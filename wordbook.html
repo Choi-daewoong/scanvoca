@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단어장 - Scan_Voca</title>
+    <link rel="stylesheet" href="css/wordbook-styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>나의 단어장</h1>
+            <p>학습할 단어장을 선택하세요</p>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="home.html" class="nav-item">
+                <div class="nav-icon">🏠</div>
+                <div>홈</div>
+            </a>
+            <a href="camera.html" class="nav-item">
+                <div class="nav-icon">📷</div>
+                <div>스캔</div>
+            </a>
+            <a href="wordbook.html" class="nav-item active">
+                <div class="nav-icon">📚</div>
+                <div>단어장</div>
+            </a>
+            <a href="wordbook-study.html" class="nav-item">
+                <div class="nav-icon">🎯</div>
+                <div>학습</div>
+            </a>
+            <a href="wordbook-quiz.html" class="nav-item">
+                <div class="nav-icon">🧠</div>
+                <div>퀴즈</div>
+            </a>
+        </nav>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Wordbook List -->
+            <div class="wordbook-list" id="wordbookList">
+                <div class="wordbook-item" draggable="true" data-wordbook-id="1">
+                    <div class="drag-handle">⋮⋮</div>
+                    <div class="wordbook-content">
+                        <div class="wordbook-header">
+                            <div class="wordbook-title">기초 영단어</div>
+                            <div class="wordbook-icon">📖</div>
+                        </div>
+                        <div class="wordbook-meta">
+                            <span class="word-count">32개 단어</span>
+                            <span class="last-studied">2시간 전</span>
+                        </div>
+                        <div class="progress-info">
+                            <span class="progress-text">학습 진행률</span>
+                            <span class="progress-percent">85%</span>
+                        </div>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" style="width: 85%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wordbook-item" draggable="true" data-wordbook-id="2">
+                    <div class="drag-handle">⋮⋮</div>
+                    <div class="wordbook-content">
+                        <div class="wordbook-header">
+                            <div class="wordbook-title">토익 필수 단어</div>
+                            <div class="wordbook-icon">💼</div>
+                        </div>
+                        <div class="wordbook-meta">
+                            <span class="word-count">156개 단어</span>
+                            <span class="last-studied">1일 전</span>
+                        </div>
+                        <div class="progress-info">
+                            <span class="progress-text">학습 진행률</span>
+                            <span class="progress-percent">67%</span>
+                        </div>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" style="width: 67%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wordbook-item" draggable="true" data-wordbook-id="3">
+                    <div class="drag-handle">⋮⋮</div>
+                    <div class="wordbook-content">
+                        <div class="wordbook-header">
+                            <div class="wordbook-title">일상 회화 표현</div>
+                            <div class="wordbook-icon">💬</div>
+                        </div>
+                        <div class="wordbook-meta">
+                            <span class="word-count">89개 단어</span>
+                            <span class="last-studied">3일 전</span>
+                        </div>
+                        <div class="progress-info">
+                            <span class="progress-text">학습 진행률</span>
+                            <span class="progress-percent">42%</span>
+                        </div>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" style="width: 42%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wordbook-item" draggable="true" data-wordbook-id="4">
+                    <div class="drag-handle">⋮⋮</div>
+                    <div class="wordbook-content">
+                        <div class="wordbook-header">
+                            <div class="wordbook-title">스캔한 단어들</div>
+                            <div class="wordbook-icon">📷</div>
+                        </div>
+                        <div class="wordbook-meta">
+                            <span class="word-count">23개 단어</span>
+                            <span class="last-studied">어제</span>
+                        </div>
+                        <div class="progress-info">
+                            <span class="progress-text">학습 진행률</span>
+                            <span class="progress-percent">12%</span>
+                        </div>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" style="width: 12%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wordbook-item" draggable="true" data-wordbook-id="5">
+                    <div class="drag-handle">⋮⋮</div>
+                    <div class="wordbook-content">
+                        <div class="wordbook-header">
+                            <div class="wordbook-title">고급 어휘</div>
+                            <div class="wordbook-icon">🎓</div>
+                        </div>
+                        <div class="wordbook-meta">
+                            <span class="word-count">78개 단어</span>
+                            <span class="last-studied">1주일 전</span>
+                        </div>
+                        <div class="progress-info">
+                            <span class="progress-text">학습 진행률</span>
+                            <span class="progress-percent">28%</span>
+                        </div>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" style="width: 28%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Wordbook Button -->
+            <button class="new-wordbook-btn" onclick="showNewWordbookModal()">
+                ➕ 새 단어장 만들기
+            </button>
+        </div>
+    </div>
+
+    <!-- Group Creation Modal -->
+    <div class="group-modal-overlay" id="groupModal">
+        <div class="group-modal">
+            <h3 class="group-modal-title">새 그룹 만들기</h3>
+            <div class="group-preview">
+                <div class="group-preview-title">그룹에 포함될 단어장:</div>
+                <div class="group-preview-items" id="groupPreviewItems">
+                    <!-- 동적으로 추가됨 -->
+                </div>
+            </div>
+            <input type="text" class="modal-input" id="groupNameInput" placeholder="그룹 이름을 입력하세요" maxlength="20">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="hideGroupModal()">
+                    취소
+                </button>
+                <button class="modal-btn modal-btn-confirm" id="groupConfirmBtn" onclick="createGroup()" disabled>
+                    그룹 만들기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Wordbook Modal -->
+    <div class="modal-overlay" id="newWordbookModal">
+        <div class="modal">
+            <h3 class="modal-title">새 단어장 만들기</h3>
+            <input type="text" class="modal-input" id="wordbookNameInput" placeholder="단어장 이름을 입력하세요" maxlength="20">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="hideNewWordbookModal()">
+                    취소
+                </button>
+                <button class="modal-btn modal-btn-confirm" id="confirmBtn" onclick="createNewWordbook()" disabled>
+                    만들기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/wordbook-drag.js"></script>
+    <script src="js/wordbook-modals.js"></script>
+</body>
+</html>

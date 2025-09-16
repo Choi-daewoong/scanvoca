@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단어장 - Scan_Voca</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F9FAFB;
+            color: #111827;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 375px;
+            margin: 0 auto;
+            background: #FFFFFF;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        /* Header */
+        .header {
+            background: #FFFFFF;
+            padding: 20px;
+            border-bottom: 1px solid #E5E7EB;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4F46E5;
+            letter-spacing: -0.25px;
+        }
+
+        .header p {
+            color: #4B5563;
+            margin-top: 4px;
+            font-size: 14px;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            background: #FFFFFF;
+            border-bottom: 1px solid #E5E7EB;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .nav-item {
+            flex: 1;
+            padding: 16px 8px;
+            text-align: center;
+            text-decoration: none;
+            color: #9CA3AF;
+            font-size: 12px;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-item.active {
+            color: #4F46E5;
+            border-bottom-color: #4F46E5;
+        }
+
+        .nav-item:hover {
+            background: #F9FAFB;
+            color: #4F46E5;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        /* Content */
+        .content {
+            padding: 20px;
+        }
+
+
+        /* Wordbook List */
+        .wordbook-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .wordbook-item {
+            background: #FFFFFF;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #E5E7EB;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+        }
+
+        .wordbook-item:hover {
+            border-color: #4F46E5;
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .wordbook-item.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        .wordbook-item.drag-over-group {
+            border-color: #10B981;
+            background: #D1FAE5;
+            transform: scale(1.02);
+        }
+
+        .wordbook-item.drag-over-reorder {
+            border-color: #4F46E5;
+            background: #EEF2FF;
+            transform: translateY(-2px);
+        }
+
+        .wordbook-group.drag-over-reorder {
+            border-color: #4F46E5;
+            background: #EEF2FF;
+            transform: translateY(-2px);
+        }
+
+        .wordbook-group.drag-over-group {
+            border-color: #10B981;
+            background: #ECFDF5;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+        }
+
+        .wordbook-group.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        .drop-indicator {
+            height: 3px;
+            background: #4F46E5;
+            border-radius: 2px;
+            margin: 8px 0;
+            opacity: 0;
+            transform: scaleY(0);
+            transition: all 0.2s ease;
+        }
+
+        .drop-indicator.show {
+            opacity: 1;
+            transform: scaleY(1);
+        }
+
+        .drag-handle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: grab;
+            color: #9CA3AF;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .wordbook-item:hover .drag-handle,
+        .wordbook-group:hover .drag-handle {
+            opacity: 1;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .wordbook-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .wordbook-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .wordbook-icon {
+            font-size: 20px;
+            opacity: 0.7;
+        }
+
+        .wordbook-meta {
+            font-size: 14px;
+            color: #4B5563;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .word-count {
+            font-weight: 500;
+        }
+
+        .last-studied {
+            font-size: 12px;
+            color: #9CA3AF;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: #6B7280;
+        }
+
+        .progress-percent {
+            font-size: 12px;
+            font-weight: 600;
+            color: #10B981;
+        }
+
+        .mini-progress-bar {
+            background: #E5E7EB;
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .mini-progress-fill {
+            background: linear-gradient(90deg, #10B981, #6EE7B7);
+            height: 100%;
+            transition: width 0.3s ease-out;
+            border-radius: 2px;
+        }
+
+        /* New Wordbook Button */
+        .new-wordbook-btn {
+            width: 100%;
+            padding: 16px 24px;
+            border: 2px dashed #4F46E5;
+            border-radius: 12px;
+            background: transparent;
+            color: #4F46E5;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .new-wordbook-btn:hover {
+            background: #F9FAFB;
+            border-color: #3730A3;
+            color: #3730A3;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 320px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn-cancel {
+            background: #F3F4F6;
+            color: #6B7280;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #E5E7EB;
+        }
+
+        .modal-btn-confirm {
+            background: #4F46E5;
+            color: #FFFFFF;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #3730A3;
+        }
+
+        .modal-btn-confirm:disabled {
+            background: #D1D5DB;
+            cursor: not-allowed;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9CA3AF;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #4B5563;
+        }
+
+        .empty-description {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Wordbook Group */
+        .wordbook-group {
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .wordbook-group:hover {
+            border-color: #4F46E5;
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.1);
+        }
+
+        .group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .group-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .group-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .group-count {
+            background: #4F46E5;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .group-toggle {
+            color: #6B7280;
+            font-size: 14px;
+            transition: transform 0.2s ease;
+        }
+
+        .group-toggle.expanded {
+            transform: rotate(90deg);
+        }
+
+        .group-content {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            padding-left: 12px;
+        }
+
+        .group-content.expanded {
+            display: flex;
+        }
+
+        .group-content .wordbook-item {
+            margin-bottom: 0;
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+        }
+
+        .group-content .wordbook-item:hover {
+            border-color: #4F46E5;
+            transform: translateY(-1px);
+        }
+
+        /* Group Creation Modal */
+        .group-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .group-modal-overlay.show {
+            display: flex;
+        }
+
+        .group-modal {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 320px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .group-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .group-preview {
+            background: #F3F4F6;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .group-preview-title {
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 8px;
+        }
+
+        .group-preview-items {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .group-preview-item {
+            font-size: 14px;
+            color: #374151;
+            padding: 4px 8px;
+            background: #FFFFFF;
+            border-radius: 4px;
+        }
+
+        /* Wordbook Content Wrapper */
+        .wordbook-content {
+            flex: 1;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>나의 단어장</h1>
+            <p>학습할 단어장을 선택하세요</p>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="home.html" class="nav-item">
+                <div class="nav-icon">🏠</div>
+                <div>홈</div>
+            </a>
+            <a href="camera.html" class="nav-item">
+                <div class="nav-icon">📷</div>
+                <div>스캔</div>
+            </a>
+            <a href="wordbook.html" class="nav-item active">
+                <div class="nav-icon">📚</div>
+                <div>단어장</div>
+            </a>
+            <a href="wordbook-study.html" class="nav-item">
+                <div class="nav-icon">🎯</div>
+                <div>학습</div>
+            </a>
+            <a href="wordbook-quiz.html" class="nav-item">
+                <div class="nav-icon">🧠</div>
+                <div>퀴즈</div>
+            </a>
+        </nav>
+
+        <!-- Content -->
+        <div class="content">
+
+            <!-- Wordbook List -->
+            <div class="wordbook-list" id="wordbookList">
+                <div class="wordbook-item" draggable="true" data-wordbook-id="1">
+                    <div class="drag-handle">⋮⋮</div>
+                    <div class="wordbook-content">
+                        <div class="wordbook-header">
+                            <div class="wordbook-title">기초 영단어</div>
+                            <div class="wordbook-icon">📖</div>
+                        </div>
+                        <div class="wordbook-meta">
+                            <span class="word-count">32개 단어</span>
+                            <span class="last-studied">2시간 전</span>
+                        </div>
+                        <div class="progress-info">
+                            <span class="progress-text">학습 진행률</span>
+                            <span class="progress-percent">85%</span>
+                        </div>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" style="width: 85%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wordbook-item" draggable="true" data-wordbook-id="2">
+                    <div class="drag-handle">⋮⋮</div>
+                    <div class="wordbook-content">
+                        <div class="wordbook-header">
+                            <div class="wordbook-title">토익 필수 단어</div>
+                            <div class="wordbook-icon">💼</div>
+                        </div>
+                        <div class="wordbook-meta">
+                            <span class="word-count">156개 단어</span>
+                            <span class="last-studied">1일 전</span>
+                        </div>
+                        <div class="progress-info">
+                            <span class="progress-text">학습 진행률</span>
+                            <span class="progress-percent">67%</span>
+                        </div>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" style="width: 67%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wordbook-item" draggable="true" data-wordbook-id="3">
+                    <div class="drag-handle">⋮⋮</div>
+                    <div class="wordbook-content">
+                        <div class="wordbook-header">
+                            <div class="wordbook-title">일상 회화 표현</div>
+                            <div class="wordbook-icon">💬</div>
+                        </div>
+                        <div class="wordbook-meta">
+                            <span class="word-count">89개 단어</span>
+                            <span class="last-studied">3일 전</span>
+                        </div>
+                        <div class="progress-info">
+                            <span class="progress-text">학습 진행률</span>
+                            <span class="progress-percent">42%</span>
+                        </div>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" style="width: 42%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wordbook-item" draggable="true" data-wordbook-id="4">
+                    <div class="drag-handle">⋮⋮</div>
+                    <div class="wordbook-content">
+                        <div class="wordbook-header">
+                            <div class="wordbook-title">스캔한 단어들</div>
+                            <div class="wordbook-icon">📷</div>
+                        </div>
+                        <div class="wordbook-meta">
+                            <span class="word-count">23개 단어</span>
+                            <span class="last-studied">어제</span>
+                        </div>
+                        <div class="progress-info">
+                            <span class="progress-text">학습 진행률</span>
+                            <span class="progress-percent">12%</span>
+                        </div>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" style="width: 12%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wordbook-item" draggable="true" data-wordbook-id="5">
+                    <div class="drag-handle">⋮⋮</div>
+                    <div class="wordbook-content">
+                        <div class="wordbook-header">
+                            <div class="wordbook-title">고급 어휘</div>
+                            <div class="wordbook-icon">🎓</div>
+                        </div>
+                        <div class="wordbook-meta">
+                            <span class="word-count">78개 단어</span>
+                            <span class="last-studied">1주일 전</span>
+                        </div>
+                        <div class="progress-info">
+                            <span class="progress-text">학습 진행률</span>
+                            <span class="progress-percent">28%</span>
+                        </div>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" style="width: 28%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Wordbook Button -->
+            <button class="new-wordbook-btn" onclick="showNewWordbookModal()">
+                ➕ 새 단어장 만들기
+            </button>
+        </div>
+    </div>
+
+    <!-- Group Creation Modal -->
+    <div class="group-modal-overlay" id="groupModal">
+        <div class="group-modal">
+            <h3 class="group-modal-title">새 그룹 만들기</h3>
+            <div class="group-preview">
+                <div class="group-preview-title">그룹에 포함될 단어장:</div>
+                <div class="group-preview-items" id="groupPreviewItems">
+                    <!-- 동적으로 추가됨 -->
+                </div>
+            </div>
+            <input type="text" class="modal-input" id="groupNameInput" placeholder="그룹 이름을 입력하세요" maxlength="20">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="hideGroupModal()">
+                    취소
+                </button>
+                <button class="modal-btn modal-btn-confirm" id="groupConfirmBtn" onclick="createGroup()" disabled>
+                    그룹 만들기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Wordbook Modal -->
+    <div class="modal-overlay" id="newWordbookModal">
+        <div class="modal">
+            <h3 class="modal-title">새 단어장 만들기</h3>
+            <input type="text" class="modal-input" id="wordbookNameInput" placeholder="단어장 이름을 입력하세요" maxlength="20">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="hideNewWordbookModal()">
+                    취소
+                </button>
+                <button class="modal-btn modal-btn-confirm" id="confirmBtn" onclick="createNewWordbook()" disabled>
+                    만들기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 새 단어장 모달 표시
+        function showNewWordbookModal() {
+            document.getElementById('newWordbookModal').classList.add('show');
+            document.getElementById('wordbookNameInput').focus();
+        }
+
+        // 새 단어장 모달 숨기기
+        function hideNewWordbookModal() {
+            document.getElementById('newWordbookModal').classList.remove('show');
+            document.getElementById('wordbookNameInput').value = '';
+            document.getElementById('confirmBtn').disabled = true;
+        }
+
+        // 새 단어장 만들기
+        function createNewWordbook() {
+            const name = document.getElementById('wordbookNameInput').value.trim();
+            if (name) {
+                // 새 단어장 생성 로직
+                console.log('새 단어장 생성:', name);
+                
+                // 단어장 목록에 추가 (시뮬레이션)
+                addNewWordbookToList(name);
+                
+                // 모달 닫기
+                hideNewWordbookModal();
+                
+                // 성공 메시지
+                alert(`"${name}" 단어장이 만들어졌습니다!`);
+            }
+        }
+
+        // 단어장 목록에 새 항목 추가
+        function addNewWordbookToList(name) {
+            const wordbookList = document.getElementById('wordbookList');
+            const newItemId = 'wb-' + Date.now();
+            const newItem = document.createElement('div');
+            newItem.className = 'wordbook-item';
+            newItem.draggable = true;
+            newItem.setAttribute('data-wordbook-id', newItemId);
+            newItem.innerHTML = `
+                <div class="drag-handle">⋮⋮</div>
+                <div class="wordbook-content">
+                    <div class="wordbook-header">
+                        <div class="wordbook-title">${name}</div>
+                        <div class="wordbook-icon">📝</div>
+                    </div>
+                    <div class="wordbook-meta">
+                        <span class="word-count">0개 단어</span>
+                        <span class="last-studied">방금 생성</span>
+                    </div>
+                    <div class="progress-info">
+                        <span class="progress-text">학습 진행률</span>
+                        <span class="progress-percent">0%</span>
+                    </div>
+                    <div class="mini-progress-bar">
+                        <div class="mini-progress-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            `;
+            wordbookList.appendChild(newItem);
+            
+            // 새로 추가된 요소에 이벤트 추가
+            setTimeout(() => {
+                initializeDragAndDrop();
+            }, 100);
+        }
+
+        // 입력 감지 및 버튼 활성화
+        document.getElementById('wordbookNameInput').addEventListener('input', function() {
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.disabled = this.value.trim() === '';
+        });
+
+        // Enter 키로 단어장 만들기
+        document.getElementById('wordbookNameInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && this.value.trim() !== '') {
+                createNewWordbook();
+            }
+        });
+
+        // ESC 키로 모달 닫기
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideNewWordbookModal();
+            }
+        });
+
+        // 모달 배경 클릭으로 닫기
+        document.getElementById('newWordbookModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideNewWordbookModal();
+            }
+        });
+
+
+        // 드래그 앤 드롭 관련 변수
+        let draggedElement = null;
+        let draggedData = null;
+        let dragStartTime = null;
+        let dragStartPosition = null;
+
+        // 그룹 모달 관련 함수
+        function showGroupModal(sourceWordbook, targetWordbook) {
+            const modal = document.getElementById('groupModal');
+            const previewItems = document.getElementById('groupPreviewItems');
+            const groupNameInput = document.getElementById('groupNameInput');
+            
+            // 미리보기 항목 추가
+            previewItems.innerHTML = `
+                <div class="group-preview-item">${sourceWordbook.title}</div>
+                <div class="group-preview-item">${targetWordbook.title}</div>
+            `;
+            
+            // 임시 데이터 저장
+            window.tempGroupData = {
+                source: sourceWordbook,
+                target: targetWordbook
+            };
+            
+            modal.classList.add('show');
+            groupNameInput.focus();
+        }
+
+        function hideGroupModal() {
+            const modal = document.getElementById('groupModal');
+            const groupNameInput = document.getElementById('groupNameInput');
+            const confirmBtn = document.getElementById('groupConfirmBtn');
+            
+            modal.classList.remove('show');
+            groupNameInput.value = '';
+            confirmBtn.disabled = true;
+            
+            // 임시 데이터 정리
+            delete window.tempGroupData;
+        }
+
+        function createGroup() {
+            const groupName = document.getElementById('groupNameInput').value.trim();
+            const groupData = window.tempGroupData;
+            
+            if (groupName && groupData) {
+                console.log(`그룹 생성: ${groupName}`, groupData);
+                
+                // 그룹 HTML 생성
+                const groupHTML = createGroupHTML(groupName, [groupData.source, groupData.target]);
+                
+                // 원본 단어장들 제거
+                const sourceElement = document.querySelector(`[data-wordbook-id="${groupData.source.id}"]`);
+                const targetElement = document.querySelector(`[data-wordbook-id="${groupData.target.id}"]`);
+                
+                const wordbookList = document.getElementById('wordbookList');
+                
+                // 그룹을 대상 단어장 위치에 추가
+                if (targetElement) {
+                    targetElement.insertAdjacentHTML('beforebegin', groupHTML);
+                    targetElement.remove();
+                }
+                if (sourceElement && sourceElement !== targetElement) {
+                    sourceElement.remove();
+                }
+                
+                // 이벤트 리스너 재초기화
+                setTimeout(() => {
+                    initializeDragAndDrop();
+                    // 새로 생성된 그룹 내 단어장들에 클릭 이벤트 추가
+                    setupGroupWordbookEvents();
+                }, 100);
+                
+                hideGroupModal();
+                alert(`"${groupName}" 그룹이 생성되었습니다!`);
+            }
+        }
+
+        function createGroupHTML(groupName, wordbooks) {
+            const totalWords = wordbooks.reduce((sum, wb) => sum + parseInt(wb.wordCount), 0);
+            const avgProgress = Math.round(wordbooks.reduce((sum, wb) => sum + wb.progress, 0) / wordbooks.length);
+            
+            const wordbookItems = wordbooks.map(wb => `
+                <div class="wordbook-item" draggable="true" data-wordbook-id="${wb.id}">
+                    <div class="drag-handle">⋮⋮</div>
+                    <div class="wordbook-content">
+                        <div class="wordbook-header">
+                            <div class="wordbook-title">${wb.title}</div>
+                            <div class="wordbook-icon">${wb.icon}</div>
+                        </div>
+                        <div class="wordbook-meta">
+                            <span class="word-count">${wb.wordCount}개 단어</span>
+                            <span class="last-studied">${wb.lastStudied}</span>
+                        </div>
+                        <div class="progress-info">
+                            <span class="progress-text">학습 진행률</span>
+                            <span class="progress-percent">${wb.progress}%</span>
+                        </div>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" style="width: ${wb.progress}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            return `
+                <div class="wordbook-group" draggable="true" data-group-id="group-${Date.now()}">
+                    <div class="drag-handle">⋮⋮</div>
+                    <div class="group-header" onclick="toggleGroup(this)">
+                        <div class="group-title">
+                            <span class="group-name">${groupName}</span>
+                            <span class="group-count">${wordbooks.length}</span>
+                        </div>
+                        <div class="group-toggle">▶</div>
+                    </div>
+                    <div class="group-content">
+                        ${wordbookItems}
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleGroup(header) {
+            const toggle = header.querySelector('.group-toggle');
+            const content = header.parentElement.querySelector('.group-content');
+            
+            toggle.classList.toggle('expanded');
+            content.classList.toggle('expanded');
+        }
+
+        function goToWordbook(wordbookId) {
+            console.log(`단어장으로 이동: ${wordbookId}`);
+            window.location.href = 'wordbook-detail.html';
+        }
+
+        // 드래그 앤 드롭 이벤트 핸들러
+        function initializeDragAndDrop() {
+            // 기존 이벤트 리스너 제거를 위해 모든 요소의 이벤트를 정리
+            const items = document.querySelectorAll('.wordbook-item, .wordbook-group');
+            const container = document.getElementById('wordbookList');
+            
+            items.forEach(item => {
+                // 이미 이벤트가 추가된 요소는 스킵
+                if (item.hasAttribute('data-drag-initialized')) {
+                    return;
+                }
+                item.setAttribute('data-drag-initialized', 'true');
+                
+                // 드래그 시작
+                item.addEventListener('dragstart', function(e) {
+                    draggedElement = this;
+                    dragStartTime = Date.now();
+                    dragStartPosition = { x: e.clientX, y: e.clientY };
+                    
+                    if (this.classList.contains('wordbook-item')) {
+                        draggedData = extractWordbookData(this);
+                    } else {
+                        draggedData = extractGroupData(this);
+                    }
+                    
+                    this.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/html', this.outerHTML);
+                });
+                
+                // 드래그 종료
+                item.addEventListener('dragend', function(e) {
+                    this.classList.remove('dragging');
+                    clearAllDropIndicators();
+                    clearAllHighlights();
+                    
+                    draggedElement = null;
+                    draggedData = null;
+                    dragStartTime = null;
+                    dragStartPosition = null;
+                });
+                
+                // 드롭 허용
+                item.addEventListener('dragover', function(e) {
+                    if (draggedElement && draggedElement !== this) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        
+                        // 드롭 위치 결정
+                        const rect = this.getBoundingClientRect();
+                        const midY = rect.top + rect.height / 2;
+                        const dropPosition = e.clientY < midY ? 'before' : 'after';
+                        
+                        // 중앙 영역 체크 (그룹 생성용)
+                        const dropX = e.clientX - rect.left;
+                        const dropY = e.clientY - rect.top;
+                        const isInCenterArea = dropX > rect.width * 0.2 && dropX < rect.width * 0.8 &&
+                                             dropY > rect.height * 0.3 && dropY < rect.height * 0.7;
+                        
+                        // 시각적 피드백
+                        clearAllHighlights();
+                        
+                        if (draggedElement.classList.contains('wordbook-item') && 
+                            this.classList.contains('wordbook-group') &&
+                            !isWordbookInGroup(draggedElement)) {
+                            // 외부 단어장을 그룹에 추가 모드
+                            this.classList.add('drag-over-group');
+                            clearAllDropIndicators();
+                        } else if (draggedElement.classList.contains('wordbook-item') && 
+                                 this.classList.contains('wordbook-item') &&
+                                 isWordbookInGroup(draggedElement) && 
+                                 isWordbookInGroup(this) &&
+                                 getParentGroup(draggedElement) === getParentGroup(this)) {
+                            // 같은 그룹 내 순서 변경 모드
+                            this.classList.add('drag-over-reorder');
+                            showDropIndicator(this, dropPosition);
+                        } else if (isInCenterArea && 
+                            draggedElement.classList.contains('wordbook-item') && 
+                            this.classList.contains('wordbook-item') &&
+                            !isWordbookInGroup(draggedElement) && !isWordbookInGroup(this)) {
+                            // 외부 단어장끼리 그룹 생성 모드
+                            this.classList.add('drag-over-group');
+                            clearAllDropIndicators();
+                        } else {
+                            // 일반 순서 변경 모드
+                            this.classList.add('drag-over-reorder');
+                            showDropIndicator(this, dropPosition);
+                        }
+                    }
+                });
+                
+                // 드롭 존 진입
+                item.addEventListener('dragenter', function(e) {
+                    if (draggedElement && draggedElement !== this) {
+                        e.preventDefault();
+                    }
+                });
+                
+                // 드롭 존 떠나기
+                item.addEventListener('dragleave', function(e) {
+                    if (!this.contains(e.relatedTarget)) {
+                        clearDropIndicator(this);
+                    }
+                });
+                
+                // 드롭 처리
+                item.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    
+                    if (draggedElement && draggedElement !== this) {
+                        const dragDuration = Date.now() - dragStartTime;
+                        const dragDistance = Math.sqrt(
+                            Math.pow(e.clientX - dragStartPosition.x, 2) + 
+                            Math.pow(e.clientY - dragStartPosition.y, 2)
+                        );
+                        
+                        // 드롭 위치 결정
+                        const rect = this.getBoundingClientRect();
+                        const midY = rect.top + rect.height / 2;
+                        const dropPosition = e.clientY < midY ? 'before' : 'after';
+                        
+                        // 드롭 위치가 중앙 영역인지 확인 (그룹 생성용)
+                        const dropX = e.clientX - rect.left;
+                        const dropY = e.clientY - rect.top;
+                        const isInCenterArea = dropX > rect.width * 0.2 && dropX < rect.width * 0.8 &&
+                                             dropY > rect.height * 0.3 && dropY < rect.height * 0.7;
+                        
+                        // 드롭 대상에 따른 처리
+                        if (draggedElement.classList.contains('wordbook-item') && 
+                            this.classList.contains('wordbook-group') &&
+                            !isWordbookInGroup(draggedElement)) {
+                            // 외부 단어장을 그룹에 드롭 - 그룹에 추가
+                            addWordbookToGroup(draggedElement, this);
+                        } else if (draggedElement.classList.contains('wordbook-item') && 
+                                 this.classList.contains('wordbook-item') &&
+                                 isWordbookInGroup(draggedElement) && 
+                                 isWordbookInGroup(this) &&
+                                 getParentGroup(draggedElement) === getParentGroup(this)) {
+                            // 같은 그룹 내 단어장끼리 순서 변경
+                            reorderWithinGroup(draggedElement, this, dropPosition);
+                        } else if (isInCenterArea && 
+                            draggedElement.classList.contains('wordbook-item') && 
+                            this.classList.contains('wordbook-item') &&
+                            !isWordbookInGroup(draggedElement) && !isWordbookInGroup(this)) {
+                            // 외부 단어장끼리 중앙 드롭 - 그룹 생성
+                            const targetData = extractWordbookData(this);
+                            showGroupModal(draggedData, targetData);
+                        } else {
+                            // 일반 순서 변경
+                            reorderItems(draggedElement, this, dropPosition);
+                        }
+                    }
+                    
+                    clearAllDropIndicators();
+                    clearAllHighlights();
+                });
+
+                // 단어장 콘텐츠 클릭 이벤트 (wordbook-item만)
+                if (item.classList.contains('wordbook-item')) {
+                    const content = item.querySelector('.wordbook-content');
+                    if (content && !item.hasAttribute('data-click-added')) {
+                        content.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            goToWordbook(item.getAttribute('data-wordbook-id'));
+                        });
+                        item.setAttribute('data-click-added', 'true');
+                    }
+                }
+            });
+        }
+
+
+        function extractWordbookData(element) {
+            const titleElement = element.querySelector('.wordbook-title');
+            const iconElement = element.querySelector('.wordbook-icon');
+            const wordCountElement = element.querySelector('.word-count');
+            const lastStudiedElement = element.querySelector('.last-studied');
+            const progressElement = element.querySelector('.progress-percent');
+            
+            return {
+                id: element.getAttribute('data-wordbook-id'),
+                title: titleElement ? titleElement.textContent : '',
+                icon: iconElement ? iconElement.textContent : '📚',
+                wordCount: wordCountElement ? parseInt(wordCountElement.textContent) : 0,
+                lastStudied: lastStudiedElement ? lastStudiedElement.textContent : '',
+                progress: progressElement ? parseInt(progressElement.textContent) : 0
+            };
+        }
+
+        function extractGroupData(element) {
+            const nameElement = element.querySelector('.group-name');
+            const countElement = element.querySelector('.group-count');
+            
+            return {
+                id: element.getAttribute('data-group-id') || 'group-' + Date.now(),
+                name: nameElement ? nameElement.textContent : '',
+                count: countElement ? parseInt(countElement.textContent) : 0,
+                type: 'group'
+            };
+        }
+
+        // 드롭 인디케이터 관련 함수들
+        function showDropIndicator(targetElement, position) {
+            clearAllDropIndicators();
+            
+            const indicator = document.createElement('div');
+            indicator.className = 'drop-indicator show';
+            indicator.setAttribute('data-drop-indicator', 'true');
+            
+            try {
+                if (position === 'before') {
+                    targetElement.parentNode.insertBefore(indicator, targetElement);
+                } else {
+                    targetElement.parentNode.insertBefore(indicator, targetElement.nextSibling);
+                }
+            } catch (error) {
+                console.error('드롭 인디케이터 표시 실패:', error, targetElement);
+            }
+        }
+
+        function clearDropIndicator(targetElement) {
+            const indicators = targetElement.parentNode.querySelectorAll('.drop-indicator');
+            indicators.forEach(indicator => indicator.remove());
+        }
+
+        function clearAllDropIndicators() {
+            const indicators = document.querySelectorAll('.drop-indicator');
+            indicators.forEach(indicator => indicator.remove());
+        }
+
+        function clearAllHighlights() {
+            document.querySelectorAll('.wordbook-item, .wordbook-group').forEach(item => {
+                item.classList.remove('drag-over-group', 'drag-over-reorder');
+            });
+        }
+
+        // 단어장을 그룹에 추가하는 함수
+        function addWordbookToGroup(wordbookElement, groupElement) {
+            const wordbookData = extractWordbookData(wordbookElement);
+            const groupContent = groupElement.querySelector('.group-content');
+            const groupCount = groupElement.querySelector('.group-count');
+            
+            // 원본 단어장을 그룹 내부로 직접 이동 (복사가 아닌 이동)
+            wordbookElement.removeAttribute('data-drag-initialized');
+            
+            // 기존 클릭 이벤트 제거하고 새로 추가
+            const existingContent = wordbookElement.querySelector('.wordbook-content');
+            if (existingContent) {
+                existingContent.onclick = () => goToWordbook(wordbookData.id);
+            }
+            
+            // 그룹 내용에 직접 이동
+            groupContent.appendChild(wordbookElement);
+            
+            // 그룹 카운트 업데이트
+            const currentCount = parseInt(groupCount.textContent);
+            groupCount.textContent = currentCount + 1;
+            
+            // 그룹 펼치기
+            const groupToggle = groupElement.querySelector('.group-toggle');
+            if (!groupToggle.classList.contains('expanded')) {
+                groupToggle.classList.add('expanded');
+                groupContent.classList.add('expanded');
+            }
+            
+            console.log(`"${wordbookData.title}" 단어장이 그룹에 추가되었습니다.`);
+            
+            // 이벤트 리스너 재초기화
+            setTimeout(() => {
+                initializeDragAndDrop();
+                setupGroupWordbookEvents();
+            }, 100);
+        }
+
+        // 단어장이 그룹 내부에 있는지 확인
+        function isWordbookInGroup(wordbookElement) {
+            return wordbookElement.closest('.wordbook-group') !== null;
+        }
+
+        // 단어장의 부모 그룹 반환
+        function getParentGroup(wordbookElement) {
+            return wordbookElement.closest('.wordbook-group');
+        }
+
+        // 그룹 내 단어장들에 클릭 이벤트 설정
+        function setupGroupWordbookEvents() {
+            const groupWordbooks = document.querySelectorAll('.wordbook-group .wordbook-item .wordbook-content');
+            groupWordbooks.forEach(content => {
+                const wordbookItem = content.closest('.wordbook-item');
+                const wordbookId = wordbookItem.getAttribute('data-wordbook-id');
+                
+                // 기존 이벤트 제거
+                content.onclick = null;
+                
+                // 새 클릭 이벤트 추가
+                content.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    goToWordbook(wordbookId);
+                });
+            });
+        }
+
+        // 그룹 내에서 단어장 순서 변경
+        function reorderWithinGroup(draggedElement, targetElement, position) {
+            const groupContent = targetElement.closest('.group-content');
+            
+            // 드래그 초기화 속성 제거
+            draggedElement.removeAttribute('data-drag-initialized');
+            
+            // 새 위치에 삽입
+            if (position === 'before') {
+                groupContent.insertBefore(draggedElement, targetElement);
+            } else {
+                groupContent.insertBefore(draggedElement, targetElement.nextSibling);
+            }
+            
+            console.log('그룹 내 순서 변경 완료:', draggedData, position, 'target:', targetElement);
+            
+            // 이벤트 리스너 재초기화
+            setTimeout(() => {
+                initializeDragAndDrop();
+            }, 100);
+        }
+
+        // 순서 변경 함수
+        function reorderItems(draggedElement, targetElement, position) {
+            const container = document.getElementById('wordbookList');
+            
+            // 드래그 초기화 속성 제거
+            draggedElement.removeAttribute('data-drag-initialized');
+            
+            // 새 위치에 삽입
+            if (position === 'before') {
+                container.insertBefore(draggedElement, targetElement);
+            } else {
+                container.insertBefore(draggedElement, targetElement.nextSibling);
+            }
+            
+            console.log('순서 변경 완료:', draggedData, position, 'target:', targetElement);
+            
+            // 이벤트 리스너 재초기화
+            setTimeout(() => {
+                initializeDragAndDrop();
+            }, 100);
+        }
+
+        // 그룹 모달 입력 감지
+        document.getElementById('groupNameInput').addEventListener('input', function() {
+            const confirmBtn = document.getElementById('groupConfirmBtn');
+            confirmBtn.disabled = this.value.trim() === '';
+        });
+
+        // Enter 키로 그룹 만들기
+        document.getElementById('groupNameInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && this.value.trim() !== '') {
+                createGroup();
+            }
+        });
+
+        // ESC 키로 그룹 모달 닫기
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideGroupModal();
+            }
+        });
+
+        // 그룹 모달 배경 클릭으로 닫기
+        document.getElementById('groupModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideGroupModal();
+            }
+        });
+
+        // 페이지 로드 시 드래그 앤 드롭 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDragAndDrop();
+        });
+    </script>
+</body>
+</html>

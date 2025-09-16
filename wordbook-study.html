@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단어 학습 - Scan_Voca</title>
+    <link rel="stylesheet" href="css/common-styles.css">
+    <link rel="stylesheet" href="css/study-styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="study-header">
+            <button class="close-btn" onclick="exitStudy()">✕</button>
+            <div class="study-title">기초 영단어 학습</div>
+            <div class="study-progress">8/32</div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 25%;"></div>
+            </div>
+        </div>
+
+        <!-- Study Stats -->
+        <div class="study-stats">
+            <div class="stat-item">
+                <div class="stat-number">7</div>
+                <div class="stat-label">완료</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">2</div>
+                <div class="stat-label">어려움</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">5</div>
+                <div class="stat-label">쉬움</div>
+            </div>
+        </div>
+
+        <!-- Study Content -->
+        <div class="study-content">
+            <div class="study-card" onclick="flipCard()">
+                <div class="card-front">
+                    <div class="word-display">vocabulary</div>
+                    <div class="pronunciation">/vəˈkæbjəlɛri/</div>
+                    <div class="flip-hint">탭하여 뜻 보기</div>
+                </div>
+                
+                <div class="card-back">
+                    <div class="word-display">vocabulary</div>
+                    <div class="pronunciation">/vəˈkæbjəlɛri/</div>
+                    <div class="word-meaning">n. 어휘, 단어의 집합</div>
+                    <div class="word-example">
+                        "Building your vocabulary is essential for language learning."
+                        <br><br>
+                        "어휘를 늘리는 것은 언어 학습에 필수적이다."
+                    </div>
+                    <div class="flip-hint">탭하여 단어 보기</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Study Controls -->
+        <div class="study-controls">
+            <div class="control-buttons">
+                <button class="btn btn-nav" onclick="previousWord()" disabled>← 이전</button>
+                
+                <div class="difficulty-buttons">
+                    <button class="btn btn-difficulty btn-hard" onclick="markDifficulty('hard')">
+                        어려움
+                    </button>
+                    <button class="btn btn-difficulty btn-medium" onclick="markDifficulty('medium')">
+                        보통
+                    </button>
+                    <button class="btn btn-difficulty btn-easy" onclick="markDifficulty('easy')">
+                        쉬움
+                    </button>
+                </div>
+                
+                <button class="btn btn-nav" onclick="nextWord()">다음 →</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/study-logic.js"></script>
+</body>
+</html>

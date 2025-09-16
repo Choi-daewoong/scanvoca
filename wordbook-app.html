@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영어 단어장 앱</title>
+    <link rel="stylesheet" href="styles/app-styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 홈 화면 -->
+        <div id="home-screen" class="home-screen">
+            <div class="app-header">
+                <h1 class="app-title">영어 단어장</h1>
+                <p>효과적인 어휘 학습을 시작하세요</p>
+            </div>
+
+            <div class="wordbook-card" onclick="openWordbook()">
+                <div class="wordbook-name">기본 단어장</div>
+                <div class="wordbook-info">📚 10개 단어 • 📅 최근 학습: 오늘</div>
+                <div class="level-distribution">
+                    <span class="level-tag level-1">Lv.1: 3개</span>
+                    <span class="level-tag level-2">Lv.2: 2개</span>
+                    <span class="level-tag level-3">Lv.3: 3개</span>
+                    <span class="level-tag level-4">Lv.4: 2개</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 단어장 상세 화면 -->
+        <div id="wordbook-detail" class="wordbook-detail">
+            <div class="detail-header">
+                <button class="back-btn" onclick="goHome()">← 돌아가기</button>
+                <div class="header-title-section">
+                    <h2 id="wordbook-title">기본 단어장</h2>
+                    <button class="edit-btn" onclick="editWordbookName()">편집</button>
+                </div>
+                <p>총 10개 단어</p>
+
+                <div class="mode-selector">
+                    <button class="mode-btn active" onclick="switchMode('study')">학습 모드</button>
+                    <button class="mode-btn" onclick="switchMode('exam')">시험 모드</button>
+                </div>
+            </div>
+
+            <!-- 학습 모드 -->
+            <div id="study-mode" class="study-mode">
+                <div class="filter-tabs-container">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" onclick="setDisplayFilter('all')">전체</button>
+                        <button class="filter-tab" onclick="setDisplayFilter('english')">영어만</button>
+                        <button class="filter-tab" onclick="setDisplayFilter('meaning')">뜻만</button>
+                        <button class="filter-tab shuffle-btn" onclick="shuffleWords()">🔀 섞기</button>
+                    </div>
+                    <div class="filter-tabs level-tabs">
+                        <button class="filter-tab active" onclick="toggleLevelFilter('all')">모두</button>
+                        <button class="filter-tab" onclick="toggleLevelFilter(1)">Lv.1</button>
+                        <button class="filter-tab" onclick="toggleLevelFilter(2)">Lv.2</button>
+                        <button class="filter-tab" onclick="toggleLevelFilter(3)">Lv.3</button>
+                        <button class="filter-tab" onclick="toggleLevelFilter(4)">Lv.4</button>
+                    </div>
+                </div>
+
+                <div class="select-all-container">
+                    <label class="select-all-checkbox">
+                        <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll()">
+                        <span>전체 선택</span>
+                    </label>
+                    <button class="delete-selected-btn" id="delete-selected-btn" onclick="deleteSelectedWords()">
+                        🗑 삭제
+                    </button>
+                </div>
+
+                <div class="word-grid" id="word-grid">
+                    <!-- 단어 카드들이 여기에 동적으로 생성됩니다 -->
+                </div>
+            </div>
+
+            <!-- 시험 모드 -->
+            <div id="exam-mode" class="exam-mode">
+                <!-- 시험 설정 -->
+                <div id="exam-setup" class="exam-setup">
+                    <div class="exam-header">
+                        <div class="exam-icon">📝</div>
+                        <h3>시험 준비</h3>
+                        <p class="exam-subtitle">외운 단어로 실력을 확인해보세요</p>
+                    </div>
+
+                    <div class="exam-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon">🔥</div>
+                            <div class="stat-info">
+                                <div class="stat-number" id="memorized-count">2</div>
+                                <div class="stat-label">외운 단어</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📚</div>
+                            <div class="stat-info">
+                                <div class="stat-number" id="total-count">10</div>
+                                <div class="stat-label">전체 단어</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="question-selector">
+                        <h4>문제 개수 선택</h4>
+                        <div class="count-options">
+                            <button class="count-btn selected" onclick="selectCount(5)" data-count="5">
+                                <span class="count-number">5</span>
+                                <span class="count-label">문제</span>
+                            </button>
+                            <button class="count-btn" onclick="selectCount(10)" data-count="10">
+                                <span class="count-number">10</span>
+                                <span class="count-label">문제</span>
+                            </button>
+                            <button class="count-btn" onclick="selectCount(15)" data-count="15">
+                                <span class="count-number">15</span>
+                                <span class="count-label">문제</span>
+                            </button>
+                            <button class="count-btn" onclick="selectCount(20)" data-count="20">
+                                <span class="count-number">20</span>
+                                <span class="count-label">문제</span>
+                            </button>
+                        </div>
+                        
+                        <div class="custom-count-section">
+                            <div class="custom-input-wrapper">
+                                <input type="number" id="custom-count" min="1" max="100" placeholder="직접입력" onchange="selectCustomCount()">
+                            </div>
+                            <div class="input-label">문제</div>
+                        </div>
+                    </div>
+
+                    <div class="exam-actions">
+                        <button class="start-exam-btn" onclick="startExam()">
+                            <span class="btn-icon">🚀</span>
+                            <span class="btn-text">시험 시작하기</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 시험 문제 -->
+                <div id="exam-question" class="exam-question">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+
+                    <div class="question-number" id="question-number">1 / 10</div>
+
+                    <div class="sound-play">
+                        <div class="exam-buttons">
+                            <button class="play-btn" onclick="playCurrentWord()">🔊</button>
+                            <button class="exam-memorize-btn memorized" onclick="toggleCurrentWordMemorized()" id="exam-memorize-btn">🔥</button>
+                        </div>
+                        <p>발음을 듣고 단어와 뜻을 적어보세요</p>
+                        <p class="exam-hint">🔥 클릭하면 외운 상태를 변경할 수 있습니다</p>
+                    </div>
+
+                    <div class="input-section">
+                        <div class="input-group">
+                            <label>영어 스펠링</label>
+                            <input type="text" id="spelling-input" placeholder="단어를 입력하세요">
+                        </div>
+                        <div class="input-group">
+                            <label>한글 뜻</label>
+                            <input type="text" id="meaning-input" placeholder="뜻을 입력하세요">
+                        </div>
+                    </div>
+
+                    <div class="exam-nav">
+                        <button class="nav-btn" onclick="previousQuestion()" id="prev-btn">이전</button>
+                        <button class="nav-btn primary" onclick="nextQuestion()" id="next-btn">다음</button>
+                    </div>
+                </div>
+
+                <!-- 시험 결과 -->
+                <div id="exam-result" class="exam-result">
+                    <div class="result-score">
+                        <div class="score-number" id="final-score">85점</div>
+                        <p id="score-message">훌륭해요! 계속 학습하세요!</p>
+                    </div>
+
+                    <div class="result-details" id="result-details">
+                        <!-- 결과 상세가 여기에 표시됩니다 -->
+                    </div>
+
+                    <button class="retry-btn" onclick="retryExam()">다시 시험보기</button>
+                    <button class="nav-btn" onclick="goHome()" style="margin-left: 10px;">홈으로</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 파일들 -->
+    <script src="js/app-data.js"></script>
+    <script src="js/app-core.js"></script>
+    <script src="js/study-mode.js"></script>
+    <script src="js/exam-mode.js"></script>
+    <script src="js/word-management.js"></script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>홈 - Scan_Voca</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F9FAFB;
+            color: #111827;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 375px;
+            margin: 0 auto;
+            background: #FFFFFF;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        /* Header */
+        .header {
+            background: #FFFFFF;
+            padding: 20px;
+            border-bottom: 1px solid #E5E7EB;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4F46E5;
+            letter-spacing: -0.25px;
+        }
+
+        .header p {
+            color: #4B5563;
+            margin-top: 4px;
+            font-size: 14px;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            background: #FFFFFF;
+            border-bottom: 1px solid #E5E7EB;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .nav-item {
+            flex: 1;
+            padding: 16px 8px;
+            text-align: center;
+            text-decoration: none;
+            color: #9CA3AF;
+            font-size: 12px;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-item.active {
+            color: #4F46E5;
+            border-bottom-color: #4F46E5;
+        }
+
+        .nav-item:hover {
+            background: #F9FAFB;
+            color: #4F46E5;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        /* Content */
+        .content {
+            padding: 20px;
+        }
+
+        /* Progress Container */
+        .progress-container {
+            margin-bottom: 20px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: #4B5563;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            background: #E5E7EB;
+            height: 8px;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #4F46E5, #818CF8);
+            height: 100%;
+            width: 70%;
+            transition: width 0.3s ease-out;
+            border-radius: 9999px;
+        }
+
+        /* Home Stats */
+        .home-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #FFFFFF;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #E5E7EB;
+            text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            border-color: #4F46E5;
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.1);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4F46E5;
+            margin-bottom: 4px;
+            line-height: 36px;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #4B5563;
+            font-weight: normal;
+            letter-spacing: 0.25px;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 16px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 48px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .btn-primary {
+            background: #4F46E5;
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background: #3730A3;
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.15);
+        }
+
+        .btn-secondary {
+            background: #FFFFFF;
+            color: #4F46E5;
+            border: 1px solid #4F46E5;
+        }
+
+        .btn-secondary:hover {
+            background: #F9FAFB;
+            border-color: #3730A3;
+            color: #3730A3;
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4F46E5, #3730A3);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(79, 70, 229, 0.2);
+            transition: all 0.3s ease;
+            z-index: 100;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 24px rgba(79, 70, 229, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .container {
+                max-width: 100%;
+            }
+            
+            .home-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .fab {
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Scan_Voca</h1>
+            <p>스마트한 영어 학습을 시작하세요</p>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="home.html" class="nav-item active">
+                <div class="nav-icon">🏠</div>
+                <div>홈</div>
+            </a>
+            <a href="camera.html" class="nav-item">
+                <div class="nav-icon">📷</div>
+                <div>스캔</div>
+            </a>
+            <a href="wordbook.html" class="nav-item">
+                <div class="nav-icon">📚</div>
+                <div>단어장</div>
+            </a>
+            <a href="wordbook-study.html" class="nav-item">
+                <div class="nav-icon">🎯</div>
+                <div>학습</div>
+            </a>
+            <a href="wordbook-quiz.html" class="nav-item">
+                <div class="nav-icon">🧠</div>
+                <div>퀴즈</div>
+            </a>
+        </nav>
+
+        <!-- Content -->
+        <div class="content">
+            <div class="progress-container">
+                <div class="progress-info">
+                    <span class="progress-text">일일 학습 목표</span>
+                    <span class="progress-text">7/10 단어</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+            </div>
+
+            <div class="home-stats">
+                <div class="stat-card">
+                    <div class="stat-number">127</div>
+                    <div class="stat-label">학습한 단어</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">단어장</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">87%</div>
+                    <div class="stat-label">정답률</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">12</div>
+                    <div class="stat-label">학습 연속일</div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="camera.html" class="btn btn-primary">
+                    📷 새 단어 스캔하기
+                </a>
+                <a href="wordbook-study.html" class="btn btn-secondary">
+                    🎯 학습 시작하기
+                </a>
+                <a href="wordbook-quiz.html" class="btn btn-secondary">
+                    🧠 퀴즈 풀기
+                </a>
+            </div>
+        </div>
+
+        <!-- Floating Action Button -->
+        <a href="camera.html" class="fab" title="빠른 스캔">
+            📷
+        </a>
+    </div>
+</body>
+</html>

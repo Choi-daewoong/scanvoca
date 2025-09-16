@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스캔 결과 - Scan_Voca</title>
+    <link rel="stylesheet" href="css/scan-results-styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 스캔 결과 상세 화면 -->
+        <div id="scan-results-detail" class="scan-results-detail">
+            <div class="detail-header">
+                <button class="back-btn" onclick="goBack()">← 돌아가기</button>
+                <div class="header-title-section">
+                    <h2 id="scan-title">인식된 단어들</h2>
+                </div>
+                <p id="total-words-count">총 4개 단어</p>
+                <!-- 스캔된 텍스트 표시 -->
+                <div class="scan-result-section">
+                    <div class="scan-content">
+                        <div class="scan-text">
+                            "Learning vocabulary is essential for language education and knowledge..."
+                        </div>
+                        <div class="scan-thumbnail">
+                            <img src="assets/scan-thumbnail.jpg" alt="스캔한 이미지" onerror="this.style.display='none'">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-tabs-container">
+                    <div class="filter-tabs level-tabs">
+                        <button class="filter-tab active" onclick="selectLevelWords('all')">모두</button>
+                        <button class="filter-tab" onclick="selectLevelWords(1)">Lv.1</button>
+                        <button class="filter-tab" onclick="selectLevelWords(2)">Lv.2</button>
+                        <button class="filter-tab" onclick="selectLevelWords(3)">Lv.3</button>
+                        <button class="filter-tab" onclick="selectLevelWords(4)">Lv.4</button>
+                    </div>
+                </div>
+
+                <div class="select-all-container">
+                    <label class="select-all-checkbox">
+                        <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll()">
+                        <span>전체</span>
+                    </label>
+                    <div class="action-buttons">
+                        <button class="move-to-wordbook-btn" id="move-to-wordbook-btn" onclick="saveToWordbook()" title="단어장으로 이동">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/>
+                            </svg>
+                            단어장
+                        </button>
+                        <button class="delete-selected-btn" id="delete-selected-btn" onclick="confirmDelete()" title="선택된 단어 삭제">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                            </svg>
+                            삭제
+                        </button>
+                    </div>
+                </div>
+
+                <div class="word-grid" id="word-grid">
+                    <div class="word-card" data-level="3">
+                        <input type="checkbox" class="word-checkbox" checked>
+                        <div class="word-level level-3">Lv.3</div>
+                        <div class="word-info">
+                            <div class="word-text">vocabulary</div>
+                            <div class="word-meaning"><span class="word-pos-tag">[n]</span> 어휘, 단어의 집합</div>
+                        </div>
+                        <div class="word-actions">
+                            <button class="pronunciation-btn" onclick="playPronunciation('vocabulary')" title="발음 듣기">🔊</button>
+                        </div>
+                    </div>
+
+                    <div class="word-card" data-level="2">
+                        <input type="checkbox" class="word-checkbox" checked>
+                        <div class="word-level level-2">Lv.2</div>
+                        <div class="word-info">
+                            <div class="word-text">essential</div>
+                            <div class="word-meaning"><span class="word-pos-tag">[adj]</span> 필수적인, 본질적인</div>
+                        </div>
+                        <div class="word-actions">
+                            <button class="pronunciation-btn" onclick="playPronunciation('essential')" title="발음 듣기">🔊</button>
+                        </div>
+                    </div>
+
+                    <div class="word-card" data-level="1">
+                        <input type="checkbox" class="word-checkbox" checked>
+                        <div class="word-level level-1">Lv.1</div>
+                        <div class="word-info">
+                            <div class="word-text">education</div>
+                            <div class="word-meaning"><span class="word-pos-tag">[n]</span> 교육</div>
+                        </div>
+                        <div class="word-actions">
+                            <button class="pronunciation-btn" onclick="playPronunciation('education')" title="발음 듣기">🔊</button>
+                        </div>
+                    </div>
+
+                    <div class="word-card" data-level="2">
+                        <input type="checkbox" class="word-checkbox" checked>
+                        <div class="word-level level-2">Lv.2</div>
+                        <div class="word-info">
+                            <div class="word-text">knowledge</div>
+                            <div class="word-meaning"><span class="word-pos-tag">[n]</span> 지식</div>
+                        </div>
+                        <div class="word-actions">
+                            <button class="pronunciation-btn" onclick="playPronunciation('knowledge')" title="발음 듣기">🔊</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Footer Actions -->
+            <div class="button-group">
+                <a href="camera.html" class="btn btn-outline">다시 스캔</a>
+                <button class="btn btn-primary" id="save-to-wordbook-btn" onclick="saveToWordbook()" disabled>단어장에 저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 단어장 선택 모달 -->
+    <div id="wordbook-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>단어장 선택</h3>
+                <button class="close-btn" onclick="closeWordbookModal()">&times;</button>
+            </div>
+
+            <div class="modal-subtitle">
+                <span id="selected-words-count">3</span>개의 단어를 저장할 단어장을 선택하세요
+            </div>
+
+            <div class="modal-body">
+                <!-- 새 단어장 만들기 버튼 -->
+                <button class="btn btn-primary mb-16" onclick="showCreateWordbookForm()">
+                    + 새 단어장 만들기
+                </button>
+
+                <!-- 새 단어장 생성 폼 -->
+                <div id="create-wordbook-form" class="create-form" style="display: none;">
+                    <div class="form-card">
+                        <h4>새 단어장 만들기</h4>
+
+                        <div class="input-group">
+                            <label>단어장 이름 *</label>
+                            <input type="text" id="new-wordbook-name" placeholder="예: 수능 필수 단어" maxlength="50">
+                        </div>
+
+                        <div class="input-group">
+                            <label>설명 (선택)</label>
+                            <textarea id="new-wordbook-description" placeholder="단어장에 대한 간단한 설명을 입력하세요" maxlength="200"></textarea>
+                        </div>
+
+                        <div class="form-buttons">
+                            <button class="btn btn-outline" onclick="hideCreateWordbookForm()">취소</button>
+                            <button class="btn btn-primary" onclick="createWordbook()">생성</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 기존 단어장 목록 -->
+                <div id="existing-wordbooks">
+                    <h4 class="list-title">기존 단어장</h4>
+
+                    <div class="wordbook-list">
+                        <div class="wordbook-item" onclick="selectWordbook(1, '기본 단어장')">
+                            <div class="wordbook-info">
+                                <div class="wordbook-header">
+                                    <span class="wordbook-name">기본 단어장</span>
+                                    <span class="default-badge">기본</span>
+                                </div>
+                                <div class="wordbook-description">기본으로 제공되는 단어장입니다</div>
+                                <div class="wordbook-meta">
+                                    <span>단어 수: 25개</span>
+                                    <span>2024.03.15</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="wordbook-item" onclick="selectWordbook(2, '수능 영단어')">
+                            <div class="wordbook-info">
+                                <div class="wordbook-header">
+                                    <span class="wordbook-name">수능 영단어</span>
+                                </div>
+                                <div class="wordbook-description">수능에 자주 출제되는 핵심 영단어 모음</div>
+                                <div class="wordbook-meta">
+                                    <span>단어 수: 156개</span>
+                                    <span>2024.03.10</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="wordbook-item" onclick="selectWordbook(3, 'TOEIC 필수')">
+                            <div class="wordbook-info">
+                                <div class="wordbook-header">
+                                    <span class="wordbook-name">TOEIC 필수</span>
+                                </div>
+                                <div class="wordbook-description">TOEIC 시험 대비용 필수 어휘</div>
+                                <div class="wordbook-meta">
+                                    <span>단어 수: 89개</span>
+                                    <span>2024.03.05</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/scan-results-logic.js"></script>
+</body>
+</html>

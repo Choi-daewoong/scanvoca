@@ -1,0 +1,257 @@
+/* Study Header */
+.study-header {
+    background: #FFFFFF;
+    padding: 20px;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #6B7280;
+    padding: 8px;
+}
+
+.study-title {
+    flex: 1;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.study-progress {
+    font-size: 14px;
+    color: #4F46E5;
+    font-weight: 500;
+}
+
+/* Progress Bar */
+.progress-container {
+    padding: 0 20px;
+    background: #FFFFFF;
+}
+
+.progress-bar {
+    background: #E5E7EB;
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    background: linear-gradient(90deg, #4F46E5, #818CF8);
+    height: 100%;
+    width: 25%;
+    transition: width 0.5s ease-out;
+}
+
+/* Study Card */
+.study-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.study-card {
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 40px 20px;
+    margin-bottom: 40px;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border: 1px solid #E5E7EB;
+    cursor: pointer;
+    transition: transform 0.6s ease;
+    perspective: 1000px;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+}
+
+.study-card.flipped {
+    transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.card-back {
+    transform: rotateY(180deg);
+}
+
+.word-display {
+    font-size: 36px;
+    font-weight: bold;
+    color: #111827;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+}
+
+.pronunciation {
+    font-size: 16px;
+    color: #6B7280;
+    margin-bottom: 24px;
+    font-style: italic;
+}
+
+.word-meaning {
+    font-size: 20px;
+    color: #4F46E5;
+    font-weight: 500;
+    margin-bottom: 24px;
+    line-height: 1.4;
+}
+
+.word-example {
+    font-size: 14px;
+    color: #4B5563;
+    background: #F9FAFB;
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 4px solid #10B981;
+    margin-bottom: 20px;
+    font-style: italic;
+}
+
+.flip-hint {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: #9CA3AF;
+}
+
+/* Control Buttons */
+.study-controls {
+    padding: 20px;
+    background: #FFFFFF;
+    border-top: 1px solid #E5E7EB;
+}
+
+.control-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn {
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 44px;
+}
+
+.btn-nav {
+    flex: 0 0 auto;
+    padding: 0 16px;
+    background: #FFFFFF;
+    color: #4F46E5;
+    border: 1px solid #4F46E5;
+    min-width: 80px;
+}
+
+.btn-nav:hover {
+    background: #F9FAFB;
+}
+
+.btn-nav:disabled {
+    background: #F3F4F6;
+    color: #9CA3AF;
+    border-color: #E5E7EB;
+    cursor: not-allowed;
+}
+
+.difficulty-buttons {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+}
+
+.btn-difficulty {
+    flex: 1;
+    padding: 0 12px;
+    max-width: 100px;
+}
+
+.btn-hard {
+    background: #EF4444;
+    color: #FFFFFF;
+}
+
+.btn-hard:hover {
+    background: #DC2626;
+}
+
+.btn-medium {
+    background: #F59E0B;
+    color: #FFFFFF;
+}
+
+.btn-medium:hover {
+    background: #D97706;
+}
+
+.btn-easy {
+    background: #10B981;
+    color: #FFFFFF;
+}
+
+.btn-easy:hover {
+    background: #059669;
+}
+
+/* Study Stats */
+.study-stats {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 0 20px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 18px;
+    font-weight: bold;
+    color: #4F46E5;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #6B7280;
+    margin-top: 2px;
+}

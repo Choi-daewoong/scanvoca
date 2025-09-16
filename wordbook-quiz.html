@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>퀴즈 - Scan_Voca</title>
+    <link rel="stylesheet" href="css/common-styles.css">
+    <link rel="stylesheet" href="css/quiz-styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="quiz-header">
+            <button class="close-btn" onclick="exitQuiz()">✕</button>
+            <div class="quiz-title">기초 영단어 퀴즈</div>
+            <div class="quiz-progress">4/10</div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-info">
+                <span class="progress-text">진행률: 40%</span>
+                <span class="score-display">정답: 3/3</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 40%;"></div>
+            </div>
+        </div>
+
+        <!-- Quiz Content -->
+        <div class="quiz-content">
+            <!-- Question Card -->
+            <div class="question-card">
+                <div class="question-word">vocabulary</div>
+                <div class="question-pronunciation">/vəˈkæbjəlɛri/</div>
+                <div class="question-text">
+                    다음 중 이 단어의 뜻으로 가장 적절한 것은?
+                </div>
+
+                <!-- Answer Options -->
+                <div class="answer-options">
+                    <div class="answer-option" onclick="selectAnswer(0)">
+                        <span class="option-letter">A</span>
+                        문법, 언어의 규칙
+                    </div>
+                    <div class="answer-option" onclick="selectAnswer(1)">
+                        <span class="option-letter">B</span>
+                        어휘, 단어의 집합
+                    </div>
+                    <div class="answer-option" onclick="selectAnswer(2)">
+                        <span class="option-letter">C</span>
+                        발음, 소리의 표현
+                    </div>
+                    <div class="answer-option" onclick="selectAnswer(3)">
+                        <span class="option-letter">D</span>
+                        철자, 글자의 순서
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Feedback -->
+            <div class="result-feedback" id="result-feedback">
+                <div class="result-icon">✅</div>
+                <div class="result-text correct">정답입니다!</div>
+                <div class="result-explanation">
+                    vocabulary는 '어휘, 단어의 집합'을 의미합니다.
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Controls -->
+        <div class="quiz-controls">
+            <div class="control-buttons">
+                <button class="btn btn-skip" onclick="skipQuestion()">건너뛰기</button>
+                <button class="btn btn-submit" id="submit-btn" onclick="submitAnswer()" disabled>
+                    정답 확인
+                </button>
+            </div>
+        </div>
+
+        <!-- Timer (숨김) -->
+        <div class="timer-display" id="timer">30초</div>
+    </div>
+
+    <script src="js/quiz-logic.js"></script>
+</body>
+</html>
