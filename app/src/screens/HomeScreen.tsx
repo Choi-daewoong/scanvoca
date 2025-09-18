@@ -1,230 +1,322 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import { HomeScreenProps } from '../navigation/types';
+import { useTheme } from '../styles/ThemeProvider';
+import { ProgressBar, StatCard, Button, FloatingActionButton } from '../components/common';
 import { databaseService } from '../database/database';
-import { Wordbook, StudyStats } from '../types/types';
 
-const HomeScreen: React.FC = () => {
-  const [wordbooks, setWordbooks] = useState<Wordbook[]>([]);
-  const [stats, setStats] = useState<StudyStats | null>(null);
+interface HomeStats {
+  totalWords: number;
+  learnedWords: number;
+  dailyGoal: number;
+  dailyProgress: number;
+}
+
+export default function HomeScreen({ navigation }: HomeScreenProps) {
+  const { theme } = useTheme();
+  const [stats, setStats] = useState<HomeStats>({
+    totalWords: 0,
+    learnedWords: 0,
+    dailyGoal: 10,
+    dailyProgress: 7
+  });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadHomeData();
+    loadHomeStats();
   }, []);
 
-  const loadHomeData = async () => {
+  const loadHomeStats = useCallback(async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
 
-      // 단어장 목록 로드
-      const wordbooksData = await databaseService.getAllWordbooks();
-      setWordbooks(wordbooksData);
+      // 실제 데이터베이스에서 통계 가져오기
+      const [totalWordsResult, studyStats] = await Promise.all([
+        databaseService.repo.words.getWordCount(),
+        databaseService.repo.studyProgress.getStudyStats(),
+      ]);
 
-      // TODO: 학습 통계 계산
-      const mockStats: StudyStats = {
-        total_words: 150,
-        learned_words: 45,
-        learning_words: 30,
-        difficult_words: 15,
-        study_streak: 7,
-        total_study_time: 240,
-        average_accuracy: 78,
-      };
-      setStats(mockStats);
-    } catch (error) {
-      console.error('Failed to load home data:', error);
+      const totalWords = totalWordsResult || 0;
+      const learnedWords = studyStats.memorizedWords || 0;
+
+      // 일일 진행률 계산 (임시로 학습된 단어 수 기반)
+      const dailyProgress = Math.min(learnedWords % 10, 10);
+
+      setStats(prev => ({
+        ...prev,
+        totalWords,
+        learnedWords,
+        dailyProgress
+      }));
+    } catch (err) {
+      console.error('Failed to load home stats:', err);
+      const errorMessage = err instanceof Error ? err.message : '통계를 불러오는데 실패했습니다.';
+      setError(errorMessage);
+
+      // 에러 발생시 사용자에게 알림 (첫 로딩시만)
+      if (!isRefresh && !loading) {
+        Alert.alert('오류', errorMessage + '\n다시 시도해 보세요.');
+      }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  }, [loading]);
+
+  const handleRefresh = useCallback(() => {
+    loadHomeStats(true);
+  }, [loadHomeStats]);
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background.primary,
+    },
+    header: {
+      padding: theme.spacing.lg,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border.light,
+      alignItems: 'center',
+      backgroundColor: theme.colors.background.primary,
+    },
+    headerTitle: {
+      ...theme.typography.h2,
+      color: theme.colors.primary.main,
+      fontWeight: 'bold',
+      letterSpacing: -0.25,
+    },
+    headerSubtitle: {
+      ...theme.typography.body2,
+      color: theme.colors.text.secondary,
+      marginTop: theme.spacing.xs,
+    },
+    content: {
+      flex: 1,
+      padding: theme.spacing.lg,
+    },
+    progressContainer: {
+      marginBottom: theme.spacing.lg,
+    },
+    progressInfo: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: theme.spacing.sm,
+    },
+    progressText: {
+      ...theme.typography.caption,
+      color: theme.colors.text.secondary,
+      fontWeight: '500',
+    },
+    statsContainer: {
+      flexDirection: 'row',
+      gap: theme.spacing.md,
+      marginBottom: theme.spacing.xl,
+    },
+    actionButtons: {
+      gap: theme.spacing.md,
+    },
+    fabContainer: {
+      position: 'absolute',
+      bottom: theme.spacing.xl,
+      right: theme.spacing.xl,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: theme.spacing.xl,
+    },
+    loadingText: {
+      ...theme.typography.body1,
+      color: theme.colors.text.secondary,
+      marginTop: theme.spacing.md,
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: theme.spacing.xl,
+    },
+    errorText: {
+      ...theme.typography.body1,
+      color: theme.colors.semantic.error,
+      textAlign: 'center',
+      marginBottom: theme.spacing.lg,
+    },
+    retryButton: {
+      backgroundColor: theme.colors.primary.main,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
+      borderRadius: theme.borderRadius.md,
+    },
+    retryButtonText: {
+      ...theme.typography.button,
+      color: theme.colors.primary.contrast,
+    },
+  });
+
+  const progressPercentage = (stats.dailyProgress / stats.dailyGoal) * 100;
+
+  const handleScanPress = () => {
+    navigation.navigate('Scan');
   };
 
-  const renderWordbookItem = ({ item }: { item: Wordbook }) => (
-    <TouchableOpacity style={styles.wordbookCard}>
-      <Text style={styles.wordbookName}>{item.name}</Text>
-      <Text style={styles.wordbookDescription}>{item.description}</Text>
-      <Text style={styles.wordbookWordCount}>단어 수: 0개</Text>
-    </TouchableOpacity>
-  );
+  const handleWordbookPress = () => {
+    navigation.navigate('Wordbook');
+  };
 
-  if (loading) {
+  const handleQuickScan = () => {
+    navigation.navigate('Scan');
+  };
+
+  const handleSettingsPress = () => {
+    navigation.navigate('Settings');
+  };
+
+  // 로딩 상태
+  if (loading && !refreshing) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text>홈 데이터를 불러오는 중...</Text>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>ScanVoca</Text>
+          <Text style={styles.headerSubtitle}>스마트한 영어 학습을 시작하세요</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>통계를 불러오는 중...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // 에러 상태
+  if (error && !refreshing) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>ScanVoca</Text>
+          <Text style={styles.headerSubtitle}>스마트한 영어 학습을 시작하세요</Text>
+        </View>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>
+            {error}
+          </Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => loadHomeStats()}>
+            <Text style={styles.retryButtonText}>다시 시도</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      {/* 학습 통계 섹션 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>오늘의 학습 현황</Text>
-        {stats && (
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{stats.total_words}</Text>
-              <Text style={styles.statLabel}>총 단어</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{stats.learned_words}</Text>
-              <Text style={styles.statLabel}>학습 완료</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{stats.study_streak}</Text>
-              <Text style={styles.statLabel}>연속 학습</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{stats.average_accuracy}%</Text>
-              <Text style={styles.statLabel}>정답률</Text>
-            </View>
-          </View>
-        )}
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>ScanVoca</Text>
+        <Text style={styles.headerSubtitle}>스마트한 영어 학습을 시작하세요</Text>
       </View>
 
-      {/* 빠른 실행 버튼들 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>빠른 시작</Text>
-        <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>📱 단어 스캔</Text>
-            <Text style={styles.actionButtonSubText}>카메라로 단어 인식</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>📚 플래시카드</Text>
-            <Text style={styles.actionButtonSubText}>단어 학습하기</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>🎯 퀴즈</Text>
-            <Text style={styles.actionButtonSubText}>실력 테스트</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* 최근 단어장 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>내 단어장</Text>
-        {wordbooks.length > 0 ? (
-          <FlatList
-            data={wordbooks}
-            renderItem={renderWordbookItem}
-            keyExtractor={(item) => item.id.toString()}
-            scrollEnabled={false}
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={theme.colors.primary.main}
+            colors={[theme.colors.primary.main]}
           />
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>아직 단어장이 없습니다</Text>
-            <Text style={styles.emptySubText}>카메라로 단어를 스캔하여 단어장을 만들어보세요!</Text>
+        }
+      >
+        {/* Daily Progress */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressInfo}>
+            <Text style={styles.progressText}>일일 학습 목표</Text>
+            <Text style={styles.progressText}>
+              {stats.dailyProgress}/{stats.dailyGoal} 단어
+            </Text>
           </View>
-        )}
+          <ProgressBar
+            progress={progressPercentage}
+            height={8}
+            color={theme.colors.primary.main}
+          />
+        </View>
+
+        {/* Statistics Cards */}
+        <View style={styles.statsContainer}>
+          <StatCard
+            title="전체 단어"
+            value={stats.totalWords.toLocaleString()}
+            color="primary"
+          />
+          <StatCard
+            title="외운 단어"
+            value={stats.learnedWords.toString()}
+            color="success"
+          />
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <Button
+            title="📷 새 단어 스캔하기"
+            variant="primary"
+            onPress={handleScanPress}
+            fullWidth
+          />
+
+          <Button
+            title="📚 전체 단어 보기"
+            variant="secondary"
+            onPress={handleWordbookPress}
+            fullWidth
+          />
+
+          <Button
+            title="✅ 외운 단어 보기"
+            variant="secondary"
+            onPress={() => {
+              // 단어장으로 이동 (외운 단어 필터링은 단어장에서 지원)
+              navigation.navigate('Wordbook');
+            }}
+            fullWidth
+          />
+
+          <Button
+            title="📊 통계 보기"
+            variant="secondary"
+            onPress={() => {
+              navigation.navigate('StudyStats');
+            }}
+            fullWidth
+          />
+
+          <Button
+            title="⚙️ 설정"
+            variant="secondary"
+            onPress={handleSettingsPress}
+            fullWidth
+          />
+        </View>
+      </ScrollView>
+
+      {/* Floating Action Button */}
+      <View style={styles.fabContainer}>
+        <FloatingActionButton
+          icon="📷"
+          onPress={handleQuickScan}
+          title="빠른 스캔"
+        />
       </View>
-    </ScrollView>
+    </View>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F8F8',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  section: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
-    marginVertical: 8,
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#007AFF',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: '#F0F0F0',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  actionButtonSubText: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-  },
-  wordbookCard: {
-    backgroundColor: '#F8F9FA',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  wordbookName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  wordbookDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  wordbookWordCount: {
-    fontSize: 12,
-    color: '#007AFF',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
-  },
-  emptySubText: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-  },
-});
-
-export default HomeScreen;
+}

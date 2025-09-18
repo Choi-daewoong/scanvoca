@@ -1,151 +1,113 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { Alert } from 'react-native';
 
 // Database
 import { databaseService } from './src/database/database';
+import { verifyDatabaseIntegrity } from './src/utils/databaseCheck';
 
-// Screens (placeholder)
-import HomeScreen from './src/screens/HomeScreen';
-import CameraScreen from './src/screens/CameraScreen';
-import WordbookScreen from './src/screens/WordbookScreen';
-import SettingsScreen from './src/screens/SettingsScreen';
+// Environment & Configuration
+import { validateEnv, debugEnv } from './src/utils/env';
 
-const Tab = createBottomTabNavigator();
+// Authentication
+import { useAuthStore } from './src/stores/authStore';
+
+// Navigation & Theme
+import RootNavigator from './src/navigation/RootNavigator';
+import { ThemeProvider } from './src/styles/ThemeProvider';
+import { LoadingScreen, ErrorScreen } from './src/components/common';
 
 export default function App() {
   const [isDbInitialized, setIsDbInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
+
+  // 인증 상태 관리
+  const { user, access_token } = useAuthStore();
 
   useEffect(() => {
     initializeApp();
   }, []);
 
+  // 인증 상태 변화 감지
+  useEffect(() => {
+    // Zustand 스토어가 AsyncStorage에서 데이터를 복원한 후 초기화 완료로 표시
+    const timer = setTimeout(() => {
+      setIsAuthInitialized(true);
+      console.log('🔐 인증 상태 초기화 완료:', {
+        hasUser: !!user,
+        hasToken: !!access_token,
+        userEmail: user?.email
+      });
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [user, access_token]);
+
   const initializeApp = async () => {
     try {
       setIsLoading(true);
 
-      // 데이터베이스 초기화
-      await databaseService.initialize();
-      setIsDbInitialized(true);
+      console.log('🚀 앱 초기화 시작...');
 
-      console.log('App initialized successfully');
+      // 환경변수 검증
+      console.log('⚙️ 환경변수 검증 중...');
+      validateEnv();
+      debugEnv();
+
+      // 데이터베이스 초기화
+      console.log('🗄️ 데이터베이스 초기화 중...');
+      await databaseService.initialize();
+
+      // 데이터베이스 무결성 검사 및 기본 설정
+      const isHealthy = await verifyDatabaseIntegrity();
+      if (!isHealthy) {
+        throw new Error('데이터베이스 무결성 검사 실패');
+      }
+
+      setIsDbInitialized(true);
+      console.log('✅ 앱 초기화 완료!');
     } catch (error) {
-      console.error('App initialization failed:', error);
-      Alert.alert('초기화 오류', '앱 초기화 중 오류가 발생했습니다. 앱을 다시 시작해 주세요.', [
-        { text: '확인' },
-      ]);
+      console.error('❌ 앱 초기화 실패:', error);
+      Alert.alert(
+        '초기화 오류',
+        '앱 초기화 중 오류가 발생했습니다.\n데이터베이스 연결을 확인하고 앱을 다시 시작해 주세요.',
+        [{ text: '확인' }]
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (isLoading) {
+  // 앱 초기화 중
+  if (isLoading || !isAuthInitialized) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>앱을 초기화하는 중...</Text>
-        <Text style={styles.loadingSubText}>데이터베이스를 준비하고 있습니다</Text>
-      </View>
+      <ThemeProvider>
+        <LoadingScreen />
+      </ThemeProvider>
     );
   }
 
+  // 데이터베이스 초기화 실패
   if (!isDbInitialized) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>데이터베이스 초기화 실패</Text>
-        <Text style={styles.errorSubText}>앱을 다시 시작해 주세요</Text>
-      </View>
+      <ThemeProvider>
+        <ErrorScreen onRetry={initializeApp} />
+      </ThemeProvider>
     );
   }
 
+  // 앱 시작 - 인증 상태에 따른 네비게이션
+  const isAuthenticated = !!(user && access_token);
+
   return (
-    <NavigationContainer>
-      <StatusBar style="auto" />
-      <Tab.Navigator
-        screenOptions={{
-          tabBarActiveTintColor: '#007AFF',
-          tabBarInactiveTintColor: '#8E8E93',
-          headerStyle: {
-            backgroundColor: '#F8F8F8',
-          },
-          headerTintColor: '#000',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-        }}
-      >
-        <Tab.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{
-            tabBarLabel: '홈',
-            headerTitle: 'AI 영단어장',
-          }}
-        />
-        <Tab.Screen
-          name="Camera"
-          component={CameraScreen}
-          options={{
-            tabBarLabel: '스캔',
-            headerTitle: '단어 스캔',
-          }}
-        />
-        <Tab.Screen
-          name="Wordbook"
-          component={WordbookScreen}
-          options={{
-            tabBarLabel: '단어장',
-            headerTitle: '내 단어장',
-          }}
-        />
-        <Tab.Screen
-          name="Settings"
-          component={SettingsScreen}
-          options={{
-            tabBarLabel: '설정',
-            headerTitle: '설정',
-          }}
-        />
-      </Tab.Navigator>
-    </NavigationContainer>
+    <ThemeProvider>
+      <NavigationContainer>
+        <StatusBar style="auto" />
+        <RootNavigator isAuthenticated={isAuthenticated} />
+      </NavigationContainer>
+    </ThemeProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8F8F8',
-  },
-  loadingText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  loadingSubText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8F8F8',
-  },
-  errorText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FF3B30',
-    marginBottom: 8,
-  },
-  errorSubText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-  },
-});

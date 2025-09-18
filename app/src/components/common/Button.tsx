@@ -27,66 +27,31 @@ const Button: React.FC<ButtonProps> = ({
   style,
   textStyle,
 }) => {
-  const getButtonStyle = (): ViewStyle[] => {
+  const getButtonStyle = (): ViewStyle => {
     const baseStyle = [styles.button, styles[size]];
-    
-    if (fullWidth) {
-      baseStyle.push(styles.fullWidth);
-    }
 
-    switch (variant) {
-      case 'primary':
-        baseStyle.push(styles.primary);
-        break;
-      case 'secondary':
-        baseStyle.push(styles.secondary);
-        break;
-      case 'outline':
-        baseStyle.push(styles.outline);
-        break;
-      case 'text':
-        baseStyle.push(styles.text);
-        break;
-    }
+    if (fullWidth) baseStyle.push(styles.fullWidth);
+    if (variant === 'primary') baseStyle.push(styles.primary);
+    if (variant === 'secondary') baseStyle.push(styles.secondary);
+    if (variant === 'outline') baseStyle.push(styles.outline);
+    if (variant === 'text') baseStyle.push(styles.text);
+    if (disabled) baseStyle.push(styles.disabled);
+    if (style) baseStyle.push(style);
 
-    if (disabled) {
-      baseStyle.push(styles.disabled);
-    }
-
-    if (style) {
-      baseStyle.push(style);
-    }
-
-    return baseStyle;
+    return StyleSheet.flatten(baseStyle);
   };
 
-  const getTextStyle = (): TextStyle[] => {
-    const baseStyle = [styles.buttonText, styles[`${size}Text`]];
+  const getTextStyle = (): TextStyle => {
+    const baseStyle = [styles.buttonText, styles[`${size}Text` as keyof typeof styles]];
 
-    switch (variant) {
-      case 'primary':
-        baseStyle.push(styles.primaryText);
-        break;
-      case 'secondary':
-        baseStyle.push(styles.secondaryText);
-        break;
-      case 'outline':
-        baseStyle.push(styles.outlineText);
-        break;
-      case 'text':
-        baseStyle.push(styles.textText);
-        break;
-    }
+    if (variant === 'primary') baseStyle.push(styles.primaryText);
+    if (variant === 'secondary') baseStyle.push(styles.secondaryText);
+    if (variant === 'outline') baseStyle.push(styles.outlineText);
+    if (variant === 'text') baseStyle.push(styles.textText);
+    if (disabled) baseStyle.push(styles.disabledText);
+    if (textStyle) baseStyle.push(textStyle);
 
-    if (disabled) {
-      baseStyle.push(styles.disabledText);
-    }
-
-    if (textStyle) {
-      baseStyle.push(textStyle);
-    }
-
-    return baseStyle;
+    return StyleSheet.flatten(baseStyle);
   };
 
   return (

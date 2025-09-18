@@ -10,6 +10,18 @@ export { default as SearchBar } from './SearchBar';
 export { default as FloatingActionButton } from './FloatingActionButton';
 export { default as StatCard } from './StatCard';
 export { default as WordbookSelectionModal } from './WordbookSelectionModal';
+export { default as InputModal } from './InputModal';
+
+// New components (Phase 2.0.2)
+export { default as Header } from './Header';
+export { default as Section } from './Section';
+export { default as FilterTabs } from './FilterTabs';
+export { default as LevelTag } from './LevelTag';
+export { default as Checkbox } from './Checkbox';
+
+// App-level components (Phase 2.1)
+export { default as LoadingScreen } from './LoadingScreen';
+export { default as ErrorScreen } from './ErrorScreen';
 
 // Export types
 export type { ButtonProps } from './Button';
@@ -23,3 +35,10 @@ export type { SearchBarProps } from './SearchBar';
 export type { FloatingActionButtonProps } from './FloatingActionButton';
 export type { StatCardProps } from './StatCard';
 export type { WordbookSelectionModalProps } from './WordbookSelectionModal';
+
+// New component types
+export type { HeaderProps } from './Header';
+export type { SectionProps } from './Section';
+export type { FilterTabsProps, FilterTab } from './FilterTabs';
+export type { LevelTagProps } from './LevelTag';
+export type { CheckboxProps } from './Checkbox';

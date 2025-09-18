@@ -84,6 +84,18 @@ export const theme = {
       lineHeight: 26,
       letterSpacing: 0,
     },
+    h5: {
+      fontSize: 16,
+      fontWeight: '600' as const,
+      lineHeight: 24,
+      letterSpacing: 0,
+    },
+    h6: {
+      fontSize: 14,
+      fontWeight: '600' as const,
+      lineHeight: 20,
+      letterSpacing: 0,
+    },
     body1: {
       fontSize: 16,
       fontWeight: 'normal' as const,
@@ -131,6 +143,7 @@ export const theme = {
   // 둥근 모서리
   borderRadius: {
     none: 0,
+    xs: 2,
     sm: 4,
     md: 8,
     lg: 12,
@@ -191,6 +204,64 @@ export const theme = {
       easeInOut: 'ease-in-out',
       linear: 'linear',
     }
+  },
+
+  // 단어 관련 컴포넌트 (CLAUDE.md 기반)
+  word: {
+    // 단어 난이도 표시 (4단계)
+    level: {
+      1: {
+        color: '#FCD34D',    // 노랑 - 기초
+        stars: 1,
+        label: '기초',
+        backgroundColor: '#FEF3C7',
+      },
+      2: {
+        color: '#60A5FA',    // 파랑 - 중급
+        stars: 2,
+        label: '중급',
+        backgroundColor: '#DBEAFE',
+      },
+      3: {
+        color: '#F97316',    // 주황 - 고급
+        stars: 3,
+        label: '고급',
+        backgroundColor: '#FED7AA',
+      },
+      4: {
+        color: '#EF4444',    // 빨강 - 최고급
+        stars: 4,
+        label: '최고급',
+        backgroundColor: '#FECACA',
+      },
+    },
+    // 품사 태그 스타일
+    partOfSpeech: {
+      backgroundColor: '#4F46E5',
+      color: '#FFFFFF',
+      borderRadius: 8,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      minWidth: 28,
+      fontSize: 12,
+      fontWeight: '600' as const,
+    },
+    // 발음 버튼 스타일
+    pronunciationButton: {
+      backgroundColor: 'transparent',
+      padding: 8,
+      borderRadius: 6,
+      activeOpacity: 0.7,
+    },
+    // 사전 버튼 스타일
+    dictionaryButton: {
+      borderWidth: 1,
+      borderColor: '#D1D5DB',
+      backgroundColor: '#FFFFFF',
+      padding: 8,
+      borderRadius: 6,
+      activeOpacity: 0.8,
+    },
   },
 
   // 레이아웃

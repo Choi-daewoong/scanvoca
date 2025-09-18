@@ -1,45 +1,243 @@
 import * as SQLite from 'expo-sqlite';
-import { Paths, Directory, File } from 'expo-file-system';
+import * as FileSystem from 'expo-file-system';
+import { Asset } from 'expo-asset';
 import { Example, Wordbook, WordWithMeaning } from '../types/types';
+import { initializeRepositories, getRepositories, RepositoryManager } from './repositories';
 
 class DatabaseService {
   private db: SQLite.SQLiteDatabase | null = null;
   private readonly DB_NAME = 'vocabulary.db';
+  private repositories: RepositoryManager | null = null;
 
   // 데이터베이스 초기화
   async initialize(): Promise<void> {
     try {
+      // 웹 환경에서는 mock 데이터베이스 사용
+      if (typeof window !== 'undefined') {
+        console.log('🌐 Web environment detected - using mock database');
+        await this.initializeWebDatabase();
+        return;
+      }
+
+      // 네이티브 환경에서는 실제 SQLite 사용
       // assets의 DB 파일을 앱 문서 디렉토리로 복사
       await this.copyDatabaseFromAssets();
 
       // 데이터베이스 연결
       this.db = await SQLite.openDatabaseAsync(this.DB_NAME);
 
-      console.log('Database initialized successfully');
+      // Repository 초기화
+      this.repositories = initializeRepositories(this.db);
+
+      console.log('📱 Native database initialized successfully');
     } catch (error) {
       console.error('Database initialization failed:', error);
       throw error;
     }
   }
 
+  // 웹 환경용 mock 데이터베이스 초기화
+  private async initializeWebDatabase(): Promise<void> {
+    try {
+      // 웹에서는 SQLite 대신 메모리 기반 mock 사용
+      this.db = await SQLite.openDatabaseAsync(':memory:');
+      
+      // 기본 테이블 생성
+      await this.createTablesForWeb();
+      
+      // 샘플 데이터 삽입
+      await this.insertSampleData();
+      
+      // Repository 초기화
+      this.repositories = initializeRepositories(this.db);
+      
+      console.log('🌐 Web mock database initialized successfully');
+    } catch (error) {
+      console.error('Web database initialization failed:', error);
+      throw error;
+    }
+  }
+
+  // 웹 환경을 위한 테이블 생성
+  private async createTablesForWeb(): Promise<void> {
+    const db = this.db!;
+
+    try {
+      // 기본 테이블들 생성
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS words (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          word TEXT UNIQUE NOT NULL,
+          pronunciation TEXT,
+          difficulty_level INTEGER DEFAULT 4,
+          frequency_rank INTEGER,
+          cefr_level TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS word_meanings (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          word_id INTEGER NOT NULL,
+          korean_meaning TEXT NOT NULL,
+          part_of_speech TEXT,
+          definition_en TEXT,
+          source TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (word_id) REFERENCES words(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS examples (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          word_id INTEGER NOT NULL,
+          sentence_en TEXT NOT NULL,
+          sentence_ko TEXT,
+          source TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (word_id) REFERENCES words(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS wordbooks (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT,
+          is_default INTEGER DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS wordbook_words (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          wordbook_id INTEGER NOT NULL,
+          word_id INTEGER NOT NULL,
+          added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (wordbook_id) REFERENCES wordbooks(id),
+          FOREIGN KEY (word_id) REFERENCES words(id),
+          UNIQUE(wordbook_id, word_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS study_progress (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          word_id INTEGER NOT NULL,
+          correct_count INTEGER DEFAULT 0,
+          incorrect_count INTEGER DEFAULT 0,
+          is_memorized INTEGER DEFAULT 0,
+          last_studied DATETIME,
+          next_review DATETIME,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (word_id) REFERENCES words(id),
+          UNIQUE(word_id)
+        );
+      `);
+
+      // 샘플 데이터 추가
+      await this.insertSampleData();
+
+      console.log('Web database tables created successfully');
+    } catch (error) {
+      console.error('Failed to create web database tables:', error);
+    }
+  }
+
+  // 샘플 데이터 삽입
+  private async insertSampleData(): Promise<void> {
+    const db = this.db!;
+
+    try {
+      // 샘플 단어들
+      const sampleWords = [
+        { word: 'education', pronunciation: '/ˌedʒuˈkeɪʃn/', level: 3 },
+        { word: 'learning', pronunciation: '/ˈlɜːrnɪŋ/', level: 2 },
+        { word: 'vocabulary', pronunciation: '/vəˈkæbjələri/', level: 4 },
+        { word: 'essential', pronunciation: '/ɪˈsenʃl/', level: 3 },
+        { word: 'knowledge', pronunciation: '/ˈnɑːlɪdʒ/', level: 3 },
+        { word: 'development', pronunciation: '/dɪˈveləpmənt/', level: 4 },
+        { word: 'systematic', pronunciation: '/ˌsɪstəˈmætɪk/', level: 4 },
+        { word: 'comprehensive', pronunciation: '/ˌkɑːmprɪˈhensɪv/', level: 4 },
+        { word: 'advanced', pronunciation: '/ədˈvænst/', level: 3 },
+        { word: 'practice', pronunciation: '/ˈpræktɪs/', level: 2 }
+      ];
+
+      const meanings = [
+        { word: 'education', meaning: '교육', pos: 'n' },
+        { word: 'learning', meaning: '학습, 배움', pos: 'n' },
+        { word: 'vocabulary', meaning: '어휘, 단어', pos: 'n' },
+        { word: 'essential', meaning: '필수적인, 본질적인', pos: 'adj' },
+        { word: 'knowledge', meaning: '지식, 아는 것', pos: 'n' },
+        { word: 'development', meaning: '개발, 발전', pos: 'n' },
+        { word: 'systematic', meaning: '체계적인', pos: 'adj' },
+        { word: 'comprehensive', meaning: '포괄적인, 종합적인', pos: 'adj' },
+        { word: 'advanced', meaning: '고급의, 발전된', pos: 'adj' },
+        { word: 'practice', meaning: '연습, 실습', pos: 'n' }
+      ];
+
+      // 단어 삽입
+      for (let i = 0; i < sampleWords.length; i++) {
+        const word = sampleWords[i];
+        await db.runAsync(
+          'INSERT OR IGNORE INTO words (word, pronunciation, difficulty_level) VALUES (?, ?, ?)',
+          [word.word, word.pronunciation, word.level]
+        );
+
+        // 의미 삽입
+        const meaning = meanings[i];
+        await db.runAsync(
+          'INSERT OR IGNORE INTO word_meanings (word_id, korean_meaning, part_of_speech) VALUES ((SELECT id FROM words WHERE word = ?), ?, ?)',
+          [meaning.word, meaning.meaning, meaning.pos]
+        );
+      }
+
+      // 기본 단어장 생성
+      await db.runAsync(
+        'INSERT OR IGNORE INTO wordbooks (name, description, is_default) VALUES (?, ?, ?)',
+        ['내 단어장', '스캔으로 추가된 단어들이 저장되는 기본 단어장입니다.', 1]
+      );
+
+      console.log('Sample data inserted successfully');
+    } catch (error) {
+      console.error('Failed to insert sample data:', error);
+    }
+  }
+
   // assets의 DB 파일을 앱 디렉토리로 복사
   private async copyDatabaseFromAssets(): Promise<void> {
-    // Expo SDK 54의 새로운 FileSystem API 사용
-    const sqliteDir = new Directory(Paths.document, 'SQLite');
-    const dbFile = new File(sqliteDir, this.DB_NAME);
+    try {
+      const dbPath = `${FileSystem.documentDirectory!}SQLite/${this.DB_NAME}`;
 
-    // SQLite 디렉토리 생성
-    await sqliteDir.create();
+      // SQLite 디렉토리 생성
+      const sqliteDir = `${FileSystem.documentDirectory!}SQLite`;
+      const dirInfo = await FileSystem.getInfoAsync(sqliteDir);
+      if (!dirInfo.exists) {
+        await FileSystem.makeDirectoryAsync(sqliteDir, { intermediates: true });
+      }
 
-    // 이미 DB 파일이 있는지 확인
-    const dbExists = dbFile.exists;
+      // 이미 DB 파일이 있는지 확인
+      const dbInfo = await FileSystem.getInfoAsync(dbPath);
 
-    if (!dbExists) {
-      // Expo SDK 54에서는 Asset.downloadAsync를 사용하여 assets에서 복사
-      // 현재는 빈 DB를 생성하고 나중에 데이터 로딩 구현
-      console.log('Database will be created when first accessed');
-    } else {
-      console.log('Database already exists');
+      if (!dbInfo.exists) {
+        try {
+          // assets의 DB 파일을 다운로드하고 복사
+          const asset = Asset.fromModule(require('../../assets/vocabulary.db'));
+          await asset.downloadAsync();
+
+          // 로컬 URI에서 앱 문서 디렉토리로 복사
+          await FileSystem.copyAsync({
+            from: asset.localUri!,
+            to: dbPath,
+          });
+
+          console.log('Database copied from assets successfully');
+        } catch (error) {
+          console.error('Failed to copy database from assets:', error);
+          throw error;
+        }
+      } else {
+        console.log('Database already exists');
+      }
+    } catch (error) {
+      console.warn('Database copy failed, will create empty database:', error);
+      // 웹 환경이거나 파일 시스템 접근에 실패한 경우 계속 진행
     }
   }
 
@@ -49,6 +247,14 @@ class DatabaseService {
       throw new Error('Database not initialized. Call initialize() first.');
     }
     return this.db;
+  }
+
+  // Repository 접근자
+  get repo(): RepositoryManager {
+    if (!this.repositories) {
+      throw new Error('Database not initialized. Call initialize() first.');
+    }
+    return this.repositories;
   }
 
   // === 단어 관련 메서드 ===
