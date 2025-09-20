@@ -10,8 +10,10 @@ export type RootStackParamList = {
   Register: undefined;
   ForgotPassword: undefined;
 
-  // Main app
-  MainTabs: undefined;
+  // Main screens
+  Home: undefined;
+  Scan: undefined;
+  Wordbook: undefined;
 
   // Modal screens (인증 필요)
   Camera: undefined;
@@ -57,9 +59,9 @@ export type RegisterScreenProps = RootStackScreenProps<'Register'>;
 export type ForgotPasswordScreenProps = RootStackScreenProps<'ForgotPassword'>;
 
 // Main app screens
-export type HomeScreenProps = MainTabScreenProps<'Home'>;
-export type ScanScreenProps = MainTabScreenProps<'Scan'>;
-export type WordbookScreenProps = MainTabScreenProps<'Wordbook'>;
+export type HomeScreenProps = RootStackScreenProps<'Home'>;
+export type ScanScreenProps = RootStackScreenProps<'Scan'>;
+export type WordbookScreenProps = RootStackScreenProps<'Wordbook'>;
 
 // Modal screens
 export type WordDetailScreenProps = RootStackScreenProps<'WordDetail'>;

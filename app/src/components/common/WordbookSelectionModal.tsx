@@ -11,7 +11,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Wordbook } from '../../types/types';
-import { databaseService } from '../../database/database';
+import databaseService from '../../database/database';
 import theme from '../../styles/theme';
 import Button from './Button';
 import Card from './Card';

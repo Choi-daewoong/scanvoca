@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { QuizSessionScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { ProgressBar } from '../components/common';
-import { databaseService } from '../database/database';
+import databaseService from '../database/database';
 import { WordWithMeaning } from '../types/types';
 
 interface QuizQuestion {

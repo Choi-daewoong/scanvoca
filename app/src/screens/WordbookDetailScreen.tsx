@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { WordbookDetailScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { SearchBar, FilterTabs, LevelTag, Checkbox } from '../components/common';
-import { databaseService } from '../database/database';
+import databaseService from '../database/database';
 
 export default function WordbookDetailScreen({ navigation, route }: WordbookDetailScreenProps) {
   const { theme } = useTheme();

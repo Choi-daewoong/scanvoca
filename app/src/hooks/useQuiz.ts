@@ -1,7 +1,7 @@
 // useQuiz Hook - 퀴즈 관련 상태 관리
 import { useState, useCallback } from 'react';
 import { QuizQuestion, QuizResult, QuizSession, WordWithMeaning } from '../types/types';
-import { databaseService } from '../database/database';
+import databaseService from '../database/database';
 
 export interface UseQuizReturn {
   // 상태

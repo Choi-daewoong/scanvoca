@@ -1,6 +1,6 @@
 // useWordbook Hook - 단어장 관련 상태 관리
 import { useState, useCallback, useEffect } from 'react';
-import { databaseService } from '../database/database';
+import databaseService from '../database/database';
 import { Wordbook, WordWithMeaning } from '../types/types';
 
 export interface UseWordbookReturn {

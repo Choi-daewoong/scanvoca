@@ -1,5 +1,6 @@
-import { databaseService } from '../database/database';
+import databaseService from '../database/database';
 import { WordWithMeaning } from '../types/types';
+import TextRecognition from '@react-native-ml-kit/text-recognition';
 
 export interface OCRWord {
   text: string;
@@ -38,75 +39,57 @@ class OCRService {
     return OCRService.instance;
   }
 
-  // 이미지에서 텍스트 추출 (강화된 시뮬레이션)
+  // 이미지에서 텍스트 추출 (실제 OCR)
   async extractTextFromImage(imageUri: string): Promise<OCRResult> {
     const startTime = Date.now();
 
     try {
-      console.log('🔍 OCR 처리 시작:', imageUri);
+      console.log('🔍 MLKit OCR 처리 시작:', imageUri);
 
-      // 실제 OCR 구현은 Google Vision API, Tesseract.js 등을 사용
-      // 현재는 다양한 시나리오를 가진 시뮬레이션 데이터
-      const mockScenarios = [
-        // 학습 교재 시나리오
-        [
-          { text: 'vocabulary', confidence: 0.95 },
-          { text: 'learning', confidence: 0.92 },
-          { text: 'English', confidence: 0.88 },
-          { text: 'study', confidence: 0.90 },
-          { text: 'application', confidence: 0.87 },
-          { text: 'education', confidence: 0.94 },
-          { text: 'knowledge', confidence: 0.89 }
-        ],
-        // 뉴스 기사 시나리오
-        [
-          { text: 'technology', confidence: 0.93 },
-          { text: 'innovation', confidence: 0.91 },
-          { text: 'development', confidence: 0.88 },
-          { text: 'research', confidence: 0.95 },
-          { text: 'artificial', confidence: 0.85 },
-          { text: 'intelligence', confidence: 0.87 }
-        ],
-        // 소설/책 시나리오
-        [
-          { text: 'beautiful', confidence: 0.94 },
-          { text: 'adventure', confidence: 0.89 },
-          { text: 'mysterious', confidence: 0.86 },
-          { text: 'character', confidence: 0.92 },
-          { text: 'journey', confidence: 0.90 },
-          { text: 'imagination', confidence: 0.88 }
-        ]
-      ];
+      // MLKit Text Recognition으로 실제 텍스트 인식
+      const result = await TextRecognition.recognize(imageUri);
 
-      // 랜덤 시나리오 선택
-      const selectedScenario = mockScenarios[Math.floor(Math.random() * mockScenarios.length)];
+      console.log('MLKit 인식 결과:', result);
 
-      // 바운딩 박스 계산
-      const mockWords: OCRWord[] = selectedScenario.map((word, index) => ({
-        ...word,
-        boundingBox: {
-          x: (index % 3) * 120 + 10,
-          y: Math.floor(index / 3) * 40 + 10,
-          width: word.text.length * 8 + 20,
-          height: 30
-        }
-      }));
+      // 인식된 블록들을 단어로 분리하여 OCRWord 형식으로 변환
+      const words: OCRWord[] = [];
 
-      // OCR 처리 시간 시뮬레이션 (1-3초)
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+      result.blocks.forEach((block) => {
+        block.lines.forEach((line) => {
+          line.elements.forEach((element) => {
+            // 각 요소의 텍스트를 단어로 분리
+            const wordTexts = element.text.split(/\s+/).filter(w => w.length > 0);
+
+            wordTexts.forEach((wordText, index) => {
+              words.push({
+                text: wordText,
+                confidence: element.confidence || 0.8, // MLKit에서 confidence 제공하지 않으면 기본값 사용
+                boundingBox: element.frame ? {
+                  x: element.frame.x,
+                  y: element.frame.y,
+                  width: element.frame.width,
+                  height: element.frame.height
+                } : undefined
+              });
+            });
+          });
+        });
+      });
 
       const processingTime = Date.now() - startTime;
+      const fullText = result.text;
 
-      console.log(`✅ OCR 완료: ${mockWords.length}개 단어 감지, 처리시간: ${processingTime}ms`);
+      console.log(`✅ MLKit OCR 완료: ${words.length}개 단어 감지, 처리시간: ${processingTime}ms`);
+      console.log('인식된 텍스트:', fullText);
 
       return {
-        text: mockWords.map(w => w.text).join(' '),
-        words: mockWords,
+        text: fullText,
+        words: words,
         processingTime,
         imageUri,
       };
     } catch (error) {
-      console.error('❌ OCR 처리 실패:', error);
+      console.error('❌ MLKit OCR 처리 실패:', error);
       throw new Error('Failed to extract text from image');
     }
   }
@@ -226,6 +209,20 @@ class OCRService {
       word.length >= 2 &&
       word.length <= 20
     );
+  }
+
+  // 간단한 이미지 처리 (CameraScreen에서 사용)
+  async processImage(imageUri: string): Promise<{
+    ocrResult: OCRResult;
+    processedWords: ProcessedWord[];
+    validWords: ProcessedWord[];
+    statistics: {
+      totalDetected: number;
+      validFound: number;
+      confidence: number;
+    };
+  }> {
+    return this.processImageComplete(imageUri);
   }
 
   // 일괄 처리: OCR + 데이터베이스 검증

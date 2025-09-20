@@ -31,7 +31,6 @@ class SocialAuthService {
     (GoogleSignin as any).configure({
       webClientId: ENV.GOOGLE_CLIENT_ID_WEB,
       iosClientId: ENV.GOOGLE_CLIENT_ID_IOS,
-      androidClientId: ENV.GOOGLE_CLIENT_ID_ANDROID,
       offlineAccess: true,
       hostedDomain: '',
       forceCodeForRefreshToken: true,

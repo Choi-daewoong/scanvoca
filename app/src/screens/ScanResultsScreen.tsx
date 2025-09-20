@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image, 
 import { ScanResultsScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { FilterTabs, LevelTag, Checkbox, Button } from '../components/common';
-import { databaseService } from '../database/database';
+import databaseService from '../database/database';
 import { ocrService, ProcessedWord } from '../services/ocrService';
 
 interface ScannedWord {

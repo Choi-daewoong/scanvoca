@@ -7,11 +7,11 @@
 
 export const ENV = {
   // 개발 환경
-  isDev: typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development',
-  isProduction: typeof __DEV__ !== 'undefined' ? !__DEV__ : process.env.NODE_ENV === 'production',
+  isDev: __DEV__,
+  isProduction: !__DEV__,
 
   // API 설정
-  API_BASE_URL: (typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development')
+  API_BASE_URL: __DEV__
     ? process.env.EXPO_PUBLIC_API_BASE_URL_DEV || 'http://localhost:8000'
     : process.env.EXPO_PUBLIC_API_BASE_URL_PROD || 'https://api.scanvoca.com',
 

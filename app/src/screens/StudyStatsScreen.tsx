@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { StudyStatsScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { StatCard, ProgressBar } from '../components/common';
-import { databaseService } from '../database/database';
+import databaseService from '../database/database';
 
 interface StudyStatistics {
   totalWords: number;

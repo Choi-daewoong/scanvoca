@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { Alert } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Database
-import { databaseService } from './src/database/database';
+import databaseService from './src/database/database';
 import { verifyDatabaseIntegrity } from './src/utils/databaseCheck';
 
 // Environment & Configuration
@@ -58,12 +59,25 @@ export default function App() {
 
       // 데이터베이스 초기화
       console.log('🗄️ 데이터베이스 초기화 중...');
-      await databaseService.initialize();
+      try {
+        await databaseService.initialize();
+        console.log('✅ 데이터베이스 초기화 성공');
+      } catch (dbError) {
+        console.error('❌ 데이터베이스 초기화 실패:', dbError);
+        // 데이터베이스 초기화에 실패해도 앱을 계속 실행 (사용자 테이블만 없을 수 있음)
+        setIsDbInitialized(true);
+        setIsLoading(false);
+        return;
+      }
 
       // 데이터베이스 무결성 검사 및 기본 설정
-      const isHealthy = await verifyDatabaseIntegrity();
-      if (!isHealthy) {
-        throw new Error('데이터베이스 무결성 검사 실패');
+      try {
+        const isHealthy = await verifyDatabaseIntegrity();
+        if (!isHealthy) {
+          console.warn('⚠️ 데이터베이스 무결성 검사 실패, 기본 기능만 제공');
+        }
+      } catch (integrityError) {
+        console.warn('⚠️ 데이터베이스 무결성 검사 중 오류:', integrityError);
       }
 
       setIsDbInitialized(true);
@@ -102,12 +116,14 @@ export default function App() {
   const isAuthenticated = !!(user && access_token);
 
   return (
-    <ThemeProvider>
-      <NavigationContainer>
-        <StatusBar style="auto" />
-        <RootNavigator isAuthenticated={isAuthenticated} />
-      </NavigationContainer>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <NavigationContainer>
+          <StatusBar style="auto" />
+          <RootNavigator isAuthenticated={isAuthenticated} />
+        </NavigationContainer>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 

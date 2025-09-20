@@ -1,4 +1,4 @@
-import { databaseService } from '../database/database';
+import databaseService from '../database/database';
 import { Wordbook, WordWithMeaning } from '../types/types';
 
 export interface SaveWordsToWordbookParams {

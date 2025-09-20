@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiClient } from '../utils/api';
+import databaseService from '../database/database';
 import type {
   User,
   LoginCredentials,
@@ -43,30 +43,34 @@ export const useAuthStore = create<AuthState>()(
           console.log('[AuthStore] 로그인 시도:', credentials.email);
           set({ isLoading: true });
 
-          // FormData 형태로 전송 (백엔드가 OAuth2 형식 기대)
-          const formData = new URLSearchParams();
-          formData.append('username', credentials.email);
-          formData.append('password', credentials.password);
-
-          const response = await apiClient.post<AuthResponse>(
-            '/auth/login',
-            formData.toString(),
-            {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            }
+          // 로컬 데이터베이스에서 사용자 인증
+          const user = await databaseService.authenticateUser(
+            credentials.email,
+            credentials.password
           );
 
-          const { user, access_token, refresh_token } = response.data;
-
-          if (!access_token || !user) {
-            throw new Error('로그인 응답에 필수 데이터가 없습니다.');
+          if (!user) {
+            throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.');
           }
 
-          // API 클라이언트에 토큰 설정
-          apiClient.setAuthToken(access_token);
+          // 간단한 토큰 생성 (실제 앱에서는 JWT 사용)
+          const access_token = `local_token_${user.id}_${Date.now()}`;
+          const refresh_token = `refresh_token_${user.id}_${Date.now()}`;
 
           set({
-            user: { ...user, id: String(user.id) },
+            user: {
+              id: String(user.id),
+              email: user.email,
+              username: user.username,
+              full_name: user.full_name,
+              phone: user.phone,
+              role: user.role as any,
+              is_active: true,
+              is_approved: true,
+              is_superuser: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
             access_token,
             refresh_token,
             isLoading: false,
@@ -85,19 +89,18 @@ export const useAuthStore = create<AuthState>()(
           console.log('[AuthStore] 회원가입 시도:', userData.email);
           set({ isLoading: true });
 
-          const payload = {
+          // 로컬 데이터베이스에 사용자 생성
+          const newUser = await databaseService.createUser({
             email: userData.email,
             username: userData.name,
-            password: userData.password,
             full_name: userData.name,
-            role: userData.role.toUpperCase(),
+            password: userData.password,
             phone: userData.phone,
-          };
-
-          await apiClient.post('/auth/register', payload);
+            role: userData.role.toUpperCase(),
+          });
 
           set({ isLoading: false });
-          console.log('[AuthStore] 회원가입 성공');
+          console.log('[AuthStore] 회원가입 성공:', newUser.email);
         } catch (error: any) {
           console.error('[AuthStore] 회원가입 실패:', error.message);
           set({ isLoading: false });
@@ -110,44 +113,9 @@ export const useAuthStore = create<AuthState>()(
           console.log('[AuthStore] 소셜 로그인 시도:', request.provider);
           set({ isLoading: true });
 
-          let endpoint = '';
-          switch (request.provider) {
-            case 'google':
-              endpoint = '/auth/google';
-              break;
-            case 'apple':
-              endpoint = '/auth/apple';
-              break;
-            case 'naver':
-              endpoint = '/auth/naver';
-              break;
-            case 'kakao':
-              endpoint = '/auth/kakao';
-              break;
-            default:
-              throw new Error('지원하지 않는 소셜 로그인 제공자입니다.');
-          }
-
-          const payload = {
-            provider: request.provider.toUpperCase(),
-            code: request.code,
-            id_token: request.id_token,
-            state: request.state,
-          };
-
-          const response = await apiClient.post<SocialLoginResult>(endpoint, payload);
-          const { user, access_token, refresh_token } = response.data;
-
-          apiClient.setAuthToken(access_token);
-
-          set({
-            user: { ...user, id: String(user.id) },
-            access_token,
-            refresh_token,
-            isLoading: false,
-          });
-
-          console.log('[AuthStore] 소셜 로그인 성공:', user.email);
+          // 소셜 로그인은 현재 미구현 상태
+          set({ isLoading: false });
+          throw new Error('소셜 로그인은 현재 지원하지 않습니다.');
         } catch (error: any) {
           console.error('[AuthStore] 소셜 로그인 실패:', error.message);
           set({ isLoading: false });
@@ -163,27 +131,10 @@ export const useAuthStore = create<AuthState>()(
             return false;
           }
 
-          console.log('[AuthStore] 토큰 갱신 시도');
-          const response = await apiClient.post<AuthResponse>('/auth/refresh', {
-            refresh_token,
-          });
-
-          const { user, access_token, refresh_token: new_refresh_token } = response.data;
-
-          apiClient.setAuthToken(access_token);
-
-          set({
-            user: { ...user, id: String(user.id) },
-            access_token,
-            refresh_token: new_refresh_token,
-          });
-
-          console.log('[AuthStore] 토큰 갱신 성공');
+          console.log('[AuthStore] 로컬 앱에서는 토큰 갱신이 필요하지 않습니다.');
           return true;
         } catch (error: any) {
           console.error('[AuthStore] 토큰 갱신 실패:', error.message);
-          // 토큰 갱신 실패 시 로그아웃
-          get().logout();
           return false;
         }
       },
@@ -191,9 +142,6 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         try {
           console.log('[AuthStore] 로그아웃 진행');
-
-          // API 클라이언트에서 토큰 제거
-          apiClient.removeAuthToken();
 
           // 상태 클리어
           set({
@@ -221,13 +169,16 @@ export const useAuthStore = create<AuthState>()(
           console.log('[AuthStore] 프로필 업데이트 시도');
           const { user: currentUser } = get();
 
-          const response = await apiClient.patch<User>('/auth/me/profile', profileData);
-          const updatedUser = response.data;
+          if (!currentUser) {
+            throw new Error('로그인이 필요합니다.');
+          }
 
+          // 로컬에서는 메모리 상태만 업데이트 (향후 DB 업데이트 추가 가능)
           const newUser = {
-            ...updatedUser,
-            role: currentUser?.role || 'USER',
-            id: String(updatedUser.id || currentUser?.id),
+            ...currentUser,
+            ...profileData,
+            id: String(currentUser.id),
+            updated_at: new Date().toISOString(),
           };
 
           set({ user: newUser });
@@ -239,7 +190,6 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setTokens: (accessToken: string, refreshToken: string) => {
-        apiClient.setAuthToken(accessToken);
         set({ access_token: accessToken, refresh_token: refreshToken });
       },
 
@@ -259,15 +209,12 @@ export const useAuthStore = create<AuthState>()(
         console.log('[AuthStore] 스토리지에서 상태 복원');
 
         if (state?.access_token) {
-          // API 클라이언트에 토큰 설정
-          apiClient.setAuthToken(state.access_token);
-
           // 사용자 ID를 문자열로 변환
           if (state.user && state.user.id !== undefined) {
             state.user.id = String(state.user.id);
           }
 
-          console.log('[AuthStore] 토큰 복원 완료');
+          console.log('[AuthStore] 상태 복원 완료');
         } else {
           console.log('[AuthStore] 저장된 토큰이 없습니다.');
         }

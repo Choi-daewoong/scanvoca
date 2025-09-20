@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  TextInput,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -149,7 +150,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                 control={control}
                 name="email"
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <View
+                  <TextInput
                     style={{
                       borderWidth: 1,
                       borderColor: errors.email
@@ -159,23 +160,20 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                       paddingHorizontal: theme.spacing.md,
                       paddingVertical: theme.spacing.sm,
                       backgroundColor: theme.colors.surface,
+                      fontSize: 16,
+                      color: theme.colors.text,
+                      minHeight: 48,
                     }}
-                  >
-                    <Typography
-                      variant="body1"
-                      style={{
-                        color: value ? theme.colors.text : theme.colors.textSecondary,
-                        minHeight: 20,
-                      }}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      value={value}
-                      placeholder="your@email.com"
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                    />
-                  </View>
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    value={value}
+                    placeholder="your@email.com"
+                    placeholderTextColor={theme.colors.textSecondary}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="email"
+                  />
                 )}
               />
               {errors.email && (
@@ -208,27 +206,29 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                         ? theme.colors.error
                         : theme.colors.border,
                       borderRadius: theme.borderRadius.md,
-                      paddingHorizontal: theme.spacing.md,
-                      paddingVertical: theme.spacing.sm,
                       backgroundColor: theme.colors.surface,
                       flexDirection: 'row',
                       alignItems: 'center',
                     }}
                   >
-                    <Typography
-                      variant="body1"
+                    <TextInput
                       style={{
                         flex: 1,
-                        color: value ? theme.colors.text : theme.colors.textSecondary,
-                        minHeight: 20,
+                        paddingHorizontal: theme.spacing.md,
+                        paddingVertical: theme.spacing.sm,
+                        fontSize: 16,
+                        color: theme.colors.text,
+                        minHeight: 48,
                       }}
                       onChangeText={onChange}
                       onBlur={onBlur}
                       value={value}
                       placeholder="비밀번호를 입력하세요"
+                      placeholderTextColor={theme.colors.textSecondary}
                       secureTextEntry={!showPassword}
                       autoCapitalize="none"
                       autoCorrect={false}
+                      autoComplete="password"
                     />
                     <TouchableOpacity
                       onPress={() => setShowPassword(!showPassword)}

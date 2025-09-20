@@ -142,7 +142,7 @@ export default function QuizResultsScreen({ navigation, route }: QuizResultsScre
     if (wordbookId) {
       navigation.navigate('WordbookDetail', { wordbookId });
     } else {
-      navigation.navigate('MainTabs', { screen: 'Home' });
+      navigation.navigate('Home');
     }
   };
 

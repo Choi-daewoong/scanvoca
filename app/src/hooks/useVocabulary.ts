@@ -1,6 +1,6 @@
 // useVocabulary Hook - 단어 관련 상태 관리
 import { useState, useCallback } from 'react';
-import { databaseService } from '../database/database';
+import databaseService from '../database/database';
 import { WordWithMeaning } from '../types/types';
 
 export interface UseVocabularyReturn {

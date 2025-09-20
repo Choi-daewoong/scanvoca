@@ -8,8 +8,10 @@ export interface User {
   phone?: string;
   role: 'USER' | 'PROVIDER' | 'ADMIN';
   is_active: boolean;
-  is_approved: boolean;
-  is_superuser: boolean;
+  is_approved?: boolean;
+  is_superuser?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface LoginCredentials {

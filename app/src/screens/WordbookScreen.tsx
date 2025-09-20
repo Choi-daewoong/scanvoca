@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { WordbookScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
-import { Button, SearchBar, FloatingActionButton } from '../components/common';
-import { databaseService } from '../database/database';
+// import { Button, SearchBar, FloatingActionButton } from '../components/common';
+import databaseService from '../database/database';
 
 interface WordbookItem {
   id: number;
@@ -18,7 +19,7 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
   const { theme } = useTheme();
   const [wordbooks, setWordbooks] = useState<WordbookItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  // const [searchQuery, setSearchQuery] = useState('');
 
   // 모의 단어장 데이터
   const mockWordbooks: WordbookItem[] = [
@@ -52,6 +53,56 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
     loadWordbooks();
   }, []);
 
+  const createDefaultWordbooks = async () => {
+    try {
+      console.log('🚀 기본 단어장 생성 시작...');
+
+      const defaultWordbooks = [
+        {
+          name: '기초 영단어',
+          description: '초급자를 위한 기본 영단어 모음'
+        },
+        {
+          name: '토익 필수 단어',
+          description: '토익 시험에 자주 나오는 핵심 단어들'
+        },
+        {
+          name: '일상 회화 표현',
+          description: '일상에서 자주 사용하는 영어 표현들'
+        },
+        {
+          name: '스캔한 단어들',
+          description: '카메라로 스캔한 단어들이 자동으로 저장됩니다'
+        },
+        {
+          name: '고급 어휘',
+          description: '고급 수준의 영어 어휘 모음'
+        }
+      ];
+
+      for (const wordbook of defaultWordbooks) {
+        const existing = await databaseService.repo.wordbooks.findByName(wordbook.name);
+        if (!existing) {
+          const created = await databaseService.repo.wordbooks.create(wordbook);
+          console.log(`✅ 단어장 생성: ${wordbook.name} (ID: ${created.id})`);
+
+          // 각 단어장에 몇 개의 샘플 단어 추가
+          const sampleWords = await databaseService.repo.words.searchByTerm('hello world the be to');
+          if (sampleWords.length > 0) {
+            for (let i = 0; i < Math.min(5, sampleWords.length); i++) {
+              await databaseService.repo.wordbooks.addWord(created.id, sampleWords[i].id);
+            }
+            console.log(`  📚 ${Math.min(5, sampleWords.length)}개 샘플 단어 추가`);
+          }
+        }
+      }
+
+      console.log('✅ 기본 단어장 생성 완료!');
+    } catch (error) {
+      console.error('❌ 기본 단어장 생성 실패:', error);
+    }
+  };
+
   const loadWordbooks = async () => {
     try {
       setLoading(true);
@@ -69,9 +120,20 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
         createdAt: wb.created_at ? new Date(wb.created_at).toLocaleDateString() : '날짜 없음',
       }));
 
-      // 데이터베이스가 비어있으면 모의 데이터 사용
+      // 데이터베이스가 비어있으면 기본 단어장 생성
       if (convertedWordbooks.length === 0) {
-        setWordbooks(mockWordbooks);
+        await createDefaultWordbooks();
+        // 다시 단어장 목록 가져오기
+        const newData = await databaseService.repo.wordbooks.getAllWordbooks();
+        const newWordbooks: WordbookItem[] = newData.map((wb: any) => ({
+          id: wb.id,
+          name: wb.name,
+          description: wb.description || '설명이 없습니다',
+          wordCount: wb.word_count || 0,
+          isDefault: wb.is_default === 1,
+          createdAt: wb.created_at ? new Date(wb.created_at).toLocaleDateString() : '날짜 없음',
+        }));
+        setWordbooks(newWordbooks);
       } else {
         setWordbooks(convertedWordbooks);
       }
@@ -87,10 +149,64 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: '#FFFFFF',
     },
     header: {
-      padding: theme.spacing.lg,
+      backgroundColor: '#FFFFFF',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: '#E5E7EB',
+      alignItems: 'center',
+    },
+    headerTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: '#4F46E5',
+      letterSpacing: -0.25,
+    },
+    headerSubtitle: {
+      color: '#4B5563',
+      marginTop: 4,
+      fontSize: 14,
+    },
+    // Navigation Tabs
+    nav: {
+      flexDirection: 'row',
+      backgroundColor: '#FFFFFF',
+      borderBottomWidth: 1,
+      borderBottomColor: '#E5E7EB',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 2,
+    },
+    navItem: {
+      flex: 1,
+      paddingVertical: 16,
+      paddingHorizontal: 8,
+      alignItems: 'center',
+      borderBottomWidth: 3,
+      borderBottomColor: 'transparent',
+    },
+    navItemActive: {
+      borderBottomColor: '#4F46E5',
+    },
+    navIcon: {
+      fontSize: 20,
+      marginBottom: 4,
+    },
+    navText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: '#9CA3AF',
+    },
+    navTextActive: {
+      color: '#4F46E5',
+    },
+    content: {
+      flex: 1,
+      padding: 20,
     },
     searchContainer: {
       marginBottom: theme.spacing.md,
@@ -104,26 +220,25 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
       alignItems: 'center',
     },
     statNumber: {
-      ...theme.typography.h3,
-      color: theme.colors.primary.main,
+      fontSize: 20,
       fontWeight: 'bold',
+      color: '#4F46E5',
     },
     statLabel: {
-      ...theme.typography.caption,
-      color: theme.colors.text.secondary,
-      marginTop: theme.spacing.xs,
+      fontSize: 12,
+      color: '#6B7280',
+      marginTop: 4,
     },
     wordbookList: {
       flex: 1,
-      paddingHorizontal: theme.spacing.lg,
     },
     wordbookCard: {
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: '#FFFFFF',
       borderWidth: 1,
-      borderColor: theme.colors.border.light,
-      borderRadius: theme.borderRadius.md,
-      padding: theme.spacing.md,
-      marginBottom: theme.spacing.md,
+      borderColor: '#E5E7EB',
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
       shadowColor: '#000000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
@@ -131,36 +246,36 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
       elevation: 2,
     },
     defaultWordbook: {
-      borderColor: theme.colors.primary.main,
+      borderColor: '#4F46E5',
       borderWidth: 2,
     },
     wordbookHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: theme.spacing.sm,
+      marginBottom: 8,
     },
     wordbookName: {
-      ...theme.typography.h5,
-      color: theme.colors.text.primary,
+      fontSize: 18,
       fontWeight: 'bold',
+      color: '#111827',
       flex: 1,
     },
     defaultBadge: {
-      backgroundColor: theme.colors.primary.main,
-      paddingHorizontal: theme.spacing.sm,
-      paddingVertical: theme.spacing.xs,
-      borderRadius: theme.borderRadius.sm,
+      backgroundColor: '#4F46E5',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
     },
     defaultBadgeText: {
-      ...theme.typography.caption,
-      color: theme.colors.primary.contrast,
+      fontSize: 12,
+      color: '#FFFFFF',
       fontWeight: '600',
     },
     wordbookDescription: {
-      ...theme.typography.body2,
-      color: theme.colors.text.secondary,
-      marginBottom: theme.spacing.sm,
+      fontSize: 14,
+      color: '#6B7280',
+      marginBottom: 8,
       lineHeight: 20,
     },
     wordbookFooter: {
@@ -169,29 +284,29 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
       alignItems: 'center',
     },
     wordCount: {
-      ...theme.typography.body2,
-      color: theme.colors.primary.main,
+      fontSize: 14,
+      color: '#4F46E5',
       fontWeight: '600',
     },
     createdDate: {
-      ...theme.typography.caption,
-      color: theme.colors.text.tertiary,
+      fontSize: 12,
+      color: '#9CA3AF',
     },
     emptyContainer: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      padding: theme.spacing.xl,
+      padding: 32,
     },
     emptyText: {
-      ...theme.typography.h5,
-      color: theme.colors.text.secondary,
-      marginBottom: theme.spacing.sm,
+      fontSize: 18,
+      color: '#6B7280',
+      marginBottom: 8,
       textAlign: 'center',
     },
     emptySubText: {
-      ...theme.typography.body2,
-      color: theme.colors.text.tertiary,
+      fontSize: 14,
+      color: '#9CA3AF',
       textAlign: 'center',
       lineHeight: 22,
     },
@@ -201,21 +316,37 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
       alignItems: 'center',
     },
     loadingText: {
-      ...theme.typography.body1,
-      color: theme.colors.text.secondary,
-      marginTop: theme.spacing.md,
+      fontSize: 16,
+      color: '#6B7280',
+      marginTop: 16,
     },
-    fabContainer: {
+    fab: {
       position: 'absolute',
-      bottom: theme.spacing.xl,
-      right: theme.spacing.xl,
+      bottom: 32,
+      right: 32,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: '#4F46E5',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#4F46E5',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.2,
+      shadowRadius: 16,
+      elevation: 8,
+      zIndex: 100,
+    },
+    fabText: {
+      fontSize: 24,
     },
   });
 
-  const filteredWordbooks = wordbooks.filter(wordbook =>
-    wordbook.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    wordbook.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // const filteredWordbooks = wordbooks.filter(wordbook =>
+  //   wordbook.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //   wordbook.description.toLowerCase().includes(searchQuery.toLowerCase())
+  // );
+  const filteredWordbooks = wordbooks;
 
   const totalWords = wordbooks.reduce((sum, wordbook) => sum + wordbook.wordCount, 0);
   const totalWordbooks = wordbooks.length;
@@ -303,67 +434,71 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.searchContainer}>
-          <SearchBar
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="단어장 검색..."
-          />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={{flex: 1}}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>나의 단어장</Text>
+          <Text style={styles.headerSubtitle}>학습할 단어장을 선택하세요</Text>
         </View>
 
-        {/* Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{totalWordbooks}</Text>
-            <Text style={styles.statLabel}>단어장</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{totalWords.toLocaleString()}</Text>
-            <Text style={styles.statLabel}>총 단어</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>
-              {wordbooks.filter(w => w.isDefault).length}
-            </Text>
-            <Text style={styles.statLabel}>기본 단어장</Text>
-          </View>
-        </View>
+      {/* Navigation Tabs */}
+      <View style={styles.nav}>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigation.navigate('Home')}
+        >
+          <Text style={styles.navIcon}>🏠</Text>
+          <Text style={styles.navText}>홈</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigation.navigate('Scan')}
+        >
+          <Text style={styles.navIcon}>📷</Text>
+          <Text style={styles.navText}>스캔</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.navItem, styles.navItemActive]}>
+          <Text style={styles.navIcon}>📚</Text>
+          <Text style={[styles.navText, styles.navTextActive]}>단어장</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigation.navigate('QuizSession', {})}
+        >
+          <Text style={styles.navIcon}>🧠</Text>
+          <Text style={styles.navText}>퀴즈</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Wordbook List */}
-      {filteredWordbooks.length > 0 ? (
-        <FlatList
-          style={styles.wordbookList}
-          data={filteredWordbooks}
-          renderItem={renderWordbookItem}
-          keyExtractor={(item) => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>📚</Text>
-          <Text style={styles.emptyText}>
-            {searchQuery ? '검색 결과가 없습니다' : '아직 단어장이 없습니다'}
-          </Text>
-          <Text style={styles.emptySubText}>
-            {searchQuery
-              ? '다른 검색어로 시도해보세요'
-              : '새로운 단어장을 만들어\n영어 학습을 시작해보세요!'
-            }
-          </Text>
-        </View>
-      )}
+      {/* Content */}
+      <View style={styles.content}>
+        {/* Wordbook List */}
+        {filteredWordbooks.length > 0 ? (
+          <FlatList
+            style={styles.wordbookList}
+            data={filteredWordbooks}
+            renderItem={renderWordbookItem}
+            keyExtractor={(item) => item.id.toString()}
+            showsVerticalScrollIndicator={false}
+          />
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>📚</Text>
+            <Text style={styles.emptyText}>단어장을 불러오는 중...</Text>
+            <Text style={styles.emptySubText}>잠시만 기다려주세요</Text>
+          </View>
+        )}
+      </View>
 
       {/* Floating Action Button */}
-      <View style={styles.fabContainer}>
-        <FloatingActionButton
-          icon="📚"
-          onPress={handleCreateWordbook}
-        />
+      <TouchableOpacity style={styles.fab} onPress={handleCreateWordbook}>
+        <Text style={styles.fabText}>📚</Text>
+      </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

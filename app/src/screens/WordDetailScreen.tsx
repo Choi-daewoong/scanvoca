@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { WordDetailScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { WordWithMeaning } from '../types/types';
-import { databaseService } from '../database/database';
+import databaseService from '../database/database';
 import { LevelTag, Button } from '../components/common';
 
 export default function WordDetailScreen({ route, navigation }: WordDetailScreenProps) {

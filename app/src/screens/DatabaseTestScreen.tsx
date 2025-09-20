@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { databaseService } from '../database/database';
+import databaseService from '../database/database';
 import { WordWithMeaning } from '../types/types';
 
 export default function DatabaseTestScreen() {

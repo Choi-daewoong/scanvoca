@@ -1,10 +1,13 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { ScanScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
+import { ocrService } from '../services/ocrService';
 
 export default function ScanScreen({ navigation }: ScanScreenProps) {
   const { theme } = useTheme();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const styles = StyleSheet.create({
     container: {
@@ -49,16 +52,108 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
       ...theme.typography.button,
       color: theme.colors.text.primary,
     },
+    buttonDisabled: {
+      opacity: 0.6,
+    },
   });
 
-  const handleCameraPress = () => {
-    // CameraScreen으로 이동
-    navigation.getParent()?.navigate('Camera');
+  // 카메라로 직접 사진 촬영
+  const handleCameraPress = async () => {
+    try {
+      setIsProcessing(true);
+
+      // 카메라 권한 요청
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('권한 필요', '카메라 접근 권한이 필요합니다.');
+        return;
+      }
+
+      // 카메라로 사진 촬영
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: [ImagePicker.MediaType.Images],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+        // 더 나은 편집 경험을 위한 설정
+        selectionLimit: 1,
+        presentationStyle: ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN,
+        videoMaxDuration: 30,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        console.log('📷 카메라 사진 촬영 완료:', imageUri);
+
+        // OCR 처리
+        const ocrResult = await ocrService.processImage(imageUri);
+        console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
+
+        // 감지된 단어들
+        const detectedWordTexts = ocrResult.validWords.map(word => word.cleaned);
+
+        // ScanResults로 이동
+        navigation.navigate('ScanResults', {
+          scannedText: ocrResult.ocrResult.text,
+          detectedWords: detectedWordTexts,
+          imageUri: imageUri
+        });
+      }
+    } catch (error) {
+      console.error('❌ 카메라 촬영 또는 OCR 처리 오류:', error);
+      Alert.alert('오류', '카메라 촬영 중 오류가 발생했습니다.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleGalleryPress = () => {
-    // CameraScreen으로 이동하여 갤러리 기능 사용
-    navigation.getParent()?.navigate('Camera');
+  // 갤러리에서 직접 이미지 선택
+  const handleGalleryPress = async () => {
+    try {
+      setIsProcessing(true);
+
+      // 갤러리 권한 요청
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('권한 필요', '갤러리 접근 권한이 필요합니다.');
+        return;
+      }
+
+      // 이미지 선택
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: [ImagePicker.MediaType.Images],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+        // 더 나은 편집 경험을 위한 설정
+        selectionLimit: 1,
+        presentationStyle: ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        console.log('📷 갤러리 이미지 선택 완료:', imageUri);
+
+        // OCR 처리
+        const ocrResult = await ocrService.processImage(imageUri);
+        console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
+
+        // 감지된 단어들
+        const detectedWordTexts = ocrResult.validWords.map(word => word.cleaned);
+
+        // ScanResults로 이동
+        navigation.navigate('ScanResults', {
+          scannedText: ocrResult.ocrResult.text,
+          detectedWords: detectedWordTexts,
+          imageUri: imageUri
+        });
+      }
+    } catch (error) {
+      console.error('❌ 갤러리 선택 또는 OCR 처리 오류:', error);
+      Alert.alert('오류', '이미지 처리 중 오류가 발생했습니다.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -70,12 +165,24 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
         자동으로 인식하고 단어장에 저장하세요.
       </Text>
 
-      <TouchableOpacity style={styles.button} onPress={handleCameraPress}>
-        <Text style={styles.buttonText}>📸 카메라로 스캔하기</Text>
+      <TouchableOpacity
+        style={[styles.button, isProcessing && styles.buttonDisabled]}
+        onPress={handleCameraPress}
+        disabled={isProcessing}
+      >
+        <Text style={styles.buttonText}>
+          {isProcessing ? '📸 처리 중...' : '📸 카메라로 스캔하기'}
+        </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.secondaryButton} onPress={handleGalleryPress}>
-        <Text style={styles.secondaryButtonText}>🖼️ 갤러리에서 선택</Text>
+      <TouchableOpacity
+        style={[styles.secondaryButton, isProcessing && styles.buttonDisabled]}
+        onPress={handleGalleryPress}
+        disabled={isProcessing}
+      >
+        <Text style={styles.secondaryButtonText}>
+          {isProcessing ? '🖼️ 처리 중...' : '🖼️ 갤러리에서 선택'}
+        </Text>
       </TouchableOpacity>
     </View>
   );

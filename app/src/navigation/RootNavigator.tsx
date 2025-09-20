@@ -4,13 +4,15 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme } from '../styles/ThemeProvider';
 import { RootStackParamList } from './types';
 
-// Navigators
-import MainTabNavigator from './MainTabNavigator';
-
 // Auth Screens
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
+
+// Main Screens
+import HomeScreen from '../screens/HomeScreen';
+import ScanScreen from '../screens/ScanScreen';
+import WordbookScreen from '../screens/WordbookScreen';
 
 // Modal/Stack Screens
 import CameraScreen from '../screens/CameraScreen';
@@ -37,12 +39,12 @@ export default function RootNavigator({ isAuthenticated }: RootNavigatorProps) {
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: theme.colors.background.primary,
+          backgroundColor: '#FFFFFF',
         },
-        headerTintColor: theme.colors.text.primary,
+        headerTintColor: '#111827',
         headerTitleStyle: {
-          fontSize: theme.typography.h4.fontSize,
-          fontWeight: theme.typography.h4.fontWeight,
+          fontSize: 18,
+          fontWeight: 'bold',
         },
         headerBackTitleVisible: false,
         animation: 'slide_from_right',
@@ -70,10 +72,22 @@ export default function RootNavigator({ isAuthenticated }: RootNavigatorProps) {
       ) : (
         // ✅ 인증된 사용자 - Main App Stack
         <>
-          {/* Main Tab Navigator */}
+          {/* Main Screens */}
           <Stack.Screen
-            name="MainTabs"
-            component={MainTabNavigator}
+            name="Home"
+            component={HomeScreen}
+            options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="Scan"
+            component={ScanScreen}
+            options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
+            name="Wordbook"
+            component={WordbookScreen}
             options={{ headerShown: false }}
           />
 

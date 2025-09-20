@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../styles/ThemeProvider';
 import { MainTabParamList } from './types';
 import TabIcon from './TabIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Screens
 import HomeScreen from '../screens/HomeScreen';
@@ -14,6 +15,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export default function MainTabNavigator() {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
@@ -40,35 +42,35 @@ export default function MainTabNavigator() {
         },
 
         // Tab Bar Style
-        tabBarActiveTintColor: theme.colors.primary.main,
-        tabBarInactiveTintColor: theme.colors.text.tertiary,
+        tabBarActiveTintColor: '#4F46E5',
+        tabBarInactiveTintColor: '#9CA3AF',
         tabBarStyle: {
-          backgroundColor: theme.colors.background.primary,
-          borderTopColor: theme.colors.border.light,
+          backgroundColor: '#FFFFFF',
+          borderTopColor: '#E5E7EB',
           borderTopWidth: 1,
-          height: theme.layout.tabBarHeight,
-          paddingBottom: 8,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom + 8,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontSize: theme.typography.caption.fontSize,
+          fontSize: 12,
           fontWeight: '600',
           marginTop: 2,
         },
 
         // Header Style
         headerStyle: {
-          backgroundColor: theme.colors.background.primary,
-          borderBottomColor: theme.colors.border.light,
+          backgroundColor: '#FFFFFF',
+          borderBottomColor: '#E5E7EB',
           borderBottomWidth: 1,
           elevation: 0,
           shadowOpacity: 0,
         },
-        headerTintColor: theme.colors.text.primary,
+        headerTintColor: '#111827',
         headerTitleStyle: {
-          fontSize: theme.typography.h4.fontSize,
-          fontWeight: theme.typography.h4.fontWeight,
-          color: theme.colors.text.primary,
+          fontSize: 18,
+          fontWeight: 'bold',
+          color: '#111827',
         },
         headerTitleAlign: 'center',
       })}
@@ -80,7 +82,7 @@ export default function MainTabNavigator() {
           tabBarLabel: '홈',
           headerTitle: 'Scan_Voca',
           headerTitleStyle: {
-            color: theme.colors.primary.main,
+            color: '#4F46E5',
             fontSize: 20,
             fontWeight: 'bold',
           },

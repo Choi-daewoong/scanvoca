@@ -1,5 +1,5 @@
 // 데이터베이스 연결 및 기본 기능 검증
-import { databaseService } from '../database/database';
+import databaseService from '../database/database';
 
 interface DatabaseStats {
   totalWords: number;

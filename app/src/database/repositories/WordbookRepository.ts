@@ -203,6 +203,14 @@ export class WordbookRepository extends BaseRepository {
     return defaultWordbook!;
   }
 
+  // 모든 단어장의 총 단어 수
+  async getTotalWordbookWordsCount(): Promise<number> {
+    const result = await this.executeRawFirst<{ count: number }>(
+      'SELECT COUNT(DISTINCT word_id) as count FROM wordbook_words'
+    );
+    return result?.count || 0;
+  }
+
   // 단어장 통계
   async getWordbookStats(wordbookId: number): Promise<{
     totalWords: number;

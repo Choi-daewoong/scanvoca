@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  TextInput,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,6 +19,7 @@ import {
   Card,
   Typography,
   Header,
+  Checkbox,
 } from '../components/common';
 import theme from '../styles/theme';
 
@@ -128,13 +130,13 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      style={{ flex: 1, backgroundColor: theme.colors.background.primary }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <Header
         title="회원가입"
-        showBack={true}
-        onBackPress={() => navigation.goBack()}
+        leftIcon={<Typography variant="h4">←</Typography>}
+        onLeftPress={() => navigation.goBack()}
       />
 
       <ScrollView
@@ -147,7 +149,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
             <Typography variant="h3" style={{ marginBottom: theme.spacing.sm }}>
               회원가입
             </Typography>
-            <Typography variant="body2" color="textSecondary">
+            <Typography variant="body2" color="secondary">
               Scan Voca와 함께 영단어 학습을 시작하세요
             </Typography>
           </View>
@@ -167,23 +169,24 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
                 <View
                   style={{
                     borderWidth: 1,
-                    borderColor: errors.name ? theme.colors.error : theme.colors.border,
+                    borderColor: errors.name ? theme.colors.semantic.error : theme.colors.border.medium.medium,
                     borderRadius: theme.borderRadius.md,
                     paddingHorizontal: theme.spacing.md,
                     paddingVertical: theme.spacing.sm,
-                    backgroundColor: theme.colors.surface,
+                    backgroundColor: theme.colors.background.primary,
                   }}
                 >
-                  <Typography
-                    variant="body1"
+                  <TextInput
                     style={{
-                      color: value ? theme.colors.text : theme.colors.textSecondary,
+                      color: theme.colors.text.primary,
+                      fontSize: 16,
                       minHeight: 20,
                     }}
                     onChangeText={onChange}
                     onBlur={onBlur}
                     value={value}
                     placeholder="이름을 입력하세요"
+                    placeholderTextColor={theme.colors.text.secondary}
                     autoCapitalize="words"
                     autoCorrect={false}
                   />
@@ -216,23 +219,24 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
                 <View
                   style={{
                     borderWidth: 1,
-                    borderColor: errors.email ? theme.colors.error : theme.colors.border,
+                    borderColor: errors.email ? theme.colors.semantic.error : theme.colors.border.medium,
                     borderRadius: theme.borderRadius.md,
                     paddingHorizontal: theme.spacing.md,
                     paddingVertical: theme.spacing.sm,
-                    backgroundColor: theme.colors.surface,
+                    backgroundColor: theme.colors.background.primary,
                   }}
                 >
-                  <Typography
-                    variant="body1"
+                  <TextInput
                     style={{
-                      color: value ? theme.colors.text : theme.colors.textSecondary,
+                      color: theme.colors.text.primary,
+                      fontSize: 16,
                       minHeight: 20,
                     }}
                     onChangeText={onChange}
                     onBlur={onBlur}
                     value={value}
                     placeholder="your@email.com"
+                    placeholderTextColor={theme.colors.text.secondary}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -266,26 +270,27 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
                 <View
                   style={{
                     borderWidth: 1,
-                    borderColor: errors.password ? theme.colors.error : theme.colors.border,
+                    borderColor: errors.password ? theme.colors.semantic.error : theme.colors.border.medium,
                     borderRadius: theme.borderRadius.md,
                     paddingHorizontal: theme.spacing.md,
                     paddingVertical: theme.spacing.sm,
-                    backgroundColor: theme.colors.surface,
+                    backgroundColor: theme.colors.background.primary,
                     flexDirection: 'row',
                     alignItems: 'center',
                   }}
                 >
-                  <Typography
-                    variant="body1"
+                  <TextInput
                     style={{
                       flex: 1,
-                      color: value ? theme.colors.text : theme.colors.textSecondary,
+                      color: theme.colors.text.primary,
+                      fontSize: 16,
                       minHeight: 20,
                     }}
                     onChangeText={onChange}
                     onBlur={onBlur}
                     value={value}
                     placeholder="영문, 숫자 포함 6자 이상"
+                    placeholderTextColor={theme.colors.text.secondary}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -328,27 +333,28 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
                   style={{
                     borderWidth: 1,
                     borderColor: errors.confirmPassword
-                      ? theme.colors.error
-                      : theme.colors.border,
+                      ? theme.colors.semantic.error
+                      : theme.colors.border.medium,
                     borderRadius: theme.borderRadius.md,
                     paddingHorizontal: theme.spacing.md,
                     paddingVertical: theme.spacing.sm,
-                    backgroundColor: theme.colors.surface,
+                    backgroundColor: theme.colors.background.primary,
                     flexDirection: 'row',
                     alignItems: 'center',
                   }}
                 >
-                  <Typography
-                    variant="body1"
+                  <TextInput
                     style={{
                       flex: 1,
-                      color: value ? theme.colors.text : theme.colors.textSecondary,
+                      color: theme.colors.text.primary,
+                      fontSize: 16,
                       minHeight: 20,
                     }}
                     onChangeText={onChange}
                     onBlur={onBlur}
                     value={value}
                     placeholder="비밀번호를 다시 입력하세요"
+                    placeholderTextColor={theme.colors.text.secondary}
                     secureTextEntry={!showConfirmPassword}
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -390,23 +396,24 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
                 <View
                   style={{
                     borderWidth: 1,
-                    borderColor: errors.phone ? theme.colors.error : theme.colors.border,
+                    borderColor: errors.phone ? theme.colors.semantic.error : theme.colors.border.medium,
                     borderRadius: theme.borderRadius.md,
                     paddingHorizontal: theme.spacing.md,
                     paddingVertical: theme.spacing.sm,
-                    backgroundColor: theme.colors.surface,
+                    backgroundColor: theme.colors.background.primary,
                   }}
                 >
-                  <Typography
-                    variant="body1"
+                  <TextInput
                     style={{
-                      color: value ? theme.colors.text : theme.colors.textSecondary,
+                      color: theme.colors.text.primary,
+                      fontSize: 16,
                       minHeight: 20,
                     }}
                     onChangeText={(text) => onChange(formatPhoneNumber(text))}
                     onBlur={onBlur}
                     value={value}
                     placeholder="010-1234-5678"
+                    placeholderTextColor={theme.colors.text.secondary}
                     keyboardType="phone-pad"
                     maxLength={13}
                   />
@@ -430,37 +437,14 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
               control={control}
               name="agreeTerms"
               render={({ field: { onChange, value } }) => (
-                <TouchableOpacity
-                  onPress={() => onChange(!value)}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    marginBottom: theme.spacing.sm,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 20,
-                      height: 20,
-                      borderWidth: 2,
-                      borderColor: value ? theme.colors.primary : theme.colors.border,
-                      backgroundColor: value ? theme.colors.primary : 'transparent',
-                      borderRadius: 4,
-                      marginRight: theme.spacing.sm,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {value && (
-                      <Typography variant="caption" style={{ color: 'white' }}>
-                        ✓
-                      </Typography>
-                    )}
-                  </View>
-                  <Typography variant="body2">
-                    서비스 이용약관에 동의합니다 *
-                  </Typography>
-                </TouchableOpacity>
+                <View style={{ marginBottom: theme.spacing.sm }}>
+                  <Checkbox
+                    checked={value}
+                    onPress={() => onChange(!value)}
+                    label="서비스 이용약관에 동의합니다 *"
+                    size="md"
+                  />
+                </View>
               )}
             />
 
@@ -468,36 +452,12 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
               control={control}
               name="agreePrivacy"
               render={({ field: { onChange, value } }) => (
-                <TouchableOpacity
+                <Checkbox
+                  checked={value}
                   onPress={() => onChange(!value)}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 20,
-                      height: 20,
-                      borderWidth: 2,
-                      borderColor: value ? theme.colors.primary : theme.colors.border,
-                      backgroundColor: value ? theme.colors.primary : 'transparent',
-                      borderRadius: 4,
-                      marginRight: theme.spacing.sm,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {value && (
-                      <Typography variant="caption" style={{ color: 'white' }}>
-                        ✓
-                      </Typography>
-                    )}
-                  </View>
-                  <Typography variant="body2">
-                    개인정보 처리방침에 동의합니다 *
-                  </Typography>
-                </TouchableOpacity>
+                  label="개인정보 처리방침에 동의합니다 *"
+                  size="md"
+                />
               )}
             />
 

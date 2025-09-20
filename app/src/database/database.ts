@@ -1,6 +1,7 @@
 import * as SQLite from 'expo-sqlite';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Asset } from 'expo-asset';
+import * as Crypto from 'expo-crypto';
 import { Example, Wordbook, WordWithMeaning } from '../types/types';
 import { initializeRepositories, getRepositories, RepositoryManager } from './repositories';
 
@@ -12,244 +13,108 @@ class DatabaseService {
   // 데이터베이스 초기화
   async initialize(): Promise<void> {
     try {
-      // 웹 환경에서는 mock 데이터베이스 사용
-      if (typeof window !== 'undefined') {
-        console.log('🌐 Web environment detected - using mock database');
-        await this.initializeWebDatabase();
-        return;
-      }
-
-      // 네이티브 환경에서는 실제 SQLite 사용
       // assets의 DB 파일을 앱 문서 디렉토리로 복사
       await this.copyDatabaseFromAssets();
 
       // 데이터베이스 연결
       this.db = await SQLite.openDatabaseAsync(this.DB_NAME);
 
+      // 사용자 테이블 생성 (없는 경우에만)
+      await this.createUserTables();
+
       // Repository 초기화
       this.repositories = initializeRepositories(this.db);
 
-      console.log('📱 Native database initialized successfully');
+      console.log('Database initialized successfully');
     } catch (error) {
       console.error('Database initialization failed:', error);
       throw error;
     }
   }
 
-  // 웹 환경용 mock 데이터베이스 초기화
-  private async initializeWebDatabase(): Promise<void> {
+  // assets에서 DB 파일을 앱 문서 디렉토리로 복사
+  private async copyDatabaseFromAssets(): Promise<void> {
+    const dbPath = `${FileSystem.documentDirectory}SQLite/${this.DB_NAME}`;
+
     try {
-      // 웹에서는 SQLite 대신 메모리 기반 mock 사용
-      this.db = await SQLite.openDatabaseAsync(':memory:');
-      
-      // 기본 테이블 생성
-      await this.createTablesForWeb();
-      
-      // 샘플 데이터 삽입
-      await this.insertSampleData();
-      
-      // Repository 초기화
-      this.repositories = initializeRepositories(this.db);
-      
-      console.log('🌐 Web mock database initialized successfully');
+      // 디렉토리가 없으면 생성
+      const dirPath = `${FileSystem.documentDirectory}SQLite/`;
+      const dirInfo = await FileSystem.getInfoAsync(dirPath);
+      if (!dirInfo.exists) {
+        await FileSystem.makeDirectoryAsync(dirPath, { intermediates: true });
+      }
+
+      // 이미 DB 파일이 존재하는지 확인
+      const fileInfo = await FileSystem.getInfoAsync(dbPath);
+      if (fileInfo.exists) {
+        console.log('Database already exists, skipping copy');
+        return;
+      }
+
+      // assets에서 DB 파일을 앱 문서 디렉토리로 복사
+      const asset = Asset.fromModule(require('../../assets/vocabulary.db'));
+      await asset.downloadAsync();
+
+      if (!asset.localUri) {
+        throw new Error('Failed to load database asset');
+      }
+
+      await FileSystem.copyAsync({
+        from: asset.localUri,
+        to: dbPath,
+      });
+
+      console.log('Database copied from assets successfully');
     } catch (error) {
-      console.error('Web database initialization failed:', error);
+      console.error('Failed to copy database from assets:', error);
       throw error;
     }
   }
 
-  // 웹 환경을 위한 테이블 생성
-  private async createTablesForWeb(): Promise<void> {
-    const db = this.db!;
+  // 사용자 테이블 생성
+  private async createUserTables(): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
 
     try {
-      // 기본 테이블들 생성
-      await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS words (
+      // 사용자 정보 테이블 생성 (개별 쿼리로 실행)
+      await this.db.runAsync(`
+        CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          word TEXT UNIQUE NOT NULL,
-          pronunciation TEXT,
-          difficulty_level INTEGER DEFAULT 4,
-          frequency_rank INTEGER,
-          cefr_level TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS word_meanings (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          word_id INTEGER NOT NULL,
-          korean_meaning TEXT NOT NULL,
-          part_of_speech TEXT,
-          definition_en TEXT,
-          source TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (word_id) REFERENCES words(id)
-        );
-
-        CREATE TABLE IF NOT EXISTS examples (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          word_id INTEGER NOT NULL,
-          sentence_en TEXT NOT NULL,
-          sentence_ko TEXT,
-          source TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (word_id) REFERENCES words(id)
-        );
-
-        CREATE TABLE IF NOT EXISTS wordbooks (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          description TEXT,
-          is_default INTEGER DEFAULT 0,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS wordbook_words (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          wordbook_id INTEGER NOT NULL,
-          word_id INTEGER NOT NULL,
-          added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (wordbook_id) REFERENCES wordbooks(id),
-          FOREIGN KEY (word_id) REFERENCES words(id),
-          UNIQUE(wordbook_id, word_id)
-        );
-
-        CREATE TABLE IF NOT EXISTS study_progress (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          word_id INTEGER NOT NULL,
-          correct_count INTEGER DEFAULT 0,
-          incorrect_count INTEGER DEFAULT 0,
-          is_memorized INTEGER DEFAULT 0,
-          last_studied DATETIME,
-          next_review DATETIME,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (word_id) REFERENCES words(id),
-          UNIQUE(word_id)
-        );
+          email TEXT UNIQUE NOT NULL,
+          username TEXT NOT NULL,
+          full_name TEXT NOT NULL,
+          password_hash TEXT NOT NULL,
+          phone TEXT,
+          role TEXT DEFAULT 'USER',
+          is_active INTEGER DEFAULT 1,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
       `);
 
-      // 샘플 데이터 추가
-      await this.insertSampleData();
+      await this.db.runAsync(`
+        CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)
+      `);
 
-      console.log('Web database tables created successfully');
+      await this.db.runAsync(`
+        CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)
+      `);
+
+      console.log('User tables created successfully');
     } catch (error) {
-      console.error('Failed to create web database tables:', error);
+      console.error('Failed to create user tables:', error);
+      throw error;
     }
   }
 
-  // 샘플 데이터 삽입
-  private async insertSampleData(): Promise<void> {
-    const db = this.db!;
-
-    try {
-      // 샘플 단어들
-      const sampleWords = [
-        { word: 'education', pronunciation: '/ˌedʒuˈkeɪʃn/', level: 3 },
-        { word: 'learning', pronunciation: '/ˈlɜːrnɪŋ/', level: 2 },
-        { word: 'vocabulary', pronunciation: '/vəˈkæbjələri/', level: 4 },
-        { word: 'essential', pronunciation: '/ɪˈsenʃl/', level: 3 },
-        { word: 'knowledge', pronunciation: '/ˈnɑːlɪdʒ/', level: 3 },
-        { word: 'development', pronunciation: '/dɪˈveləpmənt/', level: 4 },
-        { word: 'systematic', pronunciation: '/ˌsɪstəˈmætɪk/', level: 4 },
-        { word: 'comprehensive', pronunciation: '/ˌkɑːmprɪˈhensɪv/', level: 4 },
-        { word: 'advanced', pronunciation: '/ədˈvænst/', level: 3 },
-        { word: 'practice', pronunciation: '/ˈpræktɪs/', level: 2 }
-      ];
-
-      const meanings = [
-        { word: 'education', meaning: '교육', pos: 'n' },
-        { word: 'learning', meaning: '학습, 배움', pos: 'n' },
-        { word: 'vocabulary', meaning: '어휘, 단어', pos: 'n' },
-        { word: 'essential', meaning: '필수적인, 본질적인', pos: 'adj' },
-        { word: 'knowledge', meaning: '지식, 아는 것', pos: 'n' },
-        { word: 'development', meaning: '개발, 발전', pos: 'n' },
-        { word: 'systematic', meaning: '체계적인', pos: 'adj' },
-        { word: 'comprehensive', meaning: '포괄적인, 종합적인', pos: 'adj' },
-        { word: 'advanced', meaning: '고급의, 발전된', pos: 'adj' },
-        { word: 'practice', meaning: '연습, 실습', pos: 'n' }
-      ];
-
-      // 단어 삽입
-      for (let i = 0; i < sampleWords.length; i++) {
-        const word = sampleWords[i];
-        await db.runAsync(
-          'INSERT OR IGNORE INTO words (word, pronunciation, difficulty_level) VALUES (?, ?, ?)',
-          [word.word, word.pronunciation, word.level]
-        );
-
-        // 의미 삽입
-        const meaning = meanings[i];
-        await db.runAsync(
-          'INSERT OR IGNORE INTO word_meanings (word_id, korean_meaning, part_of_speech) VALUES ((SELECT id FROM words WHERE word = ?), ?, ?)',
-          [meaning.word, meaning.meaning, meaning.pos]
-        );
-      }
-
-      // 기본 단어장 생성
-      await db.runAsync(
-        'INSERT OR IGNORE INTO wordbooks (name, description, is_default) VALUES (?, ?, ?)',
-        ['내 단어장', '스캔으로 추가된 단어들이 저장되는 기본 단어장입니다.', 1]
-      );
-
-      console.log('Sample data inserted successfully');
-    } catch (error) {
-      console.error('Failed to insert sample data:', error);
-    }
+  // 데이터베이스 연결 상태 확인
+  isConnected(): boolean {
+    return this.db !== null;
   }
 
-  // assets의 DB 파일을 앱 디렉토리로 복사
-  private async copyDatabaseFromAssets(): Promise<void> {
-    try {
-      const dbPath = `${FileSystem.documentDirectory!}SQLite/${this.DB_NAME}`;
-
-      // SQLite 디렉토리 생성
-      const sqliteDir = `${FileSystem.documentDirectory!}SQLite`;
-      const dirInfo = await FileSystem.getInfoAsync(sqliteDir);
-      if (!dirInfo.exists) {
-        await FileSystem.makeDirectoryAsync(sqliteDir, { intermediates: true });
-      }
-
-      // 이미 DB 파일이 있는지 확인
-      const dbInfo = await FileSystem.getInfoAsync(dbPath);
-
-      if (!dbInfo.exists) {
-        try {
-          // assets의 DB 파일을 다운로드하고 복사
-          const asset = Asset.fromModule(require('../../assets/vocabulary.db'));
-          await asset.downloadAsync();
-
-          // 로컬 URI에서 앱 문서 디렉토리로 복사
-          await FileSystem.copyAsync({
-            from: asset.localUri!,
-            to: dbPath,
-          });
-
-          console.log('Database copied from assets successfully');
-        } catch (error) {
-          console.error('Failed to copy database from assets:', error);
-          throw error;
-        }
-      } else {
-        console.log('Database already exists');
-      }
-    } catch (error) {
-      console.warn('Database copy failed, will create empty database:', error);
-      // 웹 환경이거나 파일 시스템 접근에 실패한 경우 계속 진행
-    }
-  }
-
-  // 데이터베이스 연결 확인
-  private ensureConnection(): SQLite.SQLiteDatabase {
-    if (!this.db) {
-      throw new Error('Database not initialized. Call initialize() first.');
-    }
-    return this.db;
-  }
-
-  // Repository 접근자
+  // Repository 인스턴스 반환
   get repo(): RepositoryManager {
     if (!this.repositories) {
       throw new Error('Database not initialized. Call initialize() first.');
@@ -257,200 +122,323 @@ class DatabaseService {
     return this.repositories;
   }
 
-  // === 단어 관련 메서드 ===
-
-  // 단어 검색 (OCR 후처리용)
-  async searchWords(query: string): Promise<WordWithMeaning[]> {
-    const db = this.ensureConnection();
-
-    const sql = `
-      SELECT w.*, wm.korean_meaning, wm.part_of_speech, wm.definition_en, wm.source
-      FROM words w
-      JOIN word_meanings wm ON w.id = wm.word_id
-      WHERE w.word LIKE ?
-      ORDER BY w.frequency_rank ASC, w.word ASC
-      LIMIT 10
-    `;
-
-    const result = await db.getAllAsync(sql, [`%${query}%`]);
-    return this.groupWordMeanings(result as unknown[]);
-  }
-
-  // 정확한 단어 매칭
-  async findExactWord(word: string): Promise<WordWithMeaning | null> {
-    const db = this.ensureConnection();
-
-    const sql = `
-      SELECT w.*, wm.korean_meaning, wm.part_of_speech, wm.definition_en, wm.source
-      FROM words w
-      JOIN word_meanings wm ON w.id = wm.word_id
-      WHERE w.word = ?
-      ORDER BY wm.id
-    `;
-
-    const result = await db.getAllAsync(sql, [word.toLowerCase()]);
-    const grouped = this.groupWordMeanings(result as unknown[]);
-    return grouped.length > 0 ? grouped[0] : null;
-  }
-
-  // 단어 ID로 상세 정보 조회
-  async getWordById(wordId: number): Promise<WordWithMeaning | null> {
-    const db = this.ensureConnection();
-
-    const wordSql = `
-      SELECT w.*, wm.korean_meaning, wm.part_of_speech, wm.definition_en, wm.source
-      FROM words w
-      JOIN word_meanings wm ON w.id = wm.word_id
-      WHERE w.id = ?
-    `;
-
-    const exampleSql = `
-      SELECT * FROM examples WHERE word_id = ? LIMIT 5
-    `;
-
-    const [wordResult, exampleResult] = await Promise.all([
-      db.getAllAsync(wordSql, [wordId]),
-      db.getAllAsync(exampleSql, [wordId]),
-    ]);
-
-    if (wordResult.length === 0) return null;
-
-    const grouped = this.groupWordMeanings(wordResult as unknown[]);
-    if (grouped.length > 0) {
-      grouped[0].examples = exampleResult as Example[];
-      return grouped[0];
+  // 직접 쿼리 실행 (필요한 경우)
+  async executeQuery<T = any>(
+    query: string,
+    params: any[] = []
+  ): Promise<T[]> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
     }
 
-    return null;
+    try {
+      const result = await this.db.getAllAsync(query, params);
+      return result as T[];
+    } catch (error) {
+      console.error('Query execution failed:', error);
+      throw error;
+    }
   }
 
-  // === 단어장 관련 메서드 ===
+  // 트랜잭션 실행
+  async executeTransaction(callback: (db: SQLite.SQLiteDatabase) => Promise<void>): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
 
-  // 모든 단어장 조회
-  async getAllWordbooks(): Promise<Wordbook[]> {
-    const db = this.ensureConnection();
-
-    const sql = `
-      SELECT w.*, 
-             (SELECT COUNT(*) FROM wordbook_words ww WHERE ww.wordbook_id = w.id) as word_count
-      FROM wordbooks w
-      ORDER BY w.is_default DESC, w.created_at DESC
-    `;
-
-    return (await db.getAllAsync(sql)) as Wordbook[];
+    try {
+      await this.db.withTransactionAsync(callback);
+    } catch (error) {
+      console.error('Transaction failed:', error);
+      throw error;
+    }
   }
 
-  // 단어장에 단어 추가
-  async addWordToWordbook(wordbookId: number, wordId: number): Promise<void> {
-    const db = this.ensureConnection();
+  // 데이터베이스 정보 반환
+  async getDatabaseInfo() {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
 
-    const sql = `
-      INSERT OR IGNORE INTO wordbook_words (wordbook_id, word_id, added_at)
-      VALUES (?, ?, datetime('now'))
-    `;
+    try {
+      const wordCount = await this.db.getFirstAsync(
+        'SELECT COUNT(*) as count FROM words'
+      ) as { count: number };
 
-    await db.runAsync(sql, [wordbookId, wordId]);
+      const meaningCount = await this.db.getFirstAsync(
+        'SELECT COUNT(*) as count FROM word_meanings'
+      ) as { count: number };
+
+      const exampleCount = await this.db.getFirstAsync(
+        'SELECT COUNT(*) as count FROM examples'
+      ) as { count: number };
+
+      return {
+        words: wordCount?.count || 0,
+        meanings: meaningCount?.count || 0,
+        examples: exampleCount?.count || 0,
+        database: this.DB_NAME,
+        connected: this.isConnected(),
+      };
+    } catch (error) {
+      console.error('Failed to get database info:', error);
+      throw error;
+    }
   }
 
-  // 새 단어장 생성
-  async createWordbook(name: string, description?: string): Promise<number> {
-    const db = this.ensureConnection();
-
-    const sql = `
-      INSERT INTO wordbooks (name, description, is_default, created_at, updated_at)
-      VALUES (?, ?, 0, datetime('now'), datetime('now'))
-    `;
-
-    const result = await db.runAsync(sql, [name, description || '']);
-    return result.lastInsertRowId!;
-  }
-
-  // 단어장의 단어들 조회
-  async getWordbookWords(wordbookId: number): Promise<WordWithMeaning[]> {
-    const db = this.ensureConnection();
-
-    const sql = `
-      SELECT w.*, wm.korean_meaning, wm.part_of_speech, wm.definition_en, wm.source
-      FROM words w
-      JOIN wordbook_words ww ON w.id = ww.word_id
-      JOIN word_meanings wm ON w.id = wm.word_id
-      WHERE ww.wordbook_id = ?
-      ORDER BY ww.added_at DESC, wm.id
-    `;
-
-    const result = await db.getAllAsync(sql, [wordbookId]);
-    return this.groupWordMeanings(result as unknown[]);
-  }
-
-  // === 학습 진도 관련 메서드 ===
-
-  // 학습 진도 업데이트
-  async updateStudyProgress(wordId: number, isCorrect: boolean): Promise<void> {
-    const db = this.ensureConnection();
-
-    const sql = `
-      INSERT OR REPLACE INTO study_progress 
-      (word_id, correct_count, incorrect_count, last_studied, next_review, updated_at)
-      VALUES (
-        ?,
-        COALESCE((SELECT correct_count FROM study_progress WHERE word_id = ?), 0) + ?,
-        COALESCE((SELECT incorrect_count FROM study_progress WHERE word_id = ?), 0) + ?,
-        datetime('now'),
-        datetime('now', '+1 day'),
-        datetime('now')
-      )
-    `;
-
-    await db.runAsync(sql, [wordId, wordId, isCorrect ? 1 : 0, wordId, isCorrect ? 0 : 1]);
-  }
-
-  // === 유틸리티 메서드 ===
-
-  // 단어와 의미를 그룹핑
-  private groupWordMeanings(rows: unknown[]): WordWithMeaning[] {
-    const wordMap = new Map<number, WordWithMeaning>();
-
-    rows.forEach((row: any) => {
-      if (!wordMap.has(row.id)) {
-        wordMap.set(row.id, {
-          id: row.id,
-          word: row.word,
-          pronunciation: row.pronunciation,
-          difficulty_level: row.difficulty_level,
-          frequency_rank: row.frequency_rank,
-          cefr_level: row.cefr_level,
-          created_at: row.created_at,
-          updated_at: row.updated_at,
-          meanings: [],
-        });
-      }
-
-      const word = wordMap.get(row.id)!;
-      if (row.korean_meaning) {
-        word.meanings.push({
-          id: row.id, // 실제로는 meaning_id가 와야 함
-          word_id: row.id,
-          korean_meaning: row.korean_meaning,
-          part_of_speech: row.part_of_speech,
-          definition_en: row.definition_en,
-          source: row.source,
-          created_at: row.created_at,
-        });
-      }
-    });
-
-    return Array.from(wordMap.values());
-  }
-
-  // 데이터베이스 연결 종료
+  // 데이터베이스 연결 해제
   async close(): Promise<void> {
     if (this.db) {
       await this.db.closeAsync();
       this.db = null;
+      this.repositories = null;
+      console.log('Database connection closed');
     }
+  }
+
+  // 검색 기능 (Quick Search)
+  async searchWords(query: string, limit: number = 20): Promise<WordWithMeaning[]> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    try {
+      const searchPattern = `%${query.toLowerCase()}%`;
+
+      const results = await this.db.getAllAsync(`
+        SELECT DISTINCT
+          w.id,
+          w.word,
+          w.pronunciation,
+          w.difficulty_level,
+          w.frequency_rank,
+          w.cefr_level,
+          GROUP_CONCAT(wm.korean_meaning, ' | ') as meanings,
+          GROUP_CONCAT(wm.part_of_speech, ', ') as parts_of_speech
+        FROM words w
+        LEFT JOIN word_meanings wm ON w.id = wm.word_id
+        WHERE LOWER(w.word) LIKE ?
+           OR LOWER(wm.korean_meaning) LIKE ?
+        GROUP BY w.id, w.word, w.pronunciation, w.difficulty_level, w.frequency_rank, w.cefr_level
+        ORDER BY
+          CASE
+            WHEN LOWER(w.word) = LOWER(?) THEN 1
+            WHEN LOWER(w.word) LIKE ? THEN 2
+            ELSE 3
+          END,
+          w.frequency_rank ASC NULLS LAST,
+          w.word ASC
+        LIMIT ?
+      `, [searchPattern, searchPattern, query.toLowerCase(), `${query.toLowerCase()}%`, limit]);
+
+      return results.map(row => ({
+        id: row.id,
+        word: row.word,
+        pronunciation: row.pronunciation || null,
+        difficulty_level: row.difficulty_level || 4,
+        frequency_rank: row.frequency_rank || null,
+        cefr_level: row.cefr_level || null,
+        meanings: row.meanings ? row.meanings.split(' | ').map((meaning: string, index: number) => ({
+          id: index + 1,
+          word_id: row.id,
+          korean_meaning: meaning,
+          part_of_speech: row.parts_of_speech?.split(', ')[index] || null,
+          definition_en: null,
+          source: null,
+          created_at: new Date().toISOString(),
+        })) : [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }));
+    } catch (error) {
+      console.error('Search failed:', error);
+      throw error;
+    }
+  }
+
+  // 예문 검색
+  async searchExamples(wordId: number): Promise<Example[]> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    try {
+      const results = await this.db.getAllAsync(`
+        SELECT
+          id,
+          word_id,
+          sentence_en,
+          sentence_ko,
+          source,
+          created_at
+        FROM examples
+        WHERE word_id = ?
+        ORDER BY id
+        LIMIT 10
+      `, [wordId]);
+
+      return results.map(row => ({
+        id: row.id,
+        word_id: row.word_id,
+        sentence_en: row.sentence_en,
+        sentence_ko: row.sentence_ko || null,
+        difficulty_level: 1,
+        source: row.source || null,
+        created_at: row.created_at,
+      }));
+    } catch (error) {
+      console.error('Example search failed:', error);
+      throw error;
+    }
+  }
+
+  // 단어장 목록 조회
+  async getWordbooks(): Promise<Wordbook[]> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    try {
+      const results = await this.db.getAllAsync(`
+        SELECT
+          wb.id,
+          wb.name,
+          wb.description,
+          wb.is_default,
+          wb.created_at,
+          wb.updated_at,
+          COUNT(wbw.word_id) as word_count
+        FROM wordbooks wb
+        LEFT JOIN wordbook_words wbw ON wb.id = wbw.wordbook_id
+        GROUP BY wb.id, wb.name, wb.description, wb.is_default, wb.created_at, wb.updated_at
+        ORDER BY wb.is_default DESC, wb.created_at DESC
+      `);
+
+      return results.map(row => ({
+        id: row.id,
+        name: row.name,
+        description: row.description || null,
+        is_default: Boolean(row.is_default),
+        word_count: row.word_count || 0,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+      }));
+    } catch (error) {
+      console.error('Failed to get wordbooks:', error);
+      throw error;
+    }
+  }
+
+  // 사용자 생성 (회원가입)
+  async createUser(userData: {
+    email: string;
+    username: string;
+    full_name: string;
+    password: string;
+    phone?: string;
+    role?: string;
+  }): Promise<{ id: number; email: string; username: string; full_name: string; role: string; phone?: string }> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    try {
+      // 비밀번호 해시 생성 (간단한 해시 - 실제 앱에서는 bcrypt 등 사용)
+      const passwordHash = await this.hashPassword(userData.password);
+
+      // 사용자 생성
+      const result = await this.db.runAsync(`
+        INSERT INTO users (email, username, full_name, password_hash, phone, role)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `, [
+        userData.email,
+        userData.username,
+        userData.full_name,
+        passwordHash,
+        userData.phone || null,
+        userData.role || 'USER'
+      ]);
+
+      // 생성된 사용자 정보 반환
+      const user = await this.db.getFirstAsync(`
+        SELECT id, email, username, full_name, phone, role, created_at
+        FROM users
+        WHERE id = ?
+      `, [result.lastInsertRowId]) as any;
+
+      return {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        full_name: user.full_name,
+        phone: user.phone,
+        role: user.role,
+      };
+    } catch (error: any) {
+      console.error('Failed to create user:', error);
+      if (error.message?.includes('UNIQUE constraint failed')) {
+        throw new Error('이미 존재하는 이메일입니다.');
+      }
+      throw new Error('회원가입에 실패했습니다.');
+    }
+  }
+
+  // 사용자 로그인 검증
+  async authenticateUser(email: string, password: string): Promise<{ id: number; email: string; username: string; full_name: string; role: string; phone?: string } | null> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    try {
+      const user = await this.db.getFirstAsync(`
+        SELECT id, email, username, full_name, password_hash, phone, role
+        FROM users
+        WHERE email = ? AND is_active = 1
+      `, [email]) as any;
+
+      if (!user) {
+        return null;
+      }
+
+      // 비밀번호 검증
+      const isValidPassword = await this.verifyPassword(password, user.password_hash);
+      if (!isValidPassword) {
+        return null;
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        full_name: user.full_name,
+        phone: user.phone,
+        role: user.role,
+      };
+    } catch (error) {
+      console.error('Failed to authenticate user:', error);
+      throw new Error('로그인에 실패했습니다.');
+    }
+  }
+
+  // 간단한 비밀번호 해시 (실제 앱에서는 bcrypt 사용 권장)
+  private async hashPassword(password: string): Promise<string> {
+    // expo-crypto를 사용한 해시 (보안상 실제 앱에서는 bcrypt 등 사용)
+    const saltedPassword = password + 'scan_voca_salt';
+    return await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      saltedPassword
+    );
+  }
+
+  // 비밀번호 검증
+  private async verifyPassword(password: string, hash: string): Promise<boolean> {
+    const inputHash = await this.hashPassword(password);
+    return inputHash === hash;
   }
 }
 
 // 싱글톤 인스턴스
-export const databaseService = new DatabaseService();
-export default DatabaseService;
+const databaseService = new DatabaseService();
+
+export default databaseService;
+export { DatabaseService };
