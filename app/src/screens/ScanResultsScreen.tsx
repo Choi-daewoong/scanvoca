@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScanResultsScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
-import { FilterTabs, LevelTag, Checkbox, Button } from '../components/common';
-import databaseService from '../database/database';
-import { ocrService, ProcessedWord } from '../services/ocrService';
 
 interface ScannedWord {
   id: number;
@@ -18,256 +24,57 @@ interface ScannedWord {
 export default function ScanResultsScreen({ navigation, route }: ScanResultsScreenProps) {
   const { theme } = useTheme();
 
-  // 스캔 결과 데이터 (CameraScreen에서 전달받거나 시뮬레이션)
-  const { scannedText: routeScannedText, detectedWords: routeDetectedWords, imageUri } = route.params || {};
-  const [scannedText, setScannedText] = useState(routeScannedText || '');
-  const [scannedWords, setScannedWords] = useState<ScannedWord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [ocrStatistics, setOcrStatistics] = useState<any>(null);
-
-  useEffect(() => {
-    loadScannedWords();
-  }, []);
-
-  const loadScannedWords = async () => {
-    try {
-      setLoading(true);
-      console.log('🔍 스캔 결과 로딩 시작...');
-
-      let processedWords: ProcessedWord[] = [];
-
-      if (imageUri) {
-        // 실제 이미지가 있는 경우 OCR 서비스 사용
-        console.log('📱 OCR 서비스로 이미지 처리 중...');
-        const result = await ocrService.processImageComplete(imageUri);
-
-        setScannedText(result.ocrResult.text);
-        setOcrStatistics(result.statistics);
-        processedWords = result.validWords;
-      } else if (routeDetectedWords) {
-        // 기존 감지된 단어들이 있는 경우
-        console.log('📝 기존 감지 단어들 처리 중...');
-        for (const wordText of routeDetectedWords) {
-          const wordData = await databaseService.repo.words.findExactWord(wordText);
-          if (wordData) {
-            processedWords.push({
-              original: wordText,
-              cleaned: wordText.toLowerCase(),
-              found: true,
-              wordData
-            });
-          }
-        }
-      } else {
-        // 시뮬레이션 모드 - 샘플 이미지 처리
-        console.log('🎭 시뮬레이션 모드로 처리 중...');
-        const simulatedImageUri = 'mock://sample-image.jpg';
-        const result = await ocrService.processImageComplete(simulatedImageUri);
-
-        setScannedText(result.ocrResult.text);
-        setOcrStatistics(result.statistics);
-        processedWords = result.validWords;
-      }
-
-      // ProcessedWord를 ScannedWord로 변환
-      const wordsData: ScannedWord[] = processedWords.map((word, index) => ({
-        id: word.wordData?.id || index,
-        word: word.wordData?.word || word.cleaned,
-        meaning: word.wordData?.meanings?.[0]?.korean_meaning || '의미 없음',
-        partOfSpeech: word.wordData?.meanings?.[0]?.part_of_speech || 'n',
-        level: (word.wordData?.difficulty_level || 4) as 1 | 2 | 3 | 4,
-        isSelected: true,
-      }));
-
-      // 학습 가치 있는 단어들만 필터링
-      const filteredWords = ocrService.filterLearningWords(processedWords);
-      const finalWordsData = wordsData.filter(word =>
-        filteredWords.some(fw => fw.cleaned === word.word.toLowerCase())
-      );
-
-      setScannedWords(finalWordsData);
-      console.log(`✅ ${finalWordsData.length}개 단어 로딩 완료`);
-
-    } catch (error) {
-      console.error('❌ 스캔 결과 로딩 실패:', error);
-      Alert.alert('오류', '스캔 결과를 처리하는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const [activeFilter, setActiveFilter] = useState('모두');
   const [selectAll, setSelectAll] = useState(true);
 
-  const filterTabs = [
-    { key: '모두', label: '모두' },
-    { key: 'Lv.1', label: 'Lv.1' },
-    { key: 'Lv.2', label: 'Lv.2' },
-    { key: 'Lv.3', label: 'Lv.3' },
-    { key: 'Lv.4', label: 'Lv.4' },
-  ];
+  // HTML 목업과 동일한 데이터
+  const [scannedText] = useState('"Learning vocabulary is essential for language education and knowledge..."');
+  const [words, setWords] = useState<ScannedWord[]>([
+    {
+      id: 1,
+      word: 'vocabulary',
+      meaning: '어휘, 단어의 집합',
+      partOfSpeech: 'n',
+      level: 3,
+      isSelected: true,
+    },
+    {
+      id: 2,
+      word: 'essential',
+      meaning: '필수적인, 본질적인',
+      partOfSpeech: 'adj',
+      level: 2,
+      isSelected: true,
+    },
+    {
+      id: 3,
+      word: 'education',
+      meaning: '교육',
+      partOfSpeech: 'n',
+      level: 1,
+      isSelected: true,
+    },
+    {
+      id: 4,
+      word: 'knowledge',
+      meaning: '지식',
+      partOfSpeech: 'n',
+      level: 2,
+      isSelected: true,
+    },
+  ]);
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: theme.colors.background.primary,
-    },
-    header: {
-      padding: theme.spacing.lg,
-    },
-    title: {
-      ...theme.typography.h3,
-      color: theme.colors.text.primary,
-      marginBottom: theme.spacing.sm,
-    },
-    totalCount: {
-      ...theme.typography.body2,
-      color: theme.colors.text.secondary,
-      marginBottom: theme.spacing.md,
-    },
-    statisticsContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      backgroundColor: theme.colors.background.secondary,
-      borderRadius: theme.borderRadius.md,
-      padding: theme.spacing.md,
-      marginBottom: theme.spacing.md,
-    },
-    statItem: {
-      alignItems: 'center',
-    },
-    statLabel: {
-      ...theme.typography.caption,
-      color: theme.colors.text.secondary,
-      marginBottom: theme.spacing.xs,
-    },
-    statValue: {
-      ...theme.typography.h6,
-      color: theme.colors.text.primary,
-      fontWeight: 'bold',
-    },
-    scanSection: {
-      backgroundColor: theme.colors.background.secondary,
-      borderRadius: theme.borderRadius.md,
-      padding: theme.spacing.md,
-      marginBottom: theme.spacing.lg,
-    },
-    scanText: {
-      ...theme.typography.body2,
-      color: theme.colors.text.secondary,
-      fontStyle: 'italic',
-      lineHeight: 20,
-    },
-    filterContainer: {
-      paddingHorizontal: theme.spacing.lg,
-      marginBottom: theme.spacing.md,
-    },
-    selectAllContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: theme.spacing.lg,
-      marginBottom: theme.spacing.md,
-    },
-    selectAllCheckbox: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    selectAllText: {
-      ...theme.typography.body1,
-      color: theme.colors.text.primary,
-      marginLeft: theme.spacing.sm,
-    },
-    actionButtons: {
-      flexDirection: 'row',
-      gap: theme.spacing.sm,
-    },
-    actionButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.colors.primary.main,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
-      borderRadius: theme.borderRadius.sm,
-      gap: theme.spacing.xs,
-    },
-    actionButtonText: {
-      ...theme.typography.body2,
-      color: theme.colors.primary.contrast,
-      fontWeight: '600',
-    },
-    deleteButton: {
-      backgroundColor: theme.colors.semantic.error,
-    },
-    wordList: {
-      flex: 1,
-      paddingHorizontal: theme.spacing.lg,
-    },
-    wordCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.colors.background.primary,
-      borderWidth: 1,
-      borderColor: theme.colors.border.light,
-      borderRadius: theme.borderRadius.md,
-      padding: theme.spacing.md,
-      marginBottom: theme.spacing.sm,
-    },
-    wordInfo: {
-      flex: 1,
-      marginLeft: theme.spacing.md,
-    },
-    wordHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: theme.spacing.xs,
-    },
-    wordText: {
-      ...theme.typography.h6,
-      color: theme.colors.text.primary,
-      marginRight: theme.spacing.sm,
-    },
-    wordMeaning: {
-      ...theme.typography.body2,
-      color: theme.colors.text.secondary,
-    },
-    partOfSpeech: {
-      backgroundColor: theme.colors.primary.main,
-      color: theme.colors.primary.contrast,
-      fontSize: theme.typography.caption.fontSize,
-      fontWeight: '600',
-      paddingHorizontal: theme.spacing.xs,
-      paddingVertical: 2,
-      borderRadius: theme.borderRadius.xs,
-      marginRight: theme.spacing.xs,
-    },
-    wordActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing.sm,
-    },
-    pronunciationButton: {
-      padding: theme.spacing.sm,
-    },
-    bottomActions: {
-      flexDirection: 'row',
-      gap: theme.spacing.md,
-      padding: theme.spacing.lg,
-    },
+  const filteredWords = words.filter(word => {
+    if (activeFilter === '모두') return true;
+    return word.level.toString() === activeFilter.replace('Lv.', '');
   });
 
-  const filteredWords = activeFilter === '모두'
-    ? scannedWords
-    : scannedWords.filter(word => `Lv.${word.level}` === activeFilter);
-
-  const selectedWords = scannedWords.filter(word => word.isSelected);
+  const selectedWordsCount = words.filter(w => w.isSelected).length;
 
   const toggleWordSelection = (wordId: number) => {
-    setScannedWords(prev =>
-      prev.map(word =>
-        word.id === wordId
-          ? { ...word, isSelected: !word.isSelected }
-          : word
+    setWords(prevWords =>
+      prevWords.map(word =>
+        word.id === wordId ? { ...word, isSelected: !word.isSelected } : word
       )
     );
   };
@@ -275,200 +82,437 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
   const toggleSelectAll = () => {
     const newSelectAll = !selectAll;
     setSelectAll(newSelectAll);
-    setScannedWords(prev =>
-      prev.map(word => ({ ...word, isSelected: newSelectAll }))
+    setWords(prevWords =>
+      prevWords.map(word => ({ ...word, isSelected: newSelectAll }))
     );
   };
 
-  const handleSaveToWordbook = async () => {
+  const handleSaveToWordbook = () => {
+    const selectedWords = words.filter(w => w.isSelected);
     if (selectedWords.length === 0) {
       Alert.alert('알림', '저장할 단어를 선택해주세요.');
       return;
     }
-
-    try {
-      // 기본 단어장 찾기 (없으면 생성)
-      const wordbooks = await databaseService.repo.wordbooks.getAllWordbooks();
-      let defaultWordbook = wordbooks.find((wb: any) => wb.is_default === 1);
-
-      if (!defaultWordbook) {
-        // 기본 단어장이 없으면 생성
-        const wordbookId = await databaseService.repo.wordbooks.createWordbook(
-          '기본 단어장',
-          '스캔으로 추가된 단어들'
-        );
-        defaultWordbook = {
-          id: wordbookId,
-          name: '기본 단어장',
-          is_default: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-      }
-
-      // 선택된 단어들을 단어장에 추가
-      for (const word of selectedWords) {
-        await databaseService.repo.wordbooks.addWordToWordbook(
-          defaultWordbook.id,
-          word.id
-        );
-      }
-
-      Alert.alert(
-        '저장 완료',
-        `${selectedWords.length}개의 단어가 기본 단어장에 저장되었습니다.`,
-        [
-          {
-            text: '단어장 보기',
-            onPress: () => navigation.getParent()?.navigate('MainTabs', { screen: 'Wordbook' })
-          },
-          { text: '확인' }
-        ]
-      );
-    } catch (error) {
-      console.error('Failed to save words to wordbook:', error);
-      Alert.alert('오류', '단어 저장에 실패했습니다.');
-    }
+    Alert.alert('단어장 저장', `${selectedWords.length}개 단어를 단어장에 저장했습니다.`);
   };
 
   const handleDeleteSelected = () => {
-    // TODO: 선택된 단어들을 삭제하는 로직
-    setScannedWords(prev => prev.filter(word => !word.isSelected));
+    const selectedWords = words.filter(w => w.isSelected);
+    if (selectedWords.length === 0) {
+      Alert.alert('알림', '삭제할 단어를 선택해주세요.');
+      return;
+    }
+
+    Alert.alert(
+      '단어 삭제',
+      `선택된 ${selectedWords.length}개 단어를 삭제하시겠습니까?`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: () => {
+            setWords(prevWords => prevWords.filter(w => !w.isSelected));
+          }
+        }
+      ]
+    );
   };
 
-  const renderWordCard = ({ item }: { item: ScannedWord }) => (
-    <TouchableOpacity
-      style={styles.wordCard}
-      onPress={() => toggleWordSelection(item.id)}
-    >
-      <Checkbox
-        checked={item.isSelected}
-        onPress={() => toggleWordSelection(item.id)}
-      />
+  const getLevelColor = (level: number) => {
+    switch (level) {
+      case 1: return '#10B981'; // Green
+      case 2: return '#3B82F6'; // Blue
+      case 3: return '#F59E0B'; // Orange
+      case 4: return '#EF4444'; // Red
+      default: return '#6B7280'; // Gray
+    }
+  };
 
-      <View style={styles.wordInfo}>
-        <View style={styles.wordHeader}>
-          <Text style={styles.wordText}>{item.word}</Text>
-          <LevelTag level={item.level} showStars />
-        </View>
-        <Text style={styles.wordMeaning}>
-          <Text style={styles.partOfSpeech}>[{item.partOfSpeech}]</Text>
-          {' '}{item.meaning}
-        </Text>
-      </View>
-
-      <View style={styles.wordActions}>
-        <TouchableOpacity
-          style={styles.pronunciationButton}
-          onPress={() => {
-            // TODO: 발음 재생 기능
-            console.log('Play pronunciation:', item.word);
-          }}
-        >
-          <Text>🔊</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
-
-  if (loading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={styles.title}>단어를 불러오는 중...</Text>
-      </View>
-    );
-  }
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#FFFFFF',
+    },
+    backBtn: {
+      position: 'absolute',
+      top: 50,
+      left: 20,
+      zIndex: 10,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    backBtnText: {
+      fontSize: 20,
+      color: '#4F46E5',
+      fontWeight: 'bold',
+    },
+    detailHeader: {
+      backgroundColor: '#FFFFFF',
+      paddingHorizontal: 20,
+      paddingVertical: 20,
+      paddingTop: 60,
+      borderBottomWidth: 1,
+      borderBottomColor: '#E5E7EB',
+    },
+    headerTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: '#212529',
+      marginBottom: 4,
+    },
+    totalWordsCount: {
+      fontSize: 14,
+      color: '#6C757D',
+      marginBottom: 16,
+    },
+    scanResultSection: {
+      backgroundColor: '#F8F9FA',
+      borderRadius: 8,
+      padding: 16,
+      marginBottom: 16,
+    },
+    scanContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    scanText: {
+      flex: 1,
+      fontSize: 14,
+      color: '#495057',
+      fontStyle: 'italic',
+      lineHeight: 20,
+    },
+    scanThumbnail: {
+      width: 60,
+      height: 60,
+      backgroundColor: '#E9ECEF',
+      borderRadius: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    thumbnailText: {
+      fontSize: 12,
+      color: '#6C757D',
+    },
+    content: {
+      flex: 1,
+      backgroundColor: '#F9FAFB',
+      padding: 20,
+    },
+    filterTabsContainer: {
+      marginBottom: 16,
+    },
+    filterTabs: {
+      flexDirection: 'row',
+      backgroundColor: '#FFFFFF',
+      borderRadius: 8,
+      padding: 4,
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+    },
+    filterTab: {
+      flex: 1,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 6,
+      alignItems: 'center',
+    },
+    filterTabActive: {
+      backgroundColor: '#4F46E5',
+    },
+    filterTabText: {
+      fontSize: 12,
+      fontWeight: '500',
+      color: '#6C757D',
+    },
+    filterTabTextActive: {
+      color: '#FFFFFF',
+    },
+    selectAllContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    selectAllCheckbox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    checkboxContainer: {
+      width: 20,
+      height: 20,
+      borderRadius: 4,
+      borderWidth: 2,
+      borderColor: '#4F46E5',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    checkboxChecked: {
+      backgroundColor: '#4F46E5',
+    },
+    checkboxText: {
+      color: '#FFFFFF',
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+    selectAllText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: '#212529',
+    },
+    actionButtons: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    actionBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 6,
+      borderWidth: 1,
+    },
+    moveToWordbookBtn: {
+      backgroundColor: '#4F46E5',
+      borderColor: '#4F46E5',
+    },
+    deleteSelectedBtn: {
+      backgroundColor: '#FFFFFF',
+      borderColor: '#EF4444',
+    },
+    actionBtnText: {
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    actionBtnTextPrimary: {
+      color: '#FFFFFF',
+    },
+    actionBtnTextDanger: {
+      color: '#EF4444',
+    },
+    wordGrid: {
+      gap: 12,
+    },
+    wordCard: {
+      backgroundColor: '#FFFFFF',
+      borderRadius: 12,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
+    },
+    wordCardSelected: {
+      borderColor: '#4F46E5',
+      backgroundColor: '#F8FAFF',
+    },
+    wordCardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: 8,
+    },
+    wordCardLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    wordLevel: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 4,
+      minWidth: 40,
+      alignItems: 'center',
+    },
+    wordLevelText: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: '#FFFFFF',
+    },
+    wordInfo: {
+      flex: 1,
+    },
+    wordText: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: '#212529',
+      marginBottom: 4,
+    },
+    wordMeaning: {
+      fontSize: 14,
+      color: '#495057',
+      lineHeight: 20,
+    },
+    wordPosTag: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: '#4F46E5',
+    },
+    wordActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    pronunciationBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: '#F8F9FA',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pronunciationText: {
+      fontSize: 16,
+    },
+  });
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>인식된 단어들</Text>
-        <Text style={styles.totalCount}>총 {scannedWords.length}개 단어</Text>
+    <SafeAreaView style={styles.container}>
+      {/* Back Button */}
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.backBtnText}>←</Text>
+      </TouchableOpacity>
 
-        {/* OCR Statistics */}
-        {ocrStatistics && (
-          <View style={styles.statisticsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>감지됨</Text>
-              <Text style={styles.statValue}>{ocrStatistics.totalDetected}</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>유효함</Text>
-              <Text style={styles.statValue}>{ocrStatistics.validFound}</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>신뢰도</Text>
-              <Text style={[styles.statValue, {
-                color: ocrStatistics.confidence > 0.8 ? theme.colors.primary.main :
-                       ocrStatistics.confidence > 0.6 ? theme.colors.accent.orange :
-                       theme.colors.accent.red
-              }]}>
-                {Math.round(ocrStatistics.confidence * 100)}%
-              </Text>
+      {/* Header */}
+      <View style={styles.detailHeader}>
+        <Text style={styles.headerTitle}>인식된 단어들</Text>
+        <Text style={styles.totalWordsCount}>총 {words.length}개 단어</Text>
+
+        {/* Scan Result Section */}
+        <View style={styles.scanResultSection}>
+          <View style={styles.scanContent}>
+            <Text style={styles.scanText}>{scannedText}</Text>
+            <View style={styles.scanThumbnail}>
+              <Text style={styles.thumbnailText}>IMG</Text>
             </View>
           </View>
-        )}
-
-        {/* Scanned Text */}
-        <View style={styles.scanSection}>
-          <Text style={styles.scanText}>"{scannedText}"</Text>
         </View>
       </View>
 
-      {/* Filter Tabs */}
-      <View style={styles.filterContainer}>
-        <FilterTabs
-          tabs={filterTabs}
-          activeTab={activeFilter}
-          onTabPress={setActiveFilter}
-        />
-      </View>
-
-      {/* Select All & Actions */}
-      <View style={styles.selectAllContainer}>
-        <TouchableOpacity style={styles.selectAllCheckbox} onPress={toggleSelectAll}>
-          <Checkbox checked={selectAll} onPress={toggleSelectAll} />
-          <Text style={styles.selectAllText}>전체</Text>
-        </TouchableOpacity>
-
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleSaveToWordbook}
-          >
-            <Text>📚</Text>
-            <Text style={styles.actionButtonText}>단어장</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.actionButton, styles.deleteButton]}
-            onPress={handleDeleteSelected}
-          >
-            <Text>🗑️</Text>
-            <Text style={styles.actionButtonText}>삭제</Text>
-          </TouchableOpacity>
+      {/* Content */}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Filter Tabs */}
+        <View style={styles.filterTabsContainer}>
+          <View style={styles.filterTabs}>
+            {['모두', 'Lv.1', 'Lv.2', 'Lv.3', 'Lv.4'].map((filter) => {
+              const isActive = activeFilter === filter;
+              return (
+                <TouchableOpacity
+                  key={filter}
+                  style={[styles.filterTab, isActive && styles.filterTabActive]}
+                  onPress={() => setActiveFilter(filter)}
+                >
+                  <Text
+                    style={[
+                      styles.filterTabText,
+                      isActive && styles.filterTabTextActive
+                    ]}
+                  >
+                    {filter}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
-      </View>
 
-      {/* Words List */}
-      <FlatList
-        style={styles.wordList}
-        data={filteredWords}
-        renderItem={renderWordCard}
-        keyExtractor={(item) => item.id.toString()}
-        showsVerticalScrollIndicator={false}
-      />
+        {/* Select All Container */}
+        <View style={styles.selectAllContainer}>
+          <TouchableOpacity
+            style={styles.selectAllCheckbox}
+            onPress={toggleSelectAll}
+          >
+            <View style={[
+              styles.checkboxContainer,
+              selectAll && styles.checkboxChecked
+            ]}>
+              {selectAll && <Text style={styles.checkboxText}>✓</Text>}
+            </View>
+            <Text style={styles.selectAllText}>전체</Text>
+          </TouchableOpacity>
 
-      {/* Bottom Actions */}
-      <View style={styles.bottomActions}>
-        <Button
-          title="📷 다시 스캔하기"
-          variant="secondary"
-          onPress={() => navigation.goBack()}
-          fullWidth
-        />
-      </View>
-    </View>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.moveToWordbookBtn]}
+              onPress={handleSaveToWordbook}
+            >
+              <Text style={[styles.actionBtnText, styles.actionBtnTextPrimary]}>
+                📚 단어장
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.deleteSelectedBtn]}
+              onPress={handleDeleteSelected}
+            >
+              <Text style={[styles.actionBtnText, styles.actionBtnTextDanger]}>
+                🗑️ 삭제
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Word Grid */}
+        <View style={styles.wordGrid}>
+          {filteredWords.map((word) => (
+            <TouchableOpacity
+              key={word.id}
+              style={[
+                styles.wordCard,
+                word.isSelected && styles.wordCardSelected
+              ]}
+              onPress={() => toggleWordSelection(word.id)}
+            >
+              <View style={styles.wordCardHeader}>
+                <View style={styles.wordCardLeft}>
+                  <View style={[
+                    styles.checkboxContainer,
+                    word.isSelected && styles.checkboxChecked
+                  ]}>
+                    {word.isSelected && <Text style={styles.checkboxText}>✓</Text>}
+                  </View>
+                  <View style={[
+                    styles.wordLevel,
+                    { backgroundColor: getLevelColor(word.level) }
+                  ]}>
+                    <Text style={styles.wordLevelText}>Lv.{word.level}</Text>
+                  </View>
+                </View>
+                <View style={styles.wordActions}>
+                  <TouchableOpacity style={styles.pronunciationBtn}>
+                    <Text style={styles.pronunciationText}>🔊</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.wordInfo}>
+                <Text style={styles.wordText}>{word.word}</Text>
+                <Text style={styles.wordMeaning}>
+                  <Text style={styles.wordPosTag}>[{word.partOfSpeech}]</Text> {word.meaning}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

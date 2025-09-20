@@ -1,5 +1,6 @@
 import { Camera } from 'react-native-vision-camera';
 import * as ImagePicker from 'expo-image-picker';
+import { Platform } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 
 export interface CameraPermissions {
@@ -91,6 +92,8 @@ class CameraService {
         allowsEditing: true,
         aspect: [4, 3],
         quality: 1,
+        selectionLimit: 1,
+        presentationStyle: Platform.OS === 'ios' ? ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN : undefined,
       });
 
       if (!result.canceled && result.assets.length > 0) {

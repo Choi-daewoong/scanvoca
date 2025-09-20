@@ -1,0 +1,1 @@
+Uncaught SyntaxError: Cannot use 'import.meta' outside a module (at index.ts.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable:62345:65)

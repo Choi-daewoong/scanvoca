@@ -17,6 +17,7 @@ body {
     margin: 0 auto;
     background: #FFFFFF;
     min-height: 100vh;
+    position: relative;
 }
 
 /* 공통 헤더 스타일 */
@@ -38,6 +39,59 @@ body {
     color: #4B5563;
     margin-top: 4px;
     font-size: 14px;
+}
+
+/* 공통 돌아가기 버튼 - 세련된 스타일 */
+.back-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(229, 231, 235, 0.8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 18px;
+    color: #6B7280;
+    text-decoration: none;
+    border: none;
+    outline: none;
+}
+
+.back-btn:hover {
+    background: rgba(79, 70, 229, 0.05);
+    border-color: rgba(79, 70, 229, 0.2);
+    color: #4F46E5;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+}
+
+.back-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+    .back-btn {
+        background: rgba(17, 24, 39, 0.95);
+        border-color: rgba(75, 85, 99, 0.8);
+        color: #9CA3AF;
+    }
+
+    .back-btn:hover {
+        background: rgba(79, 70, 229, 0.1);
+        border-color: rgba(79, 70, 229, 0.3);
+        color: #818CF8;
+    }
 }
 
 /* 공통 네비게이션 스타일 */

@@ -35,21 +35,6 @@ body {
     z-index: 100;
 }
 
-.back-btn {
-    background: none;
-    border: none;
-    font-size: 18px;
-    color: #4F46E5;
-    cursor: pointer;
-    padding: 8px;
-    margin-bottom: 12px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.back-btn:hover {
-    background: #F3F4F6;
-}
 
 .header-title-section {
     display: flex;
@@ -63,6 +48,8 @@ body {
     font-weight: bold;
     color: #111827;
     letter-spacing: -0.25px;
+    text-align: center;
+    flex: 1;
 }
 
 .edit-btn {

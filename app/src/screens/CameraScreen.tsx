@@ -1,11 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, StatusBar, Platform } from 'react-native';
+import { Camera, useCameraDevice } from 'react-native-vision-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { CameraScreenProps } from '../navigation/types';
 import { ocrService } from '../services/ocrService';
 
 export default function CameraScreen({ navigation }: CameraScreenProps) {
   const [isScanning, setIsScanning] = useState(false);
+  const [cameraPermission, setCameraPermission] = useState<'authorized' | 'denied' | 'not-determined'>('not-determined');
+  const cameraRef = useRef<Camera>(null);
+  const device = useCameraDevice('back');
 
   useEffect(() => {
     // 상태바 숨기기 (전체화면)
@@ -17,44 +21,52 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
     };
   }, []);
 
-  // 카메라로 사진 촬영
+  useEffect(() => {
+    (async () => {
+      const status = await Camera.requestCameraPermission();
+      setCameraPermission(status);
+    })();
+  }, []);
+
+  // 카메라로 사진 촬영 (VisionCamera)
   const handleCapture = async () => {
     try {
       setIsScanning(true);
-
-      // 카메라 권한 요청
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('권한 필요', '카메라 접근 권한이 필요합니다.');
+      if (cameraPermission !== 'authorized') {
+        Alert.alert('권한 필요', '카메라 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.');
+        return;
+      }
+      if (!cameraRef.current) {
+        Alert.alert('카메라 오류', '카메라 초기화 중입니다. 잠시 후 다시 시도해주세요.');
         return;
       }
 
-      // 카메라로 사진 촬영
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: [ImagePicker.MediaType.Images],
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
+      const photo = await cameraRef.current.takePhoto({
+        enableShutterSound: true,
+        qualityPrioritization: 'quality',
       });
 
-      if (!result.canceled && result.assets[0]) {
-        const imageUri = result.assets[0].uri;
-        console.log('📷 카메라 사진 촬영 완료:', imageUri);
+      const imageUri = Platform.select({
+        ios: `file://${photo.path}`,
+        android: photo.path,
+        default: photo.path,
+      }) as string;
 
-        // OCR 처리
-        const ocrResult = await ocrService.processImage(imageUri);
-        console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
+      console.log('📷 카메라 사진 촬영 완료:', imageUri);
 
-        // 감지된 단어들
-        const detectedWordTexts = ocrResult.validWords.map(word => word.cleaned);
+      // OCR 처리
+      const ocrResult = await ocrService.processImage(imageUri);
+      console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
 
-        // ScanResults로 이동
-        navigation.navigate('ScanResults', {
-          scannedText: ocrResult.ocrResult.text,
-          detectedWords: detectedWordTexts,
-          imageUri: imageUri
-        });
-      }
+      // 감지된 단어들
+      const detectedWordTexts = ocrResult.validWords.map(word => word.cleaned);
+
+      // ScanResults로 이동
+      navigation.navigate('ScanResults', {
+        scannedText: ocrResult.ocrResult.text,
+        detectedWords: detectedWordTexts,
+        imageUri: imageUri
+      });
     } catch (error) {
       console.error('❌ 카메라 촬영 또는 OCR 처리 오류:', error);
       Alert.alert('오류', '카메라 촬영 중 오류가 발생했습니다.');
@@ -69,18 +81,21 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
       setIsScanning(true);
 
       // 갤러리 권한 요청
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
+      const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!granted) {
         Alert.alert('권한 필요', '갤러리 접근 권한이 필요합니다.');
         return;
       }
 
       // 이미지 선택
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: [ImagePicker.MediaType.Images],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
+        exif: false,
+        selectionLimit: 1,
+        presentationStyle: Platform.OS === 'ios' ? ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN : undefined,
       });
 
       if (!result.canceled && result.assets[0]) {
@@ -118,7 +133,6 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      background: 'linear-gradient(135deg, #1F2937, #374151)', // 그라데이션은 웹에서만 작동
       backgroundColor: '#1F2937', // 폴백 색상
     },
     previewText: {
@@ -231,10 +245,22 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
 
   return (
     <View style={styles.container}>
-      {/* Mock Camera Preview */}
+      {/* Camera Preview */}
       <View style={styles.cameraPreview}>
-        <Text style={styles.previewText}>📷 카메라 화면</Text>
-        <Text style={styles.previewSubtext}>촬영 버튼을 눌러 카메라 앱을 실행합니다</Text>
+        {cameraPermission === 'authorized' && device ? (
+          <Camera
+            style={StyleSheet.absoluteFill}
+            device={device}
+            isActive={!isScanning}
+            ref={cameraRef}
+            photo={true}
+          />
+        ) : (
+          <>
+            <Text style={styles.previewText}>📷 카메라 초기화 중...</Text>
+            <Text style={styles.previewSubtext}>권한을 허용했는지 확인해주세요.</Text>
+          </>
+        )}
 
         {/* Focus Guide */}
         <View style={styles.focusGuide}>

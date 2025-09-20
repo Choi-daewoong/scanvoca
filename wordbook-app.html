@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>영어 단어장 앱</title>
+    <link rel="stylesheet" href="css/common-styles.css">
     <link rel="stylesheet" href="styles/app-styles.css">
 </head>
 <body>
@@ -27,10 +28,12 @@
             </div>
         </div>
 
+        <!-- 돌아가기 버튼 -->
+        <button class="back-btn" onclick="goHome()">←</button>
+
         <!-- 단어장 상세 화면 -->
         <div id="wordbook-detail" class="wordbook-detail">
             <div class="detail-header">
-                <button class="back-btn" onclick="goHome()">← 돌아가기</button>
                 <div class="header-title-section">
                     <h2 id="wordbook-title">기본 단어장</h2>
                     <button class="edit-btn" onclick="editWordbookName()">편집</button>

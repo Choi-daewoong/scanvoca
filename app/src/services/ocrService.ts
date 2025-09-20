@@ -1,6 +1,8 @@
 import databaseService from '../database/database';
 import { WordWithMeaning } from '../types/types';
-import TextRecognition from '@react-native-ml-kit/text-recognition';
+// import TextRecognition from '@react-native-ml-kit/text-recognition'; // 임시 주석 처리
+import * as FileSystem from 'expo-file-system';
+import { Platform } from 'react-native';
 
 export interface OCRWord {
   text: string;
@@ -39,57 +41,41 @@ class OCRService {
     return OCRService.instance;
   }
 
-  // 이미지에서 텍스트 추출 (실제 OCR)
+  // 이미지에서 텍스트 추출 (임시 Mock 구현)
   async extractTextFromImage(imageUri: string): Promise<OCRResult> {
     const startTime = Date.now();
 
     try {
-      console.log('🔍 MLKit OCR 처리 시작:', imageUri);
+      console.log('🔍 Mock OCR 처리 시작:', imageUri);
 
-      // MLKit Text Recognition으로 실제 텍스트 인식
-      const result = await TextRecognition.recognize(imageUri);
-
-      console.log('MLKit 인식 결과:', result);
-
-      // 인식된 블록들을 단어로 분리하여 OCRWord 형식으로 변환
-      const words: OCRWord[] = [];
-
-      result.blocks.forEach((block) => {
-        block.lines.forEach((line) => {
-          line.elements.forEach((element) => {
-            // 각 요소의 텍스트를 단어로 분리
-            const wordTexts = element.text.split(/\s+/).filter(w => w.length > 0);
-
-            wordTexts.forEach((wordText, index) => {
-              words.push({
-                text: wordText,
-                confidence: element.confidence || 0.8, // MLKit에서 confidence 제공하지 않으면 기본값 사용
-                boundingBox: element.frame ? {
-                  x: element.frame.x,
-                  y: element.frame.y,
-                  width: element.frame.width,
-                  height: element.frame.height
-                } : undefined
-              });
-            });
-          });
-        });
-      });
+      // 임시 Mock 데이터 (실제 MLKit 대신 사용)
+      const mockWords = ['hello', 'world', 'education', 'vocabulary', 'learning', 'english', 'study', 'book', 'text', 'scan'];
+      const mockText = mockWords.join(' ');
+      
+      const words: OCRWord[] = mockWords.map((word, index) => ({
+        text: word,
+        confidence: 0.85 + (Math.random() * 0.1), // 0.85-0.95 사이의 랜덤 신뢰도
+        boundingBox: {
+          x: index * 50,
+          y: 0,
+          width: word.length * 10,
+          height: 20
+        }
+      }));
 
       const processingTime = Date.now() - startTime;
-      const fullText = result.text;
 
-      console.log(`✅ MLKit OCR 완료: ${words.length}개 단어 감지, 처리시간: ${processingTime}ms`);
-      console.log('인식된 텍스트:', fullText);
+      console.log(`✅ Mock OCR 완료: ${words.length}개 단어 감지, 처리시간: ${processingTime}ms`);
+      console.log('인식된 텍스트:', mockText);
 
       return {
-        text: fullText,
+        text: mockText,
         words: words,
         processingTime,
         imageUri,
       };
     } catch (error) {
-      console.error('❌ MLKit OCR 처리 실패:', error);
+      console.error('❌ Mock OCR 처리 실패:', error);
       throw new Error('Failed to extract text from image');
     }
   }

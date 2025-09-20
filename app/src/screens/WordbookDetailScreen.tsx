@@ -1,371 +1,495 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { WordbookDetailScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
-import { SearchBar, FilterTabs, LevelTag, Checkbox } from '../components/common';
-import databaseService from '../database/database';
+
+interface WordItem {
+  id: number;
+  word: string;
+  meaning: string;
+  partOfSpeech: string;
+  status: 'learned' | 'learning' | 'new';
+  lastStudied?: string;
+  difficulty: number; // 1-5 stars
+}
+
+interface WordbookStats {
+  totalWords: number;
+  learnedWords: number;
+  learningWords: number;
+  newWords: number;
+  progressPercent: number;
+}
 
 export default function WordbookDetailScreen({ navigation, route }: WordbookDetailScreenProps) {
   const { theme } = useTheme();
-  const { wordbookId } = route.params;
+  const { wordbookId, wordbookName } = route.params;
 
-  const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('전체');
-  const [wordbook, setWordbook] = useState<any>(null);
-  const [words, setWords] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<WordbookStats>({
+    totalWords: 32,
+    learnedWords: 21,
+    learningWords: 7,
+    newWords: 4,
+    progressPercent: 67,
+  });
 
-  useEffect(() => {
-    loadWordbookDetail();
-  }, [wordbookId]);
+  // HTML 목업과 동일한 단어 데이터
+  const [words] = useState<WordItem[]>([
+    {
+      id: 1,
+      word: 'vocabulary',
+      meaning: '어휘, 단어의 집합',
+      partOfSpeech: 'n.',
+      status: 'learned',
+      lastStudied: '2시간 전 학습',
+      difficulty: 3,
+    },
+    {
+      id: 2,
+      word: 'essential',
+      meaning: '필수적인, 본질적인',
+      partOfSpeech: 'adj.',
+      status: 'learning',
+      lastStudied: '어제 학습',
+      difficulty: 2,
+    },
+    {
+      id: 3,
+      word: 'knowledge',
+      meaning: '지식',
+      partOfSpeech: 'n.',
+      status: 'new',
+      lastStudied: '아직 학습하지 않음',
+      difficulty: 2,
+    },
+    {
+      id: 4,
+      word: 'important',
+      meaning: '중요한',
+      partOfSpeech: 'adj.',
+      status: 'learned',
+      lastStudied: '3일 전 학습',
+      difficulty: 1,
+    },
+  ]);
 
-  const loadWordbookDetail = async () => {
-    try {
-      setLoading(true);
+  const filteredWords = words.filter(word => {
+    if (activeFilter === '전체') return true;
+    if (activeFilter === '미암기') return word.status !== 'learned';
+    if (activeFilter === '완료') return word.status === 'learned';
+    return true;
+  });
 
-      // 단어장 정보 로드
-      const wordbookData = await databaseService.repo.wordbooks.getWordbookById(wordbookId);
-      setWordbook(wordbookData);
-
-      // 단어장의 단어들 로드
-      const wordsData = await databaseService.repo.wordbooks.getWordbookWords(wordbookId);
-
-      // 단어들의 암기 상태 로드
-      const wordIds = wordsData.map(w => w.id);
-      const memorizedStatusMap = await databaseService.repo.studyProgress.getMemorizedStatus(wordIds);
-
-      // 암기 상태를 단어 데이터에 추가
-      const wordsWithMemorizedStatus = wordsData.map(word => ({
-        ...word,
-        isMemorized: memorizedStatusMap[word.id] || false,
-      }));
-
-      setWords(wordsWithMemorizedStatus);
-    } catch (error) {
-      console.error('Failed to load wordbook detail:', error);
-      Alert.alert('오류', '단어장 정보를 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'learned': return '완료';
+      case 'learning': return '학습중';
+      case 'new': return '신규';
+      default: return '신규';
     }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'learned': return '#10B981';
+      case 'learning': return '#F59E0B';
+      case 'new': return '#EF4444';
+      default: return '#6B7280';
+    }
+  };
+
+  const renderStars = (difficulty: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Text
+        key={i}
+        style={[
+          styles.star,
+          { color: i < difficulty ? '#FCD34D' : '#D1D5DB' }
+        ]}
+      >
+        ★
+      </Text>
+    ));
+  };
+
+  const handleStartStudy = () => {
+    Alert.alert('학습 시작', '학습 기능을 준비 중입니다.');
+  };
+
+  const handleStartQuiz = () => {
+    navigation.navigate('QuizSession', { wordbookId, wordbookName });
   };
 
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: '#FFFFFF',
+    },
+    backBtn: {
+      position: 'absolute',
+      top: 50,
+      left: 20,
+      zIndex: 10,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    backBtnText: {
+      fontSize: 20,
+      color: '#4F46E5',
+      fontWeight: 'bold',
     },
     header: {
-      padding: theme.spacing.lg,
+      backgroundColor: '#FFFFFF',
+      paddingHorizontal: 20,
+      paddingVertical: 20,
+      paddingTop: 60,
       borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border.light,
+      borderBottomColor: '#E5E7EB',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
     },
-    wordbookTitle: {
-      ...theme.typography.h3,
-      color: theme.colors.text.primary,
-      marginBottom: theme.spacing.sm,
-    },
-    wordbookStats: {
-      ...theme.typography.body2,
-      color: theme.colors.text.secondary,
-      marginBottom: theme.spacing.md,
-    },
-    searchContainer: {
-      padding: theme.spacing.lg,
-      paddingBottom: 0,
-    },
-    filterContainer: {
-      paddingHorizontal: theme.spacing.lg,
-      marginBottom: theme.spacing.md,
-    },
-    wordList: {
+    headerTitle: {
       flex: 1,
     },
-    wordItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: theme.spacing.md,
-      paddingHorizontal: theme.spacing.lg,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border.light,
+    headerTitleText: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: '#212529',
+      marginBottom: 4,
     },
-    wordContent: {
+    headerSubtitle: {
+      fontSize: 14,
+      color: '#6C757D',
+    },
+    editBtn: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      backgroundColor: '#4F46E5',
+      borderRadius: 6,
+    },
+    editBtnText: {
+      color: '#FFFFFF',
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    content: {
       flex: 1,
-      marginLeft: theme.spacing.md,
+      backgroundColor: '#F9FAFB',
+      padding: 20,
     },
-    wordHeader: {
+    progressStats: {
+      backgroundColor: '#FFFFFF',
+      borderRadius: 12,
+      padding: 20,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
+    },
+    statsRow: {
       flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 16,
+    },
+    statItem: {
       alignItems: 'center',
-      marginBottom: theme.spacing.xs,
     },
-    word: {
-      ...theme.typography.h6,
-      color: theme.colors.text.primary,
-      marginRight: theme.spacing.sm,
+    statNumber: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: '#4F46E5',
+      marginBottom: 4,
     },
-    pronunciation: {
-      ...theme.typography.caption,
-      color: theme.colors.text.tertiary,
-      fontStyle: 'italic',
-      marginRight: theme.spacing.sm,
+    statLabel: {
+      fontSize: 12,
+      color: '#6C757D',
     },
-    meaning: {
-      ...theme.typography.body2,
-      color: theme.colors.text.secondary,
-      marginBottom: theme.spacing.xs,
+    progressBar: {
+      backgroundColor: '#E5E7EB',
+      height: 8,
+      borderRadius: 4,
+      overflow: 'hidden',
+      marginBottom: 8,
+    },
+    progressFill: {
+      backgroundColor: '#4F46E5',
+      height: '100%',
+      width: '67%',
+    },
+    progressText: {
+      textAlign: 'center',
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#4F46E5',
     },
     actionButtons: {
-      padding: theme.spacing.lg,
-      borderTopWidth: 1,
-      borderTopColor: theme.colors.border.light,
       flexDirection: 'row',
-      gap: theme.spacing.md,
+      gap: 12,
+      marginBottom: 20,
     },
-    button: {
+    btn: {
       flex: 1,
-      backgroundColor: theme.colors.primary.main,
-      paddingVertical: theme.spacing.md,
-      borderRadius: theme.borderRadius.md,
+      paddingVertical: 12,
+      borderRadius: 8,
       alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
     },
-    buttonText: {
-      ...theme.typography.button,
-      color: theme.colors.primary.contrast,
+    btnPrimary: {
+      backgroundColor: '#4F46E5',
     },
-    secondaryButton: {
-      flex: 1,
+    btnSecondary: {
+      backgroundColor: '#FFFFFF',
       borderWidth: 1,
-      borderColor: theme.colors.border.medium,
-      backgroundColor: theme.colors.background.primary,
-      paddingVertical: theme.spacing.md,
-      borderRadius: theme.borderRadius.md,
+      borderColor: '#4F46E5',
+    },
+    btnText: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    btnTextPrimary: {
+      color: '#FFFFFF',
+    },
+    btnTextSecondary: {
+      color: '#4F46E5',
+    },
+    wordFilterTabs: {
+      flexDirection: 'row',
+      backgroundColor: '#FFFFFF',
+      borderRadius: 8,
+      padding: 4,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+    },
+    filterTab: {
+      flex: 1,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 6,
       alignItems: 'center',
     },
-    secondaryButtonText: {
-      ...theme.typography.button,
-      color: theme.colors.text.primary,
+    filterTabActive: {
+      backgroundColor: '#4F46E5',
+    },
+    filterTabText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: '#6C757D',
+    },
+    filterTabTextActive: {
+      color: '#FFFFFF',
+    },
+    wordList: {
+      gap: 12,
+    },
+    wordItem: {
+      backgroundColor: '#FFFFFF',
+      borderRadius: 12,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
+    },
+    wordMain: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    wordText: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: '#212529',
+    },
+    studyStatus: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 4,
+    },
+    studyStatusText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: '#FFFFFF',
+    },
+    wordMeaning: {
+      fontSize: 14,
+      color: '#495057',
+      marginBottom: 12,
+    },
+    wordMeta: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    lastStudied: {
+      fontSize: 12,
+      color: '#6C757D',
+    },
+    difficultyStars: {
+      flexDirection: 'row',
+      gap: 2,
+    },
+    star: {
+      fontSize: 14,
     },
   });
-
-  // 로딩 중이거나 데이터가 없을 때의 처리
-  if (loading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={styles.wordbookTitle}>단어장을 불러오는 중...</Text>
-      </View>
-    );
-  }
-
-  if (!wordbook) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={styles.wordbookTitle}>단어장을 찾을 수 없습니다.</Text>
-      </View>
-    );
-  }
-
-  const filterTabs = [
-    { key: '전체', label: '전체' },
-    { key: '미암기', label: '미암기' },
-    { key: '암기완료', label: '암기완료' }
-  ];
-
-  const handleWordPress = (wordId: number) => {
-    navigation.navigate('WordDetail', { wordId });
-  };
-
-  const handleQuizStart = () => {
-    navigation.navigate('QuizSession', { wordbookId });
-  };
-
-  const handleAddWord = () => {
-    Alert.prompt(
-      '단어 추가',
-      '추가할 영어 단어를 입력하세요',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '추가',
-          onPress: async (inputWord) => {
-            if (!inputWord || inputWord.trim() === '') {
-              Alert.alert('오류', '단어를 입력해주세요.');
-              return;
-            }
-
-            try {
-              // 데이터베이스에서 단어 찾기
-              const word = await databaseService.repo.words.findExactWord(inputWord.trim());
-              if (!word) {
-                Alert.alert('알림', '사전에서 해당 단어를 찾을 수 없습니다.');
-                return;
-              }
-
-              // 이미 단어장에 있는지 확인
-              const isAlreadyAdded = words.some(w => w.id === word.id);
-              if (isAlreadyAdded) {
-                Alert.alert('알림', '이미 단어장에 있는 단어입니다.');
-                return;
-              }
-
-              // 단어장에 추가
-              const success = await databaseService.repo.wordbooks.addWordToWordbook(wordbookId, word.id);
-              if (success) {
-                Alert.alert('성공', '단어가 추가되었습니다.');
-                // 목록 새로고침
-                loadWordbookDetail();
-              } else {
-                Alert.alert('오류', '단어 추가에 실패했습니다.');
-              }
-            } catch (error) {
-              console.error('Failed to add word:', error);
-              Alert.alert('오류', '단어 추가 중 오류가 발생했습니다.');
-            }
-          }
-        }
-      ],
-      'plain-text'
-    );
-  };
-
-  const handleRemoveWord = (wordId: number, wordText: string) => {
-    Alert.alert(
-      '단어 삭제',
-      `'${wordText}' 단어를 단어장에서 삭제하시겠습니까?`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const success = await databaseService.repo.wordbooks.removeWordFromWordbook(wordbookId, wordId);
-              if (success) {
-                Alert.alert('완료', '단어가 삭제되었습니다.');
-                // 목록 새로고침
-                loadWordbookDetail();
-              } else {
-                Alert.alert('오류', '단어 삭제에 실패했습니다.');
-              }
-            } catch (error) {
-              console.error('Failed to remove word:', error);
-              Alert.alert('오류', '단어 삭제 중 오류가 발생했습니다.');
-            }
-          }
-        }
-      ]
-    );
-  };
-
-  // 검색 및 필터링된 단어들
-  const filteredWords = words.filter(word => {
-    const matchesSearch = word.word.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (word.meanings && word.meanings[0]?.korean_meaning.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    if (activeFilter === '전체') return matchesSearch;
-    if (activeFilter === '미암기') return matchesSearch && !word.isMemorized;
-    if (activeFilter === '암기완료') return matchesSearch && word.isMemorized;
-    return matchesSearch;
-  });
-
-  const memorizedCount = words.filter(w => w.isMemorized).length;
-  const notMemorizedCount = words.length - memorizedCount;
-
-  const toggleWordMemorized = async (wordId: number) => {
-    try {
-      const word = words.find(w => w.id === wordId);
-      if (!word) return;
-
-      const isCurrentlyMemorized = word.isMemorized;
-
-      // 데이터베이스 업데이트
-      if (isCurrentlyMemorized) {
-        await databaseService.repo.studyProgress.markAsNotMemorized(wordId);
-      } else {
-        await databaseService.repo.studyProgress.markAsMemorized(wordId);
-      }
-
-      // 로컬 상태 업데이트
-      setWords(prevWords =>
-        prevWords.map(w =>
-          w.id === wordId
-            ? { ...w, isMemorized: !isCurrentlyMemorized }
-            : w
-        )
-      );
-    } catch (error) {
-      console.error('Failed to toggle word memorized state:', error);
-      Alert.alert('오류', '암기 상태 변경에 실패했습니다.');
-    }
-  };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      {/* Back Button */}
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.backBtnText}>←</Text>
+      </TouchableOpacity>
+
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.wordbookTitle}>{wordbook.name}</Text>
-        <Text style={styles.wordbookStats}>
-          전체 {words.length}개 • 암기 {memorizedCount}개 • 미암기 {notMemorizedCount}개
-        </Text>
+        <View style={styles.headerTitle}>
+          <Text style={styles.headerTitleText}>기초 영단어</Text>
+          <Text style={styles.headerSubtitle}>
+            32개 단어 • 마지막 학습: 2시간 전
+          </Text>
+        </View>
+        <TouchableOpacity style={styles.editBtn}>
+          <Text style={styles.editBtnText}>편집</Text>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.searchContainer}>
-        <SearchBar
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="단어 검색..."
-        />
-      </View>
-
-      <View style={styles.filterContainer}>
-        <FilterTabs
-          tabs={filterTabs}
-          activeTab={activeFilter}
-          onTabPress={setActiveFilter}
-        />
-      </View>
-
-      <ScrollView style={styles.wordList}>
-        {filteredWords.length > 0 ? (
-          filteredWords.map((word) => (
-            <TouchableOpacity
-              key={word.id}
-              style={styles.wordItem}
-              onPress={() => handleWordPress(word.id)}
-              onLongPress={() => handleRemoveWord(word.id, word.word)}
-            >
-              <Checkbox
-                checked={word.isMemorized || false}
-                onPress={() => toggleWordMemorized(word.id)}
-              />
-              <View style={styles.wordContent}>
-                <View style={styles.wordHeader}>
-                  <Text style={styles.word}>{word.word}</Text>
-                  {word.pronunciation && (
-                    <Text style={styles.pronunciation}>{word.pronunciation}</Text>
-                  )}
-                  <LevelTag level={(word.difficulty_level || 4) as 1 | 2 | 3 | 4} showStars />
-                </View>
-                <Text style={styles.meaning}>
-                  {word.meanings && word.meanings[0] ? word.meanings[0].korean_meaning : '의미 없음'}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', flex: 1 }]}>
-            <Text style={styles.wordbookStats}>
-              {searchQuery ? '검색 결과가 없습니다' : '단어장이 비어있습니다'}
-            </Text>
+      {/* Content */}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Progress Stats */}
+        <View style={styles.progressStats}>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{stats.totalWords}</Text>
+              <Text style={styles.statLabel}>전체 단어</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{stats.learnedWords}</Text>
+              <Text style={styles.statLabel}>암기완료</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{stats.learningWords}</Text>
+              <Text style={styles.statLabel}>학습중</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{stats.newWords}</Text>
+              <Text style={styles.statLabel}>신규</Text>
+            </View>
           </View>
-        )}
-      </ScrollView>
+          <View style={styles.progressBar}>
+            <View style={styles.progressFill} />
+          </View>
+          <Text style={styles.progressText}>{stats.progressPercent}% 완료</Text>
+        </View>
 
-      <View style={styles.actionButtons}>
-        <TouchableOpacity style={styles.secondaryButton} onPress={handleAddWord}>
-          <Text style={styles.secondaryButtonText}>📝 단어 추가</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleQuizStart}>
-          <Text style={styles.buttonText}>🧠 퀴즈 시작</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[styles.btn, styles.btnPrimary]}
+            onPress={handleStartStudy}
+          >
+            <Text style={[styles.btnText, styles.btnTextPrimary]}>
+              🎯 학습 시작
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.btn, styles.btnSecondary]}
+            onPress={handleStartQuiz}
+          >
+            <Text style={[styles.btnText, styles.btnTextSecondary]}>
+              🧠 퀴즈
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Word Filter Tabs */}
+        <View style={styles.wordFilterTabs}>
+          {['전체 (32)', '미암기 (11)', '완료 (21)'].map((filter, index) => {
+            const filterKey = filter.split(' ')[0];
+            const isActive = activeFilter === filterKey;
+            return (
+              <TouchableOpacity
+                key={filterKey}
+                style={[styles.filterTab, isActive && styles.filterTabActive]}
+                onPress={() => setActiveFilter(filterKey)}
+              >
+                <Text
+                  style={[
+                    styles.filterTabText,
+                    isActive && styles.filterTabTextActive
+                  ]}
+                >
+                  {filter}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Word List */}
+        <View style={styles.wordList}>
+          {filteredWords.map((word) => (
+            <View key={word.id} style={styles.wordItem}>
+              <View style={styles.wordMain}>
+                <Text style={styles.wordText}>{word.word}</Text>
+                <View
+                  style={[
+                    styles.studyStatus,
+                    { backgroundColor: getStatusColor(word.status) }
+                  ]}
+                >
+                  <Text style={styles.studyStatusText}>
+                    {getStatusLabel(word.status)}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.wordMeaning}>
+                {word.partOfSpeech} {word.meaning}
+              </Text>
+              <View style={styles.wordMeta}>
+                <Text style={styles.lastStudied}>{word.lastStudied}</Text>
+                <View style={styles.difficultyStars}>
+                  {renderStars(word.difficulty)}
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

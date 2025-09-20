@@ -1,0 +1,279 @@
+/* Home2: 카드 기반 레이아웃 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #F8FAFC;
+    min-height: 100vh;
+    color: #1E293B;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 상단 네비게이션 */
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    padding: 16px 0;
+}
+
+.nav-brand h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+
+.nav-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.nav-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* 메인 콘텐츠 */
+.main-content {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+/* 기능 카드 */
+.feature-card {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #E2E8F0;
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+}
+
+/* 카드 헤더 */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: #F1F5F9;
+}
+
+.card-badge {
+    background: #EF4444;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.scan-card .card-icon { background: #DBEAFE; }
+.wordbook-card .card-icon { background: #DCFCE7; }
+.exam-card .card-icon { background: #FEF3C7; }
+.stats-card .card-icon { background: #E0E7FF; }
+.settings-card .card-icon { background: #F3E8FF; }
+.help-card .card-icon { background: #FEF2F2; }
+
+/* 카드 콘텐츠 */
+.card-content {
+    margin-bottom: 24px;
+}
+
+.card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 8px;
+}
+
+.card-description {
+    font-size: 0.95rem;
+    color: #64748B;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.card-stats {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.stat {
+    background: #F8FAFC;
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
+}
+
+/* 카드 푸터 */
+.card-footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.card-action-btn {
+    background: #3B82F6;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.card-action-btn:hover {
+    background: #2563EB;
+    transform: translateX(2px);
+}
+
+/* 하단 퀵 액션 */
+.quick-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding: 20px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #E2E8F0;
+}
+
+.quick-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 16px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    min-width: 80px;
+}
+
+.quick-btn:hover {
+    background: #F8FAFC;
+    transform: translateY(-2px);
+}
+
+.quick-icon {
+    font-size: 1.5rem;
+}
+
+.quick-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #64748B;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+    
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .feature-card {
+        padding: 20px;
+    }
+    
+    .quick-actions {
+        gap: 12px;
+        padding: 16px;
+    }
+    
+    .quick-btn {
+        min-width: 60px;
+        padding: 12px;
+    }
+    
+    .nav-brand h1 {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .quick-btn {
+        min-width: 50px;
+        padding: 8px;
+    }
+    
+    .quick-label {
+        font-size: 0.7rem;
+    }
+}
+

@@ -228,27 +228,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       lineHeight: 22,
       textAlign: 'center',
     },
-    // Floating Action Button
-    fab: {
-      position: 'absolute',
-      bottom: 24,
-      right: 24,
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      backgroundColor: '#4F46E5',
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: '#4F46E5',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.2,
-      shadowRadius: 16,
-      elevation: 8,
-      zIndex: 100,
-    },
-    fabText: {
-      fontSize: 24,
-    },
   });
 
   if (loading) {
@@ -374,13 +353,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         </View>
       </ScrollView>
 
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('Scan')}
-      >
-        <Text style={styles.fabText}>📷</Text>
-      </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
