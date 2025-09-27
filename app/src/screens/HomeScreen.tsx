@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, A
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HomeScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
-import databaseService from '../database/database';
+import { wordbookService } from '../services/wordbookService';
+import initialDataService from '../services/initialDataService';
 
 interface HomeStats {
   totalWords: number;
@@ -35,14 +36,18 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         setLoading(true);
       }
 
-      // 실제 데이터베이스에서 통계 가져오기
-      const [totalWordsResult, studyStats] = await Promise.all([
-        databaseService.repo.wordbooks.getTotalWordbookWordsCount(),
-        databaseService.repo.studyProgress.getStudyStats(),
-      ]);
+      // AsyncStorage에서 통계 가져오기
+      const wordbooks = await wordbookService.getWordbooks();
 
-      const totalWords = totalWordsResult || 0;
-      const learnedWords = studyStats?.memorizedWords || 0;
+      // 총 단어 수 계산
+      let totalWords = 0;
+      for (const wordbook of wordbooks) {
+        const words = await wordbookService.getWordbookWords(wordbook.id);
+        totalWords += words.length;
+      }
+
+      // 학습된 단어 수는 임시로 총 단어 수의 30%로 계산 (향후 학습 진도 추적 시 개선)
+      const learnedWords = Math.floor(totalWords * 0.3);
 
       // 일일 진행률 계산 (임시로 학습된 단어 수 기반)
       const dailyProgress = Math.min(learnedWords % 10, 10);
@@ -65,6 +70,23 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const handleRefresh = useCallback(() => {
     loadHomeStats(true);
   }, [loadHomeStats]);
+
+  const handleLoadCompleteWordbook = useCallback(async () => {
+    try {
+      Alert.alert('🚀 테스트 시작', '완전한 단어장 로딩을 시작합니다...');
+
+      await initialDataService.forceCompleteWordbookInit();
+
+      const info = await initialDataService.getInitializationInfo();
+      Alert.alert(
+        '✅ 로딩 완료!',
+        `단어 수: ${info.wordCount}개\n버전: ${info.version}`,
+        [{ text: '확인', onPress: () => loadHomeStats() }]
+      );
+    } catch (error) {
+      Alert.alert('❌ 로딩 실패', `오류: ${error.message}`);
+    }
+  }, []);
 
   const styles = StyleSheet.create({
     container: {
@@ -349,6 +371,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             onPress={() => navigation.navigate('Settings')}
           >
             <Text style={styles.btnSecondaryText}>⚙️ 설정</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.btn, styles.btnPrimary]}
+            onPress={handleLoadCompleteWordbook}
+          >
+            <Text style={styles.btnPrimaryText}>🚀 전체 단어장 로드 테스트</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

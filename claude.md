@@ -12,12 +12,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **프로젝트명**: Scan_Voca (스마트 영단어 학습 앱)
 - **개발 접근**: UI/UX 우선 설계 → 시나리오 정의 → 기능 구현
 - **타겟 사용자**: 중/고등학생
+- **현재 개발 환경**: 🔧 **Expo Dev Client 사용 중** (네이티브 모듈 지원)
 
 ### 🎯 개발 로드맵 및 비즈니스 계획
 #### Phase 1: MVP 개발 (현재)
 - **목표**: 사용자 흐름에 따른 UX/UI 완성 및 기본 기능 구현
-- **인증**: 로컬 SQLite 기반 회원가입/로그인 (임시)
-- **데이터**: 로컬 데이터베이스 기반 오프라인 앱
+- **인증**: AsyncStorage 기반 로컬 인증 (임시)
+- **데이터**: 🚫 **로컬 DB 사용하지 않음** - GPT API를 통한 실시간 단어 정의 생성
 - **수익 모델**: 없음 (기능 검증 단계)
 
 #### Phase 2: 서버 구축 및 확장
@@ -46,18 +47,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 현재 구현 (Phase 1)
 * **Framework:** React Native + Expo SDK 54
+* **개발 환경**: 🔧 **Expo Dev Client** (커스텀 네이티브 모듈 지원)
 * **Language:** TypeScript (strict mode, extends expo/tsconfig.base)
-* **Database:** SQLite (expo-sqlite) + Repository 패턴
-  - 153,256개 단어, 235,437개 의미, 14,446개 예문
+* **Data Source:** 🤖 **GPT API 전용** (🚫 로컬 DB 사용하지 않음)
+  - 모든 단어 정의는 GPT에서 실시간 생성
+  - SmartDictionaryService를 통한 캐싱으로 성능 최적화
 * **Navigation:** React Navigation v6 (Stack + Bottom Tabs)
 * **State Management:** Zustand (authStore) + React Hooks
-* **Authentication:** 로컬 SQLite 기반 (임시)
+* **Authentication:** AsyncStorage 기반 로컬 인증 (임시)
 * **Camera:** `react-native-vision-camera` (4.7.2) + `expo-image-picker`
 * **Image Processing:** `react-native-image-crop-picker` + `react-native-image-editor`
-* **OCR:** `react-native-vision-camera` + Frame Processor (MLKit)
+* **OCR:** `react-native-vision-camera` + Frame Processor (MLKit) - Mock 데이터 사용 중
+* **TTS:** `expo-speech` (Dev Client 환경에서 실제 음성 재생 가능)
 * **Styling:** Theme-based 디자인 시스템 + ThemeProvider
 * **Forms:** `react-hook-form` + `@hookform/resolvers` + `zod` validation
-* **Storage:** `@react-native-async-storage/async-storage`
+* **Storage:** `@react-native-async-storage/async-storage` (단어장 및 설정 저장용)
 
 ### 향후 추가 예정 (Phase 2-3)
 * **Backend:** Node.js + Express/NestJS + PostgreSQL/MongoDB
@@ -111,29 +115,34 @@ data-scripts/              # ✅ 완성된 데이터 처리 스크립트
 
 ## 🎯 명령어 (Commands)
 
-### 개발 환경
+### 개발 환경 (🔧 Dev Client 사용 중)
 ```bash
-# 개발 서버 (앱 디렉토리에서 실행)
-cd app && npm start                    # Expo 개발 서버 실행
-cd app && npx expo start              # 명시적 Expo 실행
-cd app && npx expo start --clear      # 캐시 초기화 후 실행
-cd app && npx expo start --port 8082  # 다른 포트로 실행
+# 개발 서버 (앱 디렉토리에서 실행) - Dev Client 모드
+cd app && npx expo start --dev-client          # Dev Client 모드로 실행
+cd app && npx expo start --dev-client --clear  # 캐시 초기화 후 실행
+cd app && npx expo start --port 8087 --host lan  # 기본 실행 (LAN IP로)
+cd app && npx expo start --dev-client --port 8087 --host lan  # Dev Client 모드
 
-# 모바일 기기에서 접속하기 위한 네트워크 설정
-cd app && npx expo start --lan --port 8081              # LAN 네트워크에서 접속 허용 (권장)
-cd app && npx expo start --tunnel --port 8081           # 터널 모드 (네트워크 문제 시)
-cd app && npx expo start --localhost --port 8081        # 로컬호스트만 허용 (웹 테스트용)
+# 네이티브 모듈 지원을 위한 Dev Client 빌드
+cd app && npx expo run:android        # Android Dev Client 빌드 및 실행
+cd app && npx expo run:ios           # iOS Dev Client 빌드 및 실행
 
-# Expo Go 연결 방법
-# 1. 모바일 기기에 Expo Go 앱 설치
-# 2. PC와 모바일이 같은 Wi-Fi 네트워크에 연결
-# 3. --lan 옵션으로 서버 실행 후 QR 코드 스캔
-# 4. 터미널에 표시된 실제 IP 주소 확인 (예: exp://192.168.0.3:8081)
+# EAS 빌드 (네이티브 모듈 포함)
+cd app && eas build --profile development --platform android   # Dev Client APK 빌드
+cd app && eas build --profile development --platform ios       # Dev Client IPA 빌드
 
-# 플랫폼별 실행
-cd app && npm run android             # Android 시뮬레이터
-cd app && npm run ios                # iOS 시뮬레이터
-cd app && npm run web                # 웹 브라우저
+# Dev Client 연결 방법
+# 1. EAS 빌드로 생성된 Dev Client APK/IPA를 기기에 설치
+# 2. --host lan 옵션으로 LAN IP에서 서버 실행 (중요!)
+# 3. Dev Client 앱에서 QR 코드 스캔 또는 수동으로 서버 주소 입력 (192.168.0.3:8087)
+# 4. expo-speech, react-native-vision-camera 등 네이티브 모듈 정상 작동
+
+# ⚠️ 중요: localhost가 아닌 실제 IP (192.168.0.3) 사용 필수
+# - localhost/127.0.0.1은 모바일 기기에서 접근 불가
+# - 동일한 Wi-Fi 네트워크에서 192.168.0.3:8087로 접속
+
+# 웹 실행 (제한적 - 네이티브 모듈 미지원)
+cd app && npm run web                # 웹 브라우저 (TTS, 카메라 등 제한적)
 
 # 코드 품질 검사
 cd app && npm run typecheck          # TypeScript 타입 체크
@@ -300,57 +309,51 @@ import { Button, WordCard } from '../components/common';
 * **TypeScript**: strict 모드, 모든 Props 인터페이스 정의
 * **네이밍**: 컴포넌트 PascalCase, 함수/변수 camelCase
 * **테마 사용**: `import theme from '../styles/theme'`로 일관된 스타일링
-* **DB 접근**: `src/database/database.ts`를 통한 중앙화된 쿼리 관리
+* **🚫 DB 접근 금지**: 로컬 SQLite DB 사용하지 않음 - GPT API 전용
+* **단어 데이터**: `smartDictionaryService`를 통한 GPT 기반 실시간 생성
 * **사전 연동**: 네이버 사전 WebView 연결 (`https://en.dict.naver.com/#/search?query={word}`)
 * **파일 크기 제한**: 단일 파일은 400줄 이하로 유지, 초과 시 기능별로 분리
 * **모듈화**: 400줄 초과 시 즉시 별도 파일로 분리하여 유지보수성 확보
 
 ---
 
-## 🗄️ 데이터베이스 정보
+## 🤖 데이터 소스 정보
 
-### SQLite 데이터베이스 위치 및 구조
-- **경로**: `data-scripts/processed/vocabulary.db` (60MB)
-- **총 단어 수**: 153,256개
-- **총 의미 수**: 235,437개
-- **예문 수**: 14,446개
-- **특징**: 완전한 영한사전 + 예문 + 사용자 확장 지원
+### GPT API 기반 단어 처리
+- **🚫 로컬 DB 사용하지 않음**: SQLite 데이터베이스 완전 제거
+- **실시간 생성**: 모든 단어 정의는 GPT API에서 실시간 생성
+- **캐싱 시스템**: `SmartDictionaryService`를 통한 메모리 캐싱으로 성능 최적화
+- **데이터 구조**: GPT가 생성하는 일관된 JSON 형태의 단어 정의
 
-### 핵심 테이블 구조
-```sql
--- 단어 기본 정보
-words (id, word, pronunciation, difficulty_level, frequency_rank, cefr_level, created_at, updated_at)
-
--- 단어 의미 (1:N)
-word_meanings (id, word_id, korean_meaning, part_of_speech, definition_en, source, created_at)
-
--- 예문 (1:N)
-examples (id, word_id, sentence_en, sentence_ko, difficulty_level, source, created_at)
-
--- 사용자 단어장
-wordbooks (id, name, description, is_default, created_at, updated_at)
-wordbook_words (id, wordbook_id, word_id, added_at)
-
--- 학습 진도 추적
-study_progress (id, word_id, correct_count, incorrect_count, last_studied, next_review, difficulty_adjustment, created_at, updated_at)
-
--- OCR 관련
-phrase_patterns (id, pattern, word_count, pattern_type, priority, created_at)
-ocr_variants (id, original_word, variant, confidence, variant_type, created_at)
+### GPT 단어 정의 구조
+```typescript
+interface SmartWordDefinition {
+  word: string;
+  pronunciation: string;
+  difficulty: number; // 1-5 레벨
+  meanings: Array<{
+    korean: string;
+    english: string;
+    partOfSpeech: string;
+  }>;
+  source: 'gpt' | 'cache';
+}
 ```
 
-### 레벨 시스템
-- **3000words.txt**: 레벨 분류 기준 (grade 1-3 지정)
-- **자동 레벨링**: 3000words에 없는 단어는 자동으로 Level 4
-- **현재 분포**: Level 1(137개), Level 2(2개), Level 3(3개), Level 4(153,114개)
+### 저장 방식
+- **단어장**: AsyncStorage에 JSON 형태로 저장
+- **사용자 설정**: AsyncStorage 기반 로컬 저장
+- **캐시**: 메모리 기반 임시 저장 (앱 재시작 시 초기화)
+- **인증 정보**: AsyncStorage 기반 로컬 토큰 저장
 
 ---
 
 ## 🎯 현재 개발 상황
 
 ### ✅ 완료된 작업
-- [x] SQLite 데이터베이스 구축 (153,256 단어)
-- [x] 핵심 10,000단어 선별 및 예문 생성
+- [x] ✅ **로컬 DB 완전 제거** - SQLite 데이터베이스 삭제 및 GPT 전용 전환
+- [x] GPT API 기반 SmartDictionaryService 구현
+- [x] AsyncStorage 기반 단어장 시스템 구현
 - [x] 사용자 시나리오 정의
 - [x] UI/UX 목업 설계
 - [x] 네비게이션 플로우 설계
@@ -358,7 +361,6 @@ ocr_variants (id, original_word, variant, confidence, variant_type, created_at)
 - [x] 컴포넌트 라이브러리 완성 (20개)
 - [x] HTML 목업 제작
 - [x] React Navigation 시스템 구현 (Tab + Stack)
-- [x] Repository 패턴 구현 (Word, Wordbook, StudyProgress)
 - [x] 커스텀 Hooks 구현 (useVocabulary, useWordbook, useQuiz)
 - [x] 화면 컴포넌트 구현 (14개 스크린)
 - [x] 상태 관리 시스템 (Zustand + React Hooks)
@@ -381,8 +383,12 @@ ocr_variants (id, original_word, variant, confidence, variant_type, created_at)
 ## ⚠️ 핵심 개발 원칙
 
 ### 🚫 현재 단계 금지사항 (Phase 1 MVP)
-- **외부 API 의존 금지**: 모든 단어 정보는 로컬 DB 사용 (Phase 2에서 서버 연동)
-- **OCR 후처리 생략 금지**: 반드시 DB 매칭 및 사용자 검증 UI 제공
+- **🚫 로컬 DB 사용 금지**: SQLite, Realm 등 로컬 데이터베이스 사용하지 않음
+- **🚫 Repository 패턴 사용 금지**: 기존 database/repositories 디렉토리 참조하지 않음
+- **🚫 databaseService 참조 금지**: 모든 단어 데이터는 GPT API를 통해서만 접근
+- **✅ GPT API 전용**: `smartDictionaryService`만을 통한 단어 정의 생성
+- **✅ AsyncStorage만 허용**: 단어장, 설정, 인증 정보는 AsyncStorage 사용
+- **OCR 후처리 필수**: 반드시 GPT 매칭 및 사용자 검증 UI 제공
 
 
 ### ✅ 필수 준수사항
@@ -395,7 +401,7 @@ ocr_variants (id, original_word, variant, confidence, variant_type, created_at)
 #### 서버 연동 대비 (Phase 2)
 - **API 추상화**: `apiClient` 등 API 레이어 유지하여 서버 전환 용이하게 설계
 - **인증 구조**: AuthStore는 JWT 토큰 구조 유지 (현재는 로컬 토큰)
-- **데이터 동기화**: 로컬 DB와 서버 DB 간 동기화 로직 고려
+- **데이터 동기화**: GPT 캐시와 서버 DB 간 동기화 로직 고려
 - **오프라인 우선**: 서버 연동 후에도 오프라인 기능 유지
 
 #### 수익화 준비 (Phase 3)

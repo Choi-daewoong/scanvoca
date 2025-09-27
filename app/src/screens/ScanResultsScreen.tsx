@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScanResultsScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
+import ttsService from '../services/ttsService';
 
 interface ScannedWord {
   id: number;
@@ -24,45 +25,86 @@ interface ScannedWord {
 export default function ScanResultsScreen({ navigation, route }: ScanResultsScreenProps) {
   const { theme } = useTheme();
 
+  // route params에서 실제 OCR 결과 받기 (카메라에서 이미 처리된 단어 데이터)
+  const { scannedText = '', detectedWords = [], imageUri = '' } = route.params || {};
+
+  // 텍스트 줄이기 함수 (1-2줄로 제한)
+  const truncateText = (text: string, maxLines: number = 2) => {
+    if (!text) return '';
+
+    const words = text.split(' ');
+    const wordsPerLine = 8; // 한 줄당 대략 8단어
+    const maxWords = maxLines * wordsPerLine;
+
+    if (words.length <= maxWords) {
+      return text;
+    }
+
+    return words.slice(0, maxWords).join(' ') + '...';
+  };
+
+  const truncatedText = truncateText(scannedText);
+
   const [activeFilter, setActiveFilter] = useState('모두');
   const [selectAll, setSelectAll] = useState(true);
 
-  // HTML 목업과 동일한 데이터
-  const [scannedText] = useState('"Learning vocabulary is essential for language education and knowledge..."');
-  const [words, setWords] = useState<ScannedWord[]>([
-    {
-      id: 1,
-      word: 'vocabulary',
-      meaning: '어휘, 단어의 집합',
-      partOfSpeech: 'n',
-      level: 3,
-      isSelected: true,
-    },
-    {
-      id: 2,
-      word: 'essential',
-      meaning: '필수적인, 본질적인',
-      partOfSpeech: 'adj',
-      level: 2,
-      isSelected: true,
-    },
-    {
-      id: 3,
-      word: 'education',
-      meaning: '교육',
-      partOfSpeech: 'n',
-      level: 1,
-      isSelected: true,
-    },
-    {
-      id: 4,
-      word: 'knowledge',
-      meaning: '지식',
-      partOfSpeech: 'n',
-      level: 2,
-      isSelected: true,
-    },
-  ]);
+  // 카메라에서 전달받은 단어 데이터를 words 상태로 변환
+  const [words, setWords] = useState<ScannedWord[]>([]);
+
+  // 컴포넌트 마운트 시 카메라에서 받은 데이터를 words 상태로 설정
+  useEffect(() => {
+    if (!detectedWords || detectedWords.length === 0) {
+      setWords([]);
+      return;
+    }
+
+    console.log('📥 ScanResults에서 받은 단어 데이터:', detectedWords);
+
+    // 중복 단어 제거 함수
+    const removeDuplicateWords = (words: any[]) => {
+      const uniqueWords = new Map();
+
+      words.forEach((wordData) => {
+        const word = typeof wordData === 'string' ? wordData : wordData.word;
+        if (word && !uniqueWords.has(word.toLowerCase())) {
+          uniqueWords.set(word.toLowerCase(), wordData);
+        }
+      });
+
+      return Array.from(uniqueWords.values());
+    };
+
+    // 중복 제거된 단어들
+    const uniqueWords = removeDuplicateWords(detectedWords);
+    console.log('🔄 중복 제거 후:', uniqueWords.length, '개 단어');
+
+    // 카메라에서 이미 처리된 데이터를 ScannedWord 형태로 변환
+    const formattedWords = uniqueWords.map((wordData: any, index: number) => {
+      // 문자열인 경우와 객체인 경우 모두 처리
+      if (typeof wordData === 'string') {
+        return {
+          id: index + 1,
+          word: wordData,
+          meaning: '의미를 찾을 수 없습니다',
+          partOfSpeech: 'n',
+          level: 4,
+          isSelected: true,
+        };
+      } else {
+        return {
+          id: index + 1,
+          word: wordData.word || '알 수 없음',
+          meaning: wordData.meaning || '의미를 찾을 수 없습니다',
+          partOfSpeech: wordData.partOfSpeech || 'n',
+          level: wordData.level || 4,
+          isSelected: true,
+        };
+      }
+    });
+
+    console.log('✅ 단어 데이터 변환 완료:', formattedWords);
+    setWords(formattedWords);
+  }, [detectedWords]);
 
   const filteredWords = words.filter(word => {
     if (activeFilter === '모두') return true;
@@ -134,28 +176,6 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
       flex: 1,
       backgroundColor: '#FFFFFF',
     },
-    backBtn: {
-      position: 'absolute',
-      top: 50,
-      left: 20,
-      zIndex: 10,
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
-    },
-    backBtnText: {
-      fontSize: 20,
-      color: '#4F46E5',
-      fontWeight: 'bold',
-    },
     detailHeader: {
       backgroundColor: '#FFFFFF',
       paddingHorizontal: 20,
@@ -200,6 +220,7 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
       borderRadius: 6,
       alignItems: 'center',
       justifyContent: 'center',
+      resizeMode: 'cover', // 이미지가 영역에 맞게 크롭됨
     },
     thumbnailText: {
       fontSize: 12,
@@ -250,23 +271,6 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
       alignItems: 'center',
       gap: 8,
     },
-    checkboxContainer: {
-      width: 20,
-      height: 20,
-      borderRadius: 4,
-      borderWidth: 2,
-      borderColor: '#4F46E5',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    checkboxChecked: {
-      backgroundColor: '#4F46E5',
-    },
-    checkboxText: {
-      color: '#FFFFFF',
-      fontSize: 12,
-      fontWeight: 'bold',
-    },
     selectAllText: {
       fontSize: 14,
       fontWeight: '500',
@@ -308,90 +312,100 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
     },
     wordCard: {
       backgroundColor: '#FFFFFF',
-      borderRadius: 12,
-      padding: 16,
       borderWidth: 1,
-      borderColor: '#E5E7EB',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 2,
-      elevation: 1,
+      borderColor: '#E9ECEF',
+      borderRadius: 12,
+      padding: 20,
+      paddingLeft: 50,
+      minHeight: 120,
+      position: 'relative',
     },
     wordCardSelected: {
       borderColor: '#4F46E5',
       backgroundColor: '#F8FAFF',
     },
-    wordCardHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      marginBottom: 8,
+    wordCheckbox: {
+      position: 'absolute',
+      left: 15,
+      top: '50%',
+      marginTop: -9,
+      width: 18,
+      height: 18,
     },
-    wordCardLeft: {
-      flexDirection: 'row',
+    pronunciationBtn: {
+      position: 'absolute',
+      top: 5,
+      right: 45,
+      backgroundColor: 'rgba(79, 70, 229, 0.08)', // 배경색 연하게
+      padding: 12, // 16 → 12로 적당히 줄임
+      fontSize: 18,
+      minWidth: 36, // 48 → 36으로 줄임
+      minHeight: 36, // 48 → 36으로 줄임
       alignItems: 'center',
-      gap: 12,
+      justifyContent: 'center',
+      borderRadius: 18, // 24 → 18로 줄임
+      // 터치 이벤트 우선순위 보장
+      zIndex: 999,
+      elevation: 999, // Android
+    },
+    pronunciationText: {
+      fontSize: 16, // 20 → 16으로 적당히 줄임
+      color: '#4F46E5', // 색상 추가
     },
     wordLevel: {
-      paddingHorizontal: 8,
-      paddingVertical: 4,
+      position: 'absolute',
+      top: 10,
+      left: 10,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
       borderRadius: 4,
-      minWidth: 40,
-      alignItems: 'center',
+      fontSize: 11,
+      fontWeight: '500',
     },
     wordLevelText: {
-      fontSize: 10,
-      fontWeight: 'bold',
       color: '#FFFFFF',
+      fontSize: 11,
+      fontWeight: '500',
     },
     wordInfo: {
       flex: 1,
     },
     wordText: {
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: '600',
-      color: '#212529',
-      marginBottom: 4,
+      color: '#4F46E5',
+      marginBottom: 8,
     },
-    wordMeaning: {
-      fontSize: 14,
-      color: '#495057',
-      lineHeight: 20,
+    wordMeanings: {
+      gap: 4,
+    },
+    wordLine: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 8,
+      marginBottom: 6,
     },
     wordPosTag: {
       fontSize: 12,
-      fontWeight: '600',
-      color: '#4F46E5',
-    },
-    wordActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    pronunciationBtn: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      fontWeight: '500',
       backgroundColor: '#F8F9FA',
-      alignItems: 'center',
-      justifyContent: 'center',
+      color: '#6C757D',
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+      flexShrink: 0,
     },
-    pronunciationText: {
+    wordMeaning: {
       fontSize: 16,
+      color: '#6C757D',
+      flex: 1,
+      lineHeight: 20,
     },
   });
 
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Back Button */}
-      <TouchableOpacity
-        style={styles.backBtn}
-        onPress={() => navigation.goBack()}
-      >
-        <Text style={styles.backBtnText}>←</Text>
-      </TouchableOpacity>
-
       {/* Header */}
       <View style={styles.detailHeader}>
         <Text style={styles.headerTitle}>인식된 단어들</Text>
@@ -400,10 +414,14 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
         {/* Scan Result Section */}
         <View style={styles.scanResultSection}>
           <View style={styles.scanContent}>
-            <Text style={styles.scanText}>{scannedText}</Text>
-            <View style={styles.scanThumbnail}>
-              <Text style={styles.thumbnailText}>IMG</Text>
-            </View>
+            <Text style={styles.scanText}>{truncatedText}</Text>
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.scanThumbnail} />
+            ) : (
+              <View style={styles.scanThumbnail}>
+                <Text style={styles.thumbnailText}>IMG</Text>
+              </View>
+            )}
           </View>
         </View>
       </View>
@@ -441,12 +459,7 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
             style={styles.selectAllCheckbox}
             onPress={toggleSelectAll}
           >
-            <View style={[
-              styles.checkboxContainer,
-              selectAll && styles.checkboxChecked
-            ]}>
-              {selectAll && <Text style={styles.checkboxText}>✓</Text>}
-            </View>
+            <Text>{selectAll ? '☑️' : '☐'}</Text>
             <Text style={styles.selectAllText}>전체</Text>
           </TouchableOpacity>
 
@@ -481,33 +494,45 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
               ]}
               onPress={() => toggleWordSelection(word.id)}
             >
-              <View style={styles.wordCardHeader}>
-                <View style={styles.wordCardLeft}>
-                  <View style={[
-                    styles.checkboxContainer,
-                    word.isSelected && styles.checkboxChecked
-                  ]}>
-                    {word.isSelected && <Text style={styles.checkboxText}>✓</Text>}
-                  </View>
-                  <View style={[
-                    styles.wordLevel,
-                    { backgroundColor: getLevelColor(word.level) }
-                  ]}>
-                    <Text style={styles.wordLevelText}>Lv.{word.level}</Text>
-                  </View>
-                </View>
-                <View style={styles.wordActions}>
-                  <TouchableOpacity style={styles.pronunciationBtn}>
-                    <Text style={styles.pronunciationText}>🔊</Text>
-                  </TouchableOpacity>
-                </View>
+              <TouchableOpacity
+                style={styles.wordCheckbox}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  toggleWordSelection(word.id);
+                }}
+              >
+                <Text>{word.isSelected ? '☑️' : '☐'}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.pronunciationBtn}
+                activeOpacity={0.7}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} // 더 큰 터치 영역
+                onPress={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault(); // 기본 동작 방지
+                  console.log(`🔊 발음 재생 요청: "${word.word}"`);
+                  ttsService.speakWord(word.word).catch((error) => {
+                    console.error(`❌ 발음 재생 실패: "${word.word}"`, error);
+                  });
+                }}
+                // 터치 이벤트 우선권 보장
+              >
+                <Text style={styles.pronunciationText}>🔊</Text>
+              </TouchableOpacity>
+
+              <View style={[styles.wordLevel, { backgroundColor: getLevelColor(word.level) }]}>
+                <Text style={styles.wordLevelText}>Lv.{word.level}</Text>
               </View>
 
               <View style={styles.wordInfo}>
                 <Text style={styles.wordText}>{word.word}</Text>
-                <Text style={styles.wordMeaning}>
-                  <Text style={styles.wordPosTag}>[{word.partOfSpeech}]</Text> {word.meaning}
-                </Text>
+                <View style={styles.wordMeanings}>
+                  <View style={styles.wordLine}>
+                    <Text style={styles.wordPosTag}>[{word.partOfSpeech}]</Text>
+                    <Text style={styles.wordMeaning}>{word.meaning}</Text>
+                  </View>
+                </View>
               </View>
             </TouchableOpacity>
           ))}

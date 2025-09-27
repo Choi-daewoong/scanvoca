@@ -1,0 +1,1808 @@
+{
+  "version": "1.0-basic",
+  "generatedAt": "2025-09-26T05:08:35.688Z",
+  "totalWords": 100,
+  "description": "100개 기초 단어 테스트용",
+  "words": [
+    {
+      "word": "a",
+      "pronunciation": "/eɪ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "어떤 것을 가리키는 한정사",
+          "partOfSpeech": "determiner",
+          "english": "used when referring to someone or something for the first time in a text or conversation"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I saw a cat in the garden.",
+          "ko": "나는 정원에서 고양이를 보았다."
+        }
+      ]
+    },
+    {
+      "word": "about",
+      "pronunciation": "/əˈbaʊt/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "주변에 대한",
+          "partOfSpeech": "preposition",
+          "english": "on the subject of; concerning"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Let's talk about your future plans.",
+          "ko": "당신의 미래 계획에 대해 이야기해 봅시다."
+        }
+      ]
+    },
+    {
+      "word": "above",
+      "pronunciation": "/əˈbʌv/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "위에",
+          "partOfSpeech": "preposition",
+          "english": "at a higher level or layer than"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The sun is above the clouds.",
+          "ko": "태양은 구름 위에 있다."
+        }
+      ]
+    },
+    {
+      "word": "across",
+      "pronunciation": "/əˈkrɔːs/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "건너편에",
+          "partOfSpeech": "preposition",
+          "english": "from one side to the other side"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She walked across the street to the park.",
+          "ko": "그녀는 거리를 건너 공원으로 갔다."
+        }
+      ]
+    },
+    {
+      "word": "act",
+      "pronunciation": "/ækt/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "행동하다",
+          "partOfSpeech": "verb",
+          "english": "take action; do something"
+        }
+      ],
+      "examples": [
+        {
+          "en": "He decided to act on the new information.",
+          "ko": "그는 새로운 정보에 대해 행동하기로 결정했다."
+        }
+      ]
+    },
+    {
+      "word": "add",
+      "pronunciation": "/æd/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "더하다",
+          "partOfSpeech": "verb",
+          "english": "To combine numbers to find their total"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I need to add 5 and 3 to get 8.",
+          "ko": "5와 3을 더해서 8을 얻어야 해."
+        }
+      ]
+    },
+    {
+      "word": "address",
+      "pronunciation": "/əˈdrɛs/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "주소",
+          "partOfSpeech": "noun",
+          "english": "The location where someone lives or a place where something is located"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Can you tell me your address?",
+          "ko": "당신의 주소를 알려줄 수 있나요?"
+        }
+      ]
+    },
+    {
+      "word": "adult",
+      "pronunciation": "/ˈædʌlt/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "성인",
+          "partOfSpeech": "noun",
+          "english": "A person who is fully grown and mature"
+        }
+      ],
+      "examples": [
+        {
+          "en": "In most countries, you are considered an adult when you turn 18.",
+          "ko": "대부분의 나라에서, 18살이 되면 성인으로 간주됩니다."
+        }
+      ]
+    },
+    {
+      "word": "afraid",
+      "pronunciation": "/əˈfreɪd/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "두려워하는",
+          "partOfSpeech": "adjective",
+          "english": "Feeling fear or anxiety about something"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I'm afraid of spiders.",
+          "ko": "나는 거미를 무서워해."
+        }
+      ]
+    },
+    {
+      "word": "after",
+      "pronunciation": "/ˈæftər/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "이후에",
+          "partOfSpeech": "preposition",
+          "english": "Following in time or place"
+        }
+      ],
+      "examples": [
+        {
+          "en": "We can go for a walk after dinner.",
+          "ko": "저녁 식사 후에 산책을 갈 수 있어."
+        }
+      ]
+    },
+    {
+      "word": "afternoon",
+      "pronunciation": "/ˌæftərˈnuːn/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "오후",
+          "partOfSpeech": "noun",
+          "english": "the time from noon or lunchtime to evening"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Let's meet in the afternoon.",
+          "ko": "오후에 만나요."
+        }
+      ]
+    },
+    {
+      "word": "again",
+      "pronunciation": "/əˈɡɛn/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "다시",
+          "partOfSpeech": "adverb",
+          "english": "once more; another time"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Can you say that again, please?",
+          "ko": "다시 한 번 말해 줄 수 있나요?"
+        }
+      ]
+    },
+    {
+      "word": "against",
+      "pronunciation": "/əˈɡɛnst/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "~에 반대하여",
+          "partOfSpeech": "preposition",
+          "english": "in opposition to; contrary to"
+        }
+      ],
+      "examples": [
+        {
+          "en": "He leaned against the wall.",
+          "ko": "그는 벽에 기대어 있었다."
+        }
+      ]
+    },
+    {
+      "word": "age",
+      "pronunciation": "/eɪdʒ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "나이",
+          "partOfSpeech": "noun",
+          "english": "the length of time that a person has lived or a thing has existed"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She is the same age as me.",
+          "ko": "그녀는 나와 동갑이다."
+        }
+      ]
+    },
+    {
+      "word": "ago",
+      "pronunciation": "/əˈɡoʊ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "전에",
+          "partOfSpeech": "adverb",
+          "english": "before the present time"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I saw him a week ago.",
+          "ko": "일주일 전에 그를 봤어."
+        }
+      ]
+    },
+    {
+      "word": "agree",
+      "pronunciation": "/əˈɡriː/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "동의하다",
+          "partOfSpeech": "동사",
+          "english": "to have the same opinion as someone else"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I agree with your idea.",
+          "ko": "나는 네 아이디어에 동의해."
+        }
+      ]
+    },
+    {
+      "word": "ahead",
+      "pronunciation": "/əˈhed/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "앞에",
+          "partOfSpeech": "부사",
+          "english": "in or toward the front"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Keep walking ahead until you see the park.",
+          "ko": "공원을 볼 때까지 계속 앞으로 걸어가."
+        }
+      ]
+    },
+    {
+      "word": "air",
+      "pronunciation": "/ɛr/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "공기",
+          "partOfSpeech": "명사",
+          "english": "the mixture of gases that surrounds the Earth and that we breathe"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The air in the mountains is fresh and clean.",
+          "ko": "산악지대의 공기는 상쾌하고 깨끗하다."
+        }
+      ]
+    },
+    {
+      "word": "airplane",
+      "pronunciation": "/ˈɛrˌpleɪn/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "비행기",
+          "partOfSpeech": "명사",
+          "english": "a vehicle with wings that flies in the air"
+        }
+      ],
+      "examples": [
+        {
+          "en": "We took an airplane to travel to another country.",
+          "ko": "다른 나라로 여행하기 위해 비행기를 탔다."
+        }
+      ]
+    },
+    {
+      "word": "album",
+      "pronunciation": "/ˈælˌbəm/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "앨범",
+          "partOfSpeech": "명사",
+          "english": "a collection of songs or photographs"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I bought a new album of my favorite band.",
+          "ko": "내가 좋아하는 밴드의 새 앨범을 샀다."
+        }
+      ]
+    },
+    {
+      "word": "all",
+      "pronunciation": "/ɔːl/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "모든",
+          "partOfSpeech": "determiner",
+          "english": "the whole quantity or extent of"
+        }
+      ],
+      "examples": [
+        {
+          "en": "All students must wear uniforms.",
+          "ko": "모든 학생들은 교복을 입어야 합니다."
+        }
+      ]
+    },
+    {
+      "word": "almost",
+      "pronunciation": "/ˈɔːlmoʊst/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "거의",
+          "partOfSpeech": "adverb",
+          "english": "nearly all"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I almost missed the bus.",
+          "ko": "나는 버스를 놓칠 뻔했다."
+        }
+      ]
+    },
+    {
+      "word": "alone",
+      "pronunciation": "/əˈloʊn/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "혼자",
+          "partOfSpeech": "adverb",
+          "english": "by oneself"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She prefers to work alone.",
+          "ko": "그녀는 혼자서 일하는 것을 선호한다."
+        }
+      ]
+    },
+    {
+      "word": "along",
+      "pronunciation": "/əˈlɔːŋ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "곁에",
+          "partOfSpeech": "preposition",
+          "english": "in a line next to something long"
+        }
+      ],
+      "examples": [
+        {
+          "en": "We walked along the river.",
+          "ko": "우리는 강가를 따라 걸었다."
+        }
+      ]
+    },
+    {
+      "word": "already",
+      "pronunciation": "/ɔːlˈrɛdi/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "이미",
+          "partOfSpeech": "adverb",
+          "english": "before or by now or the time in question"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I have already finished my homework.",
+          "ko": "나는 이미 숙제를 끝냈다."
+        }
+      ]
+    },
+    {
+      "word": "alright",
+      "pronunciation": "/ɔːlˈraɪt/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "괜찮은, 괜찮아",
+          "partOfSpeech": "부사",
+          "english": "Satisfactory; acceptable"
+        }
+      ],
+      "examples": [
+        {
+          "en": "It's alright to make mistakes as long as you learn from them.",
+          "ko": "실수를 해도 배우면 괜찮아."
+        }
+      ]
+    },
+    {
+      "word": "also",
+      "pronunciation": "/ˈɔːlsoʊ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "또한, 또",
+          "partOfSpeech": "부사",
+          "english": "In addition; too"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I would like some coffee, and also a piece of cake.",
+          "ko": "커피도 하나 주세요, 그리고 케이크도요."
+        }
+      ]
+    },
+    {
+      "word": "always",
+      "pronunciation": "/ˈɔːlweɪz/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "항상, 언제나",
+          "partOfSpeech": "부사",
+          "english": "At all times; on every occasion"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She always arrives early for class.",
+          "ko": "그녀는 수업에 항상 일찍 도착해."
+        }
+      ]
+    },
+    {
+      "word": "and",
+      "pronunciation": "/ænd/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "그리고, 및",
+          "partOfSpeech": "접속사",
+          "english": "Used to connect words or phrases"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I like to read books and watch movies.",
+          "ko": "책을 읽고 영화를 보는 것을 좋아해."
+        }
+      ]
+    },
+    {
+      "word": "animal",
+      "pronunciation": "/ˈænɪməl/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "동물",
+          "partOfSpeech": "명사",
+          "english": "A living organism that feeds on organic matter"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The zoo has a variety of animal species.",
+          "ko": "그 동물원에는 다양한 동물 종들이 있어."
+        }
+      ]
+    },
+    {
+      "word": "another",
+      "pronunciation": "/əˈnəðər/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "또 다른",
+          "partOfSpeech": "대명사",
+          "english": "One more; an additional"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I'll have another piece of cake, please.",
+          "ko": "제게 또 다른 조각 케이크를 주세요."
+        }
+      ]
+    },
+    {
+      "word": "answer",
+      "pronunciation": "/ˈansər/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "대답하다",
+          "partOfSpeech": "동사",
+          "english": "To respond to a question or statement"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Can you answer this question for me?",
+          "ko": "이 질문에 대답해 줄 수 있나요?"
+        }
+      ]
+    },
+    {
+      "word": "any",
+      "pronunciation": "/ˈeni/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "어떤",
+          "partOfSpeech": "대명사",
+          "english": "Used to refer to one or some of a thing or number of things, no matter how much or how many"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Do you have any questions?",
+          "ko": "질문이 있으신가요?"
+        }
+      ]
+    },
+    {
+      "word": "apartment",
+      "pronunciation": "/əˈpɑːrtmənt/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "아파트",
+          "partOfSpeech": "명사",
+          "english": "A set of rooms for living in, usually on one floor of a building"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She lives in a small apartment in the city.",
+          "ko": "그녀는 도시의 작은 아파트에 살고 있습니다."
+        }
+      ]
+    },
+    {
+      "word": "apple",
+      "pronunciation": "/ˈæpl/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "사과",
+          "partOfSpeech": "명사",
+          "english": "A round fruit with red or green skin and a whitish interior"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I like to eat an apple every day.",
+          "ko": "저는 매일 사과를 먹는 것을 좋아합니다."
+        }
+      ]
+    },
+    {
+      "word": "area",
+      "pronunciation": "/ˈɛriə/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "지역",
+          "partOfSpeech": "noun",
+          "english": "A region or part of a town, a country, or the world"
+        }
+      ],
+      "examples": [
+        {
+          "en": "This park covers a large area.",
+          "ko": "이 공원은 넓은 지역을 커버합니다."
+        }
+      ]
+    },
+    {
+      "word": "arm",
+      "pronunciation": "/ɑːrm/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "팔",
+          "partOfSpeech": "noun",
+          "english": "The part of the body between the shoulder and the hand"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She broke her arm while playing soccer.",
+          "ko": "그녀는 축구를 하다가 팔을 부셨어요."
+        }
+      ]
+    },
+    {
+      "word": "around",
+      "pronunciation": "/əˈraʊnd/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "주위에",
+          "partOfSpeech": "adverb",
+          "english": "In a circle or a curve; surrounding"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The children ran around the playground.",
+          "ko": "어린이들이 놀이터 주위를 뛰었어요."
+        }
+      ]
+    },
+    {
+      "word": "arrive",
+      "pronunciation": "/əˈraɪv/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "도착하다",
+          "partOfSpeech": "verb",
+          "english": "To reach a place, especially at the end of a journey"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The train will arrive at 3 p.m.",
+          "ko": "기차는 오후 3시에 도착할 것입니다."
+        }
+      ]
+    },
+    {
+      "word": "art",
+      "pronunciation": "/ɑːrt/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "미술",
+          "partOfSpeech": "noun",
+          "english": "The expression or application of human creative skill and imagination"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She enjoys creating art with watercolors.",
+          "ko": "그녀는 수채화로 예술 작품을 만드는 것을 즐깁니다."
+        }
+      ]
+    },
+    {
+      "word": "as",
+      "pronunciation": "/əz/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "동일한 정도로",
+          "partOfSpeech": "adverb",
+          "english": "to the same degree"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She is as tall as her brother.",
+          "ko": "그녀는 그녀의 형제만큼 키가 크다."
+        }
+      ]
+    },
+    {
+      "word": "ask",
+      "pronunciation": "/æsk/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "묻다, 질문하다",
+          "partOfSpeech": "verb",
+          "english": "to inquire or request"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I will ask the teacher for help.",
+          "ko": "나는 선생님에게 도움을 요청할 것이다."
+        }
+      ]
+    },
+    {
+      "word": "at",
+      "pronunciation": "/æt/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "~에, ~에서",
+          "partOfSpeech": "preposition",
+          "english": "in or near a particular place"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I am waiting at the bus stop.",
+          "ko": "나는 버스 정류장에서 기다리고 있다."
+        }
+      ]
+    },
+    {
+      "word": "aunt",
+      "pronunciation": "/ænt/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "고모, 이모",
+          "partOfSpeech": "noun",
+          "english": "the sister of one's parent"
+        }
+      ],
+      "examples": [
+        {
+          "en": "My aunt lives in a different city.",
+          "ko": "내 고모는 다른 도시에 살고 계십니다."
+        }
+      ]
+    },
+    {
+      "word": "autumn",
+      "pronunciation": "/ˈɔːtəm/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "가을",
+          "partOfSpeech": "noun",
+          "english": "the season between summer and winter"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The leaves change color in autumn.",
+          "ko": "가을에 잎들이 색깔을 바꾼다."
+        }
+      ]
+    },
+    {
+      "word": "away",
+      "pronunciation": "/əˈweɪ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "멀리",
+          "partOfSpeech": "부사",
+          "english": "at a distance from a particular place, person, or thing"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She ran away from the dog.",
+          "ko": "그녀는 개로부터 멀리 달아났다."
+        }
+      ]
+    },
+    {
+      "word": "baby",
+      "pronunciation": "/ˈbeɪbi/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "아기",
+          "partOfSpeech": "명사",
+          "english": "a very young child, especially one that has not yet begun to walk or talk"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The baby is sleeping peacefully.",
+          "ko": "아기가 평화롭게 잠들었다."
+        }
+      ]
+    },
+    {
+      "word": "back",
+      "pronunciation": "/bæk/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "뒤",
+          "partOfSpeech": "명사",
+          "english": "the rear surface of the human body from the shoulders to the hips"
+        }
+      ],
+      "examples": [
+        {
+          "en": "He carried the heavy box on his back.",
+          "ko": "그는 무거운 상자를 등에 메었다."
+        }
+      ]
+    },
+    {
+      "word": "bad",
+      "pronunciation": "/bæd/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "나쁜",
+          "partOfSpeech": "형용사",
+          "english": "of poor quality or a low standard; not satisfactory or acceptable"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Eating too much candy is bad for your health.",
+          "ko": "과자를 너무 많이 먹는 것은 건강에 좋지 않다."
+        }
+      ]
+    },
+    {
+      "word": "badminton",
+      "pronunciation": "/ˈbæd.mɪn.tən/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "배드민턴",
+          "partOfSpeech": "명사",
+          "english": "a game played on a rectangular court by two or four players who hit a shuttlecock over a net with a light, long-handled racket"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Let's play badminton in the park this weekend.",
+          "ko": "이번 주말에 공원에서 배드민턴을 하자."
+        }
+      ]
+    },
+    {
+      "word": "bag",
+      "pronunciation": "/bæɡ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "가방",
+          "partOfSpeech": "noun",
+          "english": "A container made of flexible material with an opening at the top, used for carrying things"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She put her books in the bag.",
+          "ko": "그녀는 책을 가방에 넣었다."
+        }
+      ]
+    },
+    {
+      "word": "bake",
+      "pronunciation": "/beɪk/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "굽다",
+          "partOfSpeech": "verb",
+          "english": "To cook food in an oven without direct exposure to a flame"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She likes to bake cookies on the weekends.",
+          "ko": "그녀는 주말에 쿠키를 굽는 것을 좋아한다."
+        }
+      ]
+    },
+    {
+      "word": "ball",
+      "pronunciation": "/bɔːl/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "공",
+          "partOfSpeech": "noun",
+          "english": "A round object that is used in sports and games"
+        }
+      ],
+      "examples": [
+        {
+          "en": "He kicked the ball into the goal.",
+          "ko": "그는 공을 골대로 찼다."
+        }
+      ]
+    },
+    {
+      "word": "banana",
+      "pronunciation": "/bəˈnænə/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "바나나",
+          "partOfSpeech": "noun",
+          "english": "A long curved fruit with a yellow skin and soft, sweet flesh"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She ate a banana for breakfast.",
+          "ko": "그녀는 아침에 바나나를 먹었다."
+        }
+      ]
+    },
+    {
+      "word": "bank",
+      "pronunciation": "/bæŋk/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "은행",
+          "partOfSpeech": "noun",
+          "english": "A financial institution that provides various financial services, such as accepting deposits and lending money"
+        }
+      ],
+      "examples": [
+        {
+          "en": "He went to the bank to deposit his paycheck.",
+          "ko": "그는 월급을 입금하기 위해 은행에 갔다."
+        }
+      ]
+    },
+    {
+      "word": "base",
+      "pronunciation": "/beɪs/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "기초",
+          "partOfSpeech": "noun",
+          "english": "The bottom or lowest part of something"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She built her argument on the base of solid evidence.",
+          "ko": "그녀는 확고한 증거의 기초 위에 주장을 구축했다."
+        }
+      ]
+    },
+    {
+      "word": "baseball",
+      "pronunciation": "/ˈbeɪsˌbɔːl/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "야구",
+          "partOfSpeech": "noun",
+          "english": "A game played with a bat and ball by two teams of nine players each"
+        }
+      ],
+      "examples": [
+        {
+          "en": "He enjoys playing baseball with his friends on weekends.",
+          "ko": "그는 주말에 친구들과 야구를 즐기는 것을 즐긴다."
+        }
+      ]
+    },
+    {
+      "word": "basket",
+      "pronunciation": "/ˈbæskɪt/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "바구니",
+          "partOfSpeech": "noun",
+          "english": "A container made of woven material used for carrying or storing items"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She picked apples and put them in the basket.",
+          "ko": "그녀는 사과를 따서 바구니에 넣었다."
+        }
+      ]
+    },
+    {
+      "word": "basketball",
+      "pronunciation": "/ˈbæskɪtˌbɔːl/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "농구",
+          "partOfSpeech": "noun",
+          "english": "A team sport played on a rectangular court with a raised basket at each end"
+        }
+      ],
+      "examples": [
+        {
+          "en": "He practices basketball every day to improve his skills.",
+          "ko": "그는 매일 농구를 연습하여 실력을 향상시킨다."
+        }
+      ]
+    },
+    {
+      "word": "bat",
+      "pronunciation": "/bæt/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "방망이",
+          "partOfSpeech": "noun",
+          "english": "A club-shaped implement used in sports such as baseball and cricket"
+        }
+      ],
+      "examples": [
+        {
+          "en": "He swung the bat and hit the ball out of the park.",
+          "ko": "그는 방망이를 휘두르고 공을 공원 밖으로 쳤다."
+        }
+      ]
+    },
+    {
+      "word": "bath",
+      "pronunciation": "/bæθ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "목욕",
+          "partOfSpeech": "noun",
+          "english": "a washing of the body, typically in a bathtub or shower"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I take a bath every evening.",
+          "ko": "나는 매일 저녁 목욕을 합니다."
+        }
+      ]
+    },
+    {
+      "word": "be",
+      "pronunciation": "/bi/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "이다",
+          "partOfSpeech": "verb",
+          "english": "to exist or live"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I am a student.",
+          "ko": "나는 학생이다."
+        }
+      ]
+    },
+    {
+      "word": "beach",
+      "pronunciation": "/biːtʃ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "해변",
+          "partOfSpeech": "noun",
+          "english": "a pebbly or sandy shore, especially by the ocean between high- and low-water marks"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Let's go to the beach this weekend.",
+          "ko": "이번 주말에 해변에 가자."
+        }
+      ]
+    },
+    {
+      "word": "bear",
+      "pronunciation": "/ber/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "곰",
+          "partOfSpeech": "noun",
+          "english": "a large, heavy mammal with thick fur and a very short tail"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I saw a bear in the forest.",
+          "ko": "나는 숲 속에서 곰을 봤어."
+        }
+      ]
+    },
+    {
+      "word": "beauty",
+      "pronunciation": "/ˈbjuːti/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "아름다움",
+          "partOfSpeech": "noun",
+          "english": "a combination of qualities, such as shape, color, or form, that pleases the aesthetic senses"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The sunset was a true beauty.",
+          "ko": "일몰은 정말 아름다웠다."
+        }
+      ]
+    },
+    {
+      "word": "because",
+      "pronunciation": "/bɪˈkʌz/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "왜냐하면",
+          "partOfSpeech": "conjunction",
+          "english": "Used to introduce an explanation or reason."
+        }
+      ],
+      "examples": [
+        {
+          "en": "I stayed home because I was sick.",
+          "ko": "나는 아파서 집에 있었어."
+        }
+      ]
+    },
+    {
+      "word": "become",
+      "pronunciation": "/bɪˈkʌm/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "되다",
+          "partOfSpeech": "verb",
+          "english": "Begin to be."
+        }
+      ],
+      "examples": [
+        {
+          "en": "She wants to become a doctor when she grows up.",
+          "ko": "그녀는 커서 의사가 되고 싶어해."
+        }
+      ]
+    },
+    {
+      "word": "bed",
+      "pronunciation": "/bɛd/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "침대",
+          "partOfSpeech": "noun",
+          "english": "A piece of furniture for sleep or rest."
+        }
+      ],
+      "examples": [
+        {
+          "en": "I love my bed because it's so comfortable.",
+          "ko": "내 침대를 좋아하는 이유는 너무 편해서야."
+        }
+      ]
+    },
+    {
+      "word": "bee",
+      "pronunciation": "/biː/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "벌",
+          "partOfSpeech": "noun",
+          "english": "An insect that collects nectar from flowers."
+        }
+      ],
+      "examples": [
+        {
+          "en": "The bee is busy collecting pollen from the flowers.",
+          "ko": "그 벌은 꽃에서 꿀을 모으느라 바쁘다."
+        }
+      ]
+    },
+    {
+      "word": "beef",
+      "pronunciation": "/biːf/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "소고기",
+          "partOfSpeech": "noun",
+          "english": "Meat from a cow."
+        }
+      ],
+      "examples": [
+        {
+          "en": "I prefer chicken over beef.",
+          "ko": "나는 소고기보다 닭고기를 더 좋아해."
+        }
+      ]
+    },
+    {
+      "word": "before",
+      "pronunciation": "/bɪˈfɔːr/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "이전에",
+          "partOfSpeech": "adverb",
+          "english": "at an earlier time"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Please arrive before 9 AM.",
+          "ko": "9시 이전에 도착해주세요."
+        }
+      ]
+    },
+    {
+      "word": "begin",
+      "pronunciation": "/bɪˈɡɪn/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "시작하다",
+          "partOfSpeech": "verb",
+          "english": "to start"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Let's begin the meeting now.",
+          "ko": "지금 회의를 시작합시다."
+        }
+      ]
+    },
+    {
+      "word": "behind",
+      "pronunciation": "/bɪˈhaɪnd/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "뒤에",
+          "partOfSpeech": "adverb",
+          "english": "at the back of something"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The cat is behind the sofa.",
+          "ko": "고양이가 소파 뒤에 있어요."
+        }
+      ]
+    },
+    {
+      "word": "believe",
+      "pronunciation": "/bɪˈliːv/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "믿다",
+          "partOfSpeech": "verb",
+          "english": "to accept that something is true"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I believe in you.",
+          "ko": "나는 너를 믿어."
+        }
+      ]
+    },
+    {
+      "word": "bell",
+      "pronunciation": "/bel/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "종",
+          "partOfSpeech": "noun",
+          "english": "a hollow metal object that makes a ringing sound when struck"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The bell rang for the end of class.",
+          "ko": "종소리가 수업 종료를 알렸다."
+        }
+      ]
+    },
+    {
+      "word": "below",
+      "pronunciation": "/bɪˈloʊ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "아래에",
+          "partOfSpeech": "preposition",
+          "english": "in a lower place"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The book is below the desk.",
+          "ko": "책은 책상 아래에 있습니다."
+        }
+      ]
+    },
+    {
+      "word": "belt",
+      "pronunciation": "/bɛlt/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "벨트",
+          "partOfSpeech": "noun",
+          "english": "a strip of leather or other material worn around the waist"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She wore a black belt with her dress.",
+          "ko": "그녀는 드레스에 검은색 벨트를 차고 있었습니다."
+        }
+      ]
+    },
+    {
+      "word": "beside",
+      "pronunciation": "/bɪˈsaɪd/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "옆에",
+          "partOfSpeech": "preposition",
+          "english": "at the side of; next to"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The cat sat beside the dog.",
+          "ko": "고양이가 개 옆에 앉았습니다."
+        }
+      ]
+    },
+    {
+      "word": "between",
+      "pronunciation": "/bɪˈtwiːn/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "사이에",
+          "partOfSpeech": "preposition",
+          "english": "in or into the space that separates two places, people, or objects"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The park is between the library and the school.",
+          "ko": "공원은 도서관과 학교 사이에 있습니다."
+        }
+      ]
+    },
+    {
+      "word": "big",
+      "pronunciation": "/bɪɡ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "큰",
+          "partOfSpeech": "adjective",
+          "english": "large in size or amount"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She has a big house.",
+          "ko": "그녀는 큰 집을 가지고 있습니다."
+        }
+      ]
+    },
+    {
+      "word": "bike",
+      "pronunciation": "/baɪk/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "자전거",
+          "partOfSpeech": "noun",
+          "english": "A two-wheeled vehicle that is powered by pedaling"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I ride my bike to school every day.",
+          "ko": "매일 학교에 자전거를 타고 갑니다."
+        }
+      ]
+    },
+    {
+      "word": "bill",
+      "pronunciation": "/bɪl/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "계산서",
+          "partOfSpeech": "noun",
+          "english": "A statement of money owed for goods or services"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The waiter brought the bill after we finished our meal.",
+          "ko": "우리가 식사를 마치고 나서 웨이터가 계산서를 가져왔다."
+        }
+      ]
+    },
+    {
+      "word": "bird",
+      "pronunciation": "/bɜːrd/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "새",
+          "partOfSpeech": "noun",
+          "english": "A warm-blooded vertebrate animal with feathers and wings"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I saw a beautiful bird perched on the tree.",
+          "ko": "나무에 앉아 있는 아름다운 새를 봤어."
+        }
+      ]
+    },
+    {
+      "word": "birth",
+      "pronunciation": "/bɜːrθ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "출생",
+          "partOfSpeech": "noun",
+          "english": "The act or process of being born"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Her baby's birth was a joyous occasion for the family.",
+          "ko": "그녀 아기의 출생은 가족에게 기쁜 일이었다."
+        }
+      ]
+    },
+    {
+      "word": "biscuit",
+      "pronunciation": "/ˈbɪskɪt/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "비스킷",
+          "partOfSpeech": "noun",
+          "english": "A small, flat, baked cake that is usually sweet"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I like to have a cup of tea with biscuits in the afternoon.",
+          "ko": "나는 오후에 차 한 잔에 비스킷을 함께 먹는 것을 좋아해."
+        }
+      ]
+    },
+    {
+      "word": "black",
+      "pronunciation": "/blæk/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "검은",
+          "partOfSpeech": "adjective",
+          "english": "of the darkest color, like coal or the night sky"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The cat has shiny black fur.",
+          "ko": "고양이는 빛나는 검은 털을 가지고 있습니다."
+        }
+      ]
+    },
+    {
+      "word": "blood",
+      "pronunciation": "/blʌd/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "피",
+          "partOfSpeech": "noun",
+          "english": "the red liquid that flows through the bodies of humans and animals"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She cut her finger and blood started to flow.",
+          "ko": "그녀는 손가락을 베었고 피가 흘러나기 시작했습니다."
+        }
+      ]
+    },
+    {
+      "word": "blue",
+      "pronunciation": "/bluː/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "파란",
+          "partOfSpeech": "adjective",
+          "english": "the color of the sky on a clear day"
+        }
+      ],
+      "examples": [
+        {
+          "en": "The ocean looked beautiful with its deep blue color.",
+          "ko": "깊은 파란색으로 아름다운 바다가 보였습니다."
+        }
+      ]
+    },
+    {
+      "word": "board",
+      "pronunciation": "/bɔːrd/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "판자",
+          "partOfSpeech": "noun",
+          "english": "a long, flat piece of wood or other hard material used for a particular purpose"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She wrote her name on the board with chalk.",
+          "ko": "그녀는 분필로 칠판에 자신의 이름을 썼습니다."
+        }
+      ]
+    },
+    {
+      "word": "boat",
+      "pronunciation": "/boʊt/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "배",
+          "partOfSpeech": "noun",
+          "english": "a small vessel for travel on water"
+        }
+      ],
+      "examples": [
+        {
+          "en": "We went fishing on a boat last weekend.",
+          "ko": "지난 주말에 우리는 배로 낚시를 하러 갔습니다."
+        }
+      ]
+    },
+    {
+      "word": "body",
+      "pronunciation": "/ˈbɑːdi/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "신체",
+          "partOfSpeech": "noun",
+          "english": "The physical structure of a person or an animal"
+        }
+      ],
+      "examples": [
+        {
+          "en": "She has a healthy body.",
+          "ko": "그녀는 건강한 신체를 가지고 있습니다."
+        }
+      ]
+    },
+    {
+      "word": "bone",
+      "pronunciation": "/boʊn/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "뼈",
+          "partOfSpeech": "noun",
+          "english": "The hard tissue forming the skeleton of vertebrates"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Dogs love to chew on bones.",
+          "ko": "개들은 뼈를 씹는 것을 좋아합니다."
+        }
+      ]
+    },
+    {
+      "word": "book",
+      "pronunciation": "/bʊk/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "책",
+          "partOfSpeech": "noun",
+          "english": "A written or printed work consisting of pages glued or sewn together along one side and bound in covers"
+        }
+      ],
+      "examples": [
+        {
+          "en": "I enjoy reading books in my free time.",
+          "ko": "나는 여가 시간에 책을 읽는 것을 즐깁니다."
+        }
+      ]
+    },
+    {
+      "word": "borrow",
+      "pronunciation": "/ˈbɑːroʊ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "빌리다",
+          "partOfSpeech": "verb",
+          "english": "To take and use something that belongs to someone else with the intention of returning it"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Can I borrow your pen for a moment?",
+          "ko": "잠시 당신의 펜을 빌릴 수 있을까요?"
+        }
+      ]
+    },
+    {
+      "word": "both",
+      "pronunciation": "/boʊθ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "둘 다",
+          "partOfSpeech": "pronoun",
+          "english": "Used to refer to two people or things, considered together"
+        }
+      ],
+      "examples": [
+        {
+          "en": "Both of them are talented musicians.",
+          "ko": "그 둘 다가 재능 있는 음악가입니다."
+        }
+      ]
+    },
+    {
+      "word": "bottle",
+      "pronunciation": "/ˈbɑːtl/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "병",
+          "partOfSpeech": "noun",
+          "english": "A container typically made of glass or plastic, used for storing liquids."
+        }
+      ],
+      "examples": [
+        {
+          "en": "She filled the bottle with water.",
+          "ko": "그녀는 병에 물을 채웠다."
+        }
+      ]
+    },
+    {
+      "word": "bottom",
+      "pronunciation": "/ˈbɑːtəm/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "바닥",
+          "partOfSpeech": "noun",
+          "english": "The lowest point or part of something."
+        }
+      ],
+      "examples": [
+        {
+          "en": "The treasure was hidden at the bottom of the sea.",
+          "ko": "보물은 바닷속 깊은 곳에 숨겨져 있었다."
+        }
+      ]
+    },
+    {
+      "word": "box",
+      "pronunciation": "/bɑːks/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "상자",
+          "partOfSpeech": "noun",
+          "english": "A container with a flat base and sides, typically square or rectangular."
+        }
+      ],
+      "examples": [
+        {
+          "en": "He put the gift in a box and wrapped it with a ribbon.",
+          "ko": "그는 선물을 상자에 넣고 리본으로 감았다."
+        }
+      ]
+    },
+    {
+      "word": "boy",
+      "pronunciation": "/bɔɪ/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "소년",
+          "partOfSpeech": "noun",
+          "english": "A male child or young man."
+        }
+      ],
+      "examples": [
+        {
+          "en": "The boy played soccer with his friends in the park.",
+          "ko": "소년은 친구들과 함께 공원에서 축구를 했다."
+        }
+      ]
+    },
+    {
+      "word": "brave",
+      "pronunciation": "/breɪv/",
+      "difficulty": 1,
+      "meanings": [
+        {
+          "korean": "용감한",
+          "partOfSpeech": "adjective",
+          "english": "Ready to face and endure danger or pain; showing courage."
+        }
+      ],
+      "examples": [
+        {
+          "en": "She was brave enough to stand up to the bully.",
+          "ko": "그녀는 괴롭힘을 주는 사람에 맞서기 충분히 용감했다."
+        }
+      ]
+    }
+  ]
+}

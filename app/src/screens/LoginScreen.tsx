@@ -9,6 +9,8 @@ import {
   Platform,
   TouchableOpacity,
   TextInput,
+  StyleSheet,
+  Dimensions,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,6 +22,9 @@ import {
   Card,
   Typography,
   Header,
+  GoogleIcon,
+  KakaoIcon,
+  NaverIcon,
 } from '../components/common';
 import theme from '../styles/theme';
 
@@ -65,16 +70,13 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'apple' | 'naver' | 'kakao') => {
+  const handleSocialLogin = async (provider: 'google' | 'naver' | 'kakao') => {
     try {
       let authResult;
 
       switch (provider) {
         case 'google':
           authResult = await socialAuthService.signInWithGoogle();
-          break;
-        case 'apple':
-          authResult = await socialAuthService.signInWithApple();
           break;
         case 'kakao':
           authResult = await socialAuthService.signInWithKakao();
@@ -108,32 +110,43 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <Header title="로그인" showBack={false} />
+      {/* 단색 배경 */}
+      <View style={styles.background} />
+
+      {/* 장식용 원형 요소들 */}
+      <View style={[styles.decorCircle, styles.circle1]} />
+      <View style={[styles.decorCircle, styles.circle2]} />
+      <View style={[styles.decorCircle, styles.circle3]} />
 
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ flexGrow: 1, padding: theme.spacing.lg }}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <View style={{ flex: 1, justifyContent: 'center', minHeight: 400 }}>
-          <View style={{ marginBottom: theme.spacing.xxl, alignItems: 'center' }}>
-            <Typography variant="h1" color="primary" style={{ marginBottom: theme.spacing.sm }}>
-              Scan Voca
-            </Typography>
-            <Typography variant="body1" color="textSecondary">
-              영단어 학습의 새로운 경험
-            </Typography>
+        <View style={styles.contentContainer}>
+          {/* 로고 섹션 */}
+          <View style={styles.logoSection}>
+            <View style={styles.logoContainer}>
+              <Typography variant="h1" style={styles.logoText}>
+                Scan Voca
+              </Typography>
+              <Typography variant="body1" style={styles.subtitleText}>
+                영단어 학습의 새로운 경험
+              </Typography>
+            </View>
           </View>
 
-          <Card variant="default" style={{ padding: theme.spacing.lg }}>
+          {/* 로그인 카드 */}
+          <View style={styles.loginCard}>
             <View style={{ marginBottom: theme.spacing.lg }}>
               <Typography variant="h3" style={{ marginBottom: theme.spacing.sm }}>
                 로그인
               </Typography>
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" color="secondary">
                 계정에 로그인하여 학습을 계속하세요
               </Typography>
             </View>
@@ -255,13 +268,12 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             {/* Login Button */}
             <Button
               variant="primary"
-              size="large"
+              size="xl"
               onPress={handleSubmit(onSubmit)}
               disabled={isLoading}
+              title={isLoading ? '로그인 중...' : '로그인'}
               style={{ marginBottom: theme.spacing.md }}
-            >
-              {isLoading ? '로그인 중...' : '로그인'}
-            </Button>
+            />
 
             {/* Forgot Password Link */}
             <TouchableOpacity
@@ -286,12 +298,12 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                   style={{
                     flex: 1,
                     height: 1,
-                    backgroundColor: theme.colors.border,
+                    backgroundColor: theme.colors.border.medium,
                   }}
                 />
                 <Typography
                   variant="caption"
-                  color="textSecondary"
+                  color="secondary"
                   style={{ marginHorizontal: theme.spacing.md }}
                 >
                   또는
@@ -300,59 +312,51 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                   style={{
                     flex: 1,
                     height: 1,
-                    backgroundColor: theme.colors.border,
+                    backgroundColor: theme.colors.border.medium,
                   }}
                 />
               </View>
 
-              <View style={{ gap: theme.spacing.sm }}>
-                <Button
-                  variant="outline"
-                  size="large"
+              <View style={styles.socialButtonsContainer}>
+                <TouchableOpacity
+                  style={[styles.socialButton, styles.googleButton]}
                   onPress={() => handleSocialLogin('google')}
-                  style={{ flexDirection: 'row', alignItems: 'center' }}
                 >
-                  <Typography variant="body1" style={{ marginLeft: theme.spacing.sm }}>
+                  <GoogleIcon width={24} height={24} />
+                  <Typography variant="body1" style={styles.socialButtonText}>
                     Google로 계속하기
                   </Typography>
-                </Button>
+                </TouchableOpacity>
 
-                <Button
-                  variant="outline"
-                  size="large"
-                  onPress={() => handleSocialLogin('apple')}
-                  style={{ flexDirection: 'row', alignItems: 'center' }}
-                >
-                  <Typography variant="body1" style={{ marginLeft: theme.spacing.sm }}>
-                    Apple로 계속하기
-                  </Typography>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="large"
+                <TouchableOpacity
+                  style={[styles.socialButton, styles.kakaoButton]}
                   onPress={() => handleSocialLogin('kakao')}
-                  style={{ flexDirection: 'row', alignItems: 'center' }}
                 >
-                  <Typography variant="body1" style={{ marginLeft: theme.spacing.sm }}>
+                  <KakaoIcon width={24} height={24} />
+                  <Typography variant="body1" style={styles.socialButtonText}>
                     카카오로 계속하기
                   </Typography>
-                </Button>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.socialButton, styles.naverButton]}
+                  onPress={() => handleSocialLogin('naver')}
+                >
+                  <NaverIcon width={24} height={24} />
+                  <Typography variant="body1" style={[styles.socialButtonText, { color: '#FFFFFF' }]}>
+                    네이버로 계속하기
+                  </Typography>
+                </TouchableOpacity>
               </View>
             </View>
-          </Card>
+          </View>
 
           {/* Register Link */}
-          <View
-            style={{
-              marginTop: theme.spacing.lg,
-              alignItems: 'center',
-            }}
-          >
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Typography variant="body2" color="textSecondary">
+          <View style={styles.registerLinkContainer}>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')} style={styles.registerLink}>
+              <Typography variant="body2" style={styles.registerText}>
                 계정이 없으신가요?{' '}
-                <Typography variant="body2" color="primary">
+                <Typography variant="body2" style={styles.registerLinkText}>
                   회원가입
                 </Typography>
               </Typography>
@@ -363,3 +367,156 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     </KeyboardAvoidingView>
   );
 }
+
+const { width, height } = Dimensions.get('window');
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  background: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#667eea',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: theme.spacing.lg,
+    paddingBottom: 80, // 하단 추가 여백으로 네비게이션 바 회피
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: height * 0.9,
+  },
+
+  // 장식용 원형 요소들
+  decorCircle: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  circle1: {
+    width: 200,
+    height: 200,
+    top: -100,
+    right: -100,
+  },
+  circle2: {
+    width: 150,
+    height: 150,
+    bottom: 100,
+    left: -75,
+  },
+  circle3: {
+    width: 80,
+    height: 80,
+    top: height * 0.3,
+    right: 50,
+  },
+
+  // 로고 섹션
+  logoSection: {
+    marginBottom: theme.spacing.xxl,
+    alignItems: 'center',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+  },
+  logoText: {
+    fontSize: 42,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+    marginBottom: theme.spacing.sm,
+  },
+  subtitleText: {
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    fontWeight: '300',
+  },
+
+  // 로그인 카드
+  loginCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 24,
+    padding: theme.spacing.xl,
+    marginHorizontal: theme.spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 15,
+  },
+
+  // 소셜 로그인 버튼
+  socialButtonsContainer: {
+    gap: theme.spacing.md,
+  },
+  socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  googleButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DADCE0',
+  },
+  kakaoButton: {
+    backgroundColor: '#FEE500',
+  },
+  naverButton: {
+    backgroundColor: '#03C75A',
+  },
+  socialButtonText: {
+    marginLeft: theme.spacing.md,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+  },
+
+  // 회원가입 링크
+  registerLinkContainer: {
+    marginTop: theme.spacing.xl,
+    marginBottom: theme.spacing.xxl, // 하단 여백 크게 증가
+    paddingBottom: 40, // 추가 패딩으로 안전 영역 확보
+    alignItems: 'center',
+  },
+  registerLink: {
+    padding: theme.spacing.md,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backdropFilter: 'blur(10px)',
+  },
+  registerText: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  registerLinkText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
+});

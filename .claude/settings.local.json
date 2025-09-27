@@ -44,7 +44,12 @@
       "Bash(npm start:*)",
       "Bash(start http://localhost:8087)",
       "Bash(tasklist)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(start http://localhost:8088)",
+      "Bash(start:*)",
+      "Bash(npx tsc:*)",
+      "Read(//c/Users/pleiades/Downloads/**)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

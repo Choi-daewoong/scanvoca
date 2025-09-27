@@ -1,7 +1,7 @@
 // useQuiz Hook - 퀴즈 관련 상태 관리
 import { useState, useCallback } from 'react';
 import { QuizQuestion, QuizResult, QuizSession, WordWithMeaning } from '../types/types';
-import databaseService from '../database/database';
+import { wordbookService } from '../services/wordbookService';
 
 export interface UseQuizReturn {
   // 상태
@@ -146,7 +146,7 @@ export function useQuiz(): UseQuizReturn {
 
     try {
       // 단어장의 단어들 가져오기
-      const words = await databaseService.repo.wordbooks.getWordbookWords(wordbookId);
+      const words = await wordbookService.getWordbookWords(wordbookId);
 
       if (words.length === 0) {
         setError('단어장에 단어가 없습니다.');

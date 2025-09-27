@@ -89,13 +89,26 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
         const ocrResult = await ocrService.processImage(imageUri);
         console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
 
-        // 감지된 단어들
-        const detectedWordTexts = ocrResult.validWords.map(word => word.cleaned);
+        // 의미 포함된 단어 객체 배열 생성
+        let detectedWordsData = [];
+
+        if (ocrResult.processedWords && ocrResult.processedWords.length > 0) {
+          detectedWordsData = ocrResult.processedWords
+            .filter(word => word.found && word.wordData)
+            .map(word => ({
+              word: word.cleaned,
+              meaning: word.wordData!.meanings?.[0]?.korean || '의미 없음',
+              partOfSpeech: word.wordData!.meanings?.[0]?.partOfSpeech || 'noun',
+              level: word.wordData!.difficulty || 4
+            }));
+        }
+
+        console.log('📤 ScanScreen에서 전달하는 데이터:', detectedWordsData);
 
         // ScanResults로 이동
         navigation.navigate('ScanResults', {
           scannedText: ocrResult.ocrResult.text,
-          detectedWords: detectedWordTexts,
+          detectedWords: detectedWordsData,
           imageUri: imageUri
         });
       }
@@ -138,13 +151,26 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
         const ocrResult = await ocrService.processImage(imageUri);
         console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
 
-        // 감지된 단어들
-        const detectedWordTexts = ocrResult.validWords.map(word => word.cleaned);
+        // 의미 포함된 단어 객체 배열 생성
+        let detectedWordsData = [];
+
+        if (ocrResult.processedWords && ocrResult.processedWords.length > 0) {
+          detectedWordsData = ocrResult.processedWords
+            .filter(word => word.found && word.wordData)
+            .map(word => ({
+              word: word.cleaned,
+              meaning: word.wordData!.meanings?.[0]?.korean || '의미 없음',
+              partOfSpeech: word.wordData!.meanings?.[0]?.partOfSpeech || 'noun',
+              level: word.wordData!.difficulty || 4
+            }));
+        }
+
+        console.log('📤 ScanScreen에서 전달하는 데이터:', detectedWordsData);
 
         // ScanResults로 이동
         navigation.navigate('ScanResults', {
           scannedText: ocrResult.ocrResult.text,
-          detectedWords: detectedWordTexts,
+          detectedWords: detectedWordsData,
           imageUri: imageUri
         });
       }

@@ -155,3 +155,90 @@ export interface AppState {
   loading: boolean;
   error?: string;
 }
+
+// GPT API 관련 타입
+export interface GPTMeaning {
+  partOfSpeech: 'noun' | 'verb' | 'adjective' | 'adverb' | 'preposition' | 'conjunction' | 'interjection';
+  korean: string;
+  english: string;
+  examples: {
+    en: string;
+    ko: string;
+  }[];
+}
+
+export interface GPTWordDefinition {
+  word: string;
+  pronunciation: string;
+  difficulty: 1 | 2 | 3 | 4;
+  meanings: GPTMeaning[];
+  usage_notes?: string;
+  confidence: number;
+}
+
+export interface GPTResponse {
+  definitions: GPTWordDefinition[];
+  processing_time: number;
+  cache_source: 'gpt' | 'cache';
+}
+
+// 캐시된 단어 정보 타입
+export interface CachedWordData {
+  id: number;
+  word: string;
+  pronunciation: string;
+  difficulty: number;
+  gpt_response: string; // JSON string of GPTWordDefinition
+  created_at: string;
+  last_accessed: string;
+  access_count: number;
+}
+
+// 통합된 단어 정의 타입 (캐시 + GPT)
+export interface SmartWordDefinition {
+  word: string;
+  pronunciation: string;
+  difficulty: 1 | 2 | 3 | 4;
+  meanings: GPTMeaning[];
+  usage_notes?: string;
+  confidence: number;
+  source: 'cache' | 'gpt';
+  cached_at?: string;
+  access_count?: number;
+}
+
+// OCR과 GPT를 연결하는 처리된 단어 타입
+export interface ProcessedWordV2 {
+  original: string;
+  cleaned: string;
+  found: boolean;
+  wordData?: SmartWordDefinition;
+  processing_source: 'cache' | 'gpt' | 'none';
+  error?: string;
+}
+
+// 공유 가능한 단어장 타입
+export interface SharedWordbook {
+  id: string;
+  name: string;
+  description: string;
+  words: SmartWordDefinition[];
+  metadata: {
+    created_at: string;
+    word_count: number;
+    difficulty_distribution: Record<number, number>;
+    tags: string[];
+  };
+  sharing_code: string; // 6자리 공유 코드
+}
+
+// 캐시 통계 타입
+export interface CacheStatistics {
+  hitRate: number; // 0-1 사이 값
+  totalWords: number;
+  avgAccessCount: number;
+  totalSize: number; // MB 단위
+  oldestCache: string;
+  newestCache: string;
+  costSaved: number; // USD 단위 (추정)
+}

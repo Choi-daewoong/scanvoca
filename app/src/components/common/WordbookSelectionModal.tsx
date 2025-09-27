@@ -11,7 +11,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Wordbook } from '../../types/types';
-import databaseService from '../../database/database';
+import { wordbookService } from '../../services/wordbookService';
 import theme from '../../styles/theme';
 import Button from './Button';
 import Card from './Card';
@@ -47,7 +47,8 @@ const WordbookSelectionModal: React.FC<WordbookSelectionModalProps> = ({
   const loadWordbooks = async () => {
     try {
       setLoading(true);
-      const wordbookList = await databaseService.getAllWordbooks();
+      // wordbookService를 사용하여 단어장 목록 로드
+      const wordbookList = await wordbookService.getWordbooks();
       setWordbooks(wordbookList);
     } catch (error) {
       console.error('Failed to load wordbooks:', error);
@@ -65,10 +66,16 @@ const WordbookSelectionModal: React.FC<WordbookSelectionModalProps> = ({
 
     try {
       setLoading(true);
-      const newWordbookId = await databaseService.createWordbook(
+
+      // wordbookService를 사용하여 중복 이름 체크 포함
+      const { wordbookService } = await import('../../services/wordbookService');
+      const newWordbookId = await wordbookService.createWordbook(
         newWordbookName.trim(),
         newWordbookDescription.trim()
       );
+
+      // 단어장 목록 새로고침
+      await loadWordbooks();
 
       // 새로 생성된 단어장으로 바로 저장
       onSelectWordbook(newWordbookId);
@@ -79,7 +86,7 @@ const WordbookSelectionModal: React.FC<WordbookSelectionModalProps> = ({
       setShowCreateForm(false);
     } catch (error) {
       console.error('Failed to create wordbook:', error);
-      Alert.alert('오류', '단어장 생성에 실패했습니다.');
+      Alert.alert('오류', error instanceof Error ? error.message : '단어장 생성에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -110,25 +117,34 @@ const WordbookSelectionModal: React.FC<WordbookSelectionModalProps> = ({
           <Typography variant="h4" color="primary">
             {item.name}
           </Typography>
-          {item.is_default && (
+          {item.is_default ? (
             <View style={styles.defaultBadge}>
               <Typography variant="caption" color="inverse">
                 기본
               </Typography>
             </View>
-          )}
+          ) : null}
         </View>
 
-        {item.description && (
+        {item.description ? (
           <Typography variant="body2" color="secondary" style={styles.description}>
             {item.description}
           </Typography>
-        )}
+        ) : null}
 
         <View style={styles.wordbookFooter}>
-          <Typography variant="caption" color="tertiary">
-            단어 수: {(item as any).word_count || 0}개
-          </Typography>
+          <View style={styles.wordCountContainer}>
+            <Typography variant="caption" color="tertiary">
+              단어 수: {(item as any).word_count || 0}개
+            </Typography>
+            {(item as any).group_name ? (
+              <View style={styles.groupBadge}>
+                <Typography variant="caption" color="primary" style={styles.groupText}>
+                  📁 {(item as any).group_name}
+                </Typography>
+              </View>
+            ) : null}
+          </View>
           <Typography variant="caption" color="tertiary">
             {new Date(item.created_at).toLocaleDateString()}
           </Typography>
@@ -341,6 +357,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  wordCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  groupBadge: {
+    backgroundColor: theme.colors.primary.light,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 2,
+    borderRadius: theme.borderRadius.sm,
+  },
+  groupText: {
+    fontSize: 10,
+    fontWeight: '500',
   },
   loadingContainer: {
     flex: 1,

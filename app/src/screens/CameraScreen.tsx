@@ -54,17 +54,43 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
 
       console.log('📷 카메라 사진 촬영 완료:', imageUri);
 
-      // OCR 처리
+      // OCR 처리 (기본 처리 방식 사용)
       const ocrResult = await ocrService.processImage(imageUri);
       console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
 
-      // 감지된 단어들
-      const detectedWordTexts = ocrResult.validWords.map(word => word.cleaned);
+      // processedWords 또는 validWords에서 wordData 추출
+      let detectedWordsData = [];
+
+      console.log('🔍 ocrResult 구조 확인:', {
+        hasProcessedWords: !!ocrResult.processedWords,
+        processedWordsLength: ocrResult.processedWords?.length || 0,
+        processedWords: ocrResult.processedWords
+      });
+
+      if (ocrResult.processedWords && ocrResult.processedWords.length > 0) {
+        console.log('📋 모든 processedWords:', ocrResult.processedWords);
+
+        // processedWords에서 실제 찾은 단어들만 필터링
+        const foundWords = ocrResult.processedWords.filter(word => word.found && word.wordData);
+        console.log('✅ 찾은 단어들:', foundWords);
+
+        detectedWordsData = foundWords.map(word => ({
+          word: word.cleaned,
+          meaning: word.wordData!.meanings?.[0]?.korean || '의미 없음',
+          partOfSpeech: word.wordData!.meanings?.[0]?.partOfSpeech || 'noun',
+          level: word.wordData!.difficulty || 4
+        }));
+
+        console.log('📤 카메라에서 전달하는 데이터:', detectedWordsData);
+      } else {
+        console.log('⚠️ processedWords가 없거나 비어있습니다');
+        detectedWordsData = [];
+      }
 
       // ScanResults로 이동
       navigation.navigate('ScanResults', {
         scannedText: ocrResult.ocrResult.text,
-        detectedWords: detectedWordTexts,
+        detectedWords: detectedWordsData, // 의미 포함된 객체 배열로 전달
         imageUri: imageUri
       });
     } catch (error) {
@@ -102,17 +128,43 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
         const imageUri = result.assets[0].uri;
         console.log('📷 갤러리 이미지 선택 완료:', imageUri);
 
-        // OCR 처리
+        // OCR 처리 (기본 처리 방식 사용)
         const ocrResult = await ocrService.processImage(imageUri);
         console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
 
-        // 감지된 단어들
-        const detectedWordTexts = ocrResult.validWords.map(word => word.cleaned);
+        // processedWords 또는 validWords에서 wordData 추출
+        let detectedWordsData = [];
+
+        console.log('🔍 갤러리 ocrResult 구조 확인:', {
+          hasProcessedWords: !!ocrResult.processedWords,
+          processedWordsLength: ocrResult.processedWords?.length || 0,
+          processedWords: ocrResult.processedWords
+        });
+
+        if (ocrResult.processedWords && ocrResult.processedWords.length > 0) {
+          console.log('📋 갤러리 모든 processedWords:', ocrResult.processedWords);
+
+          // processedWords에서 실제 찾은 단어들만 필터링
+          const foundWords = ocrResult.processedWords.filter(word => word.found && word.wordData);
+          console.log('✅ 갤러리 찾은 단어들:', foundWords);
+
+          detectedWordsData = foundWords.map(word => ({
+            word: word.cleaned,
+            meaning: word.wordData.meanings?.[0]?.korean_meaning || '의미 없음',
+            partOfSpeech: word.wordData.meanings?.[0]?.part_of_speech || 'n',
+            level: word.wordData.difficulty_level || 4
+          }));
+
+          console.log('📤 갤러리에서 전달하는 데이터:', detectedWordsData);
+        } else {
+          console.log('⚠️ 갤러리 processedWords가 없거나 비어있습니다');
+          detectedWordsData = [];
+        }
 
         // ScanResults로 이동
         navigation.navigate('ScanResults', {
           scannedText: ocrResult.ocrResult.text,
-          detectedWords: detectedWordTexts,
+          detectedWords: detectedWordsData, // 의미 포함된 객체 배열로 전달
           imageUri: imageUri
         });
       }

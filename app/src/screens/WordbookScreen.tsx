@@ -13,7 +13,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WordbookScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
-import databaseService from '../database/database';
+import { useWordbook } from '../hooks/useWordbook';
+import { Wordbook } from '../types/types';
+import wordbookService from '../services/wordbookService';
 
 interface WordbookItem {
   id: number;
@@ -37,6 +39,7 @@ interface WordbookGroup {
 export default function WordbookScreen({ navigation }: WordbookScreenProps) {
   const { theme } = useTheme();
   const [wordbooks, setWordbooks] = useState<WordbookItem[]>([]);
+  const { loadWordbooks, wordbooks: hookWordbooks } = useWordbook();
   const [groups, setGroups] = useState<WordbookGroup[]>([]);
   const [showNewWordbookModal, setShowNewWordbookModal] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
@@ -45,57 +48,31 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
   const [selectedWordbooks, setSelectedWordbooks] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
-  // HTML 목업과 동일한 데이터 (order 추가)
-  const wordbookData: WordbookItem[] = [
-    {
-      id: 1,
-      name: "기초 영단어",
-      wordCount: 32,
-      icon: "📖",
-      lastStudied: "2시간 전",
-      progressPercent: 85,
-      order: 0,
-    },
-    {
-      id: 2,
-      name: "토익 필수 단어",
-      wordCount: 156,
-      icon: "💼",
-      lastStudied: "1일 전",
-      progressPercent: 67,
-      order: 1,
-    },
-    {
-      id: 3,
-      name: "일상 회화 표현",
-      wordCount: 89,
-      icon: "💬",
-      lastStudied: "3일 전",
-      progressPercent: 42,
-      order: 2,
-    },
-    {
-      id: 4,
-      name: "스캔한 단어들",
-      wordCount: 23,
-      icon: "📷",
-      lastStudied: "어제",
-      progressPercent: 12,
-      order: 3,
-    },
-    {
-      id: 5,
-      name: "고급 어휘",
-      wordCount: 78,
-      icon: "🎓",
-      lastStudied: "1주일 전",
-      progressPercent: 28,
-      order: 4,
-    },
-  ];
-
   useEffect(() => {
-    setWordbooks(wordbookData.sort((a, b) => (a.order || 0) - (b.order || 0)));
+    const load = async () => {
+      try {
+        // useWordbook hook을 통한 단어장 목록 로드
+        await loadWordbooks();
+        const list = hookWordbooks;
+        const mapped: WordbookItem[] = list.map((wb: Wordbook) => ({
+          id: wb.id,
+          name: wb.name,
+          wordCount: (wb as any).word_count || 0,
+          icon: '📖',
+          lastStudied: '—',
+          progressPercent: 0,
+          order: (wb as any).display_order || 0,
+          groupId: (wb as any).group_id || undefined,
+        }));
+        setWordbooks(mapped);
+
+        // 그룹 기능은 당장 제거 (추후 재구현)
+        setGroups([]);
+      } catch (e) {
+        console.error('Failed to load wordbooks', e);
+      }
+    };
+    load();
   }, []);
 
   // 안드로이드 뒤로가기 버튼 처리
@@ -116,7 +93,7 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
     return () => backHandler.remove();
   }, [isSelectionMode]);
 
-  const moveWordbookUp = (wordbookId: number) => {
+  const moveWordbookUp = async (wordbookId: number) => {
     const currentIndex = wordbooks.findIndex(wb => wb.id === wordbookId && !wb.groupId);
     if (currentIndex > 0) {
       const reorderedWordbooks = [...wordbooks];
@@ -127,11 +104,12 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
       reorderedWordbooks[currentIndex].order = reorderedWordbooks[targetIndex].order;
       reorderedWordbooks[targetIndex].order = temp;
 
+      // 순서 변경 기능은 당장 제거 (AsyncStorage에서는 복잡함)
       setWordbooks(reorderedWordbooks.sort((a, b) => (a.order || 0) - (b.order || 0)));
     }
   };
 
-  const moveWordbookDown = (wordbookId: number) => {
+  const moveWordbookDown = async (wordbookId: number) => {
     const ungroupedWordbooks = wordbooks.filter(wb => !wb.groupId);
     const currentIndex = ungroupedWordbooks.findIndex(wb => wb.id === wordbookId);
 
@@ -147,7 +125,13 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
         currentWb.order = nextWbInAll.order;
         nextWbInAll.order = temp;
 
-        setWordbooks(reorderedWordbooks.sort((a, b) => (a.order || 0) - (b.order || 0)));
+        try {
+          // 순서 변경 기능은 당장 제거 (AsyncStorage에서는 복잡함)
+
+          setWordbooks(reorderedWordbooks.sort((a, b) => (a.order || 0) - (b.order || 0)));
+        } catch (error) {
+          console.error('Failed to update wordbook order:', error);
+        }
       }
     }
   };
@@ -275,17 +259,30 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
     });
   };
 
-  const handleCreateWordbook = () => {
-    if (newWordbookName.trim()) {
-      const newWordbook: WordbookItem = {
-        id: Date.now(),
+  const handleCreateWordbook = async () => {
+    if (!newWordbookName.trim()) return;
+    try {
+      const result = await wordbookService.createWordbook({
         name: newWordbookName.trim(),
-        wordCount: 0,
-        icon: "📚",
-        lastStudied: "방금 전",
-        progressPercent: 0,
-      };
-      setWordbooks([...wordbooks, newWordbook]);
+        description: '',
+      });
+
+      if (result.success && result.wordbook) {
+        const wb = result.wordbook;
+        const item: WordbookItem = {
+          id: wb.id,
+          name: wb.name,
+          wordCount: (wb as any).word_count || 0,
+          icon: '📚',
+          lastStudied: '방금 전',
+          progressPercent: 0,
+          order: (wordbooks[wordbooks.length - 1]?.order || 0) + 1,
+        };
+        setWordbooks(prev => [...prev, item]);
+      }
+    } catch (e) {
+      console.error('Failed to create wordbook', e);
+    } finally {
       setNewWordbookName('');
       setShowNewWordbookModal(false);
     }

@@ -128,21 +128,40 @@ class CameraService {
     }
   }
 
-  // OCR 처리 (현재는 모의 구현)
+  // OCR 처리 (실제 MLKit 구현)
   async processImageForOCR(imageUri: string): Promise<OCRResult> {
-    // 실제 OCR 구현은 나중에 추가
-    // 현재는 모의 데이터 반환
-    console.log('Processing image for OCR:', imageUri);
-    
-    // 모의 OCR 결과
-    const mockWords = ['example', 'vocabulary', 'learning', 'english', 'study'];
-    const mockText = mockWords.join(' ');
-    
-    return {
-      text: mockText,
-      confidence: 0.85,
-      words: mockWords,
-    };
+    console.log('🔍 실제 OCR 처리 시작:', imageUri);
+
+    try {
+      // ocrService를 동적으로 import하여 순환 참조 방지
+      const { ocrService } = await import('./ocrService');
+
+      // 실제 MLKit OCR 처리
+      const ocrResult = await ocrService.extractTextFromImage(imageUri);
+
+      // CameraService의 OCRResult 형태로 변환
+      const words = ocrResult.words.map(word => word.text);
+      const averageConfidence = ocrResult.words.length > 0
+        ? ocrResult.words.reduce((sum, word) => sum + word.confidence, 0) / ocrResult.words.length
+        : 0;
+
+      console.log(`✅ OCR 처리 완료: ${words.length}개 단어, 평균 신뢰도: ${averageConfidence.toFixed(2)}`);
+
+      return {
+        text: ocrResult.text,
+        confidence: averageConfidence,
+        words: words,
+      };
+    } catch (error) {
+      console.error('❌ OCR 처리 실패:', error);
+
+      // 실패 시 fallback
+      return {
+        text: 'OCR processing failed',
+        confidence: 0,
+        words: [],
+      };
+    }
   }
 
   // 이미지를 임시 파일로 저장

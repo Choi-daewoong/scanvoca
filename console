@@ -1,1 +1,29 @@
-Uncaught SyntaxError: Cannot use 'import.meta' outside a module (at index.ts.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable:62345:65)
+
+ | import "./index.ts"
+
+Android Bundling failed 76ms index.ts (1 module)      
+Unable to resolve "../../database/database" from "src\components\common\WordbookSelectionModal.tsx"
+  12 | } from 'react-native';
+  13 | import { Wordbook } from '../../types/types';  
+> 14 | import databaseService from '../../database/database';
+     |                              ^
+  15 | import theme from '../../styles/theme';        
+  16 | import Button from './Button';
+  17 | import Card from './Card';
+
+Import stack:
+
+ src\components\common\WordbookSelectionModal.tsx     
+ | import "../../database/database"
+
+ src\components\common\index.ts
+ | import "./WordbookSelectionModal"
+
+ App.tsx
+ | import "./src/components/common"
+
+ index.ts
+ | import "./App"
+
+ 
+ | import "./index.ts"

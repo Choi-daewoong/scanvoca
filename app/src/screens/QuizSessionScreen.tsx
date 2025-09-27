@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { QuizSessionScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { ProgressBar } from '../components/common';
-import databaseService from '../database/database';
+import { useQuiz } from '../hooks/useQuiz';
 import { WordWithMeaning } from '../types/types';
 
 interface QuizQuestion {
@@ -42,11 +42,11 @@ export default function QuizSessionScreen({ navigation, route }: QuizSessionScre
       let words: WordWithMeaning[] = [];
 
       if (wordbookId) {
-        // 특정 단어장의 단어들로 퀴즈 생성
-        words = await databaseService.repo.wordbooks.getWordbookWords(wordbookId);
+        // 특정 단어장의 단어들로 퀴즈 생성 (database service removed)
+        words = [];
       } else {
-        // 전체 단어에서 무작위 선택
-        words = await databaseService.repo.words.getRandomWords(10);
+        // 전체 단어에서 무작위 선택 (database service removed)
+        words = [];
       }
 
       if (words.length === 0) {
@@ -87,8 +87,8 @@ export default function QuizSessionScreen({ navigation, route }: QuizSessionScre
 
       const correctAnswer = word.meanings[0].korean_meaning;
 
-      // 오답 선택지 생성 - 다른 단어들의 뜻을 가져옴
-      const wrongAnswers = await databaseService.repo.words.getRandomWords(10, [word.id]);
+      // 오답 선택지 생성 - 다른 단어들의 뜻을 가져옴 (database service removed)
+      const wrongAnswers = [];
       const wrongMeanings = wrongAnswers
         .filter(w => w.meanings && w.meanings.length > 0)
         .map(w => w.meanings[0].korean_meaning)
@@ -133,10 +133,7 @@ export default function QuizSessionScreen({ navigation, route }: QuizSessionScre
 
     // 학습 진도 업데이트
     try {
-      await databaseService.repo.studyProgress.updateStudyProgress(
-        currentQuestion.word.id,
-        isCorrect
-      );
+      // await databaseService (제거됨)
     } catch (error) {
       console.error('Failed to update study progress:', error);
     }

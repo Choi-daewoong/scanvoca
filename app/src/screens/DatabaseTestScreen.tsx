@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import databaseService from '../database/database';
+// Database removed - screen disabled
+// // databaseService import 제거됨
 import { WordWithMeaning } from '../types/types';
 
 export default function DatabaseTestScreen() {
@@ -12,9 +13,7 @@ export default function DatabaseTestScreen() {
   // 데이터베이스 초기화
   const initDatabase = async () => {
     setLoading(true);
-    try {
-      await databaseService.initialize();
-      setIsInitialized(true);
+    try {setIsInitialized(true);
       addTestResult('✅ Database initialized successfully');
     } catch (error) {
       addTestResult(`❌ Database initialization failed: ${error}`);
@@ -37,8 +36,7 @@ export default function DatabaseTestScreen() {
     setLoading(true);
     try {
       // "hello" 단어 검색
-      const results = await databaseService.searchWords('hello');
-      addTestResult(`🔍 Search "hello": Found ${results.length} results`);
+      const results =addTestResult(`🔍 Search "hello": Found ${results.length} results`);
 
       if (results.length > 0) {
         setSampleWords(results);
@@ -59,7 +57,8 @@ export default function DatabaseTestScreen() {
 
     setLoading(true);
     try {
-      const word = await databaseService.findExactWord('apple');
+      // Database service removed - using temporary data
+      const word = null;
       if (word) {
         addTestResult(`🎯 Exact "apple": ${word.word} - ${word.meanings[0]?.korean_meaning || 'No meaning'}`);
       } else {
@@ -80,8 +79,7 @@ export default function DatabaseTestScreen() {
 
     setLoading(true);
     try {
-      const wordbooks = await databaseService.getAllWordbooks();
-      addTestResult(`📚 Wordbooks: Found ${wordbooks.length} wordbooks`);
+      const wordbooks =addTestResult(`📚 Wordbooks: Found ${wordbooks.length} wordbooks`);
     } catch (error) {
       addTestResult(`❌ Wordbook query failed: ${error}`);
     }

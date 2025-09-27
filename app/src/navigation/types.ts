@@ -30,7 +30,7 @@ export type RootStackParamList = {
     totalCount: number;
     wordbookId?: number;
   };
-  WordbookDetail: { wordbookId: number };
+  WordbookDetail: { wordbookId: number; wordbookName?: string };
   Settings: undefined;
   StudyStats: undefined;
 };

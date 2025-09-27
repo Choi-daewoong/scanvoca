@@ -1,13 +1,14 @@
-// useWordbook Hook - 단어장 관련 상태 관리
+// useWordbook Hook - AsyncStorage 기반 단어장 관련 상태 관리
 import { useState, useCallback, useEffect } from 'react';
-import databaseService from '../database/database';
-import { Wordbook, WordWithMeaning } from '../types/types';
+import { wordbookService } from '../services/wordbookService';
+import { Wordbook } from '../types/types';
+import { WordWithMeaning } from './useVocabulary';
 
 export interface UseWordbookReturn {
   // 상태
   wordbooks: Wordbook[];
   currentWordbook: Wordbook | null;
-  wordbookWords: WordWithMeaning[];
+  wordbookWords: any[]; // GPT 생성 단어 배열
   isLoading: boolean;
   error: string | null;
 
@@ -18,8 +19,8 @@ export interface UseWordbookReturn {
   createWordbook: (name: string, description?: string) => Promise<number | null>;
   updateWordbook: (id: number, updates: { name?: string; description?: string }) => Promise<boolean>;
   deleteWordbook: (id: number) => Promise<boolean>;
-  addWordToWordbook: (wordbookId: number, wordId: number) => Promise<boolean>;
-  addWordsToWordbook: (wordbookId: number, wordIds: number[]) => Promise<number>;
+  addWordToWordbook: (wordbookId: number, word: string) => Promise<boolean>;
+  addWordsToWordbook: (wordbookId: number, words: string[]) => Promise<number>;
   removeWordFromWordbook: (wordbookId: number, wordId: number) => Promise<boolean>;
   getOrCreateDefaultWordbook: () => Promise<Wordbook>;
 }
@@ -33,179 +34,244 @@ export interface WordbookFilters {
 export function useWordbook(): UseWordbookReturn {
   const [wordbooks, setWordbooks] = useState<Wordbook[]>([]);
   const [currentWordbook, setCurrentWordbook] = useState<Wordbook | null>(null);
-  const [wordbookWords, setWordbookWords] = useState<WordWithMeaning[]>([]);
+  const [wordbookWords, setWordbookWords] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadWordbooks = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
+  const loadWordbooks = useCallback(async (): Promise<void> => {
     try {
-      const result = await databaseService.repo.wordbooks.getAllWordbooks();
-      setWordbooks(result);
+      setIsLoading(true);
+      setError(null);
+
+      console.log('📚 단어장 목록 로드 중...');
+      const loadedWordbooks = await wordbookService.getWordbooks();
+
+      setWordbooks(loadedWordbooks);
+      console.log(`✅ ${loadedWordbooks.length}개 단어장 로드 완료`);
     } catch (err) {
-      console.error('Failed to load wordbooks:', err);
-      setError('단어장 목록을 불러오는 중 오류가 발생했습니다.');
+      const errorMessage = err instanceof Error ? err.message : '단어장 로드 실패';
+      console.error('❌ 단어장 로드 실패:', errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   const selectWordbook = useCallback((wordbook: Wordbook) => {
+    console.log('📖 단어장 선택:', wordbook.name);
     setCurrentWordbook(wordbook);
   }, []);
 
-  const loadWordbookWords = useCallback(async (wordbookId: number, filters?: WordbookFilters) => {
-    setIsLoading(true);
-    setError(null);
-
+  const loadWordbookWords = useCallback(async (wordbookId: number, filters?: WordbookFilters): Promise<void> => {
     try {
-      const result = await databaseService.repo.wordbooks.getWordbookWords(wordbookId, filters);
-      setWordbookWords(result);
+      setIsLoading(true);
+      setError(null);
+
+      console.log('📝 단어장 단어들 로드 중...', wordbookId);
+      const words = await wordbookService.getWordbookWords(wordbookId);
+
+      let filteredWords = words;
+
+      // 필터 적용
+      if (filters) {
+        if (filters.search) {
+          const searchLower = filters.search.toLowerCase();
+          filteredWords = filteredWords.filter((word: any) =>
+            word.word.toLowerCase().includes(searchLower) ||
+            word.meanings?.some((meaning: any) =>
+              meaning.korean.toLowerCase().includes(searchLower)
+            )
+          );
+        }
+
+        if (filters.difficulty_level) {
+          filteredWords = filteredWords.filter((word: any) =>
+            word.difficulty === filters.difficulty_level
+          );
+        }
+      }
+
+      setWordbookWords(filteredWords);
+      console.log(`✅ ${filteredWords.length}개 단어 로드 완료`);
     } catch (err) {
-      console.error('Failed to load wordbook words:', err);
-      setError('단어장 단어를 불러오는 중 오류가 발생했습니다.');
+      const errorMessage = err instanceof Error ? err.message : '단어 로드 실패';
+      console.error('❌ 단어 로드 실패:', errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   const createWordbook = useCallback(async (name: string, description?: string): Promise<number | null> => {
-    setError(null);
-
     try {
-      const wordbookId = await databaseService.repo.wordbooks.createWordbook(name, description);
+      setError(null);
+      console.log('📚 단어장 생성 중...', name);
+
+      const wordbookId = await wordbookService.createWordbook(name, description);
 
       // 단어장 목록 새로고침
       await loadWordbooks();
 
+      console.log('✅ 단어장 생성 완료:', name);
       return wordbookId;
     } catch (err) {
-      console.error('Failed to create wordbook:', err);
-      setError('단어장 생성 중 오류가 발생했습니다.');
+      const errorMessage = err instanceof Error ? err.message : '단어장 생성 실패';
+      console.error('❌ 단어장 생성 실패:', errorMessage);
+      setError(errorMessage);
       return null;
     }
   }, [loadWordbooks]);
 
-  const updateWordbook = useCallback(async (
-    id: number,
-    updates: { name?: string; description?: string }
-  ): Promise<boolean> => {
-    setError(null);
-
+  const updateWordbook = useCallback(async (id: number, updates: { name?: string; description?: string }): Promise<boolean> => {
     try {
-      const success = await databaseService.repo.wordbooks.updateWordbook(id, updates);
+      setError(null);
+      console.log('📝 단어장 업데이트 중...', id);
 
-      if (success) {
-        // 단어장 목록 새로고침
-        await loadWordbooks();
+      await wordbookService.updateWordbook(id, updates.name || '', updates.description);
 
-        // 현재 단어장이 수정된 단어장이라면 업데이트
-        if (currentWordbook?.id === id) {
-          const updatedWordbook = await databaseService.repo.wordbooks.getWordbookById(id);
-          if (updatedWordbook) {
-            setCurrentWordbook(updatedWordbook);
-          }
-        }
+      // 단어장 목록 새로고침
+      await loadWordbooks();
+
+      // 현재 선택된 단어장 업데이트
+      if (currentWordbook?.id === id) {
+        setCurrentWordbook(prev => prev ? { ...prev, ...updates } : null);
       }
 
-      return success;
+      console.log('✅ 단어장 업데이트 완료');
+      return true;
     } catch (err) {
-      console.error('Failed to update wordbook:', err);
-      setError('단어장 수정 중 오류가 발생했습니다.');
+      const errorMessage = err instanceof Error ? err.message : '단어장 업데이트 실패';
+      console.error('❌ 단어장 업데이트 실패:', errorMessage);
+      setError(errorMessage);
       return false;
     }
   }, [loadWordbooks, currentWordbook]);
 
   const deleteWordbook = useCallback(async (id: number): Promise<boolean> => {
-    setError(null);
-
     try {
-      const success = await databaseService.repo.wordbooks.deleteWordbook(id);
+      setError(null);
+      console.log('🗑️ 단어장 삭제 중...', id);
 
-      if (success) {
-        // 단어장 목록 새로고침
-        await loadWordbooks();
+      await wordbookService.deleteWordbook(id);
 
-        // 현재 단어장이 삭제된 단어장이라면 초기화
-        if (currentWordbook?.id === id) {
-          setCurrentWordbook(null);
-          setWordbookWords([]);
-        }
+      // 단어장 목록 새로고침
+      await loadWordbooks();
+
+      // 현재 선택된 단어장이 삭제된 경우 초기화
+      if (currentWordbook?.id === id) {
+        setCurrentWordbook(null);
+        setWordbookWords([]);
       }
 
-      return success;
+      console.log('✅ 단어장 삭제 완료');
+      return true;
     } catch (err) {
-      console.error('Failed to delete wordbook:', err);
-      setError('단어장 삭제 중 오류가 발생했습니다.');
+      const errorMessage = err instanceof Error ? err.message : '단어장 삭제 실패';
+      console.error('❌ 단어장 삭제 실패:', errorMessage);
+      setError(errorMessage);
       return false;
     }
   }, [loadWordbooks, currentWordbook]);
 
-  const addWordToWordbook = useCallback(async (wordbookId: number, wordId: number): Promise<boolean> => {
+  const addWordToWordbook = useCallback(async (wordbookId: number, word: string): Promise<boolean> => {
     try {
-      const success = await databaseService.repo.wordbooks.addWordToWordbook(wordbookId, wordId);
+      setError(null);
+      console.log('➕ 단어장에 단어 추가 중...', word);
 
-      if (success && currentWordbook?.id === wordbookId) {
-        // 현재 단어장의 단어 목록 새로고침
+      await wordbookService.addWordsToWordbook(wordbookId, [word]);
+
+      // 현재 단어장의 단어들이 로드된 상태라면 새로고침
+      if (currentWordbook?.id === wordbookId) {
         await loadWordbookWords(wordbookId);
       }
 
-      return success;
+      console.log('✅ 단어 추가 완료:', word);
+      return true;
     } catch (err) {
-      console.error('Failed to add word to wordbook:', err);
+      const errorMessage = err instanceof Error ? err.message : '단어 추가 실패';
+      console.error('❌ 단어 추가 실패:', errorMessage);
+      setError(errorMessage);
       return false;
     }
   }, [currentWordbook, loadWordbookWords]);
 
-  const addWordsToWordbook = useCallback(async (wordbookId: number, wordIds: number[]): Promise<number> => {
+  const addWordsToWordbook = useCallback(async (wordbookId: number, words: string[]): Promise<number> => {
     try {
-      const addedCount = await databaseService.repo.wordbooks.addWordsToWordbook(wordbookId, wordIds);
+      setError(null);
+      console.log(`➕ 단어장에 ${words.length}개 단어 추가 중...`);
 
-      if (addedCount > 0 && currentWordbook?.id === wordbookId) {
-        // 현재 단어장의 단어 목록 새로고침
+      const result = await wordbookService.saveWordsToWordbook({
+        wordbookId,
+        words,
+      });
+
+      // 현재 단어장의 단어들이 로드된 상태라면 새로고침
+      if (currentWordbook?.id === wordbookId) {
         await loadWordbookWords(wordbookId);
       }
 
-      return addedCount;
+      console.log(`✅ ${result.savedCount}개 단어 추가 완료`);
+      return result.savedCount;
     } catch (err) {
-      console.error('Failed to add words to wordbook:', err);
+      const errorMessage = err instanceof Error ? err.message : '단어들 추가 실패';
+      console.error('❌ 단어들 추가 실패:', errorMessage);
+      setError(errorMessage);
       return 0;
     }
   }, [currentWordbook, loadWordbookWords]);
 
   const removeWordFromWordbook = useCallback(async (wordbookId: number, wordId: number): Promise<boolean> => {
     try {
-      const success = await databaseService.repo.wordbooks.removeWordFromWordbook(wordbookId, wordId);
+      setError(null);
+      console.log('➖ 단어장에서 단어 제거 중...', wordId);
 
-      if (success && currentWordbook?.id === wordbookId) {
-        // 현재 단어장의 단어 목록 새로고침
+      await wordbookService.removeWordFromWordbook(wordbookId, wordId);
+
+      // 현재 단어장의 단어들이 로드된 상태라면 새로고침
+      if (currentWordbook?.id === wordbookId) {
         await loadWordbookWords(wordbookId);
       }
 
-      return success;
+      console.log('✅ 단어 제거 완료');
+      return true;
     } catch (err) {
-      console.error('Failed to remove word from wordbook:', err);
+      const errorMessage = err instanceof Error ? err.message : '단어 제거 실패';
+      console.error('❌ 단어 제거 실패:', errorMessage);
+      setError(errorMessage);
       return false;
     }
   }, [currentWordbook, loadWordbookWords]);
 
   const getOrCreateDefaultWordbook = useCallback(async (): Promise<Wordbook> => {
     try {
-      const defaultWordbook = await databaseService.repo.wordbooks.getOrCreateDefaultWordbook();
+      const allWordbooks = await wordbookService.getWordbooks();
+      const defaultWordbook = allWordbooks.find(wb => wb.is_default);
 
-      // 단어장 목록 새로고침 (새로 생성된 경우를 위해)
-      await loadWordbooks();
+      if (defaultWordbook) {
+        return defaultWordbook;
+      }
 
-      return defaultWordbook;
+      // 기본 단어장이 없으면 생성
+      const newWordbookId = await wordbookService.createWordbook(
+        '기본 단어장',
+        '스캔한 단어들을 저장하는 기본 단어장'
+      );
+
+      const updatedWordbooks = await wordbookService.getWordbooks();
+      const newDefaultWordbook = updatedWordbooks.find(wb => wb.id === newWordbookId);
+
+      if (newDefaultWordbook) {
+        return newDefaultWordbook;
+      }
+
+      throw new Error('기본 단어장 생성 실패');
     } catch (err) {
-      console.error('Failed to get or create default wordbook:', err);
+      console.error('❌ 기본 단어장 생성/조회 실패:', err);
       throw err;
     }
-  }, [loadWordbooks]);
+  }, []);
 
-  // 초기 로드
+  // 컴포넌트 마운트 시 단어장 목록 로드
   useEffect(() => {
     loadWordbooks();
   }, [loadWordbooks]);

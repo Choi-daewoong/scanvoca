@@ -1,5 +1,6 @@
-import databaseService from '../database/database';
-import { Wordbook, WordWithMeaning } from '../types/types';
+import { Wordbook } from '../types/types';
+import smartDictionaryService from './smartDictionaryService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface SaveWordsToWordbookParams {
   wordbookId: number;
@@ -14,7 +15,7 @@ export interface SaveWordsResult {
 }
 
 class WordbookService {
-  // 여러 단어를 단어장에 저장
+  // 여러 단어를 단어장에 저장 (GPT 생성 단어만 사용 + AsyncStorage)
   async saveWordsToWordbook(params: SaveWordsToWordbookParams): Promise<SaveWordsResult> {
     const { wordbookId, words } = params;
     let savedCount = 0;
@@ -22,21 +23,35 @@ class WordbookService {
     const errors: string[] = [];
 
     try {
-      // 각 단어를 순차적으로 처리
+      // 1. GPT로 단어 정의 생성
+      console.log(`🤖 GPT로 ${words.length}개 단어 정의 생성 중...`);
+      const wordDefinitions = await smartDictionaryService.getWordDefinitions(words);
+      console.log(`✅ GPT에서 ${wordDefinitions.length}개 단어 정의 받음`);
+
+      // 2. 기존 단어장 데이터 불러오기
+      const wordbookKey = `wordbook_${wordbookId}`;
+      const existingData = await AsyncStorage.getItem(wordbookKey);
+      const existingWords = existingData ? JSON.parse(existingData) : [];
+
+      // 3. 각 단어를 순차적으로 처리
       for (const word of words) {
         try {
-          // 1. 단어를 DB에서 검색
-          const foundWord = await databaseService.findExactWord(word.toLowerCase().trim());
+          // GPT에서 생성된 단어 정의 찾기
+          const wordDef = wordDefinitions.find(def =>
+            def.word.toLowerCase() === word.toLowerCase()
+          );
 
-          if (!foundWord) {
-            // 단어를 찾을 수 없으면 스킵
+          if (!wordDef) {
+            // GPT에서 정의를 생성하지 못한 단어는 스킵
             skippedCount++;
-            errors.push(`"${word}" - 단어를 찾을 수 없습니다`);
+            errors.push(`"${word}" - GPT에서 정의를 생성할 수 없습니다`);
             continue;
           }
 
-          // 2. 단어장에 이미 있는지 확인
-          const isAlreadyInWordbook = await this.isWordInWordbook(wordbookId, foundWord.id);
+          // 4. 이미 단어장에 있는지 확인
+          const isAlreadyInWordbook = existingWords.some((existingWord: any) =>
+            existingWord.word.toLowerCase() === wordDef.word.toLowerCase()
+          );
 
           if (isAlreadyInWordbook) {
             // 이미 있는 단어는 스킵
@@ -44,8 +59,18 @@ class WordbookService {
             continue;
           }
 
-          // 3. 단어장에 추가
-          await databaseService.addWordToWordbook(wordbookId, foundWord.id);
+          // 5. 단어장에 추가
+          const wordToSave = {
+            id: Date.now() + Math.random(), // 고유 ID 생성
+            word: wordDef.word,
+            pronunciation: wordDef.pronunciation,
+            difficulty: wordDef.difficulty,
+            meanings: wordDef.meanings,
+            addedAt: new Date().toISOString(),
+            source: 'gpt'
+          };
+
+          existingWords.push(wordToSave);
           savedCount++;
 
         } catch (error) {
@@ -54,6 +79,9 @@ class WordbookService {
           console.error(`Error saving word "${word}":`, error);
         }
       }
+
+      // 6. 업데이트된 단어장을 AsyncStorage에 저장
+      await AsyncStorage.setItem(wordbookKey, JSON.stringify(existingWords));
 
       return {
         success: savedCount > 0,
@@ -73,21 +101,27 @@ class WordbookService {
     }
   }
 
-  // 단어가 이미 단어장에 있는지 확인
-  private async isWordInWordbook(wordbookId: number, wordId: number): Promise<boolean> {
-    try {
-      const wordbookWords = await databaseService.getWordbookWords(wordbookId);
-      return wordbookWords.some(word => word.id === wordId);
-    } catch (error) {
-      console.error('Error checking if word is in wordbook:', error);
-      return false;
-    }
-  }
-
-  // 단어장 목록 조회 (캐시 포함)
+  // 단어장 목록 조회 (AsyncStorage 기반)
   async getWordbooks(): Promise<Wordbook[]> {
     try {
-      return await databaseService.getAllWordbooks();
+      const wordbooksData = await AsyncStorage.getItem('wordbooks');
+      const wordbooks = wordbooksData ? JSON.parse(wordbooksData) : [];
+
+      // 기본 단어장이 없으면 생성
+      if (wordbooks.length === 0) {
+        const defaultWordbook: Wordbook = {
+          id: 1,
+          name: '기본 단어장',
+          description: '스캔한 단어들을 저장하는 기본 단어장',
+          is_default: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        wordbooks.push(defaultWordbook);
+        await AsyncStorage.setItem('wordbooks', JSON.stringify(wordbooks));
+      }
+
+      return wordbooks;
     } catch (error) {
       console.error('Failed to get wordbooks:', error);
       throw error;
@@ -97,9 +131,10 @@ class WordbookService {
   // 새 단어장 생성
   async createWordbook(name: string, description?: string): Promise<number> {
     try {
+      const wordbooks = await this.getWordbooks();
+
       // 중복 이름 확인
-      const existingWordbooks = await this.getWordbooks();
-      const nameExists = existingWordbooks.some(
+      const nameExists = wordbooks.some(
         wb => wb.name.toLowerCase() === name.toLowerCase()
       );
 
@@ -107,8 +142,19 @@ class WordbookService {
         throw new Error('이미 같은 이름의 단어장이 있습니다.');
       }
 
-      const wordbookId = await databaseService.createWordbook(name, description);
-      return wordbookId;
+      const newWordbook: Wordbook = {
+        id: Date.now(), // 새로운 ID
+        name,
+        description,
+        is_default: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      wordbooks.push(newWordbook);
+      await AsyncStorage.setItem('wordbooks', JSON.stringify(wordbooks));
+
+      return newWordbook.id;
     } catch (error) {
       console.error('Failed to create wordbook:', error);
       throw error;
@@ -118,7 +164,6 @@ class WordbookService {
   // 단어장 삭제
   async deleteWordbook(wordbookId: number): Promise<void> {
     try {
-      // 기본 단어장인지 확인
       const wordbooks = await this.getWordbooks();
       const wordbook = wordbooks.find(wb => wb.id === wordbookId);
 
@@ -126,8 +171,12 @@ class WordbookService {
         throw new Error('기본 단어장은 삭제할 수 없습니다.');
       }
 
-      // TODO: 데이터베이스에 삭제 메서드 추가 필요
-      // await databaseService.deleteWordbook(wordbookId);
+      // 단어장 목록에서 제거
+      const filteredWordbooks = wordbooks.filter(wb => wb.id !== wordbookId);
+      await AsyncStorage.setItem('wordbooks', JSON.stringify(filteredWordbooks));
+
+      // 단어장의 단어 데이터도 삭제
+      await AsyncStorage.removeItem(`wordbook_${wordbookId}`);
 
     } catch (error) {
       console.error('Failed to delete wordbook:', error);
@@ -138,8 +187,12 @@ class WordbookService {
   // 단어장에서 단어 제거
   async removeWordFromWordbook(wordbookId: number, wordId: number): Promise<void> {
     try {
-      // TODO: 데이터베이스에 단어 제거 메서드 추가 필요
-      // await databaseService.removeWordFromWordbook(wordbookId, wordId);
+      const wordbookKey = `wordbook_${wordbookId}`;
+      const existingData = await AsyncStorage.getItem(wordbookKey);
+      const words = existingData ? JSON.parse(existingData) : [];
+
+      const filteredWords = words.filter((word: any) => word.id !== wordId);
+      await AsyncStorage.setItem(wordbookKey, JSON.stringify(filteredWords));
 
     } catch (error) {
       console.error('Failed to remove word from wordbook:', error);
@@ -150,9 +203,10 @@ class WordbookService {
   // 단어장 정보 업데이트
   async updateWordbook(wordbookId: number, name: string, description?: string): Promise<void> {
     try {
+      const wordbooks = await this.getWordbooks();
+
       // 중복 이름 확인 (자기 자신 제외)
-      const existingWordbooks = await this.getWordbooks();
-      const nameExists = existingWordbooks.some(
+      const nameExists = wordbooks.some(
         wb => wb.id !== wordbookId && wb.name.toLowerCase() === name.toLowerCase()
       );
 
@@ -160,8 +214,19 @@ class WordbookService {
         throw new Error('이미 같은 이름의 단어장이 있습니다.');
       }
 
-      // TODO: 데이터베이스에 업데이트 메서드 추가 필요
-      // await databaseService.updateWordbook(wordbookId, name, description);
+      const updatedWordbooks = wordbooks.map(wb => {
+        if (wb.id === wordbookId) {
+          return {
+            ...wb,
+            name,
+            description,
+            updated_at: new Date().toISOString()
+          };
+        }
+        return wb;
+      });
+
+      await AsyncStorage.setItem('wordbooks', JSON.stringify(updatedWordbooks));
 
     } catch (error) {
       console.error('Failed to update wordbook:', error);
@@ -172,34 +237,57 @@ class WordbookService {
   // 단어장 통계 조회
   async getWordbookStats(wordbookId: number) {
     try {
-      const words = await databaseService.getWordbookWords(wordbookId);
-
-      // 난이도별 분포
-      const difficultyStats = words.reduce((acc, word) => {
-        const level = word.difficulty_level;
-        acc[level] = (acc[level] || 0) + 1;
-        return acc;
-      }, {} as Record<number, number>);
-
-      // 품사별 분포
-      const partOfSpeechStats = words.reduce((acc, word) => {
-        word.meanings.forEach(meaning => {
-          const pos = meaning.part_of_speech || 'unknown';
-          acc[pos] = (acc[pos] || 0) + 1;
-        });
-        return acc;
-      }, {} as Record<string, number>);
+      const wordbookKey = `wordbook_${wordbookId}`;
+      const wordsData = await AsyncStorage.getItem(wordbookKey);
+      const words = wordsData ? JSON.parse(wordsData) : [];
 
       return {
         totalWords: words.length,
-        difficultyStats,
-        partOfSpeechStats,
-        avgDifficulty: words.length > 0
-          ? words.reduce((sum, word) => sum + word.difficulty_level, 0) / words.length
-          : 0,
+        recentlyAdded: words.filter((word: any) => {
+          const addedDate = new Date(word.addedAt);
+          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          return addedDate > oneDayAgo;
+        }).length
       };
     } catch (error) {
       console.error('Failed to get wordbook stats:', error);
+      throw error;
+    }
+  }
+
+  // 단어장 내 단어 조회
+  async getWordbookWords(wordbookId: number) {
+    try {
+      const wordbookKey = `wordbook_${wordbookId}`;
+      const wordsData = await AsyncStorage.getItem(wordbookKey);
+      return wordsData ? JSON.parse(wordsData) : [];
+    } catch (error) {
+      console.error('Failed to get wordbook words:', error);
+      throw error;
+    }
+  }
+
+  // 여러 단어를 단어장에 추가 (단어 텍스트 배열 사용)
+  async addWordsToWordbook(wordbookId: number, wordTexts: string[]): Promise<void> {
+    try {
+      await this.saveWordsToWordbook({
+        wordbookId,
+        words: wordTexts
+      });
+    } catch (error) {
+      console.error('Failed to add words to wordbook:', error);
+      throw error;
+    }
+  }
+
+  // 여러 단어를 단어장에서 제거
+  async removeWordsFromWordbook(wordbookId: number, wordIds: number[]): Promise<void> {
+    try {
+      for (const wordId of wordIds) {
+        await this.removeWordFromWordbook(wordbookId, wordId);
+      }
+    } catch (error) {
+      console.error('Failed to remove words from wordbook:', error);
       throw error;
     }
   }

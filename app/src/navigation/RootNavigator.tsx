@@ -17,7 +17,7 @@ import WordbookScreen from '../screens/WordbookScreen';
 // Modal/Stack Screens
 import CameraScreen from '../screens/CameraScreen';
 import WordDetailScreen from '../screens/WordDetailScreen';
-import ScanResultsScreen from '../screens/ScanResultsScreen';
+import ScanResultsScreenWrapper from '../screens/ScanResultsScreenWrapper';
 import QuizSessionScreen from '../screens/QuizSessionScreen';
 import QuizResultsScreen from '../screens/QuizResultsScreen';
 import WordbookDetailScreen from '../screens/WordbookDetailScreen';
@@ -113,7 +113,7 @@ export default function RootNavigator({ isAuthenticated }: RootNavigatorProps) {
 
           <Stack.Screen
             name="ScanResults"
-            component={ScanResultsScreen}
+            component={ScanResultsScreenWrapper}
             options={{
               title: '스캔 결과',
               headerBackTitle: '스캔',

@@ -576,3 +576,8 @@ Remove web compatibility code and restore native-only functionality
 *복원 작업 완료: 2025년 9월 19일*
 *현재 상태: Expo Go 테스트 준비 완료*
 *커밋 완료: 12f9372*
+
+---
+
+## 파일 링크
+- **다음 파일**: [WORKLOG(2).md](./worklog(2).md) - 2025년 9월 20일부터 계속

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Switch } from 'react-native';
 import { SettingsScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
-import databaseService from '../database/database';
+import { wordbookService } from '../services/wordbookService';
 import { useAuthStore } from '../stores/authStore';
 import { InputModal } from '../components/common';
 
@@ -30,19 +30,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     try {
       setLoading(true);
 
-      const [wordStats, wordbookStats, studyStats] = await Promise.all([
-        databaseService.repo.words.getWordStats(),
-        databaseService.repo.wordbooks.getAllWordbooks(),
-        databaseService.repo.studyProgress.getStudyStats(),
-      ]);
-
-      setDatabaseStats({
-        totalWords: wordStats.totalWords,
-        totalMeanings: wordStats.withMeanings,
-        totalExamples: wordStats.withExamples,
-        totalWordbooks: wordbookStats.length,
-        studiedWords: studyStats.totalStudiedWords,
-      });
+      // Database service removed - using temporary data
+      const wordStats = null;
+      const wordbookStats = null;
+      const studyStats = null;
     } catch (error) {
       console.error('Failed to load database stats:', error);
     } finally {

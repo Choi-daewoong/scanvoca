@@ -11,6 +11,8 @@ export { default as FloatingActionButton } from './FloatingActionButton';
 export { default as StatCard } from './StatCard';
 export { default as WordbookSelectionModal } from './WordbookSelectionModal';
 export { default as InputModal } from './InputModal';
+export { default as DataSourceBadge, DataSourceIndicator } from './DataSourceBadge';
+export { default as SmartWordCard } from './SmartWordCard';
 
 // New components (Phase 2.0.2)
 export { default as Header } from './Header';
@@ -22,6 +24,9 @@ export { default as Checkbox } from './Checkbox';
 // App-level components (Phase 2.1)
 export { default as LoadingScreen } from './LoadingScreen';
 export { default as ErrorScreen } from './ErrorScreen';
+
+// Social Icons
+export { GoogleIcon, KakaoIcon, NaverIcon } from './SocialIcons';
 
 // Export types
 export type { ButtonProps } from './Button';

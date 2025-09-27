@@ -23,22 +23,42 @@ export interface SocialAuthResult {
 }
 
 class SocialAuthService {
+  private isGoogleConfigured = false;
+
   constructor() {
-    this.configureGoogleSignIn();
+    // Google 클라이언트 ID가 유효할 때만 초기화 (더미값 제외)
+    if (ENV.GOOGLE_CLIENT_ID_WEB &&
+        ENV.GOOGLE_CLIENT_ID_WEB.length > 0 &&
+        !ENV.GOOGLE_CLIENT_ID_WEB.includes('dummy')) {
+      this.configureGoogleSignIn();
+    } else {
+      console.warn('[SocialAuth] Google Client ID가 설정되지 않음. 소셜 로그인 비활성화');
+    }
   }
 
   private configureGoogleSignIn() {
-    (GoogleSignin as any).configure({
-      webClientId: ENV.GOOGLE_CLIENT_ID_WEB,
-      iosClientId: ENV.GOOGLE_CLIENT_ID_IOS,
-      offlineAccess: true,
-      hostedDomain: '',
-      forceCodeForRefreshToken: true,
-    });
+    try {
+      (GoogleSignin as any).configure({
+        webClientId: ENV.GOOGLE_CLIENT_ID_WEB,
+        iosClientId: ENV.GOOGLE_CLIENT_ID_IOS,
+        offlineAccess: true,
+        hostedDomain: '',
+        forceCodeForRefreshToken: true,
+      });
+      this.isGoogleConfigured = true;
+      console.log('[SocialAuth] Google Sign-In 설정 완료');
+    } catch (error) {
+      console.error('[SocialAuth] Google Sign-In 설정 실패:', error);
+      this.isGoogleConfigured = false;
+    }
   }
 
   // Google 로그인
   async signInWithGoogle(): Promise<SocialAuthResult> {
+    if (!this.isGoogleConfigured) {
+      throw new Error('Google Sign-In이 설정되지 않았습니다. 환경변수를 확인해주세요.');
+    }
+
     try {
       console.log('[SocialAuth] Google 로그인 시작');
 

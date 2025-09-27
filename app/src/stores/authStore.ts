@@ -3,7 +3,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import databaseService from '../database/database';
 import type {
   User,
   LoginCredentials,
@@ -12,6 +11,18 @@ import type {
   SocialLoginRequest,
   SocialLoginResult,
 } from '../types/auth';
+
+// 간단한 사용자 데이터 타입 (로컬 저장용)
+interface LocalUser {
+  id: string;
+  email: string;
+  username: string;
+  full_name: string;
+  password: string; // 실제 앱에서는 해싱 필요
+  phone?: string;
+  role: string;
+  created_at: string;
+}
 
 interface AuthState {
   user: User | null;
@@ -30,6 +41,44 @@ interface AuthState {
   setUser: (user: User) => void;
 }
 
+// AsyncStorage 키
+const USERS_KEY = 'local_users';
+
+// 로컬 사용자 관리 헬퍼 함수들
+const saveUser = async (user: LocalUser): Promise<void> => {
+  try {
+    const existingUsers = await getUsers();
+    const updatedUsers = [...existingUsers.filter(u => u.email !== user.email), user];
+    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+  } catch (error) {
+    console.error('사용자 저장 실패:', error);
+    throw error;
+  }
+};
+
+const getUsers = async (): Promise<LocalUser[]> => {
+  try {
+    const usersData = await AsyncStorage.getItem(USERS_KEY);
+    return usersData ? JSON.parse(usersData) : [];
+  } catch (error) {
+    console.error('사용자 목록 조회 실패:', error);
+    return [];
+  }
+};
+
+const findUserByEmail = async (email: string): Promise<LocalUser | null> => {
+  const users = await getUsers();
+  return users.find(user => user.email === email) || null;
+};
+
+const authenticateUser = async (email: string, password: string): Promise<LocalUser | null> => {
+  const user = await findUserByEmail(email);
+  if (user && user.password === password) {
+    return user;
+  }
+  return null;
+};
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -43,11 +92,8 @@ export const useAuthStore = create<AuthState>()(
           console.log('[AuthStore] 로그인 시도:', credentials.email);
           set({ isLoading: true });
 
-          // 로컬 데이터베이스에서 사용자 인증
-          const user = await databaseService.authenticateUser(
-            credentials.email,
-            credentials.password
-          );
+          // AsyncStorage에서 사용자 인증
+          const user = await authenticateUser(credentials.email, credentials.password);
 
           if (!user) {
             throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.');
@@ -59,7 +105,7 @@ export const useAuthStore = create<AuthState>()(
 
           set({
             user: {
-              id: String(user.id),
+              id: user.id,
               email: user.email,
               username: user.username,
               full_name: user.full_name,
@@ -68,7 +114,7 @@ export const useAuthStore = create<AuthState>()(
               is_active: true,
               is_approved: true,
               is_superuser: false,
-              created_at: new Date().toISOString(),
+              created_at: user.created_at,
               updated_at: new Date().toISOString(),
             },
             access_token,
@@ -89,15 +135,26 @@ export const useAuthStore = create<AuthState>()(
           console.log('[AuthStore] 회원가입 시도:', userData.email);
           set({ isLoading: true });
 
-          // 로컬 데이터베이스에 사용자 생성
-          const newUser = await databaseService.createUser({
+          // 이미 존재하는 이메일인지 확인
+          const existingUser = await findUserByEmail(userData.email);
+          if (existingUser) {
+            throw new Error('이미 사용 중인 이메일입니다.');
+          }
+
+          // 새 사용자 생성
+          const newUser: LocalUser = {
+            id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             email: userData.email,
             username: userData.name,
             full_name: userData.name,
-            password: userData.password,
+            password: userData.password, // 실제 앱에서는 해싱 필요
             phone: userData.phone,
             role: userData.role.toUpperCase(),
-          });
+            created_at: new Date().toISOString(),
+          };
+
+          // AsyncStorage에 저장
+          await saveUser(newUser);
 
           set({ isLoading: false });
           console.log('[AuthStore] 회원가입 성공:', newUser.email);
@@ -173,7 +230,7 @@ export const useAuthStore = create<AuthState>()(
             throw new Error('로그인이 필요합니다.');
           }
 
-          // 로컬에서는 메모리 상태만 업데이트 (향후 DB 업데이트 추가 가능)
+          // 로컬에서는 메모리 상태만 업데이트
           const newUser = {
             ...currentUser,
             ...profileData,

@@ -7,7 +7,9 @@ import {
   Alert,
   TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WordWithMeaning } from '../../types/types';
+import ttsService from '../../services/ttsService';
 import { wordbookService, SaveWordsResult } from '../../services/wordbookService';
 import theme from '../../styles/theme';
 import Button from '../common/Button';
@@ -30,6 +32,7 @@ const ScanResultScreen: React.FC<ScanResultScreenProps> = ({
   onRescan,
   onNavigateToWordbook,
 }) => {
+  const insets = useSafeAreaInsets();
   const [selectedTab, setSelectedTab] = useState<WordStatus>('all');
   const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
   const [showWordbookModal, setShowWordbookModal] = useState(false);
@@ -41,15 +44,23 @@ const ScanResultScreen: React.FC<ScanResultScreenProps> = ({
     setSelectedWords(allWords);
   }, [detectedWords]);
 
-  // 탭에 따른 필터링된 단어 목록
+  // 탭에 따른 필터링된 단어 목록 (개선된 학습 진도 기반 필터링)
   const getFilteredWords = (): WordWithMeaning[] => {
     switch (selectedTab) {
       case 'unlearned':
-        // TODO: 실제 학습 진도에 따른 필터링 구현
-        return detectedWords.filter(word => !word.study_progress?.correct_count);
+        // 미암기: study_progress가 없거나 correct_count가 3 미만이거나 incorrect_count가 더 큰 경우
+        return detectedWords.filter(word => {
+          const progress = word.study_progress;
+          if (!progress || !progress.correct_count) return true;
+          return progress.correct_count < 3 || (progress.incorrect_count && progress.correct_count <= progress.incorrect_count);
+        });
       case 'learned':
-        // TODO: 실제 학습 진도에 따른 필터링 구현
-        return detectedWords.filter(word => word.study_progress?.correct_count && word.study_progress.correct_count > 0);
+        // 암기완료: correct_count가 3 이상이고 incorrect_count보다 큰 경우
+        return detectedWords.filter(word => {
+          const progress = word.study_progress;
+          return progress && progress.correct_count >= 3 &&
+                 (!progress.incorrect_count || progress.correct_count > progress.incorrect_count);
+        });
       default:
         return detectedWords;
     }
@@ -86,7 +97,7 @@ const ScanResultScreen: React.FC<ScanResultScreenProps> = ({
     }
   };
 
-  // 단어장 저장 처리
+  // 단어장 저장 처리 (개선된 버전)
   const handleSaveToWordbook = async (wordbookId: number) => {
     if (selectedWords.size === 0) {
       Alert.alert('알림', '저장할 단어를 선택해주세요.');
@@ -97,44 +108,56 @@ const ScanResultScreen: React.FC<ScanResultScreenProps> = ({
       setSaving(true);
       setShowWordbookModal(false);
 
+      // wordbookService의 saveWordsToWordbook 사용
       const result: SaveWordsResult = await wordbookService.saveWordsToWordbook({
         wordbookId,
         words: Array.from(selectedWords),
       });
 
-      // 결과 메시지 생성
-      let message = `${result.savedCount}개의 단어가 저장되었습니다.`;
-
-      if (result.skippedCount > 0) {
-        message += `\n${result.skippedCount}개의 단어는 건너뛰었습니다.`;
+      // 결과 메시지 생성 - 더 상세한 정보 제공
+      let message = '';
+      if (result.savedCount > 0) {
+        message += `✅ ${result.savedCount}개의 단어가 성공적으로 저장되었습니다.`;
       }
 
-      if (result.errors.length > 0 && result.errors.length <= 3) {
-        message += '\n\n건너뛴 이유:\n' + result.errors.join('\n');
-      } else if (result.errors.length > 3) {
-        message += `\n\n${result.errors.length}개의 오류가 발생했습니다.`;
+      if (result.skippedCount > 0) {
+        message += `\n⏭️ ${result.skippedCount}개의 단어는 건너뛰었습니다.`;
+        if (result.errors.length > 0) {
+          // 오류 메시지를 더 사용자 친화적으로 표시
+          const errorSummary = result.errors.slice(0, 3).join('\n');
+          if (result.errors.length <= 3) {
+            message += `\n\n건너뛴 이유:\n${errorSummary}`;
+          } else {
+            message += `\n\n주요 오류 (${result.errors.length}개 중 3개):\n${errorSummary}\n...등`;
+          }
+        }
       }
 
       Alert.alert(
-        result.success ? '저장 완료' : '저장 실패',
+        result.success ? '💾 저장 완료' : '❌ 저장 실패',
         message,
         [
           { text: '확인' },
           ...(result.success && onNavigateToWordbook ? [{
-            text: '단어장 보기',
+            text: '📖 단어장 보기',
+            style: 'default',
             onPress: () => onNavigateToWordbook(wordbookId)
           }] : [])
         ]
       );
 
       // 저장 성공 시 선택된 단어들 해제
-      if (result.success) {
+      if (result.success && result.savedCount > 0) {
         setSelectedWords(new Set());
       }
 
     } catch (error) {
       console.error('Failed to save words:', error);
-      Alert.alert('오류', '단어 저장 중 오류가 발생했습니다.');
+      Alert.alert(
+        '❌ 저장 오류',
+        `단어 저장 중 오류가 발생했습니다:\n${error instanceof Error ? error.message : '알 수 없는 오류'}`,
+        [{ text: '확인' }]
+      );
     } finally {
       setSaving(false);
     }
@@ -158,7 +181,21 @@ const ScanResultScreen: React.FC<ScanResultScreenProps> = ({
               </Typography>
 
               {item.pronunciation && (
-                <TouchableOpacity style={styles.pronunciationButton}>
+                <TouchableOpacity
+                  style={styles.pronunciationButton}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} // 더 큰 터치 영역
+                  onPress={(e) => {
+                    e.stopPropagation(); // 부모 터치 이벤트 차단
+                    e.preventDefault(); // 기본 동작 방지
+                    console.log(`🔊 발음 재생 요청: "${item.word}"`);
+                    ttsService.speakWord(item.word).catch((error) => {
+                      console.error(`❌ 발음 재생 실패: "${item.word}"`, error);
+                    });
+                  }}
+                  // 터치 이벤트 우선권 보장
+                  pointerEvents="box-only"
+                >
                   <Text style={styles.pronunciationIcon}>🔊</Text>
                 </TouchableOpacity>
               )}
@@ -223,7 +260,7 @@ const ScanResultScreen: React.FC<ScanResultScreenProps> = ({
         <Typography variant="body2" color="secondary" style={styles.scannedTextLabel}>
           스캔된 텍스트
         </Typography>
-        <Typography variant="body1" style={styles.scannedText}>
+        <Typography variant="body1" style={styles.scannedText} numberOfLines={3} ellipsizeMode="tail">
           {scannedText}
         </Typography>
       </Card>
@@ -232,8 +269,24 @@ const ScanResultScreen: React.FC<ScanResultScreenProps> = ({
       <View style={styles.tabContainer}>
         {[
           { key: 'all', label: '전체', count: detectedWords.length },
-          { key: 'unlearned', label: '미암기', count: detectedWords.filter(w => !w.study_progress?.correct_count).length },
-          { key: 'learned', label: '암기완료', count: detectedWords.filter(w => w.study_progress?.correct_count).length },
+          {
+            key: 'unlearned',
+            label: '미암기',
+            count: detectedWords.filter(w => {
+              const progress = w.study_progress;
+              if (!progress || !progress.correct_count) return true;
+              return progress.correct_count < 3 || (progress.incorrect_count && progress.correct_count <= progress.incorrect_count);
+            }).length
+          },
+          {
+            key: 'learned',
+            label: '암기완료',
+            count: detectedWords.filter(w => {
+              const progress = w.study_progress;
+              return progress && progress.correct_count >= 3 &&
+                     (!progress.incorrect_count || progress.correct_count > progress.incorrect_count);
+            }).length
+          },
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -279,7 +332,7 @@ const ScanResultScreen: React.FC<ScanResultScreenProps> = ({
       />
 
       {/* 하단 버튼들 */}
-      <View style={styles.bottomButtons}>
+      <View style={[styles.bottomButtons, { paddingBottom: Math.max(insets.bottom + theme.spacing.md, theme.spacing.xl) }]}>
         <Button
           title="다시 스캔"
           variant="outline"
@@ -381,10 +434,22 @@ const styles = StyleSheet.create({
   },
   pronunciationButton: {
     marginLeft: theme.spacing.sm,
-    padding: theme.spacing.xs,
+    padding: theme.spacing.sm, // lg → sm으로 적당히 줄임
+    minWidth: 36, // 48 → 36으로 줄임
+    minHeight: 36, // 48 → 36으로 줄임
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 18, // 24 → 18로 줄임
+    backgroundColor: 'rgba(79, 70, 229, 0.08)', // 배경색도 조금 연하게
+    // 터치 시 피드백 효과
+    activeOpacity: 0.7,
+    // 터치 이벤트 우선순위 보장
+    zIndex: 999,
+    elevation: 999, // Android
   },
   pronunciationIcon: {
-    fontSize: 16,
+    fontSize: 16, // 20 → 16으로 줄임
+    color: theme.colors.primary.main,
   },
   wordMeta: {
     alignItems: 'flex-end',

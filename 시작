@@ -1,0 +1,2 @@
+
+npx expo start --dev-client --port 8088 --host lan

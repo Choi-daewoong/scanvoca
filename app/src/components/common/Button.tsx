@@ -3,16 +3,17 @@ import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextS
 import theme from '../../styles/theme';
 
 export interface ButtonProps {
-  title: string;
+  title?: string;
   onPress: () => void;
   variant?: 'primary' | 'secondary' | 'outline' | 'text';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   disabled?: boolean;
   loading?: boolean;
   fullWidth?: boolean;
   icon?: React.ReactNode;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  children?: React.ReactNode;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -26,6 +27,7 @@ const Button: React.FC<ButtonProps> = ({
   icon,
   style,
   textStyle,
+  children,
 }) => {
   const getButtonStyle = (): ViewStyle => {
     const baseStyle = [styles.button, styles[size]];
@@ -62,14 +64,18 @@ const Button: React.FC<ButtonProps> = ({
       activeOpacity={0.7}
     >
       {loading ? (
-        <ActivityIndicator 
-          size="small" 
+        <ActivityIndicator
+          size="small"
           color={variant === 'primary' ? theme.colors.primary.contrast : theme.colors.primary.main}
         />
       ) : (
         <>
-          {icon}
-          <Text style={getTextStyle()}>{title}</Text>
+          {children ? children : (
+            <>
+              {icon}
+              <Text style={getTextStyle()}>{title}</Text>
+            </>
+          )}
         </>
       )}
     </TouchableOpacity>
@@ -98,6 +104,10 @@ const styles = StyleSheet.create({
   lg: {
     height: theme.layout.buttonHeight.lg,
     paddingHorizontal: theme.spacing.lg,
+  },
+  xl: {
+    height: theme.layout.buttonHeight.xl,
+    paddingHorizontal: theme.spacing.xl,
   },
   
   // 너비
@@ -148,6 +158,10 @@ const styles = StyleSheet.create({
   lgText: {
     fontSize: 18,
     lineHeight: 26,
+  },
+  xlText: {
+    fontSize: 20,
+    lineHeight: 28,
   },
   
   // 텍스트 variant 스타일
