@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Modal,
   View,
@@ -38,13 +38,7 @@ const WordbookSelectionModal: React.FC<WordbookSelectionModalProps> = ({
   const [newWordbookName, setNewWordbookName] = useState('');
   const [newWordbookDescription, setNewWordbookDescription] = useState('');
 
-  useEffect(() => {
-    if (visible) {
-      loadWordbooks();
-    }
-  }, [visible]);
-
-  const loadWordbooks = async () => {
+  const loadWordbooks = useCallback(async () => {
     try {
       setLoading(true);
       // wordbookService를 사용하여 단어장 목록 로드
@@ -56,7 +50,13 @@ const WordbookSelectionModal: React.FC<WordbookSelectionModalProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (visible) {
+      loadWordbooks();
+    }
+  }, [visible, loadWordbooks]);
 
   const handleCreateWordbook = async () => {
     if (!newWordbookName.trim()) {

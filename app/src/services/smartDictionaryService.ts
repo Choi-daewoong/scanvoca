@@ -45,6 +45,11 @@ class SmartDictionaryService {
   private readonly CACHE_STATS_KEY = 'smart_dict_stats';
   private readonly MAX_MEMORY_CACHE = 1000; // 메모리 캐시 최대 개수
 
+  // Phase 1 임시 보안 및 비용 제어
+  private readonly USAGE_STATS_KEY = 'gpt_usage_stats';
+  private readonly MAX_DAILY_REQUESTS = 100; // 하루 최대 100건
+  private readonly ESTIMATED_COST_PER_REQUEST = 0.002; // 요청당 예상 비용 ($)
+
   private constructor() {}
 
   static getInstance(): SmartDictionaryService {
@@ -272,9 +277,62 @@ class SmartDictionaryService {
   }
 
 
+  // Phase 1: 일일 사용량 체크
+  private async checkDailyUsageLimit(): Promise<boolean> {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const usageStatsJson = await AsyncStorage.getItem(this.USAGE_STATS_KEY);
+      const usageStats = usageStatsJson ? JSON.parse(usageStatsJson) : { date: today, count: 0, cost: 0 };
+
+      // 날짜가 바뀌면 카운터 리셋
+      if (usageStats.date !== today) {
+        usageStats.date = today;
+        usageStats.count = 0;
+        usageStats.cost = 0;
+        await AsyncStorage.setItem(this.USAGE_STATS_KEY, JSON.stringify(usageStats));
+      }
+
+      // 일일 한도 체크
+      if (usageStats.count >= this.MAX_DAILY_REQUESTS) {
+        console.warn(`⚠️ 일일 요청 한도 초과: ${usageStats.count}/${this.MAX_DAILY_REQUESTS}`);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('❌ 사용량 체크 실패:', error);
+      return true; // 에러 시에는 계속 진행
+    }
+  }
+
+  // Phase 1: 사용량 기록
+  private async recordUsage(wordCount: number): Promise<void> {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const usageStatsJson = await AsyncStorage.getItem(this.USAGE_STATS_KEY);
+      const usageStats = usageStatsJson ? JSON.parse(usageStatsJson) : { date: today, count: 0, cost: 0 };
+
+      usageStats.count += 1;
+      usageStats.cost += this.ESTIMATED_COST_PER_REQUEST;
+
+      await AsyncStorage.setItem(this.USAGE_STATS_KEY, JSON.stringify(usageStats));
+
+      console.log(`💰 GPT 사용량 기록: ${usageStats.count}/${this.MAX_DAILY_REQUESTS} (예상 비용: $${usageStats.cost.toFixed(4)})`);
+    } catch (error) {
+      console.error('❌ 사용량 기록 실패:', error);
+    }
+  }
+
   // 실제 GPT API 호출
   private async callGPTAPI(words: string[]): Promise<SmartWordDefinition[]> {
     try {
+      // Phase 1: 일일 사용량 체크
+      const canProceed = await this.checkDailyUsageLimit();
+      if (!canProceed) {
+        console.error('❌ 일일 요청 한도를 초과했습니다. 내일 다시 시도해주세요.');
+        throw new Error('일일 GPT 요청 한도를 초과했습니다. 캐시된 단어를 사용하거나 내일 다시 시도해주세요.');
+      }
+
       // 환경변수에서 API 키 가져오기
       const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
       if (!apiKey) {
@@ -326,6 +384,9 @@ class SmartDictionaryService {
       }
 
       console.log(`📥 GPT 응답 받음: ${content.length}자`);
+
+      // Phase 1: 사용량 기록
+      await this.recordUsage(words.length);
 
       // JSON 파싱 및 변환
       const gptResponse = JSON.parse(content);

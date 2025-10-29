@@ -34,6 +34,10 @@ export interface ProcessedWord {
 class OCRService {
   private static instance: OCRService;
 
+  // 비용 제어 상수
+  private readonly MAX_WORDS_PER_SCAN = 50;
+  private readonly ESTIMATED_COST_PER_WORD = 0.034; // GPT API 호출 비용 추정치
+
   private constructor() {}
 
   static getInstance(): OCRService {
@@ -166,6 +170,42 @@ class OCRService {
       if (cleanedWords.length === 0) {
         console.log('⚠️ 처리할 유효한 단어가 없음');
         return processedWords;
+      }
+
+      // 비용 제어: 단어 수가 많을 경우 경고 및 제한
+      if (cleanedWords.length > this.MAX_WORDS_PER_SCAN) {
+        const estimatedCost = cleanedWords.length * this.ESTIMATED_COST_PER_WORD;
+        console.warn(
+          `⚠️ 스캔 단어 수 초과: ${cleanedWords.length}/${this.MAX_WORDS_PER_SCAN}\n` +
+          `💰 예상 비용: $${estimatedCost.toFixed(3)}\n` +
+          `📋 처리를 제한합니다. 처음 ${this.MAX_WORDS_PER_SCAN}개만 처리합니다.`
+        );
+
+        // 제한된 단어만 처리
+        const limitedWords = cleanedWords.slice(0, this.MAX_WORDS_PER_SCAN);
+        const skippedWords = cleanedWords.slice(this.MAX_WORDS_PER_SCAN);
+
+        // 건너뛴 단어들을 processedWords에 추가 (처리되지 않음으로 표시)
+        for (const skippedWord of skippedWords) {
+          const ocrWords = wordMapping[skippedWord] || [];
+          for (const ocrWord of ocrWords) {
+            processedWords.push({
+              original: ocrWord.text,
+              cleaned: skippedWord,
+              found: false,
+              processing_source: 'none',
+              error: 'Exceeded maximum words per scan limit'
+            });
+          }
+        }
+
+        // 제한된 단어만 계속 처리
+        cleanedWords.length = 0;
+        cleanedWords.push(...limitedWords);
+      } else {
+        // 정상 범위 내 비용 로그
+        const estimatedCost = cleanedWords.length * this.ESTIMATED_COST_PER_WORD;
+        console.log(`💰 예상 비용: $${estimatedCost.toFixed(3)} (${cleanedWords.length}개 단어)`);
       }
 
       // 2단계: 배치로 GPT 스마트 사전 호출 (캐시 우선)

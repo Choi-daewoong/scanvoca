@@ -271,10 +271,11 @@ export function useWordbook(): UseWordbookReturn {
     }
   }, []);
 
-  // 컴포넌트 마운트 시 단어장 목록 로드
+  // 컴포넌트 마운트 시 단어장 목록 로드 (한 번만 실행)
   useEffect(() => {
     loadWordbooks();
-  }, [loadWordbooks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     wordbooks,

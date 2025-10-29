@@ -99,9 +99,24 @@ class WordbookService {
         }
       }
 
-      // 6. 업데이트된 단어장을 AsyncStorage에 저장
-      await AsyncStorage.setItem(wordbookKey, JSON.stringify(existingWords));
-      console.log(`💾 단어장 ${wordbookId}에 ${existingWords.length}개 단어로 업데이트 완료`);
+      // 6. 업데이트된 단어장을 AsyncStorage에 저장 (트랜잭션 적용)
+      const originalData = existingData; // Rollback을 위한 원본 데이터 보관
+      try {
+        await AsyncStorage.setItem(wordbookKey, JSON.stringify(existingWords));
+        console.log(`💾 단어장 ${wordbookId}에 ${existingWords.length}개 단어로 업데이트 완료`);
+      } catch (storageError) {
+        // Rollback: 원본 데이터 복원
+        console.error('❌ AsyncStorage 저장 실패, Rollback 수행 중...', storageError);
+        if (originalData) {
+          try {
+            await AsyncStorage.setItem(wordbookKey, originalData);
+            console.log('✅ Rollback 완료: 원본 데이터 복원됨');
+          } catch (rollbackError) {
+            console.error('❌ Rollback 실패:', rollbackError);
+          }
+        }
+        throw storageError;
+      }
 
       const result = {
         success: savedCount > 0,
@@ -179,11 +194,27 @@ class WordbookService {
 
       console.log(`💾 새 단어장 생성: ID ${newWordbook.id}, 이름 "${name}"`);
 
+      // 트랜잭션: 원본 데이터 보관 및 업데이트
+      const originalData = await AsyncStorage.getItem('wordbooks');
       wordbooks.push(newWordbook);
-      await AsyncStorage.setItem('wordbooks', JSON.stringify(wordbooks));
 
-      console.log(`✅ 단어장 "${name}" 생성 완료 (ID: ${newWordbook.id})`);
-      return newWordbook.id;
+      try {
+        await AsyncStorage.setItem('wordbooks', JSON.stringify(wordbooks));
+        console.log(`✅ 단어장 "${name}" 생성 완료 (ID: ${newWordbook.id})`);
+        return newWordbook.id;
+      } catch (storageError) {
+        // Rollback: 원본 데이터 복원
+        console.error('❌ AsyncStorage 저장 실패, Rollback 수행 중...', storageError);
+        if (originalData) {
+          try {
+            await AsyncStorage.setItem('wordbooks', originalData);
+            console.log('✅ Rollback 완료: 원본 데이터 복원됨');
+          } catch (rollbackError) {
+            console.error('❌ Rollback 실패:', rollbackError);
+          }
+        }
+        throw storageError;
+      }
     } catch (error) {
       console.error('Failed to create wordbook:', error);
       throw error;
@@ -200,12 +231,42 @@ class WordbookService {
         throw new Error('기본 단어장은 삭제할 수 없습니다.');
       }
 
-      // 단어장 목록에서 제거
-      const filteredWordbooks = wordbooks.filter(wb => wb.id !== wordbookId);
-      await AsyncStorage.setItem('wordbooks', JSON.stringify(filteredWordbooks));
+      // 트랜잭션: 원본 데이터 보관
+      const originalWordbooksData = await AsyncStorage.getItem('wordbooks');
+      const wordbookKey = `wordbook_${wordbookId}`;
+      const originalWordDataKey = await AsyncStorage.getItem(wordbookKey);
 
-      // 단어장의 단어 데이터도 삭제
-      await AsyncStorage.removeItem(`wordbook_${wordbookId}`);
+      try {
+        // 단어장 목록에서 제거
+        const filteredWordbooks = wordbooks.filter(wb => wb.id !== wordbookId);
+        await AsyncStorage.setItem('wordbooks', JSON.stringify(filteredWordbooks));
+
+        // 단어장의 단어 데이터도 삭제
+        await AsyncStorage.removeItem(wordbookKey);
+      } catch (storageError) {
+        // Rollback: 원본 데이터 복원
+        console.error('❌ 단어장 삭제 실패, Rollback 수행 중...', storageError);
+
+        // 단어장 목록 복원
+        if (originalWordbooksData) {
+          try {
+            await AsyncStorage.setItem('wordbooks', originalWordbooksData);
+          } catch (rollbackError) {
+            console.error('❌ 단어장 목록 Rollback 실패:', rollbackError);
+          }
+        }
+
+        // 단어 데이터 복원
+        if (originalWordDataKey) {
+          try {
+            await AsyncStorage.setItem(wordbookKey, originalWordDataKey);
+          } catch (rollbackError) {
+            console.error('❌ 단어 데이터 Rollback 실패:', rollbackError);
+          }
+        }
+
+        throw storageError;
+      }
 
     } catch (error) {
       console.error('Failed to delete wordbook:', error);
@@ -220,8 +281,25 @@ class WordbookService {
       const existingData = await AsyncStorage.getItem(wordbookKey);
       const words = existingData ? JSON.parse(existingData) : [];
 
-      const filteredWords = words.filter((word: any) => word.id !== wordId);
-      await AsyncStorage.setItem(wordbookKey, JSON.stringify(filteredWords));
+      // 트랜잭션: 원본 데이터 보관
+      const originalData = existingData;
+
+      try {
+        const filteredWords = words.filter((word: any) => word.id !== wordId);
+        await AsyncStorage.setItem(wordbookKey, JSON.stringify(filteredWords));
+      } catch (storageError) {
+        // Rollback: 원본 데이터 복원
+        console.error('❌ 단어 제거 실패, Rollback 수행 중...', storageError);
+        if (originalData) {
+          try {
+            await AsyncStorage.setItem(wordbookKey, originalData);
+            console.log('✅ Rollback 완료: 원본 데이터 복원됨');
+          } catch (rollbackError) {
+            console.error('❌ Rollback 실패:', rollbackError);
+          }
+        }
+        throw storageError;
+      }
 
     } catch (error) {
       console.error('Failed to remove word from wordbook:', error);
@@ -255,7 +333,24 @@ class WordbookService {
         return wb;
       });
 
-      await AsyncStorage.setItem('wordbooks', JSON.stringify(updatedWordbooks));
+      // 트랜잭션: 원본 데이터 보관
+      const originalData = await AsyncStorage.getItem('wordbooks');
+
+      try {
+        await AsyncStorage.setItem('wordbooks', JSON.stringify(updatedWordbooks));
+      } catch (storageError) {
+        // Rollback: 원본 데이터 복원
+        console.error('❌ 단어장 업데이트 실패, Rollback 수행 중...', storageError);
+        if (originalData) {
+          try {
+            await AsyncStorage.setItem('wordbooks', originalData);
+            console.log('✅ Rollback 완료: 원본 데이터 복원됨');
+          } catch (rollbackError) {
+            console.error('❌ Rollback 실패:', rollbackError);
+          }
+        }
+        throw storageError;
+      }
 
     } catch (error) {
       console.error('Failed to update wordbook:', error);
