@@ -1,6 +1,6 @@
 // Navigation types for Scan_Voca app
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { CompositeScreenProps } from '@react-navigation/native';
+import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 // Root Stack Navigator (전체 앱 네비게이션)
@@ -10,7 +10,10 @@ export type RootStackParamList = {
   Register: undefined;
   ForgotPassword: undefined;
 
-  // Main screens
+  // Main tabs (하단 탭 네비게이션)
+  MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
+
+  // Main screens (deprecated - use MainTabs instead)
   Home: undefined;
   Scan: undefined;
   Wordbook: undefined;

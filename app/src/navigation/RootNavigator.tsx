@@ -9,10 +9,8 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 
-// Main Screens
-import HomeScreen from '../screens/HomeScreen';
-import ScanScreen from '../screens/ScanScreen';
-import WordbookScreen from '../screens/WordbookScreen';
+// Main Tab Navigator
+import MainTabNavigator from './MainTabNavigator';
 
 // Modal/Stack Screens
 import CameraScreen from '../screens/CameraScreen';
@@ -72,22 +70,10 @@ export default function RootNavigator({ isAuthenticated }: RootNavigatorProps) {
       ) : (
         // ✅ 인증된 사용자 - Main App Stack
         <>
-          {/* Main Screens */}
+          {/* Main Tab Navigator (Home, Scan, Wordbook) */}
           <Stack.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{ headerShown: false }}
-          />
-
-          <Stack.Screen
-            name="Scan"
-            component={ScanScreen}
-            options={{ headerShown: false }}
-          />
-
-          <Stack.Screen
-            name="Wordbook"
-            component={WordbookScreen}
+            name="MainTabs"
+            component={MainTabNavigator}
             options={{ headerShown: false }}
           />
 

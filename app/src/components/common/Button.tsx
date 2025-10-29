@@ -30,30 +30,30 @@ const Button: React.FC<ButtonProps> = ({
   children,
 }) => {
   const getButtonStyle = (): ViewStyle => {
-    const baseStyle = [styles.button, styles[size]];
-
-    if (fullWidth) baseStyle.push(styles.fullWidth);
-    if (variant === 'primary') baseStyle.push(styles.primary);
-    if (variant === 'secondary') baseStyle.push(styles.secondary);
-    if (variant === 'outline') baseStyle.push(styles.outline);
-    if (variant === 'text') baseStyle.push(styles.text);
-    if (disabled) baseStyle.push(styles.disabled);
-    if (style) baseStyle.push(style);
-
-    return StyleSheet.flatten(baseStyle);
+    return StyleSheet.flatten([
+      styles.button,
+      styles[size],
+      fullWidth && styles.fullWidth,
+      variant === 'primary' && styles.primary,
+      variant === 'secondary' && styles.secondary,
+      variant === 'outline' && styles.outline,
+      variant === 'text' && styles.text,
+      disabled && styles.disabled,
+      style,
+    ]);
   };
 
   const getTextStyle = (): TextStyle => {
-    const baseStyle = [styles.buttonText, styles[`${size}Text` as keyof typeof styles]];
-
-    if (variant === 'primary') baseStyle.push(styles.primaryText);
-    if (variant === 'secondary') baseStyle.push(styles.secondaryText);
-    if (variant === 'outline') baseStyle.push(styles.outlineText);
-    if (variant === 'text') baseStyle.push(styles.textText);
-    if (disabled) baseStyle.push(styles.disabledText);
-    if (textStyle) baseStyle.push(textStyle);
-
-    return StyleSheet.flatten(baseStyle);
+    return StyleSheet.flatten([
+      styles.buttonText,
+      styles[`${size}Text` as keyof typeof styles],
+      variant === 'primary' && styles.primaryText,
+      variant === 'secondary' && styles.secondaryText,
+      variant === 'outline' && styles.outlineText,
+      variant === 'text' && styles.textText,
+      disabled && styles.disabledText,
+      textStyle,
+    ]);
   };
 
   return (

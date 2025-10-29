@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { useTheme } from '../../styles/ThemeProvider';
+import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import theme from '../../styles/theme';
 
 interface DataSourceBadgeProps {
   source: 'cache' | 'gpt' | 'none';
   size?: 'small' | 'medium';
-  style?: any;
+  style?: ViewStyle;
 }
 
 export default function DataSourceBadge({
@@ -13,7 +13,6 @@ export default function DataSourceBadge({
   size = 'small',
   style
 }: DataSourceBadgeProps) {
-  const theme = useTheme();
 
   const getBadgeConfig = () => {
     switch (source) {
@@ -21,16 +20,16 @@ export default function DataSourceBadge({
         return {
           icon: '💾',
           text: 'Cache',
-          color: theme.colors.success,
-          backgroundColor: `${theme.colors.success}15`,
+          color: theme.colors.semantic.success,
+          backgroundColor: `${theme.colors.semantic.success}15`,
           description: 'Cached'
         };
       case 'gpt':
         return {
           icon: '🤖',
           text: 'GPT',
-          color: theme.colors.primary,
-          backgroundColor: `${theme.colors.primary}15`,
+          color: theme.colors.primary.main,
+          backgroundColor: `${theme.colors.primary.main}15`,
           description: 'AI Generated'
         };
       case 'none':
@@ -38,8 +37,8 @@ export default function DataSourceBadge({
         return {
           icon: '❌',
           text: 'N/A',
-          color: theme.colors.textSecondary,
-          backgroundColor: `${theme.colors.textSecondary}10`,
+          color: theme.colors.text.secondary,
+          backgroundColor: `${theme.colors.text.secondary}10`,
           description: 'Not Found'
         };
     }
@@ -95,9 +94,8 @@ export function DataSourceIndicator({
 }: {
   source: 'cache' | 'gpt' | 'none';
   showDescription?: boolean;
-  style?: any;
+  style?: ViewStyle;
 }) {
-  const theme = useTheme();
 
   const getBadgeConfig = () => {
     switch (source) {
@@ -106,7 +104,7 @@ export function DataSourceIndicator({
           icon: '⚡',
           text: 'Instant',
           longText: 'Cached (Free)',
-          color: theme.colors.success,
+          color: theme.colors.semantic.success,
           description: '캐시에서 즉시 로드됨 (비용 0원)'
         };
       case 'gpt':
@@ -114,7 +112,7 @@ export function DataSourceIndicator({
           icon: '🧠',
           text: 'AI',
           longText: 'AI Generated',
-          color: theme.colors.primary,
+          color: theme.colors.primary.main,
           description: 'GPT API로 생성됨 (고품질 번역)'
         };
       case 'none':
@@ -123,7 +121,7 @@ export function DataSourceIndicator({
           icon: '⚪',
           text: 'N/A',
           longText: 'Not Available',
-          color: theme.colors.textSecondary,
+          color: theme.colors.text.secondary,
           description: '번역을 찾을 수 없음'
         };
     }
@@ -150,7 +148,7 @@ export function DataSourceIndicator({
         </Text>
       </View>
       {showDescription && (
-        <Text style={[styles.description, { color: theme.colors.textSecondary }]}>
+        <Text style={[styles.description, { color: theme.colors.text.secondary }]}>
           {config.description}
         </Text>
       )}

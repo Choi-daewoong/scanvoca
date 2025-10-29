@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useTheme } from '../../styles/ThemeProvider';
+import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import theme from '../../styles/theme';
 import { SmartWordDefinition } from '../../types/types';
 import DataSourceBadge from './DataSourceBadge';
 import LevelTag from './LevelTag';
@@ -10,7 +10,7 @@ interface SmartWordCardProps {
   onPress?: () => void;
   onPronounce?: () => void;
   showSource?: boolean;
-  style?: any;
+  style?: ViewStyle;
 }
 
 export default function SmartWordCard({
@@ -20,7 +20,6 @@ export default function SmartWordCard({
   showSource = true,
   style
 }: SmartWordCardProps) {
-  const theme = useTheme();
 
   const primaryMeaning = word.meanings[0];
   const exampleSentence = primaryMeaning?.examples?.[0];
@@ -30,9 +29,9 @@ export default function SmartWordCard({
       style={[
         styles.container,
         {
-          backgroundColor: theme.colors.surface,
-          borderColor: theme.colors.border,
-          shadowColor: theme.colors.text,
+          backgroundColor: theme.colors.background.primary,
+          borderColor: theme.colors.border.light,
+          shadowColor: theme.colors.text.primary,
         },
         style
       ]}
@@ -45,7 +44,7 @@ export default function SmartWordCard({
           <Text
             style={[
               styles.wordText,
-              { color: theme.colors.text }
+              { color: theme.colors.text.primary }
             ]}
           >
             {word.word}
@@ -54,7 +53,7 @@ export default function SmartWordCard({
             <TouchableOpacity
               style={[
                 styles.pronounceButton,
-                { backgroundColor: `${theme.colors.primary}15` }
+                { backgroundColor: `${theme.colors.primary.main}15` }
               ]}
               onPress={onPronounce}
             >
@@ -67,7 +66,7 @@ export default function SmartWordCard({
           {showSource && (
             <DataSourceBadge source={word.source} size="small" />
           )}
-          <LevelTag level={word.difficulty} size="small" style={{ marginLeft: 6 }} />
+          <LevelTag level={word.difficulty} size="sm" style={{ marginLeft: 6 }} />
         </View>
       </View>
 
@@ -76,7 +75,7 @@ export default function SmartWordCard({
         <Text
           style={[
             styles.pronunciation,
-            { color: theme.colors.textSecondary }
+            { color: theme.colors.text.secondary }
           ]}
         >
           {word.pronunciation}
@@ -90,8 +89,8 @@ export default function SmartWordCard({
             style={[
               styles.partOfSpeech,
               {
-                color: theme.colors.textSecondary,
-                backgroundColor: `${theme.colors.primary}15`,
+                color: theme.colors.text.secondary,
+                backgroundColor: `${theme.colors.primary.main}15`,
               }
             ]}
           >
@@ -100,7 +99,7 @@ export default function SmartWordCard({
           <Text
             style={[
               styles.meaning,
-              { color: theme.colors.text }
+              { color: theme.colors.text.primary }
             ]}
           >
             {primaryMeaning?.korean}
@@ -111,7 +110,7 @@ export default function SmartWordCard({
           <Text
             style={[
               styles.englishDefinition,
-              { color: theme.colors.textSecondary }
+              { color: theme.colors.text.secondary }
             ]}
           >
             {primaryMeaning.english}
@@ -125,7 +124,7 @@ export default function SmartWordCard({
           <Text
             style={[
               styles.exampleLabel,
-              { color: theme.colors.textSecondary }
+              { color: theme.colors.text.secondary }
             ]}
           >
             예문:
@@ -133,7 +132,7 @@ export default function SmartWordCard({
           <Text
             style={[
               styles.exampleEnglish,
-              { color: theme.colors.text }
+              { color: theme.colors.text.primary }
             ]}
           >
             {exampleSentence.en}
@@ -141,7 +140,7 @@ export default function SmartWordCard({
           <Text
             style={[
               styles.exampleKorean,
-              { color: theme.colors.textSecondary }
+              { color: theme.colors.text.secondary }
             ]}
           >
             {exampleSentence.ko}
@@ -155,11 +154,11 @@ export default function SmartWordCard({
           <View style={styles.sourceDetails}>
             {word.source === 'cache' && (
               <>
-                <Text style={[styles.sourceText, { color: theme.colors.success }]}>
+                <Text style={[styles.sourceText, { color: theme.colors.semantic.success }]}>
                   ⚡ 캐시에서 로드 (비용 0원)
                 </Text>
                 {word.access_count && word.access_count > 1 && (
-                  <Text style={[styles.accessCount, { color: theme.colors.textSecondary }]}>
+                  <Text style={[styles.accessCount, { color: theme.colors.text.secondary }]}>
                     {word.access_count}번 조회됨
                   </Text>
                 )}
@@ -167,11 +166,11 @@ export default function SmartWordCard({
             )}
             {word.source === 'gpt' && (
               <>
-                <Text style={[styles.sourceText, { color: theme.colors.primary }]}>
+                <Text style={[styles.sourceText, { color: theme.colors.primary.main }]}>
                   🤖 AI 생성 (고품질 번역)
                 </Text>
                 {word.confidence && (
-                  <Text style={[styles.confidenceText, { color: theme.colors.textSecondary }]}>
+                  <Text style={[styles.confidenceText, { color: theme.colors.text.secondary }]}>
                     신뢰도: {Math.round(word.confidence * 100)}%
                   </Text>
                 )}
@@ -180,7 +179,7 @@ export default function SmartWordCard({
           </View>
 
           {word.cached_at && (
-            <Text style={[styles.timestamp, { color: theme.colors.textSecondary }]}>
+            <Text style={[styles.timestamp, { color: theme.colors.text.secondary }]}>
               {new Date(word.cached_at).toLocaleDateString('ko-KR')}
             </Text>
           )}

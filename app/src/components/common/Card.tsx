@@ -15,41 +15,17 @@ const Card: React.FC<CardProps> = ({
   padding = 'md',
   style,
 }) => {
-  const getCardStyle = (): ViewStyle[] => {
-    const baseStyle = [styles.card];
-
-    // Variant 스타일
-    switch (variant) {
-      case 'elevated':
-        baseStyle.push(styles.elevated);
-        break;
-      case 'outlined':
-        baseStyle.push(styles.outlined);
-        break;
-      default:
-        baseStyle.push(styles.default);
-    }
-
-    // Padding 스타일
-    switch (padding) {
-      case 'none':
-        // 패딩 없음
-        break;
-      case 'sm':
-        baseStyle.push(styles.paddingSm);
-        break;
-      case 'lg':
-        baseStyle.push(styles.paddingLg);
-        break;
-      default:
-        baseStyle.push(styles.paddingMd);
-    }
-
-    if (style) {
-      baseStyle.push(style);
-    }
-
-    return baseStyle;
+  const getCardStyle = (): ViewStyle => {
+    return StyleSheet.flatten([
+      styles.card,
+      variant === 'elevated' && styles.elevated,
+      variant === 'outlined' && styles.outlined,
+      variant === 'default' && styles.default,
+      padding === 'sm' && styles.paddingSm,
+      padding === 'lg' && styles.paddingLg,
+      padding === 'md' && styles.paddingMd,
+      style,
+    ]);
   };
 
   return <View style={getCardStyle()}>{children}</View>;
