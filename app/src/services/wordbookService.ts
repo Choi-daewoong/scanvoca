@@ -23,10 +23,14 @@ class WordbookService {
     const errors: string[] = [];
 
     try {
+      console.log(`📚 단어장 ${wordbookId}에 ${words.length}개 단어 저장 시작`);
+      console.log(`💭 저장할 단어들: ${words.join(', ')}`);
+
       // 1. GPT로 단어 정의 생성
       console.log(`🤖 GPT로 ${words.length}개 단어 정의 생성 중...`);
       const wordDefinitions = await smartDictionaryService.getWordDefinitions(words);
       console.log(`✅ GPT에서 ${wordDefinitions.length}개 단어 정의 받음`);
+      console.log(`📝 GPT 정의 단어들: ${wordDefinitions.map(def => def.word).join(', ')}`);
 
       // 2. 기존 단어장 데이터 불러오기
       const wordbookKey = `wordbook_${wordbookId}`;
@@ -36,17 +40,31 @@ class WordbookService {
       // 3. 각 단어를 순차적으로 처리
       for (const word of words) {
         try {
-          // GPT에서 생성된 단어 정의 찾기
-          const wordDef = wordDefinitions.find(def =>
+          // GPT에서 생성된 단어 정의 찾기 (원본 단어와 일치하는 것 우선 검색)
+          let wordDef = wordDefinitions.find(def =>
             def.word.toLowerCase() === word.toLowerCase()
           );
+
+          // 원본 단어로 찾지 못한 경우, 변형된 단어로 검색
+          if (!wordDef) {
+            wordDef = wordDefinitions.find(def => {
+              // 단어의 meanings에서 원본 단어를 포함하는지 확인
+              return def.meanings.some(meaning =>
+                meaning.korean.includes(word) || def.word.includes(word.toLowerCase())
+              );
+            });
+          }
 
           if (!wordDef) {
             // GPT에서 정의를 생성하지 못한 단어는 스킵
             skippedCount++;
             errors.push(`"${word}" - GPT에서 정의를 생성할 수 없습니다`);
+            console.log(`❌ "${word}" - GPT 정의 없음, 스킵`);
             continue;
           }
+
+          console.log(`🔍 "${word}" - GPT 정의 찾음: "${wordDef.word}"`);
+          console.log(`📖 "${word}" 의미: ${wordDef.meanings[0]?.korean}`);
 
           // 4. 이미 단어장에 있는지 확인
           const isAlreadyInWordbook = existingWords.some((existingWord: any) =>
@@ -72,6 +90,7 @@ class WordbookService {
 
           existingWords.push(wordToSave);
           savedCount++;
+          console.log(`✅ "${word}" 단어장에 저장 완료`);
 
         } catch (error) {
           skippedCount++;
@@ -82,13 +101,17 @@ class WordbookService {
 
       // 6. 업데이트된 단어장을 AsyncStorage에 저장
       await AsyncStorage.setItem(wordbookKey, JSON.stringify(existingWords));
+      console.log(`💾 단어장 ${wordbookId}에 ${existingWords.length}개 단어로 업데이트 완료`);
 
-      return {
+      const result = {
         success: savedCount > 0,
         savedCount,
         skippedCount,
         errors,
       };
+
+      console.log(`📊 저장 결과: 성공 ${savedCount}개, 스킵 ${skippedCount}개`);
+      return result;
 
     } catch (error) {
       console.error('Failed to save words to wordbook:', error);
@@ -131,7 +154,9 @@ class WordbookService {
   // 새 단어장 생성
   async createWordbook(name: string, description?: string): Promise<number> {
     try {
+      console.log(`📚 새 단어장 생성 시작: "${name}"`);
       const wordbooks = await this.getWordbooks();
+      console.log(`📊 기존 단어장 수: ${wordbooks.length}개`);
 
       // 중복 이름 확인
       const nameExists = wordbooks.some(
@@ -139,6 +164,7 @@ class WordbookService {
       );
 
       if (nameExists) {
+        console.error(`❌ 중복된 단어장 이름: "${name}"`);
         throw new Error('이미 같은 이름의 단어장이 있습니다.');
       }
 
@@ -151,9 +177,12 @@ class WordbookService {
         updated_at: new Date().toISOString()
       };
 
+      console.log(`💾 새 단어장 생성: ID ${newWordbook.id}, 이름 "${name}"`);
+
       wordbooks.push(newWordbook);
       await AsyncStorage.setItem('wordbooks', JSON.stringify(wordbooks));
 
+      console.log(`✅ 단어장 "${name}" 생성 완료 (ID: ${newWordbook.id})`);
       return newWordbook.id;
     } catch (error) {
       console.error('Failed to create wordbook:', error);
@@ -293,6 +322,5 @@ class WordbookService {
   }
 }
 
-// 싱글톤 인스턴스
+// 싱글톤 인스턴스 export
 export const wordbookService = new WordbookService();
-export default WordbookService;

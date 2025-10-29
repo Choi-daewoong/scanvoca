@@ -15,7 +15,8 @@ import { WordbookScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { useWordbook } from '../hooks/useWordbook';
 import { Wordbook } from '../types/types';
-import wordbookService from '../services/wordbookService';
+import { wordbookService } from '../services/wordbookService';
+import ImportWordbookButton from '../components/common/ImportWordbookButton';
 
 interface WordbookItem {
   id: number;
@@ -262,17 +263,16 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
   const handleCreateWordbook = async () => {
     if (!newWordbookName.trim()) return;
     try {
-      const result = await wordbookService.createWordbook({
-        name: newWordbookName.trim(),
-        description: '',
-      });
+      const newWordbookId = await wordbookService.createWordbook(
+        newWordbookName.trim(),
+        ''
+      );
 
-      if (result.success && result.wordbook) {
-        const wb = result.wordbook;
+      if (newWordbookId) {
         const item: WordbookItem = {
-          id: wb.id,
-          name: wb.name,
-          wordCount: (wb as any).word_count || 0,
+          id: newWordbookId,
+          name: newWordbookName.trim(),
+          wordCount: 0,
           icon: '📚',
           lastStudied: '방금 전',
           progressPercent: 0,
@@ -793,14 +793,17 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
           <Text style={styles.headerTitle}>나의 단어장</Text>
           <Text style={styles.headerSubtitle}>학습할 단어장을 선택하세요</Text>
         </View>
-        <TouchableOpacity
-          style={styles.selectionToggleBtn}
-          onPress={toggleSelectionMode}
-        >
-          <Text style={styles.selectionToggleBtnText}>
-            {isSelectionMode ? '완료' : '편집'}
-          </Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <ImportWordbookButton />
+          <TouchableOpacity
+            style={styles.selectionToggleBtn}
+            onPress={toggleSelectionMode}
+          >
+            <Text style={styles.selectionToggleBtnText}>
+              {isSelectionMode ? '완료' : '편집'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Selection Mode Actions */}

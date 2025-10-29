@@ -68,7 +68,6 @@ const WordbookSelectionModal: React.FC<WordbookSelectionModalProps> = ({
       setLoading(true);
 
       // wordbookService를 사용하여 중복 이름 체크 포함
-      const { wordbookService } = await import('../../services/wordbookService');
       const newWordbookId = await wordbookService.createWordbook(
         newWordbookName.trim(),
         newWordbookDescription.trim()
@@ -85,8 +84,15 @@ const WordbookSelectionModal: React.FC<WordbookSelectionModalProps> = ({
       setNewWordbookDescription('');
       setShowCreateForm(false);
     } catch (error) {
-      console.error('Failed to create wordbook:', error);
-      Alert.alert('오류', error instanceof Error ? error.message : '단어장 생성에 실패했습니다.');
+      console.error('🚨 단어장 생성 실패:', error);
+      console.error('🚨 에러 세부사항:', {
+        message: error instanceof Error ? error.message : '알 수 없는 오류',
+        name: error instanceof Error ? error.name : '알 수 없음',
+        stack: error instanceof Error ? error.stack : '없음'
+      });
+
+      const errorMessage = error instanceof Error ? error.message : '단어장 생성에 실패했습니다.';
+      Alert.alert('오류', `단어장 생성 실패:\n${errorMessage}`);
     } finally {
       setLoading(false);
     }

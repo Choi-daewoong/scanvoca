@@ -120,7 +120,7 @@ data-scripts/              # ✅ 완성된 데이터 처리 스크립트
 # 개발 서버 (앱 디렉토리에서 실행) - Dev Client 모드
 cd app && npx expo start --dev-client          # Dev Client 모드로 실행
 cd app && npx expo start --dev-client --clear  # 캐시 초기화 후 실행
-cd app && npx expo start --port 8087 --host lan  # 기본 실행 (LAN IP로)
+cd app && npx expo start --port 8094 --host lan  # 기본 실행 (LAN IP로)
 cd app && npx expo start --dev-client --port 8087 --host lan  # Dev Client 모드
 
 # 네이티브 모듈 지원을 위한 Dev Client 빌드

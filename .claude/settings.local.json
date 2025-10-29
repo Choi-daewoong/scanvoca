@@ -49,7 +49,10 @@
       "Bash(start:*)",
       "Bash(npx tsc:*)",
       "Read(//c/Users/pleiades/Downloads/**)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Read(//e/21.project/edu_eng/**)",
+      "Bash(cat:*)",
+      "Bash(tasklist:*)"
     ],
     "deny": [],
     "ask": []

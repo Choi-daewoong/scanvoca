@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ScanScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { ocrService } from '../services/ocrService';
+import { ImageEditingGuide } from '../components/common';
 
 export default function ScanScreen({ navigation }: ScanScreenProps) {
   const { theme } = useTheme();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showEditingGuide, setShowEditingGuide] = useState(false);
 
   const styles = StyleSheet.create({
     container: {
@@ -17,43 +19,113 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
       alignItems: 'center',
       padding: theme.spacing.lg,
     },
-    title: {
-      ...theme.typography.h2,
-      color: theme.colors.text.primary,
+    heroSection: {
+      alignItems: 'center',
+      marginBottom: theme.spacing.xxl,
+    },
+    iconContainer: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      backgroundColor: theme.colors.primary.main,
+      alignItems: 'center',
+      justifyContent: 'center',
       marginBottom: theme.spacing.lg,
+      shadowColor: theme.colors.primary.main,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.3,
+      shadowRadius: 16,
+      elevation: 12,
+    },
+    iconText: {
+      fontSize: 48,
+      color: 'white',
+    },
+    title: {
+      ...theme.typography.h1,
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.sm,
       textAlign: 'center',
+      fontWeight: '700',
     },
     subtitle: {
       ...theme.typography.body1,
       color: theme.colors.text.secondary,
       marginBottom: theme.spacing.xl,
       textAlign: 'center',
+      lineHeight: 24,
+      paddingHorizontal: theme.spacing.md,
     },
-    button: {
+    buttonsContainer: {
+      width: '100%',
+      gap: theme.spacing.md,
+    },
+    primaryButton: {
       backgroundColor: theme.colors.primary.main,
       paddingHorizontal: theme.spacing.xl,
-      paddingVertical: theme.spacing.md,
-      borderRadius: theme.borderRadius.md,
-      marginBottom: theme.spacing.md,
+      paddingVertical: 18,
+      borderRadius: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: theme.colors.primary.main,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 12,
+      elevation: 8,
+      gap: theme.spacing.sm,
     },
-    buttonText: {
+    primaryButtonText: {
       ...theme.typography.button,
       color: theme.colors.primary.contrast,
+      fontSize: 16,
+      fontWeight: '600',
     },
     secondaryButton: {
-      borderWidth: 1,
+      borderWidth: 2,
       borderColor: theme.colors.border.medium,
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.colors.background.secondary,
       paddingHorizontal: theme.spacing.xl,
-      paddingVertical: theme.spacing.md,
-      borderRadius: theme.borderRadius.md,
+      paddingVertical: 18,
+      borderRadius: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: theme.spacing.sm,
     },
     secondaryButtonText: {
       ...theme.typography.button,
       color: theme.colors.text.primary,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    buttonIcon: {
+      fontSize: 20,
     },
     buttonDisabled: {
       opacity: 0.6,
+      transform: [{ scale: 0.98 }],
+    },
+    helpButton: {
+      position: 'absolute',
+      top: 50,
+      right: theme.spacing.lg,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: 'rgba(79, 70, 229, 0.9)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: theme.colors.primary.main,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 6,
+    },
+    helpButtonText: {
+      color: 'white',
+      fontSize: 18,
+      fontWeight: '600',
     },
   });
 
@@ -69,29 +141,35 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
         return;
       }
 
-      // 카메라로 사진 촬영
+      // 카메라로 사진 촬영 (개선된 편집 옵션으로 더 좋은 가시성 제공)
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
-        // 더 나은 편집 경험을 위한 설정
+        // 자유롭게 크롭 가능 (위/아래, 좌/우 독립적 조정)
+        quality: 0.9, // 더 높은 품질로 졌명하게
         selectionLimit: 1,
-        presentationStyle: ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN,
+        // iOS에서 더 나은 편집 경험 제공
+        presentationStyle: Platform.OS === 'ios'
+          ? ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN
+          : undefined,
         videoMaxDuration: 30,
+        // Android 전용 옵션들
+        ...(Platform.OS === 'android' && {
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsMultipleSelection: false,
+        }),
       });
 
       if (!result.canceled && result.assets[0]) {
         const imageUri = result.assets[0].uri;
         console.log('📷 카메라 사진 촬영 완료:', imageUri);
 
-        // OCR 처리
+        // OCR 처리 후 즉시 결과 화면으로 이동 (확인 과정 생략)
         const ocrResult = await ocrService.processImage(imageUri);
         console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
 
-        // 의미 포함된 단어 객체 배열 생성
+        // processedWords에서 실제 찾은 단어들만 필터링
         let detectedWordsData = [];
-
         if (ocrResult.processedWords && ocrResult.processedWords.length > 0) {
           detectedWordsData = ocrResult.processedWords
             .filter(word => word.found && word.wordData)
@@ -103,9 +181,7 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
             }));
         }
 
-        console.log('📤 ScanScreen에서 전달하는 데이터:', detectedWordsData);
-
-        // ScanResults로 이동
+        // 확인 과정 없이 바로 결과 화면으로 이동
         navigation.navigate('ScanResults', {
           scannedText: ocrResult.ocrResult.text,
           detectedWords: detectedWordsData,
@@ -132,28 +208,34 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
         return;
       }
 
-      // 이미지 선택
+      // 이미지 선택 (개선된 편집 옵션으로 더 좋은 가시성 제공)
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
-        // 더 나은 편집 경험을 위한 설정
+        // 자유롭게 크롭 가능 (위/아래, 좌/우 독립적 조정)
+        quality: 0.9, // 더 높은 품질로 졌명하게
         selectionLimit: 1,
-        presentationStyle: ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN,
+        // iOS에서 더 나은 편집 경험 제공
+        presentationStyle: Platform.OS === 'ios'
+          ? ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN
+          : undefined,
+        // Android 전용 옵션들
+        ...(Platform.OS === 'android' && {
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsMultipleSelection: false,
+        }),
       });
 
       if (!result.canceled && result.assets[0]) {
         const imageUri = result.assets[0].uri;
         console.log('📷 갤러리 이미지 선택 완료:', imageUri);
 
-        // OCR 처리
+        // OCR 처리 후 즉시 결과 화면으로 이동 (확인 과정 생략)
         const ocrResult = await ocrService.processImage(imageUri);
         console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
 
-        // 의미 포함된 단어 객체 배열 생성
+        // processedWords에서 실제 찾은 단어들만 필터링
         let detectedWordsData = [];
-
         if (ocrResult.processedWords && ocrResult.processedWords.length > 0) {
           detectedWordsData = ocrResult.processedWords
             .filter(word => word.found && word.wordData)
@@ -165,9 +247,7 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
             }));
         }
 
-        console.log('📤 ScanScreen에서 전달하는 데이터:', detectedWordsData);
-
-        // ScanResults로 이동
+        // 확인 과정 없이 바로 결과 화면으로 이동
         navigation.navigate('ScanResults', {
           scannedText: ocrResult.ocrResult.text,
           detectedWords: detectedWordsData,
@@ -184,32 +264,62 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>📷</Text>
-      <Text style={styles.title}>단어 스캔</Text>
-      <Text style={styles.subtitle}>
-        책, 문서, 화면의 영어 단어를 스캔하여{'\n'}
-        자동으로 인식하고 단어장에 저장하세요.
-      </Text>
+      <View style={styles.heroSection}>
+        <View style={styles.iconContainer}>
+          <Text style={styles.iconText}>📷</Text>
+        </View>
 
-      <TouchableOpacity
-        style={[styles.button, isProcessing && styles.buttonDisabled]}
-        onPress={handleCameraPress}
-        disabled={isProcessing}
-      >
-        <Text style={styles.buttonText}>
-          {isProcessing ? '📸 처리 중...' : '📸 카메라로 스캔하기'}
+        <Text style={styles.title}>스마트 단어 스캔</Text>
+        <Text style={styles.subtitle}>
+          AI가 영어 단어를 자동 인식하고{'\n'}
+          자연스러운 한국어 번역을 제공합니다
         </Text>
-      </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.secondaryButton, isProcessing && styles.buttonDisabled]}
-        onPress={handleGalleryPress}
-        disabled={isProcessing}
-      >
-        <Text style={styles.secondaryButtonText}>
-          {isProcessing ? '🖼️ 처리 중...' : '🖼️ 갤러리에서 선택'}
-        </Text>
-      </TouchableOpacity>
+        {/* 편집 도움말 버튼 */}
+        <TouchableOpacity
+          style={styles.helpButton}
+          onPress={() => setShowEditingGuide(true)}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.helpButtonText}>?</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.buttonsContainer}>
+        <TouchableOpacity
+          style={[styles.primaryButton, isProcessing && styles.buttonDisabled]}
+          onPress={handleCameraPress}
+          disabled={isProcessing}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonIcon}>
+            {isProcessing ? '⏳' : '📷'}
+          </Text>
+          <Text style={styles.primaryButtonText}>
+            {isProcessing ? '스마트 스캔 중...' : '카메라로 스캔하기'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.secondaryButton, isProcessing && styles.buttonDisabled]}
+          onPress={handleGalleryPress}
+          disabled={isProcessing}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonIcon}>
+            {isProcessing ? '⏳' : '🖼️'}
+          </Text>
+          <Text style={styles.secondaryButtonText}>
+            {isProcessing ? '이미지 처리 중...' : '갤러리에서 선택'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* 이미지 편집 가이드 모달 */}
+      <ImageEditingGuide
+        visible={showEditingGuide}
+        onClose={() => setShowEditingGuide(false)}
+      />
     </View>
   );
 }

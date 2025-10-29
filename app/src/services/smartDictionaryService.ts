@@ -202,62 +202,244 @@ class SmartDictionaryService {
     this.memoryCache.set(word, { ...definition, source: 'cache' });
   }
 
-  // GPT로 단어 정의 생성 (Mock 구현)
+  // 단어 정의 생성 (3000단어 DB 우선, 없으면 GPT)
   private async generateDefinitionsWithGPT(words: string[]): Promise<SmartWordDefinition[]> {
-    console.log(`🤖 GPT로 ${words.length}개 단어 처리 중...`);
+    console.log(`🤖 스마트 사전으로 ${words.length}개 단어 처리 중...`);
 
-    // Mock GPT 응답 (실제로는 OpenAI API 호출)
     const definitions: SmartWordDefinition[] = [];
 
-    for (const word of words) {
-      // Mock 데이터 생성
-      const mockDefinition: SmartWordDefinition = {
-        word: word,
-        pronunciation: this.generateMockPronunciation(word),
-        difficulty: this.generateMockDifficulty(),
-        meanings: this.generateMockMeanings(word),
-        confidence: 0.9 + Math.random() * 0.1,
-        source: 'gpt'
-      };
+    // 1. 완전한 단어장 데이터 로드 (3000단어)
+    const completeWordbook = await this.loadCompleteWordbook();
+    console.log(`📚 로컬 DB에서 ${completeWordbook.words?.length || 0}개 단어 로드됨`);
 
-      definitions.push(mockDefinition);
+    // 2. 간단하게 각 단어를 DB에서 찾고, 없으면 GPT로 보내기
+    const unknownWords: string[] = [];
+    const knownResults: SmartWordDefinition[] = [];
+
+    for (const word of words) {
+      const normalizedWord = word.toLowerCase().trim();
+
+      // 3000단어 DB에서 정확히 일치하는 단어 찾기
+      const foundWord = completeWordbook.words?.find(w =>
+        w.word.toLowerCase() === normalizedWord
+      );
+
+      if (foundWord) {
+        // 로컬 DB에서 찾은 경우
+        const definition: SmartWordDefinition = {
+          word: foundWord.word,
+          pronunciation: foundWord.pronunciation,
+          difficulty: foundWord.difficulty,
+          meanings: foundWord.meanings.map(m => ({
+            partOfSpeech: m.partOfSpeech as any,
+            korean: m.korean,
+            english: m.english,
+            examples: foundWord.examples ? [{
+              en: foundWord.examples[0]?.en || `Example with ${foundWord.word}`,
+              ko: foundWord.examples[0]?.ko || `${foundWord.word} 예문`
+            }] : undefined
+          })),
+          confidence: 1.0,
+          source: 'cache'
+        };
+        knownResults.push(definition);
+        console.log(`✅ "${word}" - 로컬 DB에서 찾음`);
+      } else {
+        // 로컬 DB에 없는 단어는 GPT 호출 대상
+        unknownWords.push(word);
+        console.log(`❓ "${word}" - 로컬 DB에 없음, GPT 호출 필요`);
+      }
     }
 
-    // 실제 지연 시뮬레이션
-    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+    // 3. 로컬 DB에 없는 단어들을 GPT로 처리 (GPT가 알아서 복수형, 과거형 등 설명해줌)
+    if (unknownWords.length > 0) {
+      console.log(`🤖 GPT로 ${unknownWords.length}개 신규 단어 처리 시작...`);
+      const gptResults = await this.callGPTAPI(unknownWords);
 
-    console.log(`✅ GPT 처리 완료: ${definitions.length}개 단어`);
+      // GPT로 생성된 단어들을 로컬 캐시에 저장 (향후 재사용)
+      for (const gptDef of gptResults) {
+        await this.addWordToCache(gptDef);
+      }
+
+      definitions.push(...gptResults);
+    }
+
+    // 4. 로컬 DB 결과와 GPT 결과 합치기
+    definitions.push(...knownResults);
+
+    console.log(`✅ 스마트 사전 처리 완료: ${definitions.length}개 단어 (로컬: ${knownResults.length}, GPT: ${unknownWords.length})`);
     return definitions;
   }
 
-  // Mock 데이터 생성 헬퍼들
-  private generateMockPronunciation(word: string): string {
-    return `/${word.replace(/./g, (c, i) => i === 0 ? c : c.toLowerCase())}/`;
-  }
 
-  private generateMockDifficulty(): 1 | 2 | 3 | 4 | 5 {
-    const levels = [1, 2, 3, 4, 5] as const;
-    return levels[Math.floor(Math.random() * levels.length)];
-  }
+  // 실제 GPT API 호출
+  private async callGPTAPI(words: string[]): Promise<SmartWordDefinition[]> {
+    try {
+      // 환경변수에서 API 키 가져오기
+      const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
+      if (!apiKey) {
+        console.error('❌ OpenAI API 키가 설정되지 않았습니다.');
+        return [];
+      }
 
-  private generateMockMeanings(word: string): GPTMeaning[] {
-    const partOfSpeeches = ['noun', 'verb', 'adjective', 'adverb'] as const;
-    const meanings: GPTMeaning[] = [];
-    const meaningCount = 1 + Math.floor(Math.random() * 3); // 1-3개 의미
+      const model = process.env.EXPO_PUBLIC_GPT_MODEL || 'gpt-3.5-turbo';
 
-    for (let i = 0; i < meaningCount; i++) {
-      meanings.push({
-        partOfSpeech: partOfSpeeches[Math.floor(Math.random() * partOfSpeeches.length)],
-        korean: `${word}의 한국어 뜻 ${i + 1}`,
-        english: `English meaning ${i + 1} of ${word}`,
-        examples: [{
-          en: `This is an example sentence with ${word}.`,
-          ko: `이것은 ${word}를 사용한 예문입니다.`
-        }]
+      // GPT 프롬프트 생성
+      const prompt = this.createGPTPrompt(words);
+
+      console.log(`🔑 API 키 확인됨, 모델: ${model}`);
+      console.log(`📝 요청 단어: ${words.join(', ')}`);
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: 'system',
+              content: '당신은 영어 단어 사전입니다. 정확하고 일관된 JSON 형식으로 단어 정의를 제공해주세요.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.1,
+          max_tokens: 2000,
+          response_format: { type: 'json_object' }
+        })
       });
+
+      if (!response.ok) {
+        throw new Error(`GPT API 호출 실패: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content;
+
+      if (!content) {
+        throw new Error('GPT 응답이 비어있습니다.');
+      }
+
+      console.log(`📥 GPT 응답 받음: ${content.length}자`);
+
+      // JSON 파싱 및 변환
+      const gptResponse = JSON.parse(content);
+      return this.parseGPTResponse(gptResponse, words);
+
+    } catch (error) {
+      console.error('❌ GPT API 호출 실패:', error);
+      return [];
+    }
+  }
+
+  // GPT 프롬프트 생성
+  private createGPTPrompt(words: string[]): string {
+    return `다음 영어 단어들의 정의를 JSON 형식으로 제공해주세요:
+
+단어들: ${words.join(', ')}
+
+각 단어에 대해 다음 정보를 제공해주세요:
+1. 정확한 발음기호 (IPA 형식)
+2. 중고등학생 수준에 맞는 난이도 (1-5)
+3. 주요 의미들 (품사, 한국어 뜻, 영어 설명)
+4. 간단한 예문 (영어, 한국어)
+
+응답 형식:
+{
+  "definitions": [
+    {
+      "word": "단어",
+      "pronunciation": "/발음/",
+      "difficulty": 1-5,
+      "meanings": [
+        {
+          "partOfSpeech": "품사",
+          "korean": "한국어 뜻",
+          "english": "영어 설명",
+          "examples": [
+            {
+              "en": "영어 예문",
+              "ko": "한국어 번역"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}`;
+  }
+
+  // GPT 응답 파싱
+  private parseGPTResponse(gptResponse: any, requestedWords: string[]): SmartWordDefinition[] {
+    const definitions: SmartWordDefinition[] = [];
+
+    if (!gptResponse.definitions || !Array.isArray(gptResponse.definitions)) {
+      console.error('❌ GPT 응답 형식이 올바르지 않습니다:', gptResponse);
+      return definitions;
     }
 
-    return meanings;
+    for (const def of gptResponse.definitions) {
+      try {
+        const definition: SmartWordDefinition = {
+          word: def.word,
+          pronunciation: def.pronunciation || `/${def.word}/`,
+          difficulty: Math.max(1, Math.min(5, def.difficulty || 3)) as 1 | 2 | 3 | 4 | 5,
+          meanings: def.meanings?.map((m: any) => ({
+            partOfSpeech: m.partOfSpeech,
+            korean: m.korean,
+            english: m.english,
+            examples: m.examples || []
+          })) || [],
+          confidence: 0.9,
+          source: 'gpt' as 'gpt'
+        };
+
+        definitions.push(definition);
+        console.log(`✅ GPT에서 "${def.word}" 정의 생성 완료`);
+      } catch (error) {
+        console.error(`❌ "${def.word}" 파싱 실패:`, error);
+      }
+    }
+
+    return definitions;
+  }
+
+  // 완전한 단어장 데이터 로드 (3000단어)
+  private async loadCompleteWordbook(): Promise<any> {
+    try {
+      // complete-wordbook.json 파일에서 데이터 로드
+      const completeWordbook = require('../../assets/complete-wordbook.json');
+      return completeWordbook;
+    } catch (error) {
+      console.warn('완전한 단어장 로드 실패, 기본 단어장 사용:', error);
+      try {
+        // fallback으로 basic-wordbook.json 사용
+        const basicWordbook = require('../../assets/basic-wordbook.json');
+        return basicWordbook;
+      } catch (fallbackError) {
+        console.error('기본 단어장도 로드 실패:', fallbackError);
+        return { words: [] };
+      }
+    }
+  }
+
+  // GPT로 생성된 새 단어를 캐시에 추가 (향후 빠른 재검색을 위해)
+  async addWordToCache(definition: SmartWordDefinition): Promise<void> {
+    try {
+      console.log(`💾 새 단어 "${definition.word}" 캐시에 추가됨`);
+
+      // 캐시에 추가
+      await this.saveToAsyncCache(definition);
+      this.addToMemoryCache(definition.word.toLowerCase(), definition);
+
+    } catch (error) {
+      console.error('캐시 추가 실패:', error);
+    }
   }
 
   // 캐시 통계 업데이트
@@ -317,6 +499,40 @@ class SmartDictionaryService {
     } catch (error) {
       console.error('❌ 캐시 초기화 실패:', error);
       throw error;
+    }
+  }
+
+  // 단어 분석 및 베이스 폼 제안 (GPT가 알아서 처리하므로 간단하게)
+  analyzeWordForBaseFormSuggestion(word: string): {
+    isInflected: boolean;
+    baseForm?: string;
+    explanation?: string;
+    shouldSuggest: boolean;
+  } {
+    // GPT가 알아서 복수형, 과거형 등을 처리하므로 베이스 폼 제안 기능은 비활성화
+    return {
+      isInflected: false,
+      shouldSuggest: false
+    };
+  }
+
+  // 베이스 폼 추가를 위한 GPT 호출 헬퍼
+  async getBaseFormDefinition(baseForm: string): Promise<SmartWordDefinition | null> {
+    try {
+      console.log(`🔍 베이스 폼 정의 요청: "${baseForm}"`);
+
+      const definitions = await this.getWordDefinitions([baseForm]);
+
+      if (definitions.length > 0) {
+        console.log(`✅ 베이스 폼 "${baseForm}" 정의 생성 완료`);
+        return definitions[0];
+      }
+
+      console.log(`❌ 베이스 폼 "${baseForm}" 정의 생성 실패`);
+      return null;
+    } catch (error) {
+      console.error(`❌ 베이스 폼 "${baseForm}" 정의 요청 실패:`, error);
+      return null;
     }
   }
 

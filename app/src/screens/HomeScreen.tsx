@@ -5,6 +5,7 @@ import { HomeScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { wordbookService } from '../services/wordbookService';
 import initialDataService from '../services/initialDataService';
+import smartDictionaryService from '../services/smartDictionaryService';
 
 interface HomeStats {
   totalWords: number;
@@ -86,6 +87,33 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     } catch (error) {
       Alert.alert('❌ 로딩 실패', `오류: ${error.message}`);
     }
+  }, []);
+
+  // 개발 모드에서만 사용할 캐시 초기화 함수
+  const handleClearCache = useCallback(async () => {
+    Alert.alert(
+      '🗑️ 캐시 초기화',
+      'SmartDictionary 캐시를 모두 삭제하고 새로 시작하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await smartDictionaryService.clearCache();
+              Alert.alert(
+                '✅ 캐시 초기화 완료',
+                '다음 스캔부터 GPT API로 새로운 정의를 생성합니다.',
+                [{ text: '확인', onPress: () => loadHomeStats() }]
+              );
+            } catch (error) {
+              Alert.alert('❌ 초기화 실패', `오류: ${error.message}`);
+            }
+          }
+        }
+      ]
+    );
   }, []);
 
   const styles = StyleSheet.create({
@@ -304,6 +332,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       {/* Content */}
       <ScrollView
         style={styles.content}
+        contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
@@ -379,6 +408,18 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           >
             <Text style={styles.btnPrimaryText}>🚀 전체 단어장 로드 테스트</Text>
           </TouchableOpacity>
+
+          {/* 개발 모드에서만 보이는 캐시 초기화 버튼 */}
+          {__DEV__ && (
+            <TouchableOpacity
+              style={[styles.btn, { backgroundColor: '#EF4444' }]}
+              onPress={handleClearCache}
+            >
+              <Text style={[styles.btnPrimaryText, { color: '#FFFFFF' }]}>
+                🗑️ 캐시 초기화 (개발용)
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
 

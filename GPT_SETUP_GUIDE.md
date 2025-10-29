@@ -49,8 +49,8 @@ npx expo start --dev-client
 # 필수: OpenAI API 키
 EXPO_PUBLIC_OPENAI_API_KEY=sk-proj-your-key
 
-# 옵션: GPT 모델 (기본: gpt-4o-mini)
-EXPO_PUBLIC_GPT_MODEL=gpt-4o-mini
+# 옵션: GPT 모델 (기본: gpt-3.5-turbo - 더 경제적)
+EXPO_PUBLIC_GPT_MODEL=gpt-3.5-turbo
 
 # 옵션: 배치 크기 (기본: 5)
 EXPO_PUBLIC_MAX_BATCH_SIZE=5

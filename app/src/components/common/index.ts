@@ -13,6 +13,8 @@ export { default as WordbookSelectionModal } from './WordbookSelectionModal';
 export { default as InputModal } from './InputModal';
 export { default as DataSourceBadge, DataSourceIndicator } from './DataSourceBadge';
 export { default as SmartWordCard } from './SmartWordCard';
+export { default as BaseFormSuggestion } from './BaseFormSuggestion';
+export { default as ImageEditingGuide } from './ImageEditingGuide';
 
 // New components (Phase 2.0.2)
 export { default as Header } from './Header';
@@ -40,6 +42,7 @@ export type { SearchBarProps } from './SearchBar';
 export type { FloatingActionButtonProps } from './FloatingActionButton';
 export type { StatCardProps } from './StatCard';
 export type { WordbookSelectionModalProps } from './WordbookSelectionModal';
+export type { BaseFormSuggestionProps } from './BaseFormSuggestion';
 
 // New component types
 export type { HeaderProps } from './Header';

@@ -16,6 +16,7 @@ import { useWordbook } from '../hooks/useWordbook';
 import { WordWithMeaning } from '../types/types';
 import { useTheme } from '../styles/ThemeProvider';
 import ttsService from '../services/ttsService';
+import ShareWordbookButton from '../components/common/ShareWordbookButton';
 
 interface WordItemUI {
   id: number;
@@ -1007,12 +1008,19 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
           ) : (
             <Text style={styles.headerTitleText}>{editedTitle}</Text>
           )}
-          <TouchableOpacity
-            style={styles.editBtn}
-            onPress={() => setIsEditingTitle(true)}
-          >
-            <Text style={styles.editBtnText}>편집</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              style={styles.editBtn}
+              onPress={() => setIsEditingTitle(true)}
+            >
+              <Text style={styles.editBtnText}>편집</Text>
+            </TouchableOpacity>
+
+            <ShareWordbookButton
+              wordbookId={wordbookId}
+              wordbookName={editedTitle}
+            />
+          </View>
         </View>
         <Text style={styles.totalWordsText}>총 {totalWords}개 단어</Text>
 

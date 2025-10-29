@@ -109,23 +109,12 @@ class OCRService {
     } catch (error) {
       console.error('❌ MLKit OCR 처리 실패:', error);
 
-      // MLKit 실패 시 fallback으로 Mock 데이터 사용
-      console.log('🔄 Fallback to mock data due to MLKit error');
-      const mockWords = ['fallback', 'example', 'text'];
-      const words: OCRWord[] = mockWords.map((word, index) => ({
-        text: word,
-        confidence: 0.7,
-        boundingBox: {
-          x: index * 50,
-          y: 0,
-          width: word.length * 10,
-          height: 20
-        }
-      }));
+      // MLKit 실패 시 빈 결과 반환 (Mock 데이터 사용하지 않음)
+      console.log('🚫 OCR 실패 - 빈 결과 반환 (Mock 데이터 사용하지 않음)');
 
       return {
-        text: mockWords.join(' '),
-        words: words,
+        text: '',
+        words: [],
         processingTime: Date.now() - startTime,
         imageUri,
       };

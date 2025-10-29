@@ -2,17 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { Alert } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-// Data Management
-import { registerGlobalClearFunctions } from './src/utils/clearAllData';
-import initialDataService from './src/services/initialDataService';
+// Smart Dictionary Service (GPT + Local JSON)
+import smartDictionaryService from './src/services/smartDictionaryService';
 
 // Environment & Configuration
 import { validateEnv, debugEnv } from './src/utils/env';
-
-// TTS Service
-import ttsService from './src/services/ttsService';
 
 // Authentication
 import { useAuthStore } from './src/stores/authStore';
@@ -23,6 +18,7 @@ import { ThemeProvider } from './src/styles/ThemeProvider';
 import { LoadingScreen, ErrorScreen } from './src/components/common';
 
 export default function App() {
+  const [isAppInitialized, setIsAppInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
 
@@ -59,41 +55,11 @@ export default function App() {
       validateEnv();
       debugEnv();
 
-      // 🔧 개발 도구 등록 (데이터 초기화 함수)
-      console.log('🔧 개발 도구 등록 중...');
-      registerGlobalClearFunctions();
+      // Smart Dictionary Service 초기화 (GPT + Local JSON)
+      console.log('🤖 Smart Dictionary Service 초기화 중...');
+      await smartDictionaryService.initialize();
 
-      // 📚 초기 단어장 데이터 로딩
-      console.log('📚 초기 단어장 데이터 확인 중...');
-      try {
-        const wasInitialized = await initialDataService.initializeApp();
-        if (wasInitialized) {
-          console.log('🎉 100개 기초 단어장이 새로 생성되었습니다!');
-        }
-
-        const initInfo = await initialDataService.getInitializationInfo();
-        console.log('📊 초기화 정보:', initInfo);
-      } catch (error) {
-        console.error('❌ 초기 단어장 로딩 실패:', error);
-        // 초기 단어장 로딩 실패해도 앱은 계속 실행
-      }
-
-      // TTS 서비스 초기화 및 테스트
-      console.log('🔊 TTS 서비스 초기화 중...');
-      try {
-        const ttsStatus = ttsService.getDiagnostics();
-        console.log('🔍 TTS 진단 정보:', ttsStatus);
-
-        if (ttsStatus.isInitialized) {
-          console.log('✅ TTS 서비스 초기화 성공:', ttsStatus.status);
-          // TTS 자동 테스트 제거 (사용자 요청으로 hello 발음 방지)
-        } else {
-          console.warn('⚠️ TTS 서비스 사용 불가:', ttsStatus.status);
-        }
-      } catch (ttsError) {
-        console.error('❌ TTS 서비스 초기화 실패:', ttsError);
-      }
-
+      setIsAppInitialized(true);
       console.log('✅ 앱 초기화 완료!');
     } catch (error) {
       console.error('❌ 앱 초기화 실패:', error);
@@ -116,18 +82,25 @@ export default function App() {
     );
   }
 
+  // 앱 초기화 실패
+  if (!isAppInitialized) {
+    return (
+      <ThemeProvider>
+        <ErrorScreen onRetry={initializeApp} />
+      </ThemeProvider>
+    );
+  }
+
   // 앱 시작 - 인증 상태에 따른 네비게이션
   const isAuthenticated = !!(user && access_token);
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <NavigationContainer>
-          <StatusBar style="auto" />
-          <RootNavigator isAuthenticated={isAuthenticated} />
-        </NavigationContainer>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <ThemeProvider>
+      <NavigationContainer>
+        <StatusBar style="auto" />
+        <RootNavigator isAuthenticated={isAuthenticated} />
+      </NavigationContainer>
+    </ThemeProvider>
   );
 }
 

@@ -54,12 +54,6 @@
     "plugins": [
       "expo-sqlite",
       [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan text for vocabulary learning."
-        }
-      ],
-      [
         "react-native-vision-camera",
         {
           "cameraPermissionText": "$(PRODUCT_NAME) needs access to your Camera to scan text for vocabulary learning.",

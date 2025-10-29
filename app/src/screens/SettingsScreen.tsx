@@ -5,6 +5,7 @@ import { useTheme } from '../styles/ThemeProvider';
 import { wordbookService } from '../services/wordbookService';
 import { useAuthStore } from '../stores/authStore';
 import { InputModal } from '../components/common';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { theme } = useTheme();
@@ -21,9 +22,27 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [autoFilter, setAutoFilter] = useState(true);
   const [loading, setLoading] = useState(true);
   const [showGoalModal, setShowGoalModal] = useState(false);
+  const [excludeMastered, setExcludeMastered] = useState(true);
+  const [excludeBasic, setExcludeBasic] = useState(false);
 
   useEffect(() => {
     loadDatabaseStats();
+  }, []);
+
+  useEffect(() => {
+    const loadFilterSettings = async () => {
+      try {
+        const settingsJson = await AsyncStorage.getItem('ocr_filter_settings');
+        if (settingsJson) {
+          const settings = JSON.parse(settingsJson);
+          setExcludeMastered(settings.excludeMastered ?? true);
+          setExcludeBasic(settings.excludeBasic ?? false);
+        }
+      } catch (error) {
+        console.error('설정 불러오기 실패:', error);
+      }
+    };
+    loadFilterSettings();
   }, []);
 
   const loadDatabaseStats = async () => {
@@ -61,6 +80,19 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       Alert.alert('오류', '1-100 사이의 숫자를 입력해주세요.');
     }
     setShowGoalModal(false);
+  };
+
+  const saveFilterSettings = async (key: string, value: boolean) => {
+    try {
+      const currentSettings = {
+        excludeMastered,
+        excludeBasic,
+        [key]: value
+      };
+      await AsyncStorage.setItem('ocr_filter_settings', JSON.stringify(currentSettings));
+    } catch (error) {
+      console.error('설정 저장 실패:', error);
+    }
   };
 
   const handleGoalCancel = () => {
@@ -323,6 +355,44 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
                 true: theme.colors.primary.light
               }}
               thumbColor={autoFilter ? theme.colors.primary.main : theme.colors.text.tertiary}
+            />
+          }
+          showArrow={false}
+        />
+        <SettingItem
+          title="외운 단어 자동 제외"
+          subtitle="이미 암기한 단어는 스캔 결과에서 제외합니다"
+          rightComponent={
+            <Switch
+              value={excludeMastered}
+              onValueChange={(value) => {
+                setExcludeMastered(value);
+                saveFilterSettings('excludeMastered', value);
+              }}
+              trackColor={{
+                false: theme.colors.border.light,
+                true: theme.colors.primary.light
+              }}
+              thumbColor={excludeMastered ? theme.colors.primary.main : theme.colors.text.tertiary}
+            />
+          }
+          showArrow={false}
+        />
+        <SettingItem
+          title="기초 단어 제외"
+          subtitle="레벨 1 (a, the, is 등) 단어는 제외합니다"
+          rightComponent={
+            <Switch
+              value={excludeBasic}
+              onValueChange={(value) => {
+                setExcludeBasic(value);
+                saveFilterSettings('excludeBasic', value);
+              }}
+              trackColor={{
+                false: theme.colors.border.light,
+                true: theme.colors.primary.light
+              }}
+              thumbColor={excludeBasic ? theme.colors.primary.main : theme.colors.text.tertiary}
             />
           }
           showArrow={false}

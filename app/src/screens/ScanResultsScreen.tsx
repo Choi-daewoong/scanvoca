@@ -26,7 +26,7 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
   const { theme } = useTheme();
 
   // route params에서 실제 OCR 결과 받기 (카메라에서 이미 처리된 단어 데이터)
-  const { scannedText = '', detectedWords = [], imageUri = '' } = route.params || {};
+  const { scannedText = '', detectedWords = [], imageUri = '', excludedCount = 0, excludedWords = [] } = route.params || {};
 
   // 텍스트 줄이기 함수 (1-2줄로 제한)
   const truncateText = (text: string, maxLines: number = 2) => {
@@ -47,6 +47,7 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
 
   const [activeFilter, setActiveFilter] = useState('모두');
   const [selectAll, setSelectAll] = useState(true);
+  const [showExcludedDetail, setShowExcludedDetail] = useState(false);
 
   // 카메라에서 전달받은 단어 데이터를 words 상태로 변환
   const [words, setWords] = useState<ScannedWord[]>([]);
@@ -401,6 +402,44 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
       flex: 1,
       lineHeight: 20,
     },
+    excludedBanner: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: '#E8F5E9',
+      padding: 12,
+      borderRadius: 8,
+      marginBottom: 16,
+      marginHorizontal: 20,
+    },
+    excludedText: {
+      fontSize: 14,
+      color: '#2E7D32',
+      fontWeight: '600',
+    },
+    detailLink: {
+      fontSize: 14,
+      color: '#1976D2',
+      textDecorationLine: 'underline',
+    },
+    excludedDetail: {
+      backgroundColor: '#F5F5F5',
+      padding: 12,
+      borderRadius: 8,
+      marginBottom: 16,
+      marginHorizontal: 20,
+    },
+    excludedTitle: {
+      fontSize: 14,
+      fontWeight: '600',
+      marginBottom: 8,
+      color: '#424242',
+    },
+    excludedItem: {
+      fontSize: 13,
+      color: '#616161',
+      marginBottom: 4,
+    },
   });
 
 
@@ -428,6 +467,30 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
 
       {/* Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* 제외된 단어 배너 */}
+        {excludedCount > 0 && (
+          <View style={styles.excludedBanner}>
+            <Text style={styles.excludedText}>
+              ✅ 외운 단어 {excludedCount}개 제외됨
+            </Text>
+            <TouchableOpacity onPress={() => setShowExcludedDetail(!showExcludedDetail)}>
+              <Text style={styles.detailLink}>자세히</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* 제외된 단어 상세 */}
+        {showExcludedDetail && excludedWords && excludedWords.length > 0 && (
+          <View style={styles.excludedDetail}>
+            <Text style={styles.excludedTitle}>제외된 단어:</Text>
+            {excludedWords.map(({ word, reason }: { word: string; reason: string }) => (
+              <Text key={word} style={styles.excludedItem}>
+                • {word} ({reason})
+              </Text>
+            ))}
+          </View>
+        )}
+
         {/* Filter Tabs */}
         <View style={styles.filterTabsContainer}>
           <View style={styles.filterTabs}>
