@@ -21,7 +21,7 @@ export default function WordDetailScreen({ route, navigation }: WordDetailScreen
   const loadWordDetail = async () => {
     try {
       setLoading(true);
-      // databaseService 제거됨 - 임시 데이터 사용
+      // TODO: 향후 서버 연동 시 실제 단어 데이터 로드 구현 예정
       const wordData = null;
       const memorizedStatus = false;
       const allWordbooks = [];
@@ -56,7 +56,7 @@ export default function WordDetailScreen({ route, navigation }: WordDetailScreen
       text: wb.name,
       onPress: async () => {
         try {
-          // databaseService 사용 코드 제거됨 - wordbookService로 재구현 필요
+          // TODO: wordbookService를 사용한 단어 추가 기능 구현 필요
           const success = true; // 임시로 true 반환
           if (success) {
             Alert.alert('성공', `${wb.name}에 단어가 추가되었습니다.`);

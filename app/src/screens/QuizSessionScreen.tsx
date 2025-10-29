@@ -148,12 +148,7 @@ export default function QuizSessionScreen({ navigation, route }: QuizSessionScre
       }
     };
 
-    // 학습 진도 업데이트
-    try {
-      // await databaseService (제거됨)
-    } catch (error) {
-      console.error('Failed to update study progress:', error);
-    }
+    // TODO: 학습 진도 업데이트 기능은 향후 서버 연동 시 구현 예정
 
     if (quizSession.currentQuestionIndex < quizSession.questions.length - 1) {
       // 다음 문제로 이동

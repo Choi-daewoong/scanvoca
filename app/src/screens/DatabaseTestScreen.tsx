@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-// Database removed - screen disabled
-// // databaseService import 제거됨
+// NOTE: 이 화면은 더 이상 사용되지 않습니다 (Database 제거됨)
 import { WordWithMeaning } from '../types/types';
 
 export default function DatabaseTestScreen() {

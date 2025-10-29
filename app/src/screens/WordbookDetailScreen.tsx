@@ -135,37 +135,8 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
       return newVocab;
     });
 
-    // DB에 즉시 저장 (StudyProgress 업데이트)
-    try {
-      if (newMemorizedState) {
-        // 암기 완료 상태로 설정 (correct_count를 3 이상으로)
-        // await databaseService (제거됨)
-      } else {
-        // 암기 해제 상태로 설정 (correct_count를 0으로)
-        // await databaseService (제거됨)
-      }
-    } catch (error) {
-      console.error('Failed to update memorization state:', error);
-
-      // 오류 발생 시 UI 상태 롤백
-      setVocabulary(prev => {
-        const revertedVocab = prev.map(word =>
-          word.english === englishWord
-            ? { ...word, memorized: !newMemorizedState }
-            : word
-        );
-
-        setShuffledVocabulary(prevShuffled =>
-          prevShuffled.map(word =>
-            word.english === englishWord
-              ? { ...word, memorized: !newMemorizedState }
-              : word
-          )
-        );
-
-        return revertedVocab;
-      });
-    }
+    // TODO: 암기 상태 저장 기능은 향후 서버 연동 시 구현 예정
+    // 현재는 로컬 상태로만 관리됨
   };
 
   // 단어 선택 토글

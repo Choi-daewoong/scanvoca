@@ -1,14 +1,14 @@
 // useWordbook Hook - AsyncStorage 기반 단어장 관련 상태 관리
 import { useState, useCallback, useEffect } from 'react';
 import { wordbookService } from '../services/wordbookService';
-import { Wordbook } from '../types/types';
+import { Wordbook, WordbookWord } from '../types/types';
 import { WordWithMeaning } from './useVocabulary';
 
 export interface UseWordbookReturn {
   // 상태
   wordbooks: Wordbook[];
   currentWordbook: Wordbook | null;
-  wordbookWords: any[]; // GPT 생성 단어 배열
+  wordbookWords: WordbookWord[]; // GPT 생성 단어 배열
   isLoading: boolean;
   error: string | null;
 
@@ -34,7 +34,7 @@ export interface WordbookFilters {
 export function useWordbook(): UseWordbookReturn {
   const [wordbooks, setWordbooks] = useState<Wordbook[]>([]);
   const [currentWordbook, setCurrentWordbook] = useState<Wordbook | null>(null);
-  const [wordbookWords, setWordbookWords] = useState<any[]>([]);
+  const [wordbookWords, setWordbookWords] = useState<WordbookWord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

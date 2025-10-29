@@ -35,7 +35,7 @@ export default function StudyStatsScreen({ navigation }: StudyStatsScreenProps) 
     try {
       setLoading(true);
 
-      // databaseService 제거됨 - 임시 데이터 사용
+      // TODO: 향후 서버 연동 시 실제 통계 데이터 로드 구현 예정
       const studyStats = {
         memorizedWords: 0,
         learningWords: 0,
