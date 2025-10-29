@@ -49,10 +49,26 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     try {
       setLoading(true);
 
-      // Database service removed - using temporary data
-      const wordStats = null;
-      const wordbookStats = null;
-      const studyStats = null;
+      // Load from wordbookService (AsyncStorage based)
+      const { wordbookService } = await import('../services/wordbookService');
+      const wordbooks = await wordbookService.getAllWordbooks();
+
+      let totalWords = 0;
+      let totalMeanings = 0;
+
+      for (const wordbook of wordbooks) {
+        const words = await wordbookService.getWordbookWords(wordbook.id);
+        totalWords += words.length;
+        totalMeanings += words.reduce((sum, w) => sum + (w.meanings?.length || 0), 0);
+      }
+
+      setDatabaseStats({
+        totalWords,
+        totalMeanings,
+        totalExamples: 0, // TODO: Calculate from word examples
+        totalWordbooks: wordbooks.length,
+        studiedWords: 0, // TODO: Calculate from study progress
+      });
     } catch (error) {
       console.error('Failed to load database stats:', error);
     } finally {

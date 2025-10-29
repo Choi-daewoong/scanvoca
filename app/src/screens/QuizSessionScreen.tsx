@@ -5,6 +5,7 @@ import { useTheme } from '../styles/ThemeProvider';
 import { ProgressBar } from '../components/common';
 import { useQuiz } from '../hooks/useQuiz';
 import { WordWithMeaning } from '../types/types';
+import wordbookService from '../services/wordbookService';
 
 interface QuizQuestion {
   id: number;
@@ -42,11 +43,27 @@ export default function QuizSessionScreen({ navigation, route }: QuizSessionScre
       let words: WordWithMeaning[] = [];
 
       if (wordbookId) {
-        // 특정 단어장의 단어들로 퀴즈 생성 (database service removed)
-        words = [];
+        // 특정 단어장의 단어들로 퀴즈 생성
+        try {
+          words = await wordbookService.getWordbookWords(wordbookId);
+        } catch (error) {
+          console.error('Failed to load wordbook words:', error);
+          words = [];
+        }
       } else {
-        // 전체 단어에서 무작위 선택 (database service removed)
-        words = [];
+        // 전체 단어장에서 무작위 선택
+        try {
+          const allWordbooks = await wordbookService.getAllWordbooks();
+          for (const wordbook of allWordbooks) {
+            const wordbookWords = await wordbookService.getWordbookWords(wordbook.id);
+            words = words.concat(wordbookWords);
+          }
+          // 무작위 섞기
+          words = words.sort(() => Math.random() - 0.5).slice(0, 20);
+        } catch (error) {
+          console.error('Failed to load words:', error);
+          words = [];
+        }
       }
 
       if (words.length === 0) {

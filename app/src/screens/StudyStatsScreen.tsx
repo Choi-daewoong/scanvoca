@@ -36,8 +36,15 @@ export default function StudyStatsScreen({ navigation }: StudyStatsScreenProps) 
       setLoading(true);
 
       // databaseService 제거됨 - 임시 데이터 사용
-      const studyStats = null;
-      const wordStats = null;
+      const studyStats = {
+        memorizedWords: 0,
+        learningWords: 0,
+        totalStudiedWords: 0,
+        averageCorrectRate: 0,
+      };
+      const wordStats = {
+        totalWords: 0,
+      };
       const wordbooks = [];
 
       // 레벨별 통계 계산
