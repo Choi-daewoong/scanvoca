@@ -59,7 +59,15 @@ export async function exportWordbookToFile(wordbookId: number): Promise<string> 
         difficulty: word.difficulty,
         meanings: word.meanings,
         confidence: 1.0,
-        source: word.source || 'gpt'
+        source: word.source || 'gpt',
+
+        // ⭐ 커스텀 필드 추가 (가상 단어장 데이터 보존)
+        isCustomized: word.isCustomized,
+        customNote: word.customNote,
+        customExamples: word.customExamples,
+        tags: word.tags,
+        addedAt: word.addedAt,
+        lastModified: word.lastModified
       })),
       metadata: {
         created_at: new Date().toISOString(),
@@ -162,8 +170,15 @@ export async function importWordbookFromFile(jsonData: string): Promise<number> 
       pronunciation: word.pronunciation,
       difficulty: word.difficulty,
       meanings: word.meanings,
-      addedAt: new Date().toISOString(),
-      source: word.source || 'gpt'
+      addedAt: word.addedAt || new Date().toISOString(),
+      source: word.source || 'gpt',
+
+      // ⭐ 커스텀 필드 보존 (import 시에도 편집 내용 유지)
+      isCustomized: word.isCustomized || false,
+      customNote: word.customNote,
+      customExamples: word.customExamples,
+      tags: word.tags,
+      lastModified: word.lastModified
     }));
 
     await AsyncStorage.setItem(wordbookKey, JSON.stringify(wordsToSave));
