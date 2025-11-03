@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 
 interface WordItemUI {
   id: number;
@@ -25,6 +25,7 @@ interface StudyModeViewProps {
   onFlipCard: (word: string) => void;
   onPlayPronunciation: (word: string) => Promise<void>;
   getLevelColor: (level: number) => string;
+  onAddWord: () => void;
 }
 
 export default function StudyModeView({
@@ -43,6 +44,7 @@ export default function StudyModeView({
   onFlipCard,
   onPlayPronunciation,
   getLevelColor,
+  onAddWord,
 }: StudyModeViewProps) {
   const getWordMeaningsHTML = (word: WordItemUI) => {
     return word.korean.map((item, index) => (
@@ -214,9 +216,8 @@ export default function StudyModeView({
       {/* 단어추가하기 버튼 */}
       <TouchableOpacity
         style={styles.addWordBtn}
-        onPress={() => {
-          Alert.alert('알림', '단어 추가 기능은 곧 구현됩니다.');
-        }}
+        onPress={onAddWord}
+        activeOpacity={0.8}
       >
         <Text style={styles.addWordBtnText}>+ 단어추가하기</Text>
       </TouchableOpacity>

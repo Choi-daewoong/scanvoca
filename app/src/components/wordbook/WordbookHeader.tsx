@@ -13,6 +13,7 @@ interface WordbookHeaderProps {
   onStartEdit: () => void;
   onFinishEdit: () => void;
   onModeChange: (mode: 'study' | 'exam') => void;
+  onAddWord: () => void;
 }
 
 export default function WordbookHeader({
@@ -26,6 +27,7 @@ export default function WordbookHeader({
   onStartEdit,
   onFinishEdit,
   onModeChange,
+  onAddWord,
 }: WordbookHeaderProps) {
   return (
     <>
@@ -52,6 +54,10 @@ export default function WordbookHeader({
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <TouchableOpacity style={styles.editBtn} onPress={onStartEdit}>
               <Text style={styles.editBtnText}>편집</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.addBtn} onPress={onAddWord}>
+              <Text style={styles.addBtnText}>+</Text>
             </TouchableOpacity>
 
             <ShareWordbookButton
@@ -159,6 +165,25 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  addBtn: {
+    width: 36,
+    height: 36,
+    backgroundColor: '#10B981',
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  addBtnText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+    lineHeight: 20,
   },
   totalWordsText: {
     fontSize: 14,

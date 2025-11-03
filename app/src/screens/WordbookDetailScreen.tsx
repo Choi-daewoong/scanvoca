@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WordbookDetailScreenProps } from '../navigation/types';
@@ -7,10 +7,14 @@ import { useWordbookDetail } from '../hooks/useWordbookDetail';
 import WordbookHeader from '../components/wordbook/WordbookHeader';
 import StudyModeView from '../components/wordbook/StudyModeView';
 import ExamModeView from '../components/wordbook/ExamModeView';
+import AddWordModal from '../components/wordbook/AddWordModal';
 
 export default function WordbookDetailScreen({ navigation, route }: WordbookDetailScreenProps) {
   const { theme } = useTheme();
   const { wordbookId, wordbookName = '단어장' } = route.params;
+
+  // 모달 상태
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
   // 커스텀 Hook에서 모든 상태와 로직 가져오기
   const {
@@ -57,6 +61,7 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
     getLevelColor,
     playPronunciation,
     calculateExamScore,
+    reloadWords,
   } = useWordbookDetail(wordbookId, wordbookName);
 
   const styles = StyleSheet.create({
@@ -79,6 +84,7 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
         onStartEdit={() => setIsEditingTitle(true)}
         onFinishEdit={finishEditingTitle}
         onModeChange={setCurrentMode}
+        onAddWord={() => setIsAddModalVisible(true)}
       />
 
       {currentMode === 'study' && (
@@ -98,6 +104,7 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
           onFlipCard={flipCard}
           onPlayPronunciation={playPronunciation}
           getLevelColor={getLevelColor}
+          onAddWord={() => setIsAddModalVisible(true)}
         />
       )}
 
@@ -132,6 +139,14 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
           calculateExamScore={calculateExamScore}
         />
       )}
+
+      {/* 단어 추가 모달 */}
+      <AddWordModal
+        visible={isAddModalVisible}
+        wordbookId={wordbookId}
+        onClose={() => setIsAddModalVisible(false)}
+        onWordsAdded={reloadWords}
+      />
     </SafeAreaView>
   );
 }

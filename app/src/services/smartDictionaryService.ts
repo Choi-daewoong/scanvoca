@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import completeWordbook from '../../assets/complete-wordbook.json';
 
 // GPT Response Types
 export interface GPTMeaning {
@@ -40,6 +41,7 @@ export interface CacheStats {
 class SmartDictionaryService {
   private static instance: SmartDictionaryService;
   private memoryCache: Map<string, SmartWordDefinition> = new Map();
+  private localWordbookMap: Map<string, any> = new Map(); // 로컬 JSON 데이터
   private isInitialized = false;
   private readonly CACHE_KEY_PREFIX = 'smart_dict_';
   private readonly CACHE_STATS_KEY = 'smart_dict_stats';
@@ -50,7 +52,15 @@ class SmartDictionaryService {
   private readonly MAX_DAILY_REQUESTS = 100; // 하루 최대 100건
   private readonly ESTIMATED_COST_PER_REQUEST = 0.002; // 요청당 예상 비용 ($)
 
-  private constructor() {}
+  private constructor() {
+    // 로컬 워드북 데이터를 Map으로 변환 (빠른 검색을 위해)
+    if (completeWordbook && completeWordbook.words) {
+      for (const word of completeWordbook.words) {
+        this.localWordbookMap.set(word.word.toLowerCase(), word);
+      }
+      console.log(`📚 로컬 워드북 로드 완료: ${this.localWordbookMap.size}개 단어`);
+    }
+  }
 
   static getInstance(): SmartDictionaryService {
     if (!SmartDictionaryService.instance) {
@@ -110,17 +120,18 @@ class SmartDictionaryService {
     return true;
   }
 
-  // 단어 정의 배치 조회 (GPT + 캐시)
+  // 단어 정의 배치 조회 (로컬 JSON → 캐시 → GPT)
   async getWordDefinitions(words: string[]): Promise<SmartWordDefinition[]> {
     await this.initialize();
 
     const results: SmartWordDefinition[] = [];
     const wordsToProcess: string[] = [];
     let cacheHits = 0;
+    let localHits = 0;
 
     console.log(`🔍 ${words.length}개 단어 정의 조회 시작`);
 
-    // 1단계: 캐시에서 먼저 찾기
+    // 1단계: 캐시 및 로컬 JSON에서 찾기
     for (const word of words) {
       const normalizedWord = word.toLowerCase().trim();
       if (!normalizedWord) continue;
@@ -142,12 +153,23 @@ class SmartDictionaryService {
         continue;
       }
 
+      // 로컬 JSON 파일에서 확인 (예문 포함!)
+      const localWord = this.getFromLocalWordbook(normalizedWord);
+      if (localWord) {
+        results.push(localWord);
+        // 로컬 데이터도 캐시에 저장
+        await this.saveToAsyncCache(localWord);
+        this.addToMemoryCache(normalizedWord, localWord);
+        localHits++;
+        continue;
+      }
+
       wordsToProcess.push(normalizedWord);
     }
 
-    console.log(`📊 캐시 히트: ${cacheHits}개, GPT 처리 필요: ${wordsToProcess.length}개`);
+    console.log(`📊 캐시 히트: ${cacheHits}개, 로컬 DB: ${localHits}개, GPT 필요: ${wordsToProcess.length}개`);
 
-    // 2단계: 캐시에 없는 단어들은 GPT로 처리
+    // 2단계: 캐시와 로컬 JSON에도 없는 단어들만 GPT로 처리
     if (wordsToProcess.length > 0) {
       const gptResults = await this.generateDefinitionsWithGPT(wordsToProcess);
 
@@ -161,10 +183,31 @@ class SmartDictionaryService {
     }
 
     // 통계 업데이트
-    await this.updateCacheStats(words.length, cacheHits);
+    await this.updateCacheStats(words.length, cacheHits + localHits);
 
-    console.log(`✅ 총 ${results.length}개 단어 정의 생성 완료`);
+    console.log(`✅ 총 ${results.length}개 단어 정의 생성 완료 (로컬: ${localHits}, 캐시: ${cacheHits}, GPT: ${wordsToProcess.length})`);
     return results;
+  }
+
+  // 로컬 워드북(JSON)에서 단어 조회
+  private getFromLocalWordbook(word: string): SmartWordDefinition | null {
+    const localData = this.localWordbookMap.get(word);
+    if (!localData) return null;
+
+    // 로컬 JSON 형식을 SmartWordDefinition으로 변환
+    return {
+      word: localData.word,
+      pronunciation: localData.pronunciation || '',
+      difficulty: localData.difficulty || 4,
+      meanings: localData.meanings.map((m: any) => ({
+        partOfSpeech: m.partOfSpeech || 'noun',
+        korean: m.korean,
+        english: m.english || '',
+        examples: localData.examples || [] // 예문 포함!
+      })),
+      confidence: 1.0,
+      source: 'cache', // 로컬 DB도 캐시로 취급
+    };
   }
 
   // AsyncStorage 캐시에서 단어 조회

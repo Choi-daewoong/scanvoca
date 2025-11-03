@@ -18,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 #### Phase 1: MVP 개발 (현재)
 - **목표**: 사용자 흐름에 따른 UX/UI 완성 및 기본 기능 구현
 - **인증**: AsyncStorage 기반 로컬 인증 (임시)
-- **데이터**: 🚫 **로컬 DB 사용하지 않음** - GPT API를 통한 실시간 단어 정의 생성
+- **데이터**: 📚 **로컬 JSON 우선 → GPT API** - complete-wordbook.json (3267단어) 먼저 검색 후 없으면 GPT 호출
 - **수익 모델**: 없음 (기능 검증 단계)
 
 #### Phase 2: 서버 구축 및 확장
@@ -49,9 +49,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 * **Framework:** React Native + Expo SDK 54
 * **개발 환경**: 🔧 **Expo Dev Client** (커스텀 네이티브 모듈 지원)
 * **Language:** TypeScript (strict mode, extends expo/tsconfig.base)
-* **Data Source:** 🤖 **GPT API 전용** (🚫 로컬 DB 사용하지 않음)
-  - 모든 단어 정의는 GPT에서 실시간 생성
-  - SmartDictionaryService를 통한 캐싱으로 성능 최적화
+* **Data Source:** 📚 **로컬 JSON 우선 + GPT API 백업**
+  - 검색 순서: 메모리 캐시 → complete-wordbook.json (3267단어) → AsyncStorage 캐시 → GPT API
+  - 로컬 JSON에 예문 포함되어 있어 비용 절감 효과
+  - SmartDictionaryService를 통한 통합 관리
 * **Navigation:** React Navigation v6 (Stack + Bottom Tabs)
 * **State Management:** Zustand (authStore) + React Hooks
 * **Authentication:** AsyncStorage 기반 로컬 인증 (임시)
@@ -309,8 +310,10 @@ import { Button, WordCard } from '../components/common';
 * **TypeScript**: strict 모드, 모든 Props 인터페이스 정의
 * **네이밍**: 컴포넌트 PascalCase, 함수/변수 camelCase
 * **테마 사용**: `import theme from '../styles/theme'`로 일관된 스타일링
-* **🚫 DB 접근 금지**: 로컬 SQLite DB 사용하지 않음 - GPT API 전용
-* **단어 데이터**: `smartDictionaryService`를 통한 GPT 기반 실시간 생성
+* **🚫 SQLite DB 접근 금지**: 로컬 SQLite/Realm 등 사용하지 않음
+* **✅ 단어 데이터 소스**: `smartDictionaryService`를 통한 통합 관리
+  - 우선순위: complete-wordbook.json (3267단어, 예문 포함) → GPT API
+  - 비용 절감: 일반 단어는 로컬 JSON 사용, 신조어/전문용어만 GPT 호출
 * **사전 연동**: 네이버 사전 WebView 연결 (`https://en.dict.naver.com/#/search?query={word}`)
 * **파일 크기 제한**: 단일 파일은 400줄 이하로 유지, 초과 시 기능별로 분리
 * **모듈화**: 400줄 초과 시 즉시 별도 파일로 분리하여 유지보수성 확보
@@ -319,11 +322,15 @@ import { Button, WordCard } from '../components/common';
 
 ## 🤖 데이터 소스 정보
 
-### GPT API 기반 단어 처리
-- **🚫 로컬 DB 사용하지 않음**: SQLite 데이터베이스 완전 제거
-- **실시간 생성**: 모든 단어 정의는 GPT API에서 실시간 생성
-- **캐싱 시스템**: `SmartDictionaryService`를 통한 메모리 캐싱으로 성능 최적화
-- **데이터 구조**: GPT가 생성하는 일관된 JSON 형태의 단어 정의
+### 단어 데이터 처리 우선순위
+- **검색 순서**: 메모리 캐시 → 로컬 JSON → AsyncStorage 캐시 → GPT API
+- **로컬 JSON 우선**: `complete-wordbook.json` (3267단어, 예문 포함) 먼저 검색
+- **비용 최적화**: 일반 단어는 로컬 데이터 사용 (무료), 없을 때만 GPT 호출 (~$0.002/단어)
+- **캐싱 시스템**: `SmartDictionaryService`를 통한 통합 관리
+  - 메모리 캐시: 앱 실행 중 임시 저장 (빠른 재검색)
+  - AsyncStorage: 영구 캐시 (GPT로 생성한 단어 저장)
+  - 로컬 JSON: complete-wordbook.json (3267개 미리 정의된 단어)
+- **SQLite 제거**: 로컬 데이터베이스(SQLite, Realm) 사용하지 않음
 
 ### GPT 단어 정의 구조
 ```typescript
@@ -351,9 +358,10 @@ interface SmartWordDefinition {
 ## 🎯 현재 개발 상황
 
 ### ✅ 완료된 작업
-- [x] ✅ **로컬 DB 완전 제거** - SQLite 데이터베이스 삭제 및 GPT 전용 전환
-- [x] GPT API 기반 SmartDictionaryService 구현
+- [x] ✅ **로컬 DB 완전 제거** - SQLite 데이터베이스 삭제 및 JSON+GPT 하이브리드 전환
+- [x] SmartDictionaryService 구현 (로컬 JSON 우선 검색 → GPT 백업)
 - [x] AsyncStorage 기반 단어장 시스템 구현
+- [x] 단어 추가 기능 (AddWordModal) - 로컬 JSON/GPT 자동 선택
 - [x] 사용자 시나리오 정의
 - [x] UI/UX 목업 설계
 - [x] 네비게이션 플로우 설계
@@ -383,12 +391,14 @@ interface SmartWordDefinition {
 ## ⚠️ 핵심 개발 원칙
 
 ### 🚫 현재 단계 금지사항 (Phase 1 MVP)
-- **🚫 로컬 DB 사용 금지**: SQLite, Realm 등 로컬 데이터베이스 사용하지 않음
+- **🚫 SQLite/Realm 사용 금지**: 로컬 데이터베이스 시스템 사용하지 않음
 - **🚫 Repository 패턴 사용 금지**: 기존 database/repositories 디렉토리 참조하지 않음
-- **🚫 databaseService 참조 금지**: 모든 단어 데이터는 GPT API를 통해서만 접근
-- **✅ GPT API 전용**: `smartDictionaryService`만을 통한 단어 정의 생성
-- **✅ AsyncStorage만 허용**: 단어장, 설정, 인증 정보는 AsyncStorage 사용
-- **OCR 후처리 필수**: 반드시 GPT 매칭 및 사용자 검증 UI 제공
+- **🚫 databaseService 참조 금지**: 모든 단어 데이터는 smartDictionaryService를 통해서만 접근
+- **✅ smartDictionaryService 전용**: 로컬 JSON + GPT API 통합 관리
+  - 검색 우선순위: 메모리 캐시 → complete-wordbook.json → AsyncStorage → GPT API
+  - 비용 절감을 위해 로컬 JSON (3267단어) 먼저 검색
+- **✅ AsyncStorage만 허용**: 단어장, 설정, 인증 정보, GPT 캐시는 AsyncStorage 사용
+- **OCR 후처리 필수**: 반드시 단어 매칭 및 사용자 검증 UI 제공
 
 
 ### ✅ 필수 준수사항
@@ -459,4 +469,4 @@ npm install react-native-image-editor
 - `src/styles/theme.ts`: 디자인 시스템
 
 ---
-*마지막 업데이트: 2025년 9월*
+*마지막 업데이트: 2025년 11월 4일*

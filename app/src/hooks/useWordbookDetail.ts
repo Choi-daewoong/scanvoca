@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { WordWithMeaning } from '../types/types';
 import ttsService from '../services/ttsService';
 import { wordbookService } from '../services/wordbookService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface WordItemUI {
   id: number;
@@ -78,6 +79,7 @@ export interface UseWordbookDetailReturn {
   getWordMeaningsHTML: (word: WordItemUI) => string;
   playPronunciation: (word: string) => Promise<void>;
   calculateExamScore: () => { correctCount: number; totalCount: number };
+  reloadWords: () => Promise<void>;
 }
 
 export function useWordbookDetail(
@@ -141,6 +143,34 @@ export function useWordbookDetail(
       }
     };
     loadWords();
+  }, [wordbookId]);
+
+  // 단어 목록 다시 불러오기 (단어 추가 후 호출용)
+  const reloadWords = useCallback(async () => {
+    try {
+      console.log(`🔄 단어장 ${wordbookId} 단어 다시 로드 시작`);
+
+      // wordbookService에서 단어 로드
+      const words = await wordbookService.getWordbookWords(wordbookId);
+      console.log(`✅ ${words.length}개 단어 다시 로드 완료`);
+
+      const uiWords: WordItemUI[] = words.map((w: any) => ({
+        id: w.id,
+        english: w.word,
+        korean: w.meanings.map((m: any) => ({
+          pos: m.partOfSpeech || '—',
+          meanings: [m.korean],
+        })),
+        level: w.difficulty || 1,
+        memorized: Boolean(w.study_progress && w.study_progress.correct_count >= 3 && (w.study_progress.correct_count > (w.study_progress.incorrect_count || 0))),
+      }));
+
+      console.log(`📝 UI 형식으로 변환 완료:`, uiWords);
+      setVocabulary(uiWords);
+      setShuffledVocabulary(uiWords);
+    } catch (e) {
+      console.error('Failed to reload wordbook words', e);
+    }
   }, [wordbookId]);
 
   // 계산된 값
@@ -399,5 +429,6 @@ export function useWordbookDetail(
     getWordMeaningsHTML,
     playPronunciation,
     calculateExamScore,
+    reloadWords,
   };
 }
