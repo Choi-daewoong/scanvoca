@@ -146,12 +146,27 @@ export function useQuiz(): UseQuizReturn {
 
     try {
       // 단어장의 단어들 가져오기
-      const words = await wordbookService.getWordbookWords(wordbookId);
+      const wordbookWords = await wordbookService.getWordbookWords(wordbookId);
 
-      if (words.length === 0) {
+      if (wordbookWords.length === 0) {
         setError('단어장에 단어가 없습니다.');
         return false;
       }
+
+      // 🔧 WordInWordbook을 WordWithMeaning으로 변환
+      const words: WordWithMeaning[] = wordbookWords.map((w: any) => ({
+        id: w.id,
+        word: w.word,
+        pronunciation: w.pronunciation,
+        difficulty_level: w.difficulty || 3,
+        meanings: w.meanings?.map((m: any) => ({
+          korean_meaning: m.korean,
+          part_of_speech: m.partOfSpeech,
+          definition_en: m.english,
+        })) || [],
+        created_at: w.addedAt,
+        updated_at: w.lastModified || w.addedAt,
+      }));
 
       // 문제 생성
       const questions = await generateQuizQuestions(words, questionCount);

@@ -1,29 +1,14 @@
 // useWordbook Hook - AsyncStorage 기반 단어장 관련 상태 관리
 import { useState, useCallback, useEffect } from 'react';
 import { wordbookService } from '../services/wordbookService';
-import { Wordbook } from '../types/types';
+import { Wordbook, WordInWordbook } from '../types/types';
 import { WordWithMeaning } from './useVocabulary';
-
-// GPT 기반 단어장 단어 타입 (AsyncStorage에 저장되는 실제 구조)
-export interface StoredWord {
-  id: number;
-  word: string;
-  pronunciation: string;
-  difficulty: number;
-  meanings: Array<{
-    korean: string;
-    english: string;
-    partOfSpeech: string;
-  }>;
-  addedAt: string;
-  source: 'gpt';
-}
 
 export interface UseWordbookReturn {
   // 상태
   wordbooks: Wordbook[];
   currentWordbook: Wordbook | null;
-  wordbookWords: StoredWord[]; // GPT 생성 단어 배열
+  wordbookWords: WordInWordbook[]; // 가상 단어장 단어 배열
   isLoading: boolean;
   error: string | null;
 
@@ -49,7 +34,7 @@ export interface WordbookFilters {
 export function useWordbook(): UseWordbookReturn {
   const [wordbooks, setWordbooks] = useState<Wordbook[]>([]);
   const [currentWordbook, setCurrentWordbook] = useState<Wordbook | null>(null);
-  const [wordbookWords, setWordbookWords] = useState<StoredWord[]>([]);
+  const [wordbookWords, setWordbookWords] = useState<WordInWordbook[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -91,7 +76,7 @@ export function useWordbook(): UseWordbookReturn {
       if (filters) {
         if (filters.search) {
           const searchLower = filters.search.toLowerCase();
-          filteredWords = filteredWords.filter((word: StoredWord) =>
+          filteredWords = filteredWords.filter((word: WordInWordbook) =>
             word.word.toLowerCase().includes(searchLower) ||
             word.meanings?.some((meaning) =>
               meaning.korean.toLowerCase().includes(searchLower)
@@ -100,7 +85,7 @@ export function useWordbook(): UseWordbookReturn {
         }
 
         if (filters.difficulty_level) {
-          filteredWords = filteredWords.filter((word: StoredWord) =>
+          filteredWords = filteredWords.filter((word: WordInWordbook) =>
             word.difficulty === filters.difficulty_level
           );
         }

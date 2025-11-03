@@ -26,6 +26,7 @@ interface StudyModeViewProps {
   onPlayPronunciation: (word: string) => Promise<void>;
   getLevelColor: (level: number) => string;
   onAddWord: () => void;
+  onWordPress: (word: WordItemUI) => void; // ⭐ Phase 5: 단어 카드 클릭 시 상세 화면으로
 }
 
 export default function StudyModeView({
@@ -45,6 +46,7 @@ export default function StudyModeView({
   onPlayPronunciation,
   getLevelColor,
   onAddWord,
+  onWordPress, // ⭐ Phase 5
 }: StudyModeViewProps) {
   const getWordMeaningsHTML = (word: WordItemUI) => {
     return word.korean.map((item, index) => (
@@ -160,7 +162,7 @@ export default function StudyModeView({
               selectedWords.has(word.english) && styles.wordCardSelected,
               flippedCards.has(word.english) && styles.wordCardFlipped,
             ]}
-            onPress={() => onFlipCard(word.english)}
+            onPress={() => onWordPress(word)}
           >
             <TouchableOpacity
               style={styles.wordCheckbox}

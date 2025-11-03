@@ -153,7 +153,12 @@ class SmartDictionaryService {
           word: normalizedWord,
           pronunciation: userDefault.pronunciation || '',
           difficulty: (userDefault.difficulty || 3) as 1 | 2 | 3 | 4 | 5,
-          meanings: userDefault.meanings,
+          meanings: userDefault.meanings.map((m) => ({
+            partOfSpeech: m.partOfSpeech as any, // CustomMeaning의 string을 GPTMeaning 타입으로 변환
+            korean: m.korean,
+            english: m.english || '',
+            examples: m.examples?.map((ex) => ({ en: ex, ko: '' })),
+          })),
           confidence: 1.0,
           source: 'cache', // 'user-default'로 표시하면 좋지만 타입 호환성 유지
         };

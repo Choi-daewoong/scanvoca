@@ -22,6 +22,7 @@ import { WordDetailScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { WordInWordbook } from '../types/types';
 import { wordbookService } from '../services/wordbookService';
+import EditWordModal from '../components/wordbook/EditWordModal';
 import * as Speech from 'expo-speech';
 
 export default function WordDetailScreen({ route, navigation }: WordDetailScreenProps) {
@@ -31,6 +32,7 @@ export default function WordDetailScreen({ route, navigation }: WordDetailScreen
 
   const [word, setWord] = useState<WordInWordbook | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
   useEffect(() => {
     loadWordDetail();
@@ -80,13 +82,18 @@ export default function WordDetailScreen({ route, navigation }: WordDetailScreen
   };
 
   /**
-   * 편집 화면으로 이동
+   * 편집 모달 열기
    */
   const handleEdit = () => {
     if (!word) return;
+    setIsEditModalVisible(true);
+  };
 
-    // TODO: Phase 4에서 EditWordModal 구현
-    Alert.alert('준비 중', '편집 기능은 다음 단계에서 구현됩니다.');
+  /**
+   * 편집 저장 후 데이터 다시 로드
+   */
+  const handleEditSaved = () => {
+    loadWordDetail();
   };
 
   /**
@@ -443,6 +450,17 @@ export default function WordDetailScreen({ route, navigation }: WordDetailScreen
           </View>
         )}
       </ScrollView>
+
+      {/* Edit Modal */}
+      {word && (
+        <EditWordModal
+          visible={isEditModalVisible}
+          wordbookId={wordbookId}
+          word={word}
+          onClose={() => setIsEditModalVisible(false)}
+          onSaved={handleEditSaved}
+        />
+      )}
     </SafeAreaView>
   );
 }

@@ -266,8 +266,8 @@ export async function getWordMasteryStatus(word: string): Promise<{
 
       if (found) {
         // 가장 높은 correct_count 찾기
-        const correctCount = found.study_progress?.correct_count || 0;
-        const incorrectCount = found.study_progress?.incorrect_count || 0;
+        const correctCount = (found as any).study_progress?.correct_count || 0;
+        const incorrectCount = (found as any).study_progress?.incorrect_count || 0;
 
         if (correctCount > maxCorrectCount) {
           maxCorrectCount = correctCount;

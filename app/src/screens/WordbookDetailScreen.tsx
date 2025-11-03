@@ -105,6 +105,13 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
           onPlayPronunciation={playPronunciation}
           getLevelColor={getLevelColor}
           onAddWord={() => setIsAddModalVisible(true)}
+          onWordPress={(word) =>
+            navigation.navigate('WordDetail', {
+              wordbookId: wordbookId,
+              wordId: word.id,
+              word: word.english,
+            })
+          }
         />
       )}
 

@@ -42,10 +42,28 @@ export default function QuizSessionScreen({ navigation, route }: QuizSessionScre
 
       let words: WordWithMeaning[] = [];
 
+      // 🔧 WordInWordbook을 WordWithMeaning으로 변환하는 헬퍼 함수
+      const convertToWordWithMeaning = (wordbookWords: any[]): WordWithMeaning[] => {
+        return wordbookWords.map((w: any) => ({
+          id: w.id,
+          word: w.word,
+          pronunciation: w.pronunciation,
+          difficulty_level: w.difficulty || 3,
+          meanings: w.meanings?.map((m: any) => ({
+            korean_meaning: m.korean,
+            part_of_speech: m.partOfSpeech,
+            definition_en: m.english,
+          })) || [],
+          created_at: w.addedAt,
+          updated_at: w.lastModified || w.addedAt,
+        }));
+      };
+
       if (wordbookId) {
         // 특정 단어장의 단어들로 퀴즈 생성
         try {
-          words = await wordbookService.getWordbookWords(wordbookId);
+          const wordbookWords = await wordbookService.getWordbookWords(wordbookId);
+          words = convertToWordWithMeaning(wordbookWords);
         } catch (error) {
           console.error('Failed to load wordbook words:', error);
           words = [];
@@ -56,7 +74,7 @@ export default function QuizSessionScreen({ navigation, route }: QuizSessionScre
           const allWordbooks = await wordbookService.getWordbooks();
           for (const wordbook of allWordbooks) {
             const wordbookWords = await wordbookService.getWordbookWords(wordbook.id);
-            words = words.concat(wordbookWords);
+            words = words.concat(convertToWordWithMeaning(wordbookWords));
           }
           // 무작위 섞기
           words = words.sort(() => Math.random() - 0.5).slice(0, 20);
