@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../styles/ThemeProvider';
 
 export interface LevelTagProps {
-  level: 1 | 2 | 3 | 4;
+  level: 1 | 2 | 3 | 4 | 5;
   showStars?: boolean;
   showLabel?: boolean;
   size?: 'sm' | 'md' | 'lg';

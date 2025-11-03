@@ -33,11 +33,17 @@ const StudyCard: React.FC<StudyCardProps> = ({
   const [flipAnimation] = useState(new Animated.Value(0));
 
   React.useEffect(() => {
-    Animated.timing(flipAnimation, {
+    const animation = Animated.timing(flipAnimation, {
       toValue: isFlipped ? 1 : 0,
       duration: 600,
-      useNativeDriver: false,
-    }).start();
+      useNativeDriver: true,  // 성능 개선
+    });
+
+    animation.start();
+
+    return () => {
+      animation.stop();  // Cleanup
+    };
   }, [isFlipped, flipAnimation]);
 
   const frontInterpolate = flipAnimation.interpolate({

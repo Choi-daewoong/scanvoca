@@ -5,11 +5,17 @@ import { useTheme } from '../styles/ThemeProvider';
 import { wordbookService } from '../services/wordbookService';
 import { useAuthStore } from '../stores/authStore';
 import { InputModal } from '../components/common';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useOCRFilterSettings } from '../hooks/useOCRFilterSettings';
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { theme } = useTheme();
   const { user, logout } = useAuthStore();
+  const {
+    excludeMastered,
+    excludeBasic,
+    setExcludeMastered,
+    setExcludeBasic,
+  } = useOCRFilterSettings();
   const [databaseStats, setDatabaseStats] = useState({
     totalWords: 0,
     totalMeanings: 0,
@@ -22,27 +28,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [autoFilter, setAutoFilter] = useState(true);
   const [loading, setLoading] = useState(true);
   const [showGoalModal, setShowGoalModal] = useState(false);
-  const [excludeMastered, setExcludeMastered] = useState(true);
-  const [excludeBasic, setExcludeBasic] = useState(false);
 
   useEffect(() => {
     loadDatabaseStats();
-  }, []);
-
-  useEffect(() => {
-    const loadFilterSettings = async () => {
-      try {
-        const settingsJson = await AsyncStorage.getItem('ocr_filter_settings');
-        if (settingsJson) {
-          const settings = JSON.parse(settingsJson);
-          setExcludeMastered(settings.excludeMastered ?? true);
-          setExcludeBasic(settings.excludeBasic ?? false);
-        }
-      } catch (error) {
-        console.error('설정 불러오기 실패:', error);
-      }
-    };
-    loadFilterSettings();
   }, []);
 
   const loadDatabaseStats = async () => {
@@ -51,7 +39,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 
       // Load from wordbookService (AsyncStorage based)
       const { wordbookService } = await import('../services/wordbookService');
-      const wordbooks = await wordbookService.getAllWordbooks();
+      const wordbooks = await wordbookService.getWordbooks();
 
       let totalWords = 0;
       let totalMeanings = 0;
@@ -59,7 +47,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       for (const wordbook of wordbooks) {
         const words = await wordbookService.getWordbookWords(wordbook.id);
         totalWords += words.length;
-        totalMeanings += words.reduce((sum, w) => sum + (w.meanings?.length || 0), 0);
+        totalMeanings += words.reduce((sum: number, w: any) => sum + (w.meanings?.length || 0), 0);
       }
 
       setDatabaseStats({
@@ -98,18 +86,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     setShowGoalModal(false);
   };
 
-  const saveFilterSettings = async (key: string, value: boolean) => {
-    try {
-      const currentSettings = {
-        excludeMastered,
-        excludeBasic,
-        [key]: value
-      };
-      await AsyncStorage.setItem('ocr_filter_settings', JSON.stringify(currentSettings));
-    } catch (error) {
-      console.error('설정 저장 실패:', error);
-    }
-  };
+  // saveFilterSettings는 hook에서 자동으로 처리됨 (제거)
 
   const handleGoalCancel = () => {
     setShowGoalModal(false);
@@ -381,10 +358,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           rightComponent={
             <Switch
               value={excludeMastered}
-              onValueChange={(value) => {
-                setExcludeMastered(value);
-                saveFilterSettings('excludeMastered', value);
-              }}
+              onValueChange={setExcludeMastered}
               trackColor={{
                 false: theme.colors.border.light,
                 true: theme.colors.primary.light
@@ -400,10 +374,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           rightComponent={
             <Switch
               value={excludeBasic}
-              onValueChange={(value) => {
-                setExcludeBasic(value);
-                saveFilterSettings('excludeBasic', value);
-              }}
+              onValueChange={setExcludeBasic}
               trackColor={{
                 false: theme.colors.border.light,
                 true: theme.colors.primary.light
@@ -444,7 +415,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           onPress={() =>
             Alert.alert(
               '📄 라이센스',
-              '• React Native (MIT)\n• Expo SDK (MIT)\n• React Navigation (MIT)\n• SQLite (Public Domain)\n• 영어 사전 데이터 (Open Source)'
+              '• React Native (MIT)\n• Expo SDK (MIT)\n• React Navigation (MIT)\n• OpenAI GPT API\n• ML Kit Text Recognition'
             )
           }
         />

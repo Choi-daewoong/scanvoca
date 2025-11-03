@@ -1,291 +1,62 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
-  Modal,
-  Alert,
-  BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { WordbookScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
-import { useWordbook } from '../hooks/useWordbook';
-import { Wordbook } from '../types/types';
-import { wordbookService } from '../services/wordbookService';
-import ImportWordbookButton from '../components/common/ImportWordbookButton';
-
-interface WordbookItem {
-  id: number;
-  name: string;
-  wordCount: number;
-  icon: string;
-  lastStudied: string;
-  progressPercent: number;
-  isSelected?: boolean;
-  groupId?: number;
-  order?: number;
-}
-
-interface WordbookGroup {
-  id: number;
-  name: string;
-  wordbookIds: number[];
-  isExpanded: boolean;
-}
+import { useWordbookManagement, WordbookItem, WordbookGroup } from '../hooks/useWordbookManagement';
+// import ImportWordbookButton from '../components/common/ImportWordbookButton'; // TODO: expo-document-picker 네이티브 모듈 필요
+import CreateWordbookModal from '../components/wordbook/CreateWordbookModal';
+import CreateGroupModal from '../components/wordbook/CreateGroupModal';
 
 export default function WordbookScreen({ navigation }: WordbookScreenProps) {
   const { theme } = useTheme();
-  const [wordbooks, setWordbooks] = useState<WordbookItem[]>([]);
-  const { loadWordbooks, wordbooks: hookWordbooks } = useWordbook();
-  const [groups, setGroups] = useState<WordbookGroup[]>([]);
-  const [showNewWordbookModal, setShowNewWordbookModal] = useState(false);
-  const [showGroupModal, setShowGroupModal] = useState(false);
-  const [newWordbookName, setNewWordbookName] = useState('');
-  const [newGroupName, setNewGroupName] = useState('');
-  const [selectedWordbooks, setSelectedWordbooks] = useState<number[]>([]);
-  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const {
+    wordbooks,
+    groups,
+    isSelectionMode,
+    selectedWordbooks,
+    showNewWordbookModal,
+    showGroupModal,
+    newWordbookName,
+    newGroupName,
+    setShowNewWordbookModal,
+    setShowGroupModal,
+    setNewWordbookName,
+    setNewGroupName,
+    toggleSelectionMode,
+    toggleWordbookSelection,
+    handleLongPress,
+    handleCreateWordbook,
+    handleCreateGroup,
+    confirmCreateGroup,
+    deleteSelectedWordbooks,
+    moveWordbookUp,
+    moveWordbookDown,
+    toggleGroupExpansion,
+    ungroupWordbooks,
+    loadWordbooksData,
+  } = useWordbookManagement();
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        // useWordbook hook을 통한 단어장 목록 로드
-        await loadWordbooks();
-        const list = hookWordbooks;
-        const mapped: WordbookItem[] = list.map((wb: Wordbook) => ({
-          id: wb.id,
-          name: wb.name,
-          wordCount: (wb as any).word_count || 0,
-          icon: '📖',
-          lastStudied: '—',
-          progressPercent: 0,
-          order: (wb as any).display_order || 0,
-          groupId: (wb as any).group_id || undefined,
-        }));
-        setWordbooks(mapped);
-
-        // 그룹 기능은 당장 제거 (추후 재구현)
-        setGroups([]);
-      } catch (e) {
-        console.error('Failed to load wordbooks', e);
-      }
-    };
-    load();
-  }, []);
-
-  // 안드로이드 뒤로가기 버튼 처리
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      () => {
-        if (isSelectionMode) {
-          // 편집 모드가 활성화된 경우 편집 모드만 종료
-          setIsSelectionMode(false);
-          setSelectedWordbooks([]);
-          return true; // 이벤트를 소비하여 기본 뒤로가기 동작 방지
-        }
-        return false; // 기본 뒤로가기 동작 허용
-      }
-    );
-
-    return () => backHandler.remove();
-  }, [isSelectionMode]);
-
-  const moveWordbookUp = async (wordbookId: number) => {
-    const currentIndex = wordbooks.findIndex(wb => wb.id === wordbookId && !wb.groupId);
-    if (currentIndex > 0) {
-      const reorderedWordbooks = [...wordbooks];
-      const targetIndex = currentIndex - 1;
-
-      // 두 아이템의 order 값 교환
-      const temp = reorderedWordbooks[currentIndex].order;
-      reorderedWordbooks[currentIndex].order = reorderedWordbooks[targetIndex].order;
-      reorderedWordbooks[targetIndex].order = temp;
-
-      // 순서 변경 기능은 당장 제거 (AsyncStorage에서는 복잡함)
-      setWordbooks(reorderedWordbooks.sort((a, b) => (a.order || 0) - (b.order || 0)));
-    }
-  };
-
-  const moveWordbookDown = async (wordbookId: number) => {
-    const ungroupedWordbooks = wordbooks.filter(wb => !wb.groupId);
-    const currentIndex = ungroupedWordbooks.findIndex(wb => wb.id === wordbookId);
-
-    if (currentIndex < ungroupedWordbooks.length - 1) {
-      const reorderedWordbooks = [...wordbooks];
-      const currentWb = reorderedWordbooks.find(wb => wb.id === wordbookId);
-      const nextWb = ungroupedWordbooks[currentIndex + 1];
-      const nextWbInAll = reorderedWordbooks.find(wb => wb.id === nextWb.id);
-
-      if (currentWb && nextWbInAll) {
-        // 두 아이템의 order 값 교환
-        const temp = currentWb.order;
-        currentWb.order = nextWbInAll.order;
-        nextWbInAll.order = temp;
-
-        try {
-          // 순서 변경 기능은 당장 제거 (AsyncStorage에서는 복잡함)
-
-          setWordbooks(reorderedWordbooks.sort((a, b) => (a.order || 0) - (b.order || 0)));
-        } catch (error) {
-          console.error('Failed to update wordbook order:', error);
-        }
-      }
-    }
-  };
-
-  const toggleSelectionMode = () => {
-    const newSelectionMode = !isSelectionMode;
-    setIsSelectionMode(newSelectionMode);
-    if (!newSelectionMode) {
-      setSelectedWordbooks([]);
-    }
-  };
-
-  const toggleWordbookSelection = (wordbookId: number) => {
-    setSelectedWordbooks(prev => {
-      if (prev.includes(wordbookId)) {
-        return prev.filter(id => id !== wordbookId);
-      } else {
-        return [...prev, wordbookId];
-      }
-    });
-  };
-
-  const handleLongPress = (wordbookId: number) => {
-    if (!isSelectionMode) {
-      setIsSelectionMode(true);
-      setSelectedWordbooks([wordbookId]);
-    }
-  };
-
-  const handleCreateGroup = () => {
-    if (selectedWordbooks.length < 2) {
-      Alert.alert('알림', '그룹을 만들려면 최소 2개의 단어장을 선택해주세요.');
-      return;
-    }
-    setShowGroupModal(true);
-  };
-
-  const confirmCreateGroup = () => {
-    if (newGroupName.trim() && selectedWordbooks.length >= 2) {
-      const newGroup: WordbookGroup = {
-        id: Date.now(),
-        name: newGroupName.trim(),
-        wordbookIds: selectedWordbooks,
-        isExpanded: true,
-      };
-
-      setGroups(prev => [...prev, newGroup]);
-
-      // 그룹에 속한 단어장들에 groupId 설정
-      setWordbooks(prev =>
-        prev.map(wb =>
-          selectedWordbooks.includes(wb.id)
-            ? { ...wb, groupId: newGroup.id }
-            : wb
-        )
-      );
-
-      setNewGroupName('');
-      setShowGroupModal(false);
-      setIsSelectionMode(false);
-      setSelectedWordbooks([]);
-
-      Alert.alert('완료', `"${newGroup.name}" 그룹이 생성되었습니다.`);
-    }
-  };
-
-  const deleteSelectedWordbooks = () => {
-    Alert.alert(
-      '단어장 삭제',
-      `선택된 ${selectedWordbooks.length}개 단어장을 삭제하시겠습니까?`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: () => {
-            setWordbooks(prev => prev.filter(wb => !selectedWordbooks.includes(wb.id)));
-            setIsSelectionMode(false);
-            setSelectedWordbooks([]);
-          }
-        }
-      ]
-    );
-  };
-
-  const toggleGroupExpansion = (groupId: number) => {
-    setGroups(prev =>
-      prev.map(group =>
-        group.id === groupId
-          ? { ...group, isExpanded: !group.isExpanded }
-          : group
-      )
-    );
-  };
-
-  const ungroupWordbooks = (groupId: number) => {
-    Alert.alert(
-      '그룹 해제',
-      '이 그룹을 해제하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '해제',
-          onPress: () => {
-            // 그룹에서 단어장들 제거
-            setWordbooks(prev =>
-              prev.map(wb =>
-                wb.groupId === groupId
-                  ? { ...wb, groupId: undefined }
-                  : wb
-              )
-            );
-            // 그룹 삭제
-            setGroups(prev => prev.filter(g => g.id !== groupId));
-          }
-        }
-      ]
-    );
-  };
+  // 화면 포커스 시 단어장 목록 다시 로드
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('📚 WordbookScreen focused - 단어장 목록 재로드');
+      loadWordbooksData();
+    }, [loadWordbooksData])
+  );
 
   const handleWordbookPress = (wordbook: WordbookItem) => {
     navigation.navigate('WordbookDetail', {
       wordbookId: wordbook.id,
       wordbookName: wordbook.name
     });
-  };
-
-  const handleCreateWordbook = async () => {
-    if (!newWordbookName.trim()) return;
-    try {
-      const newWordbookId = await wordbookService.createWordbook(
-        newWordbookName.trim(),
-        ''
-      );
-
-      if (newWordbookId) {
-        const item: WordbookItem = {
-          id: newWordbookId,
-          name: newWordbookName.trim(),
-          wordCount: 0,
-          icon: '📚',
-          lastStudied: '방금 전',
-          progressPercent: 0,
-          order: (wordbooks[wordbooks.length - 1]?.order || 0) + 1,
-        };
-        setWordbooks(prev => [...prev, item]);
-      }
-    } catch (e) {
-      console.error('Failed to create wordbook', e);
-    } finally {
-      setNewWordbookName('');
-      setShowNewWordbookModal(false);
-    }
   };
 
   const renderGroupItem = (group: WordbookGroup) => {
@@ -329,7 +100,7 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
     );
   };
 
-  const renderWordbookItem = (wordbook: WordbookItem, isInGroup = false, index?: number) => {
+  const renderWordbookItem = (wordbook: WordbookItem, isInGroup = false) => {
     const isSelected = selectedWordbooks.includes(wordbook.id);
     const ungroupedWordbooks = wordbooks.filter(wb => !wb.groupId);
     const currentIndex = ungroupedWordbooks.findIndex(wb => wb.id === wordbook.id);
@@ -337,453 +108,93 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
     const canMoveDown = currentIndex < ungroupedWordbooks.length - 1;
 
     return (
-    <View
-      key={wordbook.id}
-      style={[
-        styles.wordbookItem,
-        isInGroup && styles.wordbookItemInGroup,
-        isSelectionMode && isSelected && styles.wordbookItemSelected,
-      ]}
-    >
-      <TouchableOpacity
-        style={styles.wordbookTouchable}
-        onPress={() => {
-          if (isSelectionMode) {
-            toggleWordbookSelection(wordbook.id);
-          } else {
-            handleWordbookPress(wordbook);
-          }
-        }}
-        onLongPress={() => handleLongPress(wordbook.id)}
+      <View
+        key={wordbook.id}
+        style={[
+          styles.wordbookItem,
+          isInGroup && styles.wordbookItemInGroup,
+          isSelectionMode && isSelected && styles.wordbookItemSelected,
+        ]}
       >
-      {isSelectionMode && (
-        <View style={styles.selectionCheckbox}>
-          <View style={[
-            styles.checkboxContainer,
-            selectedWordbooks.includes(wordbook.id) && styles.checkboxChecked
-          ]}>
-            {selectedWordbooks.includes(wordbook.id) && (
-              <Text style={styles.checkboxText}>✓</Text>
-            )}
+        <TouchableOpacity
+          style={styles.wordbookTouchable}
+          onPress={() => {
+            if (isSelectionMode) {
+              toggleWordbookSelection(wordbook.id);
+            } else {
+              handleWordbookPress(wordbook);
+            }
+          }}
+          onLongPress={() => handleLongPress(wordbook.id)}
+        >
+          {isSelectionMode && (
+            <View style={styles.selectionCheckbox}>
+              <View style={[
+                styles.checkboxContainer,
+                selectedWordbooks.includes(wordbook.id) && styles.checkboxChecked
+              ]}>
+                {selectedWordbooks.includes(wordbook.id) && (
+                  <Text style={styles.checkboxText}>✓</Text>
+                )}
+              </View>
+            </View>
+          )}
+
+          {!isSelectionMode && !isInGroup && (
+            <View style={styles.dragHandle}>
+              <Text style={styles.dragIcon}>⋮⋮</Text>
+            </View>
+          )}
+
+          {isSelectionMode && isSelected && !isInGroup && (
+            <View style={styles.moveButtons}>
+              <TouchableOpacity
+                style={[styles.moveBtn, !canMoveUp && styles.moveBtnDisabled]}
+                onPress={() => moveWordbookUp(wordbook.id)}
+                disabled={!canMoveUp}
+              >
+                <Text style={[styles.moveBtnText, !canMoveUp && styles.moveBtnTextDisabled]}>
+                  ↑
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.moveBtn, !canMoveDown && styles.moveBtnDisabled]}
+                onPress={() => moveWordbookDown(wordbook.id)}
+                disabled={!canMoveDown}
+              >
+                <Text style={[styles.moveBtnText, !canMoveDown && styles.moveBtnTextDisabled]}>
+                  ↓
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <View style={styles.wordbookContent}>
+            <View style={styles.wordbookHeader}>
+              <Text style={styles.wordbookTitle}>{wordbook.name}</Text>
+              <Text style={styles.wordbookIcon}>{wordbook.icon}</Text>
+            </View>
+            <View style={styles.wordbookMeta}>
+              <Text style={styles.wordCount}>{wordbook.wordCount}개 단어</Text>
+              <Text style={styles.lastStudied}>{wordbook.lastStudied}</Text>
+            </View>
+            <View style={styles.progressInfo}>
+              <Text style={styles.progressText}>학습 진행률</Text>
+              <Text style={styles.progressPercent}>{wordbook.progressPercent}%</Text>
+            </View>
+            <View style={styles.miniProgressBar}>
+              <View
+                style={[
+                  styles.miniProgressFill,
+                  { width: `${wordbook.progressPercent}%` }
+                ]}
+              />
+            </View>
           </View>
-        </View>
-      )}
-
-      {!isSelectionMode && !isInGroup && (
-        <View style={styles.dragHandle}>
-          <Text style={styles.dragIcon}>⋮⋮</Text>
-        </View>
-      )}
-
-      {/* 선택 모드에서 이동 버튼들 */}
-      {isSelectionMode && isSelected && !isInGroup && (
-        <View style={styles.moveButtons}>
-          <TouchableOpacity
-            style={[styles.moveBtn, !canMoveUp && styles.moveBtnDisabled]}
-            onPress={() => moveWordbookUp(wordbook.id)}
-            disabled={!canMoveUp}
-          >
-            <Text style={[styles.moveBtnText, !canMoveUp && styles.moveBtnTextDisabled]}>↑</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.moveBtn, !canMoveDown && styles.moveBtnDisabled]}
-            onPress={() => moveWordbookDown(wordbook.id)}
-            disabled={!canMoveDown}
-          >
-            <Text style={[styles.moveBtnText, !canMoveDown && styles.moveBtnTextDisabled]}>↓</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      <View style={styles.wordbookContent}>
-        <View style={styles.wordbookHeader}>
-          <Text style={styles.wordbookTitle}>{wordbook.name}</Text>
-          <Text style={styles.wordbookIcon}>{wordbook.icon}</Text>
-        </View>
-        <View style={styles.wordbookMeta}>
-          <Text style={styles.wordCount}>{wordbook.wordCount}개 단어</Text>
-          <Text style={styles.lastStudied}>{wordbook.lastStudied}</Text>
-        </View>
-        <View style={styles.progressInfo}>
-          <Text style={styles.progressText}>학습 진행률</Text>
-          <Text style={styles.progressPercent}>{wordbook.progressPercent}%</Text>
-        </View>
-        <View style={styles.miniProgressBar}>
-          <View
-            style={[
-              styles.miniProgressFill,
-              { width: `${wordbook.progressPercent}%` }
-            ]}
-          />
-        </View>
+        </TouchableOpacity>
       </View>
-      </TouchableOpacity>
-    </View>
-  );
+    );
   };
-
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#f8f9fa',
-    },
-    header: {
-      paddingHorizontal: 20,
-      paddingVertical: 24,
-      backgroundColor: '#ffffff',
-      borderBottomWidth: 1,
-      borderBottomColor: '#e9ecef',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-end',
-    },
-    headerLeft: {
-      flex: 1,
-    },
-    headerTitle: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: '#212529',
-      marginBottom: 4,
-    },
-    headerSubtitle: {
-      fontSize: 16,
-      color: '#6c757d',
-    },
-    selectionToggleBtn: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      backgroundColor: '#4f46e5',
-      borderRadius: 8,
-    },
-    selectionToggleBtnText: {
-      color: '#ffffff',
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    content: {
-      flex: 1,
-      paddingHorizontal: 20,
-      paddingTop: 20,
-    },
-    // Group Styles
-    groupContainer: {
-      marginBottom: 16,
-      backgroundColor: '#ffffff',
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: '#e9ecef',
-      overflow: 'hidden',
-    },
-    groupHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 16,
-      backgroundColor: '#f8f9fa',
-    },
-    groupHeaderLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flex: 1,
-    },
-    groupExpandIcon: {
-      fontSize: 20,
-      marginRight: 12,
-    },
-    groupInfo: {
-      flex: 1,
-    },
-    groupTitle: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: '#212529',
-      marginBottom: 2,
-    },
-    groupMeta: {
-      fontSize: 12,
-      color: '#6c757d',
-    },
-    groupOptionsBtn: {
-      padding: 8,
-    },
-    groupOptionsText: {
-      fontSize: 18,
-      color: '#6c757d',
-    },
-    groupContent: {
-      paddingLeft: 16,
-      backgroundColor: '#ffffff',
-    },
-    // Wordbook Styles
-    wordbookItem: {
-      backgroundColor: '#ffffff',
-      marginBottom: 16,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: '#e9ecef',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-    wordbookTouchable: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 16,
-      paddingHorizontal: 12,
-      flex: 1,
-    },
-    wordbookItemInGroup: {
-      marginBottom: 8,
-      marginRight: 16,
-      borderColor: '#dee2e6',
-    },
-    wordbookItemSelected: {
-      borderColor: '#4f46e5',
-      backgroundColor: '#f8faff',
-    },
-    selectionCheckbox: {
-      marginRight: 12,
-    },
-    checkboxContainer: {
-      width: 24,
-      height: 24,
-      borderRadius: 4,
-      borderWidth: 2,
-      borderColor: '#4f46e5',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    checkboxChecked: {
-      backgroundColor: '#4f46e5',
-    },
-    checkboxText: {
-      color: '#ffffff',
-      fontSize: 14,
-      fontWeight: 'bold',
-    },
-    dragHandle: {
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 4,
-    },
-    dragIcon: {
-      fontSize: 16,
-      color: '#adb5bd',
-    },
-    wordbookContent: {
-      flex: 1,
-      paddingLeft: 12,
-    },
-    wordbookHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 8,
-    },
-    wordbookTitle: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: '#212529',
-    },
-    wordbookIcon: {
-      fontSize: 24,
-    },
-    wordbookMeta: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 12,
-    },
-    wordCount: {
-      fontSize: 14,
-      color: '#495057',
-      fontWeight: '500',
-    },
-    lastStudied: {
-      fontSize: 14,
-      color: '#6c757d',
-    },
-    progressInfo: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 8,
-    },
-    progressText: {
-      fontSize: 13,
-      color: '#6c757d',
-    },
-    progressPercent: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: '#4f46e5',
-    },
-    miniProgressBar: {
-      height: 6,
-      backgroundColor: '#e9ecef',
-      borderRadius: 3,
-      overflow: 'hidden',
-    },
-    miniProgressFill: {
-      height: '100%',
-      backgroundColor: '#4f46e5',
-      borderRadius: 3,
-    },
-    // Selection Actions
-    selectionActionsTop: {
-      flexDirection: 'row',
-      gap: 12,
-      paddingHorizontal: 20,
-      paddingVertical: 16,
-      backgroundColor: '#f8f9fa',
-      borderBottomWidth: 1,
-      borderBottomColor: '#e9ecef',
-    },
-    selectionBtn: {
-      flex: 1,
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      backgroundColor: '#4f46e5',
-      borderRadius: 8,
-      alignItems: 'center',
-    },
-    selectionBtnSecondary: {
-      backgroundColor: '#ffffff',
-      borderWidth: 1,
-      borderColor: '#4f46e5',
-    },
-    selectionBtnDelete: {
-      backgroundColor: '#ef4444',
-    },
-    selectionBtnText: {
-      color: '#ffffff',
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    selectionBtnTextSecondary: {
-      color: '#4f46e5',
-    },
-    selectionBtnTextDelete: {
-      color: '#ffffff',
-    },
-    selectionBtnTextDisabled: {
-      opacity: 0.5,
-    },
-    // Move Buttons
-    moveButtons: {
-      flexDirection: 'column',
-      gap: 4,
-      marginLeft: 8,
-    },
-    moveBtn: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: '#4f46e5',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    moveBtnDisabled: {
-      backgroundColor: '#e9ecef',
-    },
-    moveBtnText: {
-      color: '#ffffff',
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-    moveBtnTextDisabled: {
-      color: '#adb5bd',
-    },
-    newWordbookBtn: {
-      backgroundColor: '#4f46e5',
-      paddingVertical: 16,
-      paddingHorizontal: 24,
-      borderRadius: 12,
-      alignItems: 'center',
-      marginTop: 20,
-      marginBottom: 40,
-    },
-    newWordbookBtnText: {
-      color: '#ffffff',
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    // Modal Styles
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    modal: {
-      backgroundColor: '#ffffff',
-      margin: 20,
-      padding: 24,
-      borderRadius: 16,
-      width: '90%',
-      maxWidth: 400,
-    },
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: '600',
-      color: '#212529',
-      marginBottom: 20,
-      textAlign: 'center',
-    },
-    groupPreview: {
-      marginBottom: 20,
-    },
-    groupPreviewTitle: {
-      fontSize: 14,
-      fontWeight: '500',
-      color: '#495057',
-      marginBottom: 8,
-    },
-    groupPreviewItems: {
-      backgroundColor: '#f8f9fa',
-      borderRadius: 8,
-      padding: 12,
-      maxHeight: 120,
-    },
-    groupPreviewItem: {
-      fontSize: 14,
-      color: '#212529',
-      marginBottom: 4,
-    },
-    modalInput: {
-      borderWidth: 1,
-      borderColor: '#e9ecef',
-      borderRadius: 8,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      fontSize: 16,
-      marginBottom: 24,
-    },
-    modalButtons: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    modalBtn: {
-      flex: 1,
-      paddingVertical: 12,
-      borderRadius: 8,
-      alignItems: 'center',
-    },
-    modalBtnCancel: {
-      backgroundColor: '#6c757d',
-      marginRight: 8,
-    },
-    modalBtnConfirm: {
-      backgroundColor: '#4f46e5',
-      marginLeft: 8,
-    },
-    modalBtnText: {
-      color: '#ffffff',
-      fontSize: 16,
-      fontWeight: '600',
-    },
-  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -794,7 +205,7 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
           <Text style={styles.headerSubtitle}>학습할 단어장을 선택하세요</Text>
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <ImportWordbookButton />
+          {/* <ImportWordbookButton /> */}
           <TouchableOpacity
             style={styles.selectionToggleBtn}
             onPress={toggleSelectionMode}
@@ -843,17 +254,13 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
         style={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* 그룹들 렌더링 */}
         {groups.map(renderGroupItem)}
 
-        {/* 그룹에 속하지 않은 단어장들 렌더링 */}
         {wordbooks
           .filter(wb => !wb.groupId)
           .sort((a, b) => (a.order || 0) - (b.order || 0))
-          .map((wordbook, index) => renderWordbookItem(wordbook, false, index))}
+          .map(wordbook => renderWordbookItem(wordbook, false))}
 
-
-        {/* New Wordbook Button */}
         {!isSelectionMode && (
           <TouchableOpacity
             style={styles.newWordbookBtn}
@@ -864,107 +271,304 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
         )}
       </ScrollView>
 
-      {/* New Wordbook Modal */}
-      <Modal
+      {/* Modals */}
+      <CreateWordbookModal
         visible={showNewWordbookModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowNewWordbookModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>새 단어장 만들기</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="단어장 이름을 입력하세요"
-              value={newWordbookName}
-              onChangeText={setNewWordbookName}
-              maxLength={20}
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.modalBtnCancel]}
-                onPress={() => {
-                  setShowNewWordbookModal(false);
-                  setNewWordbookName('');
-                }}
-              >
-                <Text style={styles.modalBtnText}>취소</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalBtn,
-                  styles.modalBtnConfirm,
-                  !newWordbookName.trim() && { opacity: 0.5 }
-                ]}
-                onPress={handleCreateWordbook}
-                disabled={!newWordbookName.trim()}
-              >
-                <Text style={styles.modalBtnText}>만들기</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        wordbookName={newWordbookName}
+        onChangeName={setNewWordbookName}
+        onCreate={handleCreateWordbook}
+        onClose={() => {
+          setShowNewWordbookModal(false);
+          setNewWordbookName('');
+        }}
+      />
 
-      {/* Group Creation Modal */}
-      <Modal
+      <CreateGroupModal
         visible={showGroupModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowGroupModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>새 그룹 만들기</Text>
-
-            {/* Group Preview */}
-            <View style={styles.groupPreview}>
-              <Text style={styles.groupPreviewTitle}>그룹에 포함될 단어장:</Text>
-              <ScrollView style={styles.groupPreviewItems}>
-                {selectedWordbooks.map(id => {
-                  const wordbook = wordbooks.find(wb => wb.id === id);
-                  return (
-                    <Text key={id} style={styles.groupPreviewItem}>
-                      {wordbook?.icon} {wordbook?.name}
-                    </Text>
-                  );
-                })}
-              </ScrollView>
-            </View>
-
-            <TextInput
-              style={styles.modalInput}
-              placeholder="그룹 이름을 입력하세요"
-              value={newGroupName}
-              onChangeText={setNewGroupName}
-              maxLength={20}
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.modalBtnCancel]}
-                onPress={() => {
-                  setShowGroupModal(false);
-                  setNewGroupName('');
-                }}
-              >
-                <Text style={styles.modalBtnText}>취소</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalBtn,
-                  styles.modalBtnConfirm,
-                  !newGroupName.trim() && { opacity: 0.5 }
-                ]}
-                onPress={confirmCreateGroup}
-                disabled={!newGroupName.trim()}
-              >
-                <Text style={styles.modalBtnText}>그룹 만들기</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        groupName={newGroupName}
+        selectedWordbooks={selectedWordbooks}
+        wordbooks={wordbooks}
+        onChangeName={setNewGroupName}
+        onCreate={confirmCreateGroup}
+        onClose={() => {
+          setShowGroupModal(false);
+          setNewGroupName('');
+        }}
+      />
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#212529',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#6c757d',
+  },
+  selectionToggleBtn: {
+    backgroundColor: '#4f46e5',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  selectionToggleBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  selectionActionsTop: {
+    flexDirection: 'row',
+    padding: 12,
+    gap: 8,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  selectionBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  selectionBtnSecondary: {
+    backgroundColor: '#e7f5ff',
+  },
+  selectionBtnDelete: {
+    backgroundColor: '#ffe5e5',
+  },
+  selectionBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  selectionBtnTextSecondary: {
+    color: '#1971c2',
+  },
+  selectionBtnTextDelete: {
+    color: '#c92a2a',
+  },
+  selectionBtnTextDisabled: {
+    opacity: 0.3,
+  },
+  content: {
+    flex: 1,
+  },
+  groupContainer: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  groupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#f8f9fa',
+  },
+  groupHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  groupExpandIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  groupInfo: {
+    flex: 1,
+  },
+  groupTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#212529',
+    marginBottom: 4,
+  },
+  groupMeta: {
+    fontSize: 12,
+    color: '#6c757d',
+  },
+  groupOptionsBtn: {
+    padding: 8,
+  },
+  groupOptionsText: {
+    fontSize: 20,
+    color: '#6c757d',
+  },
+  groupContent: {
+    paddingTop: 8,
+  },
+  wordbookItem: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  wordbookItemInGroup: {
+    marginHorizontal: 8,
+    marginBottom: 8,
+  },
+  wordbookItemSelected: {
+    borderColor: '#4f46e5',
+    borderWidth: 2,
+  },
+  wordbookTouchable: {
+    padding: 16,
+  },
+  selectionCheckbox: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    zIndex: 10,
+  },
+  checkboxContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#dee2e6',
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#4f46e5',
+    borderColor: '#4f46e5',
+  },
+  checkboxText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  dragHandle: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+  },
+  dragIcon: {
+    fontSize: 16,
+    color: '#adb5bd',
+  },
+  moveButtons: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    gap: 4,
+  },
+  moveBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: '#e9ecef',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moveBtnDisabled: {
+    opacity: 0.3,
+  },
+  moveBtnText: {
+    fontSize: 16,
+    color: '#495057',
+  },
+  moveBtnTextDisabled: {
+    color: '#adb5bd',
+  },
+  wordbookContent: {
+    paddingLeft: 40,
+  },
+  wordbookHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  wordbookTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#212529',
+  },
+  wordbookIcon: {
+    fontSize: 24,
+  },
+  wordbookMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  wordCount: {
+    fontSize: 14,
+    color: '#6c757d',
+  },
+  lastStudied: {
+    fontSize: 14,
+    color: '#6c757d',
+  },
+  progressInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  progressText: {
+    fontSize: 12,
+    color: '#6c757d',
+  },
+  progressPercent: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4f46e5',
+  },
+  miniProgressBar: {
+    height: 6,
+    backgroundColor: '#e9ecef',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  miniProgressFill: {
+    height: '100%',
+    backgroundColor: '#4f46e5',
+  },
+  newWordbookBtn: {
+    marginHorizontal: 16,
+    marginVertical: 16,
+    padding: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#4f46e5',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+  },
+  newWordbookBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4f46e5',
+  },
+});

@@ -6,6 +6,13 @@ import { useTheme } from '../styles/ThemeProvider';
 import { ocrService } from '../services/ocrService';
 import { ImageEditingGuide } from '../components/common';
 
+interface DetectedWordData {
+  word: string;
+  meaning: string;
+  partOfSpeech: string;
+  level: number;
+}
+
 export default function ScanScreen({ navigation }: ScanScreenProps) {
   const { theme } = useTheme();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -169,7 +176,7 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
         console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
 
         // processedWords에서 실제 찾은 단어들만 필터링
-        let detectedWordsData = [];
+        let detectedWordsData: DetectedWordData[] = [];
         if (ocrResult.processedWords && ocrResult.processedWords.length > 0) {
           detectedWordsData = ocrResult.processedWords
             .filter(word => word.found && word.wordData)
@@ -235,7 +242,7 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
         console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
 
         // processedWords에서 실제 찾은 단어들만 필터링
-        let detectedWordsData = [];
+        let detectedWordsData: DetectedWordData[] = [];
         if (ocrResult.processedWords && ocrResult.processedWords.length > 0) {
           detectedWordsData = ocrResult.processedWords
             .filter(word => word.found && word.wordData)

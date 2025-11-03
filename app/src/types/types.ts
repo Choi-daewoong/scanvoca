@@ -88,6 +88,7 @@ export interface DetectedWord {
   confidence: number;
   matched_words: WordWithMeaning[];
   is_phrase: boolean; // 숙어/구문 여부
+  reason?: string; // 제외 사유
 }
 
 // 퀴즈 관련 타입
@@ -161,7 +162,7 @@ export interface GPTMeaning {
   partOfSpeech: 'noun' | 'verb' | 'adjective' | 'adverb' | 'preposition' | 'conjunction' | 'interjection';
   korean: string;
   english: string;
-  examples: {
+  examples?: {
     en: string;
     ko: string;
   }[];
@@ -198,7 +199,7 @@ export interface CachedWordData {
 export interface SmartWordDefinition {
   word: string;
   pronunciation: string;
-  difficulty: 1 | 2 | 3 | 4;
+  difficulty: 1 | 2 | 3 | 4 | 5;
   meanings: GPTMeaning[];
   usage_notes?: string;
   confidence: number;

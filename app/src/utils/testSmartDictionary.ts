@@ -5,9 +5,7 @@
 
 import smartDictionaryService from '../services/smartDictionaryService';
 import { ocrService } from '../services/ocrService';
-// Database removed - using AsyncStorage instead
-// // databaseService import 제거됨
-import { SmartWordDefinition, ProcessedWord } from '../types/types';
+import { SmartWordDefinition, ProcessedWordV2 } from '../types/types';
 
 export interface TestResults {
   success: boolean;
@@ -194,7 +192,7 @@ export async function testCachePerformance(): Promise<{
 
     // 첫 번째 호출 (GPT API)
     const start1 = Date.now();
-    const result1 = await smartDictionaryService.getWordDefinition(testWord);
+    const [result1] = await smartDictionaryService.getWordDefinitions([testWord]);
     const firstCallTime = Date.now() - start1;
 
     console.log(`⏱️ 첫 번째 호출: ${firstCallTime}ms (소스: ${result1?.source})`);
@@ -203,7 +201,7 @@ export async function testCachePerformance(): Promise<{
     await new Promise(resolve => setTimeout(resolve, 100));
 
     const start2 = Date.now();
-    const result2 = await smartDictionaryService.getWordDefinition(testWord);
+    const [result2] = await smartDictionaryService.getWordDefinitions([testWord]);
     const secondCallTime = Date.now() - start2;
 
     console.log(`⏱️ 두 번째 호출: ${secondCallTime}ms (소스: ${result2?.source})`);
@@ -268,7 +266,7 @@ export async function testErrorHandling(): Promise<{
 
     return {
       success: true,
-      networkErrorHandled: !serviceStatus.hasError,
+      networkErrorHandled: serviceStatus.initialized && serviceStatus.isOnline,
       invalidWordHandled: longWordHandled,
       fallbackWorking: emptyHandled
     };
@@ -323,7 +321,8 @@ export const devTestUtils = {
   // 단일 단어 테스트
   async testSingleWord(word: string): Promise<SmartWordDefinition | null> {
     await smartDictionaryService.initialize();
-    return await smartDictionaryService.getWordDefinition(word);
+    const [result] = await smartDictionaryService.getWordDefinitions([word]);
+    return result || null;
   },
 
   // 배치 테스트
@@ -333,7 +332,7 @@ export const devTestUtils = {
   },
 
   // OCR 모킹 테스트
-  async testOCRFlow(text: string): Promise<ProcessedWord[]> {
+  async testOCRFlow(text: string): Promise<ProcessedWordV2[]> {
     const mockOcr = {
       text,
       words: text.split(' ').map((word, i) => ({

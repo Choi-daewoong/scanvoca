@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { TouchableOpacity, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import theme from '../../styles/theme';
 import Typography from './Typography';
 
@@ -20,17 +20,17 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   disabled = false,
   style,
 }) => {
-  const getButtonStyle = (): ViewStyle[] => {
-    const baseStyle = [styles.fab, styles[size], styles[variant]];
-    
+  const getButtonStyle = (): StyleProp<ViewStyle> => {
+    const baseStyle: any[] = [styles.fab, styles[size], styles[variant]];
+
     if (disabled) {
       baseStyle.push(styles.disabled);
     }
-    
+
     if (style) {
       baseStyle.push(style);
     }
-    
+
     return baseStyle;
   };
 

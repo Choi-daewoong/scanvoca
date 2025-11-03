@@ -200,8 +200,10 @@ class SmartDictionaryService {
   private addToMemoryCache(word: string, definition: SmartWordDefinition): void {
     // 메모리 캐시 크기 제한
     if (this.memoryCache.size >= this.MAX_MEMORY_CACHE) {
-      const firstKey = this.memoryCache.keys().next().value;
-      this.memoryCache.delete(firstKey);
+      const firstKey = this.memoryCache.keys().next().value as string;
+      if (firstKey) {
+        this.memoryCache.delete(firstKey);
+      }
     }
 
     this.memoryCache.set(word, { ...definition, source: 'cache' });
@@ -225,7 +227,7 @@ class SmartDictionaryService {
       const normalizedWord = word.toLowerCase().trim();
 
       // 3000단어 DB에서 정확히 일치하는 단어 찾기
-      const foundWord = completeWordbook.words?.find(w =>
+      const foundWord = completeWordbook.words?.find((w: any) =>
         w.word.toLowerCase() === normalizedWord
       );
 
@@ -235,7 +237,7 @@ class SmartDictionaryService {
           word: foundWord.word,
           pronunciation: foundWord.pronunciation,
           difficulty: foundWord.difficulty,
-          meanings: foundWord.meanings.map(m => ({
+          meanings: foundWord.meanings.map((m: any) => ({
             partOfSpeech: m.partOfSpeech as any,
             korean: m.korean,
             english: m.english,

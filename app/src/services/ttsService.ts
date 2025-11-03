@@ -1,13 +1,18 @@
 // TTS (Text-to-Speech) 서비스 - 호환성 모드
 import { Alert, Platform } from 'react-native';
+import * as ExpoSpeech from 'expo-speech';
+
+// expo-speech 타입 정의
+type SpeechModule = typeof ExpoSpeech | null;
 
 // expo-speech 조건부 import (네이티브 모듈 미포함 시 대응)
-let Speech: any = null;
+let Speech: SpeechModule = null;
 try {
   Speech = require('expo-speech');
   console.log('✅ expo-speech 모듈 로드 성공');
 } catch (error) {
-  console.log('⚠️ expo-speech 모듈 사용 불가:', error.message);
+  const message = error instanceof Error ? error.message : 'Unknown error';
+  console.log('⚠️ expo-speech 모듈 사용 불가:', message);
 }
 
 interface TTSOptions {
@@ -25,7 +30,7 @@ class TTSService {
 
   private async initialize() {
     try {
-      if (Speech && Speech.speak) {
+      if (Speech) {
         this.isInitialized = true;
         console.log('✅ TTS 서비스: expo-speech 사용 가능');
       } else {
@@ -82,7 +87,7 @@ class TTSService {
               console.log(`⏹️ TTS 재생 중단됨: "${text}"`);
               resolve(false);
             },
-            onError: (error: any) => {
+            onError: (error: unknown) => {
               console.error(`❌ TTS 재생 에러: "${text}"`, error);
               resolve(false);
             },

@@ -1,0 +1,189 @@
+
+> app@1.0.0 typecheck
+> tsc --noEmit
+
+src/components/common/FloatingActionButton.tsx(31,22): error TS2345: Argument of type 'ViewStyle' is not assignable to parameter of type '{ shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; justifyContent: "center"; alignItems: "center"; position: "absolute"; bottom: number; right: number; } | { ...; } | { ...; }'.
+  Type 'ViewStyle' is not assignable to type '{ shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; justifyContent: "center"; alignItems: "center"; position: "absolute"; bottom: number; right: number; }'.
+    Types of property 'shadowColor' are incompatible.
+      Type 'ColorValue | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+src/components/common/ImportWordbookButton.tsx(59,35): error TS2345: Argument of type '[never, never]' is not assignable to parameter of type 'never'.
+src/components/common/ImportWordbookButton.tsx(84,36): error TS2322: Type '{ backgroundColor: { main: string; light: string; dark: string; contrast: string; }; }' is not assignable to type 'ViewStyle | Falsy | RegisteredStyle<ViewStyle> | RecursiveArray<ViewStyle | Falsy | RegisteredStyle<ViewStyle>> | readonly (ViewStyle | ... 1 more ... | RegisteredStyle<...>)[]'.
+  Types of property 'backgroundColor' are incompatible.
+    Type '{ main: string; light: string; dark: string; contrast: string; }' is not assignable to type 'ColorValue | undefined'.
+src/components/common/ProgressBar.tsx(29,22): error TS2345: Argument of type 'ViewStyle' is not assignable to parameter of type '{ backgroundColor: string; borderRadius: number; overflow: "hidden"; } | { height: number; }'.
+  Type 'ViewStyle' is not assignable to type '{ backgroundColor: string; borderRadius: number; overflow: "hidden"; }'.
+    Types of property 'backgroundColor' are incompatible.
+      Type 'ColorValue | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+src/components/common/ProgressBar.tsx(72,5): error TS2345: Argument of type '{ progressBar: { backgroundColor: string; borderRadius: number; overflow: "hidden"; }; progressFill: { height: "100%"; borderRadius: number; transition: string; }; sm: { height: number; }; md: { height: number; }; ... 5 more ...; errorFill: { ...; }; }' is not assignable to parameter of type '{ progressBar: { backgroundColor: string; borderRadius: number; overflow: "hidden"; }; progressFill: { height: "100%"; borderRadius: number; transition: string; }; sm: { height: number; }; md: { height: number; }; ... 5 more ...; errorFill: { ...; }; } & NamedStyles<...>'.
+  Property 'progressFill' is incompatible with index signature.
+    Object literal may only specify known properties, and 'transition' does not exist in type 'ViewStyle | TextStyle | ImageStyle'.
+src/components/common/QuizCard.tsx(39,22): error TS2345: Argument of type '{ backgroundColor: string; borderColor: string; }' is not assignable to parameter of type '{ borderWidth: number; borderColor: string; }'.
+  Property 'borderWidth' is missing in type '{ backgroundColor: string; borderColor: string; }' but required in type '{ borderWidth: number; borderColor: string; }'.
+src/components/common/QuizCard.tsx(44,24): error TS2345: Argument of type '{ backgroundColor: string; borderColor: string; }' is not assignable to parameter of type '{ borderWidth: number; borderColor: string; }'.
+  Property 'borderWidth' is missing in type '{ backgroundColor: string; borderColor: string; }' but required in type '{ borderWidth: number; borderColor: string; }'.
+src/components/common/QuizCard.tsx(46,24): error TS2345: Argument of type '{ backgroundColor: string; borderColor: string; }' is not assignable to parameter of type '{ borderWidth: number; borderColor: string; }'.
+  Property 'borderWidth' is missing in type '{ backgroundColor: string; borderColor: string; }' but required in type '{ borderWidth: number; borderColor: string; }'.
+src/components/common/QuizCard.tsx(88,13): error TS2322: Type '{ borderWidth: number; borderColor: string; }[]' is not assignable to type 'ViewStyle'.
+  Types of property 'filter' are incompatible.
+    Type '{ <S extends { borderWidth: number; borderColor: string; }>(predicate: (value: { borderWidth: number; borderColor: string; }, index: number, array: { borderWidth: number; borderColor: string; }[]) => value is S, thisArg?: any): S[]; (predicate: (value: { ...; }, index: number, array: { ...; }[]) => unknown, thisArg?...' is not assignable to type 'string | readonly FilterFunction[] | undefined'.
+src/components/common/ShareWordbookButton.tsx(53,35): error TS2322: Type '{ backgroundColor: { main: string; light: string; dark: string; contrast: string; }; }' is not assignable to type 'ViewStyle | Falsy | RegisteredStyle<ViewStyle> | RecursiveArray<ViewStyle | Falsy | RegisteredStyle<ViewStyle>> | readonly (ViewStyle | ... 1 more ... | RegisteredStyle<...>)[]'.
+  Types of property 'backgroundColor' are incompatible.
+    Type '{ main: string; light: string; dark: string; contrast: string; }' is not assignable to type 'ColorValue | undefined'.
+src/components/common/SmartWordCard.tsx(152,22): error TS2367: This comparison appears to be unintentional because the types '"cache" | "gpt"' and '"none"' have no overlap.
+src/components/common/Typography.tsx(32,24): error TS2345: Argument of type 'TextStyle' is not assignable to parameter of type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+  Type 'TextStyle' is not assignable to type '{ fontSize: number; fontWeight: "normal"; lineHeight: number; letterSpacing: number; }'.
+    Types of property 'fontSize' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/components/common/Typography.tsx(35,24): error TS2345: Argument of type 'TextStyle' is not assignable to parameter of type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+  Type 'TextStyle' is not assignable to type '{ fontSize: number; fontWeight: "normal"; lineHeight: number; letterSpacing: number; }'.
+    Types of property 'fontSize' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/components/common/Typography.tsx(38,24): error TS2345: Argument of type 'TextStyle' is not assignable to parameter of type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+  Type 'TextStyle' is not assignable to type '{ fontSize: number; fontWeight: "normal"; lineHeight: number; letterSpacing: number; }'.
+    Types of property 'fontSize' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/components/common/Typography.tsx(41,24): error TS2345: Argument of type 'TextStyle' is not assignable to parameter of type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+  Type 'TextStyle' is not assignable to type '{ fontSize: number; fontWeight: "normal"; lineHeight: number; letterSpacing: number; }'.
+    Types of property 'fontSize' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/components/common/Typography.tsx(44,24): error TS2345: Argument of type 'TextStyle' is not assignable to parameter of type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+  Type 'TextStyle' is not assignable to type '{ fontSize: number; fontWeight: "normal"; lineHeight: number; letterSpacing: number; }'.
+    Types of property 'fontSize' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/components/common/Typography.tsx(47,24): error TS2345: Argument of type 'TextStyle' is not assignable to parameter of type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+  Type 'TextStyle' is not assignable to type '{ fontSize: number; fontWeight: "normal"; lineHeight: number; letterSpacing: number; }'.
+    Types of property 'fontSize' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/components/common/Typography.tsx(50,24): error TS2345: Argument of type 'TextStyle' is not assignable to parameter of type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+  Type 'TextStyle' is not assignable to type '{ fontSize: number; fontWeight: "normal"; lineHeight: number; letterSpacing: number; }'.
+    Types of property 'fontSize' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/components/common/Typography.tsx(53,24): error TS2345: Argument of type 'TextStyle' is not assignable to parameter of type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+  Type 'TextStyle' is not assignable to type '{ fontSize: number; fontWeight: "normal"; lineHeight: number; letterSpacing: number; }'.
+    Types of property 'fontSize' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/components/common/Typography.tsx(60,24): error TS2345: Argument of type 'TextStyle' is not assignable to parameter of type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+  Type 'TextStyle' is not assignable to type '{ fontSize: number; fontWeight: "normal"; lineHeight: number; letterSpacing: number; }'.
+    Types of property 'fontSize' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/components/common/Typography.tsx(63,24): error TS2345: Argument of type 'TextStyle' is not assignable to parameter of type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+  Type 'TextStyle' is not assignable to type '{ fontSize: number; fontWeight: "normal"; lineHeight: number; letterSpacing: number; }'.
+    Types of property 'fontSize' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/components/common/Typography.tsx(66,24): error TS2345: Argument of type 'TextStyle' is not assignable to parameter of type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+  Type 'TextStyle' is not assignable to type '{ fontSize: number; fontWeight: "normal"; lineHeight: number; letterSpacing: number; }'.
+    Types of property 'fontSize' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/components/common/Typography.tsx(71,22): error TS2345: Argument of type '{ fontWeight: "bold" | "normal" | "medium"; }' is not assignable to parameter of type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+  Types of property 'fontWeight' are incompatible.
+    Type '"bold" | "normal" | "medium"' is not assignable to type '"bold" | "normal" | undefined'.
+      Type '"medium"' is not assignable to type '"bold" | "normal" | undefined'.
+src/components/common/Typography.tsx(75,22): error TS2345: Argument of type 'TextStyle | RegisteredStyle<TextStyle> | RecursiveArray<TextStyle | Falsy | RegisteredStyle<TextStyle>>' is not assignable to parameter of type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+  Type 'TextStyle' is not assignable to type '{ includeFontPadding: false; } | { fontSize: number; fontWeight: "bold"; lineHeight: number; letterSpacing: number; } | { fontSize: number; fontWeight: "600"; lineHeight: number; letterSpacing: number; } | { ...; }'.
+    Type 'TextStyle' is not assignable to type '{ fontSize: number; fontWeight: "normal"; lineHeight: number; letterSpacing: number; }'.
+      Types of property 'fontSize' are incompatible.
+        Type 'number | undefined' is not assignable to type 'number'.
+          Type 'undefined' is not assignable to type 'number'.
+src/components/scan/ScanResultScreen.tsx(141,11): error TS2322: Type '{ text: string; style: string; onPress: () => void; }' is not assignable to type 'AlertButton'.
+  Types of property 'style' are incompatible.
+    Type 'string' is not assignable to type '"cancel" | "default" | "destructive" | undefined'.
+src/components/scan/ScanResultScreen.tsx(197,19): error TS2322: Type '{ children: Element; style: { marginLeft: number; padding: number; minWidth: number; minHeight: number; alignItems: "center"; justifyContent: "center"; borderRadius: number; backgroundColor: string; activeOpacity: number; zIndex: number; elevation: number; }; activeOpacity: number; hitSlop: { ...; }; onPress: (e: Ge...' is not assignable to type 'IntrinsicAttributes & TouchableOpacityProps & RefAttributes<View>'.
+  Property 'pointerEvents' does not exist on type 'IntrinsicAttributes & TouchableOpacityProps & RefAttributes<View>'.
+src/components/scan/ScanResultScreen.tsx(263,82): error TS2322: Type '{ children: string; variant: "body1"; style: { backgroundColor: string; padding: number; borderRadius: number; }; numberOfLines: number; ellipsizeMode: string; }' is not assignable to type 'IntrinsicAttributes & TypographyProps'.
+  Property 'ellipsizeMode' does not exist on type 'IntrinsicAttributes & TypographyProps'.
+src/components/scan/ScanResultScreen.tsx(445,5): error TS2345: Argument of type '{ container: { flex: number; backgroundColor: string; }; scannedTextCard: { margin: number; }; scannedTextLabel: { marginBottom: number; }; scannedText: { backgroundColor: string; padding: number; borderRadius: number; }; ... 27 more ...; bottomButton: { ...; }; }' is not assignable to parameter of type '{ container: { flex: number; backgroundColor: string; }; scannedTextCard: { margin: number; }; scannedTextLabel: { marginBottom: number; }; scannedText: { backgroundColor: string; padding: number; borderRadius: number; }; ... 27 more ...; bottomButton: { ...; }; } & NamedStyles<...>'.
+  Property 'pronunciationButton' is incompatible with index signature.
+    Object literal may only specify known properties, and 'activeOpacity' does not exist in type 'ViewStyle | TextStyle | ImageStyle'.
+src/navigation/RootNavigator.tsx(47,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: Omit<NativeStackNavigatorProps, "id" | "children" | "layout" | "initialRouteName" | "screenListeners" | "screenOptions" | "screenLayout" | "UNSTABLE_router"> & DefaultRouterOptions<...> & { ...; } & { ...; }, context?: any): string | ... 8 more ... | undefined', gave the following error.
+    Object literal may only specify known properties, and 'headerBackTitleVisible' does not exist in type 'NativeStackNavigationOptions | ((props: { route: RouteProp<RootStackParamList, keyof RootStackParamList>; navigation: NativeStackNavigationProp<...> | ... 13 more ... | NativeStackNavigationProp<...>; theme: Theme; }) => NativeStackNavigationOptions)'.
+  Overload 2 of 2, '(props: Omit<NativeStackNavigatorProps, "id" | "children" | "layout" | "initialRouteName" | "screenListeners" | "screenOptions" | "screenLayout" | "UNSTABLE_router"> & DefaultRouterOptions<...> & { ...; } & { ...; }): string | ... 8 more ... | undefined', gave the following error.
+    Object literal may only specify known properties, and 'headerBackTitleVisible' does not exist in type 'NativeStackNavigationOptions | ((props: { route: RouteProp<RootStackParamList, keyof RootStackParamList>; navigation: NativeStackNavigationProp<...> | ... 13 more ... | NativeStackNavigationProp<...>; theme: Theme; }) => NativeStackNavigationOptions)'.
+src/screens/CameraScreen.tsx(32,27): error TS2345: Argument of type 'CameraPermissionRequestResult' is not assignable to parameter of type 'SetStateAction<"authorized" | "denied" | "not-determined">'.
+  Type '"granted"' is not assignable to type 'SetStateAction<"authorized" | "denied" | "not-determined">'.
+src/screens/CameraScreen.tsx(51,9): error TS2353: Object literal may only specify known properties, and 'qualityPrioritization' does not exist in type 'TakePhotoOptions'.
+src/screens/CameraScreen.tsx(75,11): error TS7034: Variable 'detectedWordsData' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/screens/CameraScreen.tsx(89,24): error TS7005: Variable 'detectedWordsData' implicitly has an 'any[]' type.
+src/screens/CameraScreen.tsx(150,13): error TS7034: Variable 'detectedWordsData' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/screens/CameraScreen.tsx(164,26): error TS7005: Variable 'detectedWordsData' implicitly has an 'any[]' type.
+src/screens/ForgotPasswordScreen.tsx(205,21): error TS2322: Type '{ variant: "body1"; style: ({ borderWidth: number; borderRadius: number; paddingHorizontal: number; paddingVertical: number; fontSize: number; minHeight: number; } | { color: string; borderColor: string; backgroundColor: string; })[]; ... 7 more ...; onChangeText: (...event: any[]) => void; }' is not assignable to type 'IntrinsicAttributes & TypographyProps'.
+  Property 'onBlur' does not exist on type 'IntrinsicAttributes & TypographyProps'.
+src/screens/HomeScreen.tsx(88,37): error TS18046: 'error' is of type 'unknown'.
+src/screens/HomeScreen.tsx(111,46): error TS18046: 'error' is of type 'unknown'.
+src/screens/QuizSessionScreen.tsx(8,8): error TS2613: Module '"E:/21.project/Scan_Voca/app/src/services/wordbookService"' has no default export. Did you mean to use 'import { wordbookService } from "E:/21.project/Scan_Voca/app/src/services/wordbookService"' instead?
+src/screens/QuizSessionScreen.tsx(108,13): error TS7034: Variable 'wrongAnswers' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/screens/QuizSessionScreen.tsx(109,29): error TS7005: Variable 'wrongAnswers' implicitly has an 'any[]' type.
+src/screens/RegisterScreen.tsx(172,105): error TS2339: Property 'medium' does not exist on type 'string'.
+src/screens/ScanResultsScreen.tsx(367,32): error TS2345: Argument of type '({ word, reason }: { word: string; reason: string; }) => React.JSX.Element' is not assignable to parameter of type '(value: DetectedWord, index: number, array: DetectedWord[]) => Element'.
+  Types of parameters '__0' and 'value' are incompatible.
+    Property 'reason' is missing in type 'DetectedWord' but required in type '{ word: string; reason: string; }'.
+src/screens/ScanScreen.tsx(172,13): error TS7034: Variable 'detectedWordsData' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/screens/ScanScreen.tsx(187,26): error TS7005: Variable 'detectedWordsData' implicitly has an 'any[]' type.
+src/screens/ScanScreen.tsx(238,13): error TS7034: Variable 'detectedWordsData' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/screens/ScanScreen.tsx(253,26): error TS7005: Variable 'detectedWordsData' implicitly has an 'any[]' type.
+src/screens/SettingsScreen.tsx(42,47): error TS2551: Property 'getAllWordbooks' does not exist on type 'WordbookService'. Did you mean 'getWordbooks'?
+src/screens/SettingsScreen.tsx(50,40): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/screens/SettingsScreen.tsx(50,45): error TS7006: Parameter 'w' implicitly has an 'any' type.
+src/screens/StudyStatsScreen.tsx(48,13): error TS7034: Variable 'wordbooks' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/screens/StudyStatsScreen.tsx(83,26): error TS7005: Variable 'wordbooks' implicitly has an 'any[]' type.
+src/screens/StudyStatsScreen.tsx(85,55): error TS7005: Variable 'wordbooks' implicitly has an 'any[]' type.
+src/screens/WordbookDetailScreen.tsx(60,37): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/screens/WordbookDetailScreen.tsx(132,11): error TS2322: Type '() => { correctCount: number; totalCount: number; }' is not assignable to type '() => number'.
+  Type '{ correctCount: number; totalCount: number; }' is not assignable to type 'number'.
+src/screens/WordDetailScreen.tsx(27,13): error TS7034: Variable 'allWordbooks' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/screens/WordDetailScreen.tsx(31,20): error TS7005: Variable 'allWordbooks' implicitly has an 'any[]' type.
+src/services/initialDataService.ts(115,37): error TS7006: Parameter 'meaning' implicitly has an 'any' type.
+src/services/ocrFiltering.ts(120,13): error TS2322: Type 'import("E:/21.project/Scan_Voca/app/src/services/smartDictionaryService").SmartWordDefinition | undefined' is not assignable to type 'import("E:/21.project/Scan_Voca/app/src/types/types").SmartWordDefinition | undefined'.
+  Type 'import("E:/21.project/Scan_Voca/app/src/services/smartDictionaryService").SmartWordDefinition' is not assignable to type 'import("E:/21.project/Scan_Voca/app/src/types/types").SmartWordDefinition'.
+    Types of property 'difficulty' are incompatible.
+      Type '1 | 2 | 3 | 4 | 5' is not assignable to type '1 | 2 | 3 | 4'.
+        Type '5' is not assignable to type '1 | 2 | 3 | 4'.
+src/services/ocrService.ts(224,13): error TS2322: Type 'import("E:/21.project/Scan_Voca/app/src/services/smartDictionaryService").SmartWordDefinition | undefined' is not assignable to type 'import("E:/21.project/Scan_Voca/app/src/types/types").SmartWordDefinition | undefined'.
+  Type 'import("E:/21.project/Scan_Voca/app/src/services/smartDictionaryService").SmartWordDefinition' is not assignable to type 'import("E:/21.project/Scan_Voca/app/src/types/types").SmartWordDefinition'.
+    Types of property 'difficulty' are incompatible.
+      Type '1 | 2 | 3 | 4 | 5' is not assignable to type '1 | 2 | 3 | 4'.
+        Type '5' is not assignable to type '1 | 2 | 3 | 4'.
+src/services/ocrService.ts(322,7): error TS2322: Type 'import("E:/21.project/Scan_Voca/app/src/services/smartDictionaryService").SmartWordDefinition[]' is not assignable to type 'import("E:/21.project/Scan_Voca/app/src/types/types").SmartWordDefinition[]'.
+  Type 'import("E:/21.project/Scan_Voca/app/src/services/smartDictionaryService").SmartWordDefinition' is not assignable to type 'import("E:/21.project/Scan_Voca/app/src/types/types").SmartWordDefinition'.
+    Types of property 'difficulty' are incompatible.
+      Type '1 | 2 | 3 | 4 | 5' is not assignable to type '1 | 2 | 3 | 4'.
+        Type '5' is not assignable to type '1 | 2 | 3 | 4'.
+src/services/smartDictionaryService.ts(204,31): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/services/smartDictionaryService.ts(228,54): error TS7006: Parameter 'w' implicitly has an 'any' type.
+src/services/smartDictionaryService.ts(238,44): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/services/socialAuth.ts(78,9): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/services/socialAuth.ts(79,9): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/services/socialAuth.ts(110,9): error TS2353: Object literal may only specify known properties, and 'additionalParameters' does not exist in type 'AuthRequestConfig'.
+src/services/socialAuth.ts(227,33): error TS2339: Property 'isSignedIn' does not exist on type '{ hasPlayServices: (options?: HasPlayServicesParams | undefined) => Promise<boolean>; configure: (options?: ConfigureParams | undefined) => void; ... 8 more ...; getTokens: () => Promise<...>; }'.
+src/services/ttsService.ts(33,21): error TS2774: This condition will always return true since this function is always defined. Did you mean to call it instead?
+src/services/wordbookExportImport.ts(200,35): error TS2339: Property 'cacheDirectory' does not exist on type 'typeof import("E:/21.project/Scan_Voca/app/node_modules/expo-file-system/build/index")'.
+src/services/wordbookExportImport.ts(202,28): error TS2339: Property 'EncodingType' does not exist on type 'typeof import("E:/21.project/Scan_Voca/app/node_modules/expo-file-system/build/index")'.
+src/utils/appHealthCheck.ts(2,37): error TS2307: Cannot find module './databaseCheck' or its corresponding type declarations.
+src/utils/clearAllData.ts(268,25): error TS18046: 'error' is of type 'unknown'.
+src/utils/testSmartDictionary.ts(8,31): error TS2724: '"../types/types"' has no exported member named 'ProcessedWord'. Did you mean 'ProcessedWordV2'?
+src/utils/testSmartDictionary.ts(195,50): error TS2551: Property 'getWordDefinition' does not exist on type 'SmartDictionaryService'. Did you mean 'getWordDefinitions'?
+src/utils/testSmartDictionary.ts(204,50): error TS2551: Property 'getWordDefinition' does not exist on type 'SmartDictionaryService'. Did you mean 'getWordDefinitions'?
+src/utils/testSmartDictionary.ts(269,43): error TS2339: Property 'hasError' does not exist on type '{ initialized: boolean; memoryCacheSize: number; isOnline: boolean; }'.
+src/utils/testSmartDictionary.ts(324,41): error TS2551: Property 'getWordDefinition' does not exist on type 'SmartDictionaryService'. Did you mean 'getWordDefinitions'?
+src/utils/testSmartDictionary.ts(330,5): error TS2322: Type 'import("E:/21.project/Scan_Voca/app/src/services/smartDictionaryService").SmartWordDefinition[]' is not assignable to type 'import("E:/21.project/Scan_Voca/app/src/types/types").SmartWordDefinition[]'.
+  Type 'import("E:/21.project/Scan_Voca/app/src/services/smartDictionaryService").SmartWordDefinition' is not assignable to type 'import("E:/21.project/Scan_Voca/app/src/types/types").SmartWordDefinition'.
+    Types of property 'difficulty' are incompatible.
+      Type '1 | 2 | 3 | 4 | 5' is not assignable to type '1 | 2 | 3 | 4'.
+        Type '5' is not assignable to type '1 | 2 | 3 | 4'.

@@ -24,7 +24,7 @@ export default function WordDetailScreen({ route, navigation }: WordDetailScreen
       // TODO: 향후 서버 연동 시 실제 단어 데이터 로드 구현 예정
       const wordData = null;
       const memorizedStatus = false;
-      const allWordbooks = [];
+      const allWordbooks: any[] = [];
 
       setWord(wordData);
       setIsMemorized(memorizedStatus);

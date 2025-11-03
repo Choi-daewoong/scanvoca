@@ -74,9 +74,9 @@ class SocialAuthService {
         provider: 'google',
         idToken: userInfo.data?.idToken || undefined,
         accessToken: userInfo.data?.serverAuthCode || undefined,
-        email: userInfo.data?.user.email,
-        name: userInfo.data?.user.name,
-        photo: userInfo.data?.user.photo,
+        email: userInfo.data?.user.email || undefined,
+        name: userInfo.data?.user.name || undefined,
+        photo: userInfo.data?.user.photo || undefined,
       };
     } catch (error: any) {
       console.error('[SocialAuth] Google 로그인 실패:', error);
@@ -107,7 +107,6 @@ class SocialAuthService {
         scopes: ['openid', 'email', 'name'],
         responseType: AuthSession.ResponseType.Code,
         redirectUri,
-        additionalParameters: {},
         state: await Crypto.digestStringAsync(
           Crypto.CryptoDigestAlgorithm.SHA256,
           Math.random().toString()
@@ -224,7 +223,8 @@ class SocialAuthService {
   // 현재 Google 로그인 상태 확인
   async isGoogleSignedIn(): Promise<boolean> {
     try {
-      return await GoogleSignin.isSignedIn();
+      const currentUser = await GoogleSignin.getCurrentUser();
+      return currentUser !== null;
     } catch (error) {
       console.error('[SocialAuth] Google 로그인 상태 확인 실패:', error);
       return false;

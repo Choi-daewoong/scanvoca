@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -12,28 +12,86 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScanResultsScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import ttsService from '../services/ttsService';
-
-interface ScannedWord {
-  id: number;
-  word: string;
-  meaning: string;
-  partOfSpeech: string;
-  level: 1 | 2 | 3 | 4;
-  isSelected: boolean;
-}
+import { useScanResults } from '../hooks/useScanResults';
+import WordbookSelectionModal from '../components/common/WordbookSelectionModal';
+import { wordbookService } from '../services/wordbookService';
 
 export default function ScanResultsScreen({ navigation, route }: ScanResultsScreenProps) {
   const { theme } = useTheme();
+  const [showWordbookModal, setShowWordbookModal] = useState(false);
 
-  // route params에서 실제 OCR 결과 받기 (카메라에서 이미 처리된 단어 데이터)
+  // route params에서 실제 OCR 결과 받기
   const { scannedText = '', detectedWords = [], imageUri = '', excludedCount = 0, excludedWords = [] } = route.params || {};
+
+  // 커스텀 훅 사용
+  const {
+    words,
+    activeFilter,
+    selectAll,
+    showExcludedDetail,
+    filteredWords,
+    selectedWordsCount,
+    setActiveFilter,
+    setShowExcludedDetail,
+    toggleWordSelection,
+    toggleSelectAll,
+    handleDeleteSelected,
+    getLevelColor,
+  } = useScanResults(detectedWords);
+
+  // 단어장 저장 버튼 클릭 핸들러
+  const handleSaveToWordbook = () => {
+    const selectedWords = words.filter(w => w.isSelected);
+    if (selectedWords.length === 0) {
+      Alert.alert('알림', '저장할 단어를 선택해주세요.');
+      return;
+    }
+    setShowWordbookModal(true);
+  };
+
+  // 단어장 선택 시 실제 저장 처리
+  const handleSelectWordbook = async (wordbookId: number) => {
+    try {
+      const selectedWords = words.filter(w => w.isSelected).map(w => w.word);
+
+      console.log(`📚 단어장 ${wordbookId}에 ${selectedWords.length}개 단어 저장 시작`);
+
+      const result = await wordbookService.saveWordsToWordbook({
+        wordbookId,
+        words: selectedWords
+      });
+
+      setShowWordbookModal(false);
+
+      if (result.success) {
+        Alert.alert(
+          '저장 완료',
+          `${result.savedCount}개 단어를 단어장에 저장했습니다.${
+            result.skippedCount > 0 ? `\n(${result.skippedCount}개 중복/실패)` : ''
+          }`,
+          [
+            {
+              text: '확인',
+              onPress: () => navigation.goBack()
+            }
+          ]
+        );
+      } else {
+        Alert.alert('오류', '단어 저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Failed to save words:', error);
+      Alert.alert('오류', '단어 저장 중 오류가 발생했습니다.');
+      setShowWordbookModal(false);
+    }
+  };
 
   // 텍스트 줄이기 함수 (1-2줄로 제한)
   const truncateText = (text: string, maxLines: number = 2) => {
     if (!text) return '';
 
     const words = text.split(' ');
-    const wordsPerLine = 8; // 한 줄당 대략 8단어
+    const wordsPerLine = 8;
     const maxWords = maxLines * wordsPerLine;
 
     if (words.length <= maxWords) {
@@ -44,133 +102,6 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
   };
 
   const truncatedText = truncateText(scannedText);
-
-  const [activeFilter, setActiveFilter] = useState('모두');
-  const [selectAll, setSelectAll] = useState(true);
-  const [showExcludedDetail, setShowExcludedDetail] = useState(false);
-
-  // 카메라에서 전달받은 단어 데이터를 words 상태로 변환
-  const [words, setWords] = useState<ScannedWord[]>([]);
-
-  // 컴포넌트 마운트 시 카메라에서 받은 데이터를 words 상태로 설정
-  useEffect(() => {
-    if (!detectedWords || detectedWords.length === 0) {
-      setWords([]);
-      return;
-    }
-
-    console.log('📥 ScanResults에서 받은 단어 데이터:', detectedWords);
-
-    // 중복 단어 제거 함수
-    const removeDuplicateWords = (words: any[]) => {
-      const uniqueWords = new Map();
-
-      words.forEach((wordData) => {
-        const word = typeof wordData === 'string' ? wordData : wordData.word;
-        if (word && !uniqueWords.has(word.toLowerCase())) {
-          uniqueWords.set(word.toLowerCase(), wordData);
-        }
-      });
-
-      return Array.from(uniqueWords.values());
-    };
-
-    // 중복 제거된 단어들
-    const uniqueWords = removeDuplicateWords(detectedWords);
-    console.log('🔄 중복 제거 후:', uniqueWords.length, '개 단어');
-
-    // 카메라에서 이미 처리된 데이터를 ScannedWord 형태로 변환
-    const formattedWords = uniqueWords.map((wordData: any, index: number) => {
-      // 문자열인 경우와 객체인 경우 모두 처리
-      if (typeof wordData === 'string') {
-        return {
-          id: index + 1,
-          word: wordData,
-          meaning: '의미를 찾을 수 없습니다',
-          partOfSpeech: 'n',
-          level: 4,
-          isSelected: true,
-        };
-      } else {
-        return {
-          id: index + 1,
-          word: wordData.word || '알 수 없음',
-          meaning: wordData.meaning || '의미를 찾을 수 없습니다',
-          partOfSpeech: wordData.partOfSpeech || 'n',
-          level: wordData.level || 4,
-          isSelected: true,
-        };
-      }
-    });
-
-    console.log('✅ 단어 데이터 변환 완료:', formattedWords);
-    setWords(formattedWords);
-  }, [detectedWords]);
-
-  const filteredWords = words.filter(word => {
-    if (activeFilter === '모두') return true;
-    return word.level.toString() === activeFilter.replace('Lv.', '');
-  });
-
-  const selectedWordsCount = words.filter(w => w.isSelected).length;
-
-  const toggleWordSelection = (wordId: number) => {
-    setWords(prevWords =>
-      prevWords.map(word =>
-        word.id === wordId ? { ...word, isSelected: !word.isSelected } : word
-      )
-    );
-  };
-
-  const toggleSelectAll = () => {
-    const newSelectAll = !selectAll;
-    setSelectAll(newSelectAll);
-    setWords(prevWords =>
-      prevWords.map(word => ({ ...word, isSelected: newSelectAll }))
-    );
-  };
-
-  const handleSaveToWordbook = () => {
-    const selectedWords = words.filter(w => w.isSelected);
-    if (selectedWords.length === 0) {
-      Alert.alert('알림', '저장할 단어를 선택해주세요.');
-      return;
-    }
-    Alert.alert('단어장 저장', `${selectedWords.length}개 단어를 단어장에 저장했습니다.`);
-  };
-
-  const handleDeleteSelected = () => {
-    const selectedWords = words.filter(w => w.isSelected);
-    if (selectedWords.length === 0) {
-      Alert.alert('알림', '삭제할 단어를 선택해주세요.');
-      return;
-    }
-
-    Alert.alert(
-      '단어 삭제',
-      `선택된 ${selectedWords.length}개 단어를 삭제하시겠습니까?`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: () => {
-            setWords(prevWords => prevWords.filter(w => !w.isSelected));
-          }
-        }
-      ]
-    );
-  };
-
-  const getLevelColor = (level: number) => {
-    switch (level) {
-      case 1: return '#10B981'; // Green
-      case 2: return '#3B82F6'; // Blue
-      case 3: return '#F59E0B'; // Orange
-      case 4: return '#EF4444'; // Red
-      default: return '#6B7280'; // Gray
-    }
-  };
 
   const styles = StyleSheet.create({
     container: {
@@ -483,9 +414,9 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
         {showExcludedDetail && excludedWords && excludedWords.length > 0 && (
           <View style={styles.excludedDetail}>
             <Text style={styles.excludedTitle}>제외된 단어:</Text>
-            {excludedWords.map(({ word, reason }: { word: string; reason: string }) => (
+            {excludedWords.map(({ word, reason }: { word: string; reason?: string }) => (
               <Text key={word} style={styles.excludedItem}>
-                • {word} ({reason})
+                • {word} ({reason || '알 수 없음'})
               </Text>
             ))}
           </View>
@@ -601,6 +532,14 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
           ))}
         </View>
       </ScrollView>
+
+      {/* 단어장 선택 모달 */}
+      <WordbookSelectionModal
+        visible={showWordbookModal}
+        onClose={() => setShowWordbookModal(false)}
+        onSelectWordbook={handleSelectWordbook}
+        selectedWords={words.filter(w => w.isSelected).map(w => w.word)}
+      />
     </SafeAreaView>
   );
 }

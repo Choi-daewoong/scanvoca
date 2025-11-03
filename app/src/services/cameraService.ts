@@ -1,6 +1,6 @@
 import { Camera } from 'react-native-vision-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { Platform } from 'react-native';
+import { Platform, Alert, Linking } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 
 export interface CameraPermissions {
@@ -32,25 +32,51 @@ class CameraService {
     try {
       // 카메라 권한 요청
       const cameraPermission = await Camera.requestCameraPermission();
-      
+
       // 갤러리 권한 요청 (MediaLibrary)
       const mediaLibraryStatus = await MediaLibrary.requestPermissionsAsync();
-      
+
       // 이미지 피커 권한 요청
       const imagePickerStatus = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-      return {
+      const permissions = {
         camera: cameraPermission === 'granted',
         microphone: true, // 마이크는 비활성화했으므로 true로 설정
         mediaLibrary: mediaLibraryStatus.granted && imagePickerStatus.granted,
       };
+
+      // 권한이 거부된 경우 사용자에게 안내
+      if (!permissions.camera) {
+        Alert.alert(
+          '카메라 권한 필요',
+          '카메라 기능을 사용하려면 카메라 권한이 필요합니다. 설정에서 권한을 허용해주세요.',
+          [
+            { text: '설정으로 이동', onPress: () => Linking.openSettings() },
+            { text: '취소', style: 'cancel' }
+          ]
+        );
+      }
+
+      if (!permissions.mediaLibrary) {
+        Alert.alert(
+          '갤러리 권한 필요',
+          '갤러리에서 사진을 선택하려면 미디어 라이브러리 권한이 필요합니다. 설정에서 권한을 허용해주세요.',
+          [
+            { text: '설정으로 이동', onPress: () => Linking.openSettings() },
+            { text: '취소', style: 'cancel' }
+          ]
+        );
+      }
+
+      return permissions;
     } catch (error) {
       console.error('Permission request failed:', error);
-      return {
-        camera: false,
-        microphone: false,
-        mediaLibrary: false,
-      };
+      Alert.alert(
+        '권한 요청 실패',
+        '권한 요청 중 오류가 발생했습니다. 다시 시도해주세요.',
+        [{ text: '확인' }]
+      );
+      throw error;
     }
   }
 
@@ -83,7 +109,15 @@ class CameraService {
       if (!permissions.mediaLibrary) {
         const newPermissions = await this.requestPermissions();
         if (!newPermissions.mediaLibrary) {
-          throw new Error('Gallery permission not granted');
+          Alert.alert(
+            '권한 필요',
+            '갤러리 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.',
+            [
+              { text: '설정으로 이동', onPress: () => Linking.openSettings() },
+              { text: '취소', style: 'cancel' }
+            ]
+          );
+          return null;
         }
       }
 
@@ -103,6 +137,11 @@ class CameraService {
       return null;
     } catch (error) {
       console.error('Image picker failed:', error);
+      Alert.alert(
+        '이미지 선택 실패',
+        '갤러리에서 이미지를 선택하는 중 오류가 발생했습니다. 다시 시도해주세요.',
+        [{ text: '확인' }]
+      );
       throw error;
     }
   }
@@ -147,6 +186,15 @@ class CameraService {
 
       console.log(`✅ OCR 처리 완료: ${words.length}개 단어, 평균 신뢰도: ${averageConfidence.toFixed(2)}`);
 
+      // 단어가 감지되지 않은 경우 사용자에게 안내
+      if (words.length === 0) {
+        Alert.alert(
+          '텍스트 미감지',
+          '이미지에서 텍스트를 찾을 수 없습니다. 더 선명한 이미지를 사용해주세요.',
+          [{ text: '확인' }]
+        );
+      }
+
       return {
         text: ocrResult.text,
         confidence: averageConfidence,
@@ -155,9 +203,15 @@ class CameraService {
     } catch (error) {
       console.error('❌ OCR 처리 실패:', error);
 
-      // 실패 시 fallback
+      Alert.alert(
+        'OCR 처리 실패',
+        '이미지 텍스트 인식 중 오류가 발생했습니다. 다시 시도해주세요.',
+        [{ text: '확인' }]
+      );
+
+      // 실패 시 빈 결과 반환
       return {
-        text: 'OCR processing failed',
+        text: '',
         confidence: 0,
         words: [],
       };

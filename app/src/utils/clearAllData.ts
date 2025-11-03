@@ -265,7 +265,8 @@ export function registerGlobalClearFunctions() {
         return info;
       } catch (error) {
         console.error('❌ 완전한 단어장 로딩 실패:', error);
-        return { error: error.message };
+        const message = error instanceof Error ? error.message : String(error);
+        return { error: message };
       }
     };
 

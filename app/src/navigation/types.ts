@@ -2,6 +2,15 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { SmartWordDefinition } from '../types/types';
+
+// Detected Word from OCR scan
+export interface DetectedWord {
+  word: string;
+  definition?: SmartWordDefinition;
+  isFiltered?: boolean;
+  filterReason?: string;
+}
 
 // Root Stack Navigator (전체 앱 네비게이션)
 export type RootStackParamList = {
@@ -24,7 +33,9 @@ export type RootStackParamList = {
   ScanResults: {
     scannedText?: string;
     imageUri?: string;
-    detectedWords?: any[];
+    detectedWords?: DetectedWord[];
+    excludedCount?: number;
+    excludedWords?: DetectedWord[];
   };
   QuizSession: { wordbookId?: number; questionCount?: number };
   QuizResults: {

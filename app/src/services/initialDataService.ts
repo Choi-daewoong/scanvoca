@@ -112,7 +112,7 @@ class InitialDataService {
         word: word.word,
         pronunciation: word.pronunciation,
         difficulty_level: word.difficulty,
-        meanings: word.meanings.map(meaning => ({
+        meanings: word.meanings.map((meaning: any) => ({
           korean_meaning: meaning.korean,
           part_of_speech: meaning.partOfSpeech,
           definition_en: meaning.english

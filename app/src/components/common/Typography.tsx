@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, StyleSheet, TextStyle } from 'react-native';
+import { Text, StyleSheet, TextStyle, StyleProp } from 'react-native';
 import theme from '../../styles/theme';
 
 export interface TypographyProps {
@@ -8,7 +8,7 @@ export interface TypographyProps {
   color?: 'primary' | 'secondary' | 'tertiary' | 'inverse' | 'success' | 'warning' | 'error' | 'info';
   align?: 'left' | 'center' | 'right';
   weight?: 'normal' | 'medium' | 'bold';
-  style?: TextStyle;
+  style?: StyleProp<TextStyle>;
   numberOfLines?: number;
   onPress?: () => void;
 }
@@ -23,8 +23,8 @@ const Typography: React.FC<TypographyProps> = ({
   numberOfLines,
   onPress,
 }) => {
-  const getTextStyle = (): TextStyle[] => {
-    const baseStyle = [styles.text, styles[variant]];
+  const getTextStyle = (): StyleProp<TextStyle> => {
+    const baseStyle: any[] = [styles.text, styles[variant]];
 
     // 색상 적용
     switch (color) {
@@ -154,39 +154,39 @@ const styles = StyleSheet.create({
   // Colors
   colorPrimary: {
     color: theme.colors.text.primary,
-  },
+  } as TextStyle,
   colorSecondary: {
     color: theme.colors.text.secondary,
-  },
+  } as TextStyle,
   colorTertiary: {
     color: theme.colors.text.tertiary,
-  },
+  } as TextStyle,
   colorInverse: {
     color: theme.colors.text.inverse,
-  },
+  } as TextStyle,
   colorSuccess: {
     color: theme.colors.semantic.success,
-  },
+  } as TextStyle,
   colorWarning: {
     color: theme.colors.semantic.warning,
-  },
+  } as TextStyle,
   colorError: {
     color: theme.colors.semantic.error,
-  },
+  } as TextStyle,
   colorInfo: {
     color: theme.colors.semantic.info,
-  },
+  } as TextStyle,
   
   // Alignment
   alignLeft: {
     textAlign: 'left',
-  },
+  } as TextStyle,
   alignCenter: {
     textAlign: 'center',
-  },
+  } as TextStyle,
   alignRight: {
     textAlign: 'right',
-  },
+  } as TextStyle,
 });
 
 export default Typography;

@@ -1,5 +1,5 @@
 // 앱 전체 상태 점검 스크립트
-import { checkDatabaseHealth } from './databaseCheck';
+// import { checkDatabaseHealth } from './databaseCheck'; // Removed - no local DB
 import { logNavigationStatus } from './navigationTest';
 
 export interface AppHealthReport {
@@ -100,13 +100,13 @@ export async function generateAppHealthReport(): Promise<AppHealthReport> {
     }
   };
 
-  // 데이터베이스 상태 확인
+  // 데이터베이스 상태 확인 (로컬 DB 제거됨 - GPT API 전용)
   try {
-    const dbStats = await checkDatabaseHealth();
+    // const dbStats = await checkDatabaseHealth(); // Removed - no local DB
     report.database.connected = true;
-    report.database.wordCount = dbStats.totalWords;
-    report.database.wordbookCount = dbStats.totalWordbooks;
-    report.database.sampleWordsFound = dbStats.sampleWords.length;
+    report.database.wordCount = 0; // GPT API 기반
+    report.database.wordbookCount = 0;
+    report.database.sampleWordsFound = 0;
   } catch (error) {
     report.database.error = error instanceof Error ? error.message : 'Unknown error';
     report.readiness.blockers.push('데이터베이스 연결 실패');

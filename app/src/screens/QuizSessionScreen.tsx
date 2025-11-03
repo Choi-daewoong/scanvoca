@@ -5,7 +5,7 @@ import { useTheme } from '../styles/ThemeProvider';
 import { ProgressBar } from '../components/common';
 import { useQuiz } from '../hooks/useQuiz';
 import { WordWithMeaning } from '../types/types';
-import wordbookService from '../services/wordbookService';
+import { wordbookService } from '../services/wordbookService';
 
 interface QuizQuestion {
   id: number;
@@ -53,7 +53,7 @@ export default function QuizSessionScreen({ navigation, route }: QuizSessionScre
       } else {
         // 전체 단어장에서 무작위 선택
         try {
-          const allWordbooks = await wordbookService.getAllWordbooks();
+          const allWordbooks = await wordbookService.getWordbooks();
           for (const wordbook of allWordbooks) {
             const wordbookWords = await wordbookService.getWordbookWords(wordbook.id);
             words = words.concat(wordbookWords);
@@ -104,8 +104,8 @@ export default function QuizSessionScreen({ navigation, route }: QuizSessionScre
 
       const correctAnswer = word.meanings[0].korean_meaning;
 
-      // 오답 선택지 생성 - 다른 단어들의 뜻을 가져옴 (database service removed)
-      const wrongAnswers = [];
+      // 오답 선택지 생성 - 다른 단어들의 뜻을 가져옴
+      const wrongAnswers: WordWithMeaning[] = words.filter((w, idx) => idx !== i);
       const wrongMeanings = wrongAnswers
         .filter(w => w.meanings && w.meanings.length > 0)
         .map(w => w.meanings[0].korean_meaning)

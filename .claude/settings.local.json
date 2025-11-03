@@ -52,7 +52,15 @@
       "Bash(grep:*)",
       "Read(//e/21.project/edu_eng/**)",
       "Bash(cat:*)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(ipconfig:*)",
+      "Bash(cmd //c \"taskkill /IM node.exe /F\")",
+      "Bash(watchman version:*)",
+      "Bash(npx react-native start:*)",
+      "Bash(EXPO_NO_METRO_LAZY=1 npx expo start:*)",
+      "Bash(awk:*)",
+      "Bash(cmd //c \"taskkill /F /PID 22384\")",
+      "WebFetch(domain:expo.dev)"
     ],
     "deny": [],
     "ask": []

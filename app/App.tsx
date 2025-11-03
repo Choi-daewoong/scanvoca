@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { Alert } from 'react-native';
 
 // Smart Dictionary Service (GPT + Local JSON)
@@ -14,8 +14,35 @@ import { useAuthStore } from './src/stores/authStore';
 
 // Navigation & Theme
 import RootNavigator from './src/navigation/RootNavigator';
+import { RootStackParamList } from './src/navigation/types';
 import { ThemeProvider } from './src/styles/ThemeProvider';
 import { LoadingScreen, ErrorScreen } from './src/components/common';
+
+// Deep Linking 구성
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ['com.scanvoca.app://', 'https://scanvoca.com'],
+  config: {
+    screens: {
+      Login: 'login',
+      Register: 'register',
+      ForgotPassword: 'forgot-password',
+      MainTabs: {
+        screens: {
+          Home: 'home',
+          Scan: 'scan',
+          Wordbook: 'wordbook',
+        }
+      },
+      Camera: 'camera',
+      WordDetail: 'word/:wordId',
+      ScanResults: 'scan-results',
+      QuizSession: 'quiz/:wordbookId',
+      QuizResults: 'quiz-results',
+      WordbookDetail: 'wordbook/:wordbookId',
+      Settings: 'settings',
+    }
+  }
+};
 
 export default function App() {
   const [isAppInitialized, setIsAppInitialized] = useState(false);
@@ -96,7 +123,7 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <NavigationContainer>
+      <NavigationContainer linking={linking}>
         <StatusBar style="auto" />
         <RootNavigator isAuthenticated={isAuthenticated} />
       </NavigationContainer>

@@ -6,6 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  TextInput,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -138,14 +139,14 @@ export default function ForgotPasswordScreen() {
             <Button
               title="다시 보내기"
               variant="secondary"
-              size="large"
+              size="lg"
               onPress={handleResendEmail}
               style={styles.resendButton}
             />
             <Button
               title="로그인으로 돌아가기"
               variant="primary"
-              size="large"
+              size="lg"
               onPress={handleBackToLogin}
               style={styles.backButton}
             />
@@ -190,8 +191,7 @@ export default function ForgotPasswordScreen() {
               name="email"
               render={({ field: { onChange, onBlur, value } }) => (
                 <View style={styles.inputWrapper}>
-                  <Typography
-                    variant="body1"
+                  <TextInput
                     style={[
                       styles.input,
                       {
@@ -227,7 +227,7 @@ export default function ForgotPasswordScreen() {
           <Button
             title={isLoading ? '전송 중...' : '재설정 링크 보내기'}
             variant="primary"
-            size="large"
+            size="lg"
             onPress={handleSubmit(onSubmit)}
             disabled={isLoading}
             style={styles.submitButton}
@@ -243,7 +243,7 @@ export default function ForgotPasswordScreen() {
             <Button
               title="로그인으로 돌아가기"
               variant="text"
-              size="medium"
+              size="md"
               onPress={handleBackToLogin}
               style={styles.loginLink}
             />

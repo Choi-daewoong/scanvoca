@@ -85,7 +85,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         [{ text: '확인', onPress: () => loadHomeStats() }]
       );
     } catch (error) {
-      Alert.alert('❌ 로딩 실패', `오류: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      Alert.alert('❌ 로딩 실패', `오류: ${message}`);
     }
   }, []);
 
@@ -108,7 +109,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 [{ text: '확인', onPress: () => loadHomeStats() }]
               );
             } catch (error) {
-              Alert.alert('❌ 초기화 실패', `오류: ${error.message}`);
+              const message = error instanceof Error ? error.message : String(error);
+              Alert.alert('❌ 초기화 실패', `오류: ${message}`);
             }
           }
         }

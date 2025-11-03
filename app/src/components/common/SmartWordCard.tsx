@@ -149,7 +149,7 @@ export default function SmartWordCard({
       )}
 
       {/* Data Source Indicator (detailed) */}
-      {showSource && word.source !== 'none' && (
+      {showSource && word.source && (
         <View style={styles.sourceInfo}>
           <View style={styles.sourceDetails}>
             {word.source === 'cache' && (

@@ -56,9 +56,9 @@ export default function ImportWordbookButton() {
             text: '확인',
             onPress: () => {
               // 새로 생성된 단어장 화면으로 이동
-              navigation.navigate('WordbookDetail' as never, {
+              navigation.navigate('WordbookDetail', {
                 wordbookId: newWordbookId
-              } as never);
+              });
             }
           }
         ]
@@ -81,7 +81,7 @@ export default function ImportWordbookButton() {
 
   return (
     <TouchableOpacity
-      style={[styles.importButton, { backgroundColor: theme.colors.primary }]}
+      style={[styles.importButton, { backgroundColor: theme.colors.primary.main }]}
       onPress={handleImport}
       disabled={isImporting}
     >

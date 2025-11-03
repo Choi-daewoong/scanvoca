@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import theme from '../../styles/theme';
 import Typography from './Typography';
 
@@ -22,13 +22,13 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
 }) => {
   const clampedProgress = Math.max(0, Math.min(100, progress));
 
-  const getBarStyle = (): ViewStyle[] => {
-    const baseStyle = [styles.progressBar, styles[height]];
-    
+  const getBarStyle = (): StyleProp<ViewStyle> => {
+    const baseStyle: any[] = [styles.progressBar, styles[height]];
+
     if (style) {
       baseStyle.push(style);
     }
-    
+
     return baseStyle;
   };
 
@@ -69,7 +69,6 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: theme.borderRadius.full,
-    transition: 'width 0.3s ease-out',
   },
   
   // Heights

@@ -44,7 +44,6 @@ export default function RootNavigator({ isAuthenticated }: RootNavigatorProps) {
           fontSize: 18,
           fontWeight: 'bold',
         },
-        headerBackTitleVisible: false,
         animation: 'slide_from_right',
       }}
     >

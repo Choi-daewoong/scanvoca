@@ -169,7 +169,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
                 <View
                   style={{
                     borderWidth: 1,
-                    borderColor: errors.name ? theme.colors.semantic.error : theme.colors.border.medium.medium,
+                    borderColor: errors.name ? theme.colors.semantic.error : theme.colors.border.medium,
                     borderRadius: theme.borderRadius.md,
                     paddingHorizontal: theme.spacing.md,
                     paddingVertical: theme.spacing.sm,

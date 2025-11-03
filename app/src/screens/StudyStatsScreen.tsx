@@ -45,7 +45,7 @@ export default function StudyStatsScreen({ navigation }: StudyStatsScreenProps) 
       const wordStats = {
         totalWords: 0,
       };
-      const wordbooks = [];
+      const wordbooks: any[] = [];
 
       // 레벨별 통계 계산
       const levelCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
@@ -82,7 +82,7 @@ export default function StudyStatsScreen({ navigation }: StudyStatsScreenProps) 
           averageWordsPerWordbook: wordbooks.length > 0
             ? Math.round(wordbooks.reduce((sum: number, wb: any) => sum + (wb.word_count || 0), 0) / wordbooks.length)
             : 0,
-          mostStudiedWordbook: wordbooks.length > 0 ? wordbooks[0].name : '없음',
+          mostStudiedWordbook: wordbooks.length > 0 ? wordbooks[0]?.name : '없음',
         },
         levelStats,
         weeklyProgress,

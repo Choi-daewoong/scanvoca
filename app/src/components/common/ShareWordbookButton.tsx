@@ -50,7 +50,7 @@ export default function ShareWordbookButton({ wordbookId, wordbookName }: ShareW
 
   return (
     <TouchableOpacity
-      style={[styles.shareButton, { backgroundColor: theme.colors.primary }]}
+      style={[styles.shareButton, { backgroundColor: theme.colors.primary.main }]}
       onPress={handleShare}
       disabled={isSharing}
     >

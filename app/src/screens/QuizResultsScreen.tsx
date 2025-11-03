@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity } from 'react-native';
 import { QuizResultsScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { StatCard } from '../components/common';
@@ -214,17 +214,24 @@ export default function QuizResultsScreen({ navigation, route }: QuizResultsScre
         {wrongWords.length > 0 && (
           <View style={styles.wrongWordsContainer}>
             <Text style={styles.sectionTitle}>❌ 틀린 단어 ({wrongWords.length}개)</Text>
-            {wrongWords.map((item, index) => (
-              <View key={index} style={styles.wordItem}>
-                <View>
-                  <Text style={styles.wordText}>{item.word}</Text>
-                  <Text style={styles.meaningText}>정답: {item.meaning}</Text>
-                  <Text style={[styles.meaningText, { color: theme.colors.semantic.error }]}>
-                    선택: {item.userAnswer}
-                  </Text>
+            <FlatList
+              data={wrongWords}
+              keyExtractor={(item, index) => `${item.word}-${index}`}
+              renderItem={({ item }) => (
+                <View style={styles.wordItem}>
+                  <View>
+                    <Text style={styles.wordText}>{item.word}</Text>
+                    <Text style={styles.meaningText}>정답: {item.meaning}</Text>
+                    <Text style={[styles.meaningText, { color: theme.colors.semantic.error }]}>
+                      선택: {item.userAnswer}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            ))}
+              )}
+              initialNumToRender={10}
+              maxToRenderPerBatch={10}
+              scrollEnabled={false}
+            />
           </View>
         )}
 

@@ -208,7 +208,7 @@ export const theme = {
 
   // 단어 관련 컴포넌트 (CLAUDE.md 기반)
   word: {
-    // 단어 난이도 표시 (4단계)
+    // 단어 난이도 표시 (5단계)
     level: {
       1: {
         color: '#FCD34D',    // 노랑 - 기초
@@ -233,6 +233,12 @@ export const theme = {
         stars: 4,
         label: '최고급',
         backgroundColor: '#FECACA',
+      },
+      5: {
+        color: '#9333EA',    // 보라 - 전문가
+        stars: 5,
+        label: '전문가',
+        backgroundColor: '#F3E8FF',
       },
     },
     // 품사 태그 스타일

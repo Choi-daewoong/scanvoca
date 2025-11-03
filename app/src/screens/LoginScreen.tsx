@@ -17,6 +17,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuthStore } from '../stores/authStore';
 import { socialAuthService } from '../services/socialAuth';
+import { LoginScreenProps } from '../navigation/types';
 import {
   Button,
   Card,
@@ -41,10 +42,6 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-interface LoginScreenProps {
-  navigation: any;
-}
-
 export default function LoginScreen({ navigation }: LoginScreenProps) {
   const { login, socialLogin, isLoading } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
@@ -65,8 +62,9 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     try {
       await login(data);
       // 로그인 성공 시 네비게이션은 App.tsx에서 처리
-    } catch (error: any) {
-      Alert.alert('로그인 실패', error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '로그인에 실패했습니다.';
+      Alert.alert('로그인 실패', message);
     }
   };
 
@@ -96,7 +94,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       });
 
       // 로그인 성공 시 네비게이션은 App.tsx에서 처리
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[LoginScreen] ${provider} 로그인 실패:`, error);
 
       // 개발 중에는 준비중 메시지로 대체
@@ -167,21 +165,21 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                     style={{
                       borderWidth: 1,
                       borderColor: errors.email
-                        ? theme.colors.error
-                        : theme.colors.border,
+                        ? theme.colors.semantic.error
+                        : theme.colors.border.light,
                       borderRadius: theme.borderRadius.md,
                       paddingHorizontal: theme.spacing.md,
                       paddingVertical: theme.spacing.sm,
-                      backgroundColor: theme.colors.surface,
+                      backgroundColor: theme.colors.background.secondary,
                       fontSize: 16,
-                      color: theme.colors.text,
+                      color: theme.colors.text.primary,
                       minHeight: 48,
                     }}
                     onChangeText={onChange}
                     onBlur={onBlur}
                     value={value}
                     placeholder="your@email.com"
-                    placeholderTextColor={theme.colors.textSecondary}
+                    placeholderTextColor={theme.colors.text.secondary}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -216,10 +214,10 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                     style={{
                       borderWidth: 1,
                       borderColor: errors.password
-                        ? theme.colors.error
-                        : theme.colors.border,
+                        ? theme.colors.semantic.error
+                        : theme.colors.border.light,
                       borderRadius: theme.borderRadius.md,
-                      backgroundColor: theme.colors.surface,
+                      backgroundColor: theme.colors.background.secondary,
                       flexDirection: 'row',
                       alignItems: 'center',
                     }}
@@ -230,14 +228,14 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                         paddingHorizontal: theme.spacing.md,
                         paddingVertical: theme.spacing.sm,
                         fontSize: 16,
-                        color: theme.colors.text,
+                        color: theme.colors.text.primary,
                         minHeight: 48,
                       }}
                       onChangeText={onChange}
                       onBlur={onBlur}
                       value={value}
                       placeholder="비밀번호를 입력하세요"
-                      placeholderTextColor={theme.colors.textSecondary}
+                      placeholderTextColor={theme.colors.text.secondary}
                       secureTextEntry={!showPassword}
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -507,7 +505,6 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     borderRadius: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    backdropFilter: 'blur(10px)',
   },
   registerText: {
     color: 'rgba(255, 255, 255, 0.9)',

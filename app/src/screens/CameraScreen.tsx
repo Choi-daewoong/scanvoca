@@ -6,7 +6,7 @@ import { CameraScreenProps } from '../navigation/types';
 import { ocrService } from '../services/ocrService';
 import { ImageEditingGuide } from '../components/common';
 import { processExtractedWordsWithFilter } from '../services/ocrFiltering';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useOCRFilterSettings } from '../hooks/useOCRFilterSettings';
 
 export default function CameraScreen({ navigation }: CameraScreenProps) {
   const [isScanning, setIsScanning] = useState(false);
@@ -14,6 +14,7 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
   const [showEditingGuide, setShowEditingGuide] = useState(false);
   const cameraRef = useRef<Camera>(null);
   const device = useCameraDevice('back');
+  const { settings } = useOCRFilterSettings();
 
   useEffect(() => {
     // 상태바 숨기기 (전체화면)
@@ -28,7 +29,10 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
   useEffect(() => {
     (async () => {
       const status = await Camera.requestCameraPermission();
-      setCameraPermission(status);
+      // Map VisionCamera permission to our state type
+      const mappedStatus = status === 'granted' ? 'authorized' :
+                           status === 'denied' ? 'denied' : 'not-determined';
+      setCameraPermission(mappedStatus);
     })();
   }, []);
 
@@ -47,7 +51,6 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
 
       const photo = await cameraRef.current.takePhoto({
         enableShutterSound: true,
-        qualityPrioritization: 'quality',
       });
 
       const imageUri = Platform.select({
@@ -62,24 +65,22 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
       const ocrResult = await ocrService.processImage(imageUri);
       console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
 
-      // 필터 설정 불러오기
-      const settingsJson = await AsyncStorage.getItem('ocr_filter_settings');
-      const filterSettings = settingsJson ? JSON.parse(settingsJson) : {
-        excludeMastered: true,  // 기본: 외운 단어 제외
-        excludeBasic: false,
-        minimumDifficulty: 1
-      };
-
-      // 필터링 적용
+      // 필터링 적용 (hook에서 가져온 설정 사용)
       const { processedWords, excludedCount, excludedWords } =
         await processExtractedWordsWithFilter(
           ocrResult.ocrResult,
-          (text: string) => ocrService.cleanWord(text),  // cleanWord 함수 전달
-          filterSettings
+          (text: string) => ocrService.cleanWord(text),
+          settings
         );
 
       // processedWords에서 실제 찾은 단어들만 필터링
-      let detectedWordsData = [];
+      interface DetectedWordData {
+        word: string;
+        meaning: string;
+        partOfSpeech: string;
+        level: number;
+      }
+      let detectedWordsData: DetectedWordData[] = [];
       if (processedWords && processedWords.length > 0) {
         const foundWords = processedWords.filter(word => word.found && word.wordData);
         detectedWordsData = foundWords.map(word => ({
@@ -145,24 +146,22 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
         const ocrResult = await ocrService.processImage(imageUri);
         console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
 
-        // 필터 설정 불러오기
-        const settingsJson = await AsyncStorage.getItem('ocr_filter_settings');
-        const filterSettings = settingsJson ? JSON.parse(settingsJson) : {
-          excludeMastered: true,  // 기본: 외운 단어 제외
-          excludeBasic: false,
-          minimumDifficulty: 1
-        };
-
-        // 필터링 적용
+        // 필터링 적용 (hook에서 가져온 설정 사용)
         const { processedWords, excludedCount, excludedWords } =
           await processExtractedWordsWithFilter(
             ocrResult.ocrResult,
-            (text: string) => ocrService.cleanWord(text),  // cleanWord 함수 전달
-            filterSettings
+            (text: string) => ocrService.cleanWord(text),
+            settings
           );
 
         // processedWords에서 실제 찾은 단어들만 필터링
-        let detectedWordsData = [];
+        interface DetectedWordData {
+          word: string;
+          meaning: string;
+          partOfSpeech: string;
+          level: number;
+        }
+        let detectedWordsData: DetectedWordData[] = [];
         if (processedWords && processedWords.length > 0) {
           const foundWords = processedWords.filter(word => word.found && word.wordData);
           detectedWordsData = foundWords.map(word => ({

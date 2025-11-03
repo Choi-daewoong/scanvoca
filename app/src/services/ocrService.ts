@@ -22,14 +22,8 @@ export interface OCRResult {
   imageUri: string;
 }
 
-export interface ProcessedWord {
-  original: string;
-  cleaned: string;
-  found: boolean;
-  wordData?: SmartWordDefinition;
-  processing_source?: 'cache' | 'gpt' | 'none';
-  error?: string;
-}
+// ProcessedWord는 types.ts의 ProcessedWordV2를 사용합니다
+export type ProcessedWord = ProcessedWordV2;
 
 class OCRService {
   private static instance: OCRService;
@@ -289,8 +283,8 @@ class OCRService {
     }
   }
 
-  // 단어 정리 함수
-  private cleanWord(word: string): string {
+  // 단어 정리 함수 (public으로 외부에서도 사용 가능)
+  cleanWord(word: string): string {
     return word
       .toLowerCase()
       .replace(/[^a-zA-Z]/g, '') // 알파벳이 아닌 문자 제거

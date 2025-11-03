@@ -140,7 +140,7 @@ const ScanResultScreen: React.FC<ScanResultScreenProps> = ({
           { text: '확인' },
           ...(result.success && onNavigateToWordbook ? [{
             text: '📖 단어장 보기',
-            style: 'default',
+            style: 'default' as 'default',
             onPress: () => onNavigateToWordbook(wordbookId)
           }] : [])
         ]
@@ -184,17 +184,15 @@ const ScanResultScreen: React.FC<ScanResultScreenProps> = ({
                 <TouchableOpacity
                   style={styles.pronunciationButton}
                   activeOpacity={0.7}
-                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} // 더 큰 터치 영역
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                   onPress={(e) => {
-                    e.stopPropagation(); // 부모 터치 이벤트 차단
-                    e.preventDefault(); // 기본 동작 방지
+                    e.stopPropagation();
+                    e.preventDefault();
                     console.log(`🔊 발음 재생 요청: "${item.word}"`);
                     ttsService.speakWord(item.word).catch((error) => {
                       console.error(`❌ 발음 재생 실패: "${item.word}"`, error);
                     });
                   }}
-                  // 터치 이벤트 우선권 보장
-                  pointerEvents="box-only"
                 >
                   <Text style={styles.pronunciationIcon}>🔊</Text>
                 </TouchableOpacity>
@@ -260,9 +258,9 @@ const ScanResultScreen: React.FC<ScanResultScreenProps> = ({
         <Typography variant="body2" color="secondary" style={styles.scannedTextLabel}>
           스캔된 텍스트
         </Typography>
-        <Typography variant="body1" style={styles.scannedText} numberOfLines={3} ellipsizeMode="tail">
+        <Text style={styles.scannedText} numberOfLines={3} ellipsizeMode="tail">
           {scannedText}
-        </Typography>
+        </Text>
       </Card>
 
       {/* 탭 선택 */}
@@ -441,8 +439,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 18, // 24 → 18로 줄임
     backgroundColor: 'rgba(79, 70, 229, 0.08)', // 배경색도 조금 연하게
-    // 터치 시 피드백 효과
-    activeOpacity: 0.7,
     // 터치 이벤트 우선순위 보장
     zIndex: 999,
     elevation: 999, // Android

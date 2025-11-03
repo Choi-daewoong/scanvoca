@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import theme from '../../styles/theme';
 import Typography from './Typography';
 import Card from './Card';
@@ -32,22 +32,13 @@ const QuizCard: React.FC<QuizCardProps> = ({
   onSelectOption,
   style,
 }) => {
-  const getOptionStyle = (option: QuizOption) => {
-    const baseStyle = [styles.option];
-    
-    if (!showResult && selectedOptionId === option.id) {
-      baseStyle.push(styles.selectedOption);
-    }
-    
-    if (showResult) {
-      if (option.isCorrect) {
-        baseStyle.push(styles.correctOption);
-      } else if (selectedOptionId === option.id && !option.isCorrect) {
-        baseStyle.push(styles.incorrectOption);
-      }
-    }
-    
-    return baseStyle;
+  const getOptionStyle = (option: QuizOption): ViewStyle => {
+    return StyleSheet.flatten([
+      styles.option,
+      !showResult && selectedOptionId === option.id && styles.selectedOption,
+      showResult && option.isCorrect && styles.correctOption,
+      showResult && selectedOptionId === option.id && !option.isCorrect && styles.incorrectOption,
+    ]);
   };
 
   const getOptionTextColor = (option: QuizOption) => {

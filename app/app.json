@@ -9,7 +9,7 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -52,7 +52,6 @@
     },
     "owner": "twostwo",
     "plugins": [
-      "expo-sqlite",
       [
         "react-native-vision-camera",
         {
@@ -76,7 +75,8 @@
       ],
       [
         "@react-native-google-signin/google-signin"
-      ]
+      ],
+      "expo-document-picker"
     ]
   }
 }

@@ -1,7 +1,6 @@
 import { SharedWordbook } from '../types/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+import { cacheDirectory, writeAsStringAsync, deleteAsync, EncodingType } from 'expo-file-system/legacy';
 import { wordbookService } from './wordbookService';
 
 /**
@@ -197,20 +196,23 @@ export async function shareWordbook(wordbookId: number): Promise<void> {
       .replace(/[^a-zA-Z0-9가-힣_\-]/g, '_'); // 특수문자 제거
 
     // 3. FileSystem에 임시 파일 저장
-    const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
-    await FileSystem.writeAsStringAsync(fileUri, jsonString, {
-      encoding: FileSystem.EncodingType.UTF8
+    const fileUri = `${cacheDirectory}${fileName}`;
+    await writeAsStringAsync(fileUri, jsonString, {
+      encoding: EncodingType.UTF8
     });
 
     console.log(`💾 임시 파일 생성: ${fileUri}`);
 
-    // 4. 공유 가능 여부 확인
+    // 4. 동적으로 expo-sharing import
+    const Sharing = await import('expo-sharing');
+
+    // 5. 공유 가능 여부 확인
     const isAvailable = await Sharing.isAvailableAsync();
     if (!isAvailable) {
       throw new Error('이 기기에서는 공유 기능을 사용할 수 없습니다.');
     }
 
-    // 5. expo-sharing 호출
+    // 6. expo-sharing 호출
     await Sharing.shareAsync(fileUri, {
       mimeType: 'application/json',
       dialogTitle: '단어장 공유',
@@ -219,9 +221,9 @@ export async function shareWordbook(wordbookId: number): Promise<void> {
 
     console.log(`✅ 공유 완료`);
 
-    // 6. 공유 완료 후 임시 파일 삭제
+    // 7. 공유 완료 후 임시 파일 삭제
     try {
-      await FileSystem.deleteAsync(fileUri, { idempotent: true });
+      await deleteAsync(fileUri, { idempotent: true });
       console.log(`🗑️ 임시 파일 삭제 완료`);
     } catch (error) {
       console.warn('임시 파일 삭제 실패:', error);
