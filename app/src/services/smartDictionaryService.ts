@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import completeWordbook from '../../assets/complete-wordbook.json';
+import { userDefaultsService } from './userDefaultsService';
 
 // GPT Response Types
 export interface GPTMeaning {
@@ -131,7 +132,8 @@ class SmartDictionaryService {
 
     console.log(`🔍 ${words.length}개 단어 정의 조회 시작`);
 
-    // 1단계: 캐시 및 로컬 JSON에서 찾기
+    // 1단계: 캐시, 사용자 기본값, 로컬 JSON에서 찾기
+    // ⭐ Gemini 리뷰 반영: 사용자 기본값 우선순위 추가
     for (const word of words) {
       const normalizedWord = word.toLowerCase().trim();
       if (!normalizedWord) continue;
@@ -144,12 +146,20 @@ class SmartDictionaryService {
         continue;
       }
 
-      // AsyncStorage 캐시 확인
-      const asyncCached = await this.getFromAsyncCache(normalizedWord);
-      if (asyncCached) {
-        results.push({ ...asyncCached, source: 'cache' });
-        this.addToMemoryCache(normalizedWord, asyncCached);
-        cacheHits++;
+      // ⭐ 사용자 기본값 확인 (신규! Phase 2-3)
+      const userDefault = await userDefaultsService.getUserDefault(normalizedWord);
+      if (userDefault) {
+        const definition: SmartWordDefinition = {
+          word: normalizedWord,
+          pronunciation: userDefault.pronunciation || '',
+          difficulty: (userDefault.difficulty || 3) as 1 | 2 | 3 | 4 | 5,
+          meanings: userDefault.meanings,
+          confidence: 1.0,
+          source: 'cache', // 'user-default'로 표시하면 좋지만 타입 호환성 유지
+        };
+        results.push(definition);
+        this.addToMemoryCache(normalizedWord, definition);
+        localHits++; // 통계상 로컬 히트로 카운트
         continue;
       }
 
@@ -161,6 +171,15 @@ class SmartDictionaryService {
         await this.saveToAsyncCache(localWord);
         this.addToMemoryCache(normalizedWord, localWord);
         localHits++;
+        continue;
+      }
+
+      // AsyncStorage 캐시 확인 (우선순위 낮춤)
+      const asyncCached = await this.getFromAsyncCache(normalizedWord);
+      if (asyncCached) {
+        results.push({ ...asyncCached, source: 'cache' });
+        this.addToMemoryCache(normalizedWord, asyncCached);
+        cacheHits++;
         continue;
       }
 

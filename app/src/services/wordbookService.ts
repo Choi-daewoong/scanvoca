@@ -1,6 +1,8 @@
-import { Wordbook } from '../types/types';
+import { Wordbook, WordInWordbook } from '../types/types';
 import smartDictionaryService from './smartDictionaryService';
+import { userDefaultsService } from './userDefaultsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getWordbookKey } from '../constants/storage';
 
 export interface SaveWordsToWordbookParams {
   wordbookId: number;
@@ -379,14 +381,119 @@ class WordbookService {
     }
   }
 
-  // 단어장 내 단어 조회
-  async getWordbookWords(wordbookId: number) {
+  // ⭐ 가상 단어장 생성 - 우선순위 적용된 최종 데이터 반환
+  // Gemini 리뷰 반영: 목록과 상세 화면 일관성 확보
+  async getWordbookWords(wordbookId: number): Promise<WordInWordbook[]> {
     try {
-      const wordbookKey = `wordbook_${wordbookId}`;
+      // 1. 단어장 원본 데이터 로드
+      const wordbookKey = getWordbookKey(wordbookId);
       const wordsData = await AsyncStorage.getItem(wordbookKey);
-      return wordsData ? JSON.parse(wordsData) : [];
+      const rawWords = wordsData ? JSON.parse(wordsData) : [];
+
+      // 2. 사용자 기본값 맵 로드 (한 번만, O(1) 조회용)
+      const userDefaults = await userDefaultsService.getAllDefaults();
+      const defaultsMap = new Map(Object.entries(userDefaults));
+
+      // 3. 가상 단어장 생성 (각 단어마다 우선순위 적용)
+      const virtualWordbook: WordInWordbook[] = rawWords.map((word: any) => {
+        // 최우선: 이 단어장에서 개별 커스텀된 단어
+        if (word.isCustomized === true) {
+          return word;
+        }
+
+        // 차순위: 사용자 기본값 존재 시
+        const userDefault = defaultsMap.get(word.word?.toLowerCase() || '');
+        if (userDefault) {
+          return {
+            ...word,
+            pronunciation: userDefault.pronunciation || word.pronunciation,
+            difficulty: userDefault.difficulty || word.difficulty,
+            meanings: userDefault.meanings,
+            customNote: userDefault.customNote,
+            customExamples: userDefault.customExamples,
+            source: 'user-default',
+            lastModified: userDefault.lastModified,
+          };
+        }
+
+        // 최하위: 원본 그대로
+        return word;
+      });
+
+      return virtualWordbook;
     } catch (error) {
       console.error('Failed to get wordbook words:', error);
+      throw error;
+    }
+  }
+
+  // 단어 상세 조회 (가상 단어장에서 찾기만)
+  async getWordDetail(
+    wordbookId: number,
+    wordId: number
+  ): Promise<WordInWordbook | null> {
+    try {
+      const virtualWordbook = await this.getWordbookWords(wordbookId);
+      const word = virtualWordbook.find((w: any) => w.id === wordId);
+
+      if (!word) {
+        console.warn(`단어를 찾을 수 없습니다: wordbookId=${wordbookId}, wordId=${wordId}`);
+        return null;
+      }
+
+      return word;
+    } catch (error) {
+      console.error('Failed to get word detail:', error);
+      throw error;
+    }
+  }
+
+  // 단어 업데이트 (이 단어장에서만 커스텀)
+  async updateWordInWordbook(
+    wordbookId: number,
+    wordId: number,
+    updatedData: Partial<WordInWordbook>
+  ): Promise<void> {
+    try {
+      const wordbookKey = getWordbookKey(wordbookId);
+      const data = await AsyncStorage.getItem(wordbookKey);
+      const words = data ? JSON.parse(data) : [];
+
+      const index = words.findIndex((w: any) => w.id === wordId);
+      if (index === -1) {
+        throw new Error('단어를 찾을 수 없습니다.');
+      }
+
+      // 트랜잭션: 원본 데이터 보관
+      const originalData = data;
+
+      try {
+        // 업데이트
+        words[index] = {
+          ...words[index],
+          ...updatedData,
+          isCustomized: true, // 커스텀 플래그 설정
+          lastModified: new Date().toISOString(),
+          source: 'user-custom', // 소스 변경
+        };
+
+        await AsyncStorage.setItem(wordbookKey, JSON.stringify(words));
+        console.log(`✅ 단어 업데이트 완료: ${words[index].word}`);
+      } catch (storageError) {
+        // Rollback: 원본 데이터 복원
+        console.error('❌ 단어 업데이트 실패, Rollback 수행 중...', storageError);
+        if (originalData) {
+          try {
+            await AsyncStorage.setItem(wordbookKey, originalData);
+            console.log('✅ Rollback 완료: 원본 데이터 복원됨');
+          } catch (rollbackError) {
+            console.error('❌ Rollback 실패:', rollbackError);
+          }
+        }
+        throw storageError;
+      }
+    } catch (error) {
+      console.error('Failed to update word in wordbook:', error);
       throw error;
     }
   }

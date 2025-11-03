@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScanScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { ocrService } from '../services/ocrService';
@@ -138,6 +139,72 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
 
   // 카메라로 직접 사진 촬영
   const handleCameraPress = async () => {
+    // ✅ 배포 모드: 처음 한 번만 튜토리얼 표시
+    const SHOW_TUTORIAL_ALWAYS = false;
+
+    // 처음 사용 여부 확인
+    try {
+      const hasSeenCropTutorial = await AsyncStorage.getItem('hasSeenCropTutorial');
+
+      if (!hasSeenCropTutorial || SHOW_TUTORIAL_ALWAYS) {
+        // 처음 사용: 튜토리얼 Alert 표시
+        Alert.alert(
+          '📸 처음 사용이시네요!',
+          '사진 촬영 후 편집 방법을 안내드려요:\n\n' +
+          '1️⃣ 사진 촬영\n' +
+          '2️⃣ 프리뷰 화면에서 \'확인\' 누르기\n' +
+          '3️⃣ 편집 화면 진입\n' +
+          '   ⚠️ 우측 상단 버튼들이 어두워서\n' +
+          '   잘 안 보일 수 있어요!\n' +
+          '4️⃣ 원하는 영역 선택 후\n' +
+          '   우측 상단 \'자르기\' 버튼 클릭\n\n' +
+          '버튼 위치를 꼭 기억해주세요! 👆',
+          [
+            {
+              text: '자세히 보기',
+              onPress: () => {
+                setShowEditingGuide(true);
+                // 개발 모드가 아닐 때만 "봤음" 저장
+                if (!SHOW_TUTORIAL_ALWAYS) {
+                  AsyncStorage.setItem('hasSeenCropTutorial', 'true').catch(console.error);
+                }
+              },
+            },
+            {
+              text: '바로 시작하기',
+              onPress: () => {
+                // 개발 모드가 아닐 때만 "봤음" 저장
+                if (!SHOW_TUTORIAL_ALWAYS) {
+                  AsyncStorage.setItem('hasSeenCropTutorial', 'true')
+                    .then(() => launchCamera())
+                    .catch((error) => {
+                      console.error('Failed to save tutorial status:', error);
+                      launchCamera();
+                    });
+                } else {
+                  // 개발 모드: 바로 카메라 실행 (저장 안 함)
+                  launchCamera();
+                }
+              },
+              style: 'default',
+            },
+          ],
+          { cancelable: false }
+        );
+        return;
+      }
+
+      // 이미 본 사용자: 바로 카메라 실행
+      launchCamera();
+    } catch (error) {
+      console.error('Failed to check tutorial status:', error);
+      // 에러 시에도 카메라 실행
+      launchCamera();
+    }
+  };
+
+  // 실제 카메라 실행 함수
+  const launchCamera = async () => {
     try {
       setIsProcessing(true);
 
@@ -148,30 +215,22 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
         return;
       }
 
-      // 카메라로 사진 촬영 (개선된 편집 옵션으로 더 좋은 가시성 제공)
+      // 카메라로 사진 촬영 (편집 옵션으로 크롭 가능)
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        // 자유롭게 크롭 가능 (위/아래, 좌/우 독립적 조정)
-        quality: 0.9, // 더 높은 품질로 졌명하게
+        quality: 0.9,
         selectionLimit: 1,
-        // iOS에서 더 나은 편집 경험 제공
         presentationStyle: Platform.OS === 'ios'
           ? ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN
           : undefined,
-        videoMaxDuration: 30,
-        // Android 전용 옵션들
-        ...(Platform.OS === 'android' && {
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsMultipleSelection: false,
-        }),
       });
 
       if (!result.canceled && result.assets[0]) {
         const imageUri = result.assets[0].uri;
         console.log('📷 카메라 사진 촬영 완료:', imageUri);
 
-        // OCR 처리 후 즉시 결과 화면으로 이동 (확인 과정 생략)
+        // OCR 처리 후 즉시 결과 화면으로 이동
         const ocrResult = await ocrService.processImage(imageUri);
         console.log('✅ OCR 스캔 완료:', ocrResult.statistics);
 
@@ -188,7 +247,7 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
             }));
         }
 
-        // 확인 과정 없이 바로 결과 화면으로 이동
+        // 결과 화면으로 이동
         navigation.navigate('ScanResults', {
           scannedText: ocrResult.ocrResult.text,
           detectedWords: detectedWordsData,
@@ -219,18 +278,11 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        // 자유롭게 크롭 가능 (위/아래, 좌/우 독립적 조정)
-        quality: 0.9, // 더 높은 품질로 졌명하게
+        quality: 0.9,
         selectionLimit: 1,
-        // iOS에서 더 나은 편집 경험 제공
         presentationStyle: Platform.OS === 'ios'
           ? ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN
           : undefined,
-        // Android 전용 옵션들
-        ...(Platform.OS === 'android' && {
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsMultipleSelection: false,
-        }),
       });
 
       if (!result.canceled && result.assets[0]) {

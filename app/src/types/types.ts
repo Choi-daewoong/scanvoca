@@ -243,3 +243,51 @@ export interface CacheStatistics {
   newestCache: string;
   costSaved: number; // USD 단위 (추정)
 }
+
+// ⭐ 가상 단어장 아키텍처 - 단어 커스터마이징 타입 (2025-11-04)
+
+// 커스텀 가능한 의미 타입
+export interface CustomMeaning {
+  partOfSpeech: string; // noun, verb, adjective 등
+  korean: string;
+  english?: string;
+  examples?: string[];
+  isUserEdited?: boolean; // 사용자가 편집했는지 여부
+}
+
+// 단어장 안의 단어 (커스텀 정보 포함)
+export interface WordInWordbook {
+  id: number;
+  word: string;
+  pronunciation: string;
+  difficulty: number; // 1-5
+
+  // 뜻 (여러 품사 가능)
+  meanings: CustomMeaning[];
+
+  // 커스텀 필드
+  customNote?: string; // 개인 메모
+  customExamples?: string[]; // 사용자 추가 예문
+  tags?: string[]; // 태그
+
+  // 메타데이터
+  addedAt: string; // 추가 시각
+  lastModified?: string; // 마지막 수정 시각
+  isCustomized: boolean; // 이 단어장에서 커스텀 여부 (가상 단어장 우선순위 최고)
+  source: 'complete-wordbook' | 'gpt' | 'user-custom' | 'user-default';
+
+  // 학습 관련
+  memorized?: boolean; // 암기 완료 여부
+}
+
+// 사용자 기본값 저장 구조 (AsyncStorage의 user_custom_defaults)
+export interface UserCustomDefaults {
+  [word: string]: { // 단어를 key로 사용
+    pronunciation?: string;
+    difficulty?: number;
+    meanings: CustomMeaning[];
+    customNote?: string;
+    customExamples?: string[];
+    lastModified: string; // 마지막 수정 시각
+  };
+}

@@ -29,7 +29,11 @@ export type RootStackParamList = {
 
   // Modal screens (인증 필요)
   Camera: undefined;
-  WordDetail: { wordId: number };
+  WordDetail: {
+    wordbookId: number;  // ⭐ 가상 단어장: 어느 단어장에서 온 건지
+    wordId: number;      // 단어 ID
+    word: string;        // 단어 텍스트
+  };
   ScanResults: {
     scannedText?: string;
     imageUri?: string;

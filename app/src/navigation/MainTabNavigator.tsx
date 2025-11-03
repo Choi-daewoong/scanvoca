@@ -86,6 +86,7 @@ export default function MainTabNavigator() {
             fontSize: 20,
             fontWeight: 'bold',
           },
+          tabBarStyle: { display: 'none' }, // HomeScreen에서만 하단 탭 숨기기
         }}
       />
 

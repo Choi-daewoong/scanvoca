@@ -132,24 +132,24 @@ export default function ImageEditingGuide({ visible, onClose }: ImageEditingGuid
 
   const guideItems = [
     {
-      icon: '✂️',
-      title: '자르기 (크롭)',
-      description: '이미지 모서리를 드래그하여 원하는 영역만 선택하세요. 단어가 있는 부분만 남기면 인식률이 더 좋아집니다.',
+      icon: '⬅️',
+      title: '상단 왼쪽: 뒤로가기',
+      description: '화면 왼쪽 위 모서리에 있습니다. 사진을 다시 찍으려면 이 버튼을 누르세요.',
     },
     {
       icon: '🔄',
-      title: '회전',
-      description: '사진이 기울어졌거나 거꾸로 되어있다면 회전 버튼을 눌러 바로잡으세요. 텍스트가 수평이어야 잘 인식됩니다.',
+      title: '상단 오른쪽: 회전',
+      description: '화면 오른쪽 위에 있습니다. 사진이 기울어졌다면 이 버튼으로 90도씩 회전하세요.',
     },
     {
-      icon: '🔍',
-      title: '확대/축소',
-      description: '핀치 제스처로 확대하여 정확한 영역을 선택하세요. 작은 글씨도 선명하게 잘라낼 수 있습니다.',
+      icon: '⚖️',
+      title: '상단 오른쪽: 대칭 (좌우반전)',
+      description: '회전 버튼 옆에 있습니다. 좌우가 바뀌었다면 이 버튼으로 반전하세요.',
     },
     {
-      icon: '↕️',
-      title: '자유로운 크롭',
-      description: '이제 가로/세로 비율에 제한이 없습니다! 위아래만 늘리거나 좌우만 늘려서 원하는 영역을 정확히 선택하세요.',
+      icon: '✂️',
+      title: '자르기 버튼',
+      description: '화면 상단 우측에 "자르기" 텍스트가 있습니다. 편집이 완료되면 이 버튼을 눌러 확정하세요.',
     },
   ];
 
@@ -178,11 +178,12 @@ export default function ImageEditingGuide({ visible, onClose }: ImageEditingGuid
             ))}
 
             <View style={styles.tipBox}>
-              <Text style={styles.tipTitle}>💡 편집 버튼이 안 보일 때</Text>
+              <Text style={styles.tipTitle}>⚠️ 중요: 버튼이 어두워서 잘 안 보여요!</Text>
               <Text style={styles.tipText}>
-                상단의 편집 버튼들이 <Text style={styles.highlightText}>어두워서 잘 안 보인다면</Text> 화면을 밝게 하거나,
-                손가락으로 <Text style={styles.highlightText}>상단 영역을 살짝 터치</Text>해보세요.
-                버튼 위치를 확인할 수 있습니다.
+                편집 화면의 <Text style={styles.highlightText}>상단 버튼들이 검은색 반투명 배경</Text>이라 잘 안 보일 수 있습니다.{'\n\n'}
+                <Text style={styles.highlightText}>• 왼쪽 위 모서리</Text>: ← 뒤로가기{'\n'}
+                <Text style={styles.highlightText}>• 오른쪽 위</Text>: 🔄 회전, ⚖️ 대칭, "자르기" 버튼{'\n\n'}
+                버튼 위치를 기억하고 <Text style={styles.highlightText}>손가락으로 상단을 터치</Text>해보세요!
               </Text>
             </View>
           </ScrollView>

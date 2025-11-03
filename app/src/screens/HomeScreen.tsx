@@ -123,24 +123,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       flex: 1,
       backgroundColor: '#FFFFFF',
     },
-    header: {
-      backgroundColor: '#FFFFFF',
-      padding: 20,
-      borderBottomWidth: 1,
-      borderBottomColor: '#E5E7EB',
-      alignItems: 'center',
-    },
-    headerTitle: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: '#4F46E5',
-      letterSpacing: -0.25,
-    },
-    headerSubtitle: {
-      color: '#4B5563',
-      marginTop: 4,
-      fontSize: 14,
-    },
     // Navigation Tabs
     nav: {
       flexDirection: 'row',
@@ -293,12 +275,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={{flex: 1}}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>ScanVoca</Text>
-          <Text style={styles.headerSubtitle}>스마트한 영어 학습을 시작하세요</Text>
-        </View>
-
       {/* Navigation Tabs */}
       <View style={styles.nav}>
         <TouchableOpacity style={[styles.navItem, styles.navItemActive]}>
