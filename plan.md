@@ -112,7 +112,19 @@ AsyncStorage['user_custom_defaults'] = {
 
 ---
 
-## 데이터 우선순위 시스템
+## 데이터 우선순위 시스템 (⭐ Gemini 리뷰 반영)
+
+### ⚠️ 핵심 UX 문제 해결: "가상 단어장" 아키텍처
+
+**문제 상황 (기존 계획)**:
+- StudyModeView (목록): 단어장에 저장된 원본 데이터 표시
+- WordDetailScreen (상세): 우선순위 적용된 데이터 표시
+- 결과: 목록에서 "사과" → 클릭 → 상세에서 "사과 (스티브 잡스)" 😵 혼란!
+
+**해결책: "가상 단어장" (Virtual Wordbook)**:
+- `wordbookService.getWordbookWords()`가 **이미 우선순위가 적용된 최종 데이터 반환**
+- StudyModeView와 WordDetailScreen 모두 동일한 데이터 사용
+- 결과: 목록 = 상세 화면, 완벽한 일관성! ✅
 
 ### 단어 정의 검색 순서
 ```
@@ -124,12 +136,15 @@ AsyncStorage['user_custom_defaults'] = {
 3. GPT API 호출
    → 없으면 생성
 
-단어 표시 시:
+단어 표시 시 (가상 단어장 생성):
+getWordbookWords() 호출 시 자동으로:
 1. 이 단어장의 커스텀 버전 확인
    → 있으면 사용 (최우선)
 2. 사용자 기본값 확인
    → 있으면 사용
 3. 원본 데이터 사용
+
+→ 목록과 상세 화면 모두 이 가상 단어장 사용
 ```
 
 ### 데이터 구조
@@ -222,9 +237,19 @@ Export 시:
 
 ---
 
-## 구현 계획
+## 구현 계획 (⭐ Gemini 리뷰 반영 - 순서 재정리)
 
-### Phase 1: 데이터 구조 확장 (2시간)
+### 구현 우선순위
+```
+1. 타입 정의 및 상수 (기초)
+2. 서비스 레이어 (가상 단어장 로직 - 핵심!)
+3. 단어 상세 화면 (표시)
+4. 편집 모달 (편집 기능)
+5. Navigation 연결
+6. 테스트 및 검증
+```
+
+### Phase 1: 타입 정의 및 상수 (30분)
 
 #### 1.1 타입 정의
 파일: app/src/types/types.ts
@@ -282,9 +307,66 @@ export const STORAGE_KEYS = {
 
 ---
 
-### Phase 2: 단어 상세 화면 개선 (3시간)
+### Phase 2: 서비스 레이어 구현 (⭐ 핵심 - 가상 단어장) (3시간)
 
-#### 2.1 WordDetailScreen 완성
+#### 2.1 UserDefaultsService 생성
+파일: app/src/services/userDefaultsService.ts (신규)
+
+**기능**:
+- 사용자 기본값 저장/조회/삭제
+- AsyncStorage 기반
+
+**구현 내용**:
+```typescript
+class UserDefaultsService {
+  async getUserDefault(word: string): Promise<WordDefinition | null>
+  async saveUserDefault(word: string, definition: WordDefinition): Promise<void>
+  async deleteUserDefault(word: string): Promise<void>
+  async getAllDefaults(): Promise<UserCustomDefaults>
+}
+```
+
+#### 2.2 wordbookService에 가상 단어장 로직 추가
+파일: app/src/services/wordbookService.ts
+
+**핵심 함수**:
+- `getWordbookWords()` - 가상 단어장 생성 (우선순위 적용)
+- `getWordDetail()` - 가상 단어장에서 단어 찾기 (단순화)
+- `updateWordInWordbook()` - 단어 업데이트
+
+**우선순위 로직**:
+1. 단어장 커스텀 (isCustomized: true)
+2. 사용자 기본값 (user_custom_defaults)
+3. 원본 데이터
+
+#### 2.3 smartDictionaryService에 사용자 기본값 우선순위 추가
+파일: app/src/services/smartDictionaryService.ts
+
+**변경 사항**:
+- 단어 추가 시 사용자 기본값 먼저 확인
+- 우선순위: 메모리 캐시 → 사용자 기본값 → complete-wordbook.json → AsyncStorage 캐시 → GPT API
+
+**수정 코드**:
+```typescript
+async getWordDefinitions(words: string[]): Promise<SmartWordDefinition[]> {
+  // ... 기존 로직
+  // 2. 사용자 기본값 확인 (신규!)
+  const userDefault = await userDefaultsService.getUserDefault(normalized);
+  if (userDefault) {
+    const definition = this.convertToSmartDefinition(userDefault);
+    results.push(definition);
+    continue;
+  }
+  // 3. 로컬 JSON (complete-wordbook.json)
+  // ...
+}
+```
+
+---
+
+### Phase 3: 단어 상세 화면 구현 (3시간)
+
+#### 3.1 WordDetailScreen 완성
 파일: app/src/screens/WordDetailScreen.tsx
 
 **현재 상태**: TODO로 비어있음
@@ -334,9 +416,9 @@ export const STORAGE_KEYS = {
 
 ---
 
-### Phase 3: 편집 모달 구현 (4시간)
+### Phase 4: 편집 모달 구현 (4시간)
 
-#### 3.1 EditWordModal 컴포넌트
+#### 4.1 EditWordModal 컴포넌트
 파일: app/src/components/wordbook/EditWordModal.tsx (신규)
 
 **기능**:
@@ -376,177 +458,6 @@ interface SaveOptionDialogProps {
 │                         │
 │ [취소]  [저장]           │
 └─────────────────────────┘
-```
-
----
-
-### Phase 4: 서비스 레이어 구현 (3시간)
-
-#### 4.1 UserDefaultsService 생성
-파일: app/src/services/userDefaultsService.ts (신규)
-
-```typescript
-class UserDefaultsService {
-  private static instance: UserDefaultsService;
-
-  // 사용자 기본값 가져오기
-  async getUserDefault(word: string): Promise<WordDefinition | null> {
-    const defaults = await AsyncStorage.getItem('user_custom_defaults');
-    if (!defaults) return null;
-
-    const parsed = JSON.parse(defaults);
-    return parsed[word.toLowerCase()] || null;
-  }
-
-  // 사용자 기본값 저장
-  async saveUserDefault(
-    word: string,
-    definition: WordDefinition
-  ): Promise<void> {
-    const defaults = await this.getAllDefaults();
-    defaults[word.toLowerCase()] = {
-      ...definition,
-      lastModified: new Date().toISOString()
-    };
-
-    await AsyncStorage.setItem(
-      'user_custom_defaults',
-      JSON.stringify(defaults)
-    );
-  }
-
-  // 사용자 기본값 삭제
-  async deleteUserDefault(word: string): Promise<void> {
-    const defaults = await this.getAllDefaults();
-    delete defaults[word.toLowerCase()];
-
-    await AsyncStorage.setItem(
-      'user_custom_defaults',
-      JSON.stringify(defaults)
-    );
-  }
-
-  // 모든 기본값 가져오기
-  async getAllDefaults(): Promise<UserCustomDefaults> {
-    const data = await AsyncStorage.getItem('user_custom_defaults');
-    return data ? JSON.parse(data) : {};
-  }
-}
-
-export const userDefaultsService = new UserDefaultsService();
-```
-
-#### 4.2 wordbookService 확장
-파일: app/src/services/wordbookService.ts
-
-```typescript
-class WordbookService {
-  // 기존 함수들...
-
-  // 신규: 단어 업데이트
-  async updateWordInWordbook(
-    wordbookId: number,
-    wordId: number,
-    updatedData: Partial<WordInWordbook>
-  ): Promise<void> {
-    const wordbookKey = `wordbook_${wordbookId}`;
-    const data = await AsyncStorage.getItem(wordbookKey);
-    const words = data ? JSON.parse(data) : [];
-
-    const index = words.findIndex((w: any) => w.id === wordId);
-    if (index === -1) throw new Error('단어를 찾을 수 없습니다.');
-
-    words[index] = {
-      ...words[index],
-      ...updatedData,
-      isCustomized: true,
-      lastModified: new Date().toISOString()
-    };
-
-    await AsyncStorage.setItem(wordbookKey, JSON.stringify(words));
-  }
-
-  // 신규: 단어 상세 가져오기 (우선순위 적용)
-  async getWordDetail(
-    wordbookId: number,
-    wordId: number
-  ): Promise<WordInWordbook> {
-    // 1. 단어장에서 단어 가져오기
-    const wordbookKey = `wordbook_${wordbookId}`;
-    const data = await AsyncStorage.getItem(wordbookKey);
-    const words = data ? JSON.parse(data) : [];
-
-    const word = words.find((w: any) => w.id === wordId);
-    if (!word) throw new Error('단어를 찾을 수 없습니다.');
-
-    // 2. 이미 커스텀된 경우 그대로 반환
-    if (word.isCustomized) {
-      return word;
-    }
-
-    // 3. 사용자 기본값 확인
-    const userDefault = await userDefaultsService.getUserDefault(word.word);
-    if (userDefault) {
-      return {
-        ...word,
-        ...userDefault,
-        source: 'user-default'
-      };
-    }
-
-    // 4. 원본 데이터 반환
-    return word;
-  }
-}
-```
-
-#### 4.3 smartDictionaryService 확장
-파일: app/src/services/smartDictionaryService.ts
-
-```typescript
-class SmartDictionaryService {
-  // 기존 함수들...
-
-  // 수정: 우선순위에 사용자 기본값 추가
-  async getWordDefinitions(words: string[]): Promise<SmartWordDefinition[]> {
-    const results: SmartWordDefinition[] = [];
-
-    for (const word of words) {
-      const normalized = word.toLowerCase();
-
-      // 1. 메모리 캐시
-      const cached = this.getFromMemoryCache(normalized);
-      if (cached) {
-        results.push(cached);
-        continue;
-      }
-
-      // 2. 사용자 기본값 확인 (신규!)
-      const userDefault = await userDefaultsService.getUserDefault(normalized);
-      if (userDefault) {
-        const definition = this.convertToSmartDefinition(userDefault);
-        results.push(definition);
-        this.addToMemoryCache(normalized, definition);
-        continue;
-      }
-
-      // 3. 로컬 JSON (complete-wordbook.json)
-      const localWord = this.getFromLocalWordbook(normalized);
-      if (localWord) {
-        results.push(localWord);
-        continue;
-      }
-
-      // 4. AsyncStorage 캐시
-      // ...
-
-      // 5. GPT API
-      // ...
-    }
-
-    return results;
-  }
-}
 ```
 
 ---
@@ -998,10 +909,32 @@ user_custom_defaults: 20단어 × 500bytes = 10KB
 
 ---
 
-다음 단계: 이 수정된 계획을 검토 후 구현 시작!
+## 📝 업데이트 이력
+
+### 2025-11-04 (Gemini 리뷰 반영)
+**문제 발견**: 단어장 목록과 상세 화면 간 데이터 불일치 UX 문제
+**해결책 적용**: "가상 단어장" 아키텍처 도입
+- `wordbookService.getWordbookWords()`에서 우선순위 로직 적용
+- StudyModeView와 WordDetailScreen 모두 동일한 가상 단어장 사용
+- WordDetailScreen 로직 단순화 (복잡한 우선순위 로직 제거)
+- 목록 = 상세 화면, 완벽한 일관성 확보 ✅
+
+**구현 순서 재정리**:
+1. Phase 1: 타입 정의 및 상수
+2. Phase 2: 서비스 레이어 (가상 단어장 로직 - 핵심!)
+3. Phase 3: 단어 상세 화면
+4. Phase 4: 편집 모달
+5. Phase 5: Navigation 연결
+
+**크레딧**: Gemini의 정확한 UX 문제 지적 덕분에 치명적인 결함 사전 차단!
+
+---
+
+다음 단계: 이 수정된 계획으로 구현 시작!
 
 핵심 인사이트:
 - 사용자 제안의 UX 철학 완벽히 반영
 - complete-wordbook.json 수정 문제 해결 (user_custom_defaults)
 - 자연스러운 워크플로우 구현
 - 기존 시스템과 완벽한 호환성
+- ⭐ Gemini 리뷰로 UX 일관성 문제 해결
