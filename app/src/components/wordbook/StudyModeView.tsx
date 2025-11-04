@@ -15,9 +15,12 @@ interface StudyModeViewProps {
   currentLevelFilters: Set<string | number>;
   selectedWords: Set<string>;
   flippedCards: Set<string>;
+  isDeletionMode: boolean;
   onFilterChange: (filter: 'english' | 'meaning' | 'unlearned' | 'all') => void;
   onLevelFilterChange: (filters: Set<string | number>) => void;
   onShuffle: () => void;
+  onToggleDeletionMode: () => void;
+  onDeleteWord: (word: string) => void;
   onToggleSelectAll: () => void;
   onDeleteSelected: () => void;
   onToggleWordSelection: (word: string) => void;
@@ -35,9 +38,12 @@ export default function StudyModeView({
   currentLevelFilters,
   selectedWords,
   flippedCards,
+  isDeletionMode,
   onFilterChange,
   onLevelFilterChange,
   onShuffle,
+  onToggleDeletionMode,
+  onDeleteWord,
   onToggleSelectAll,
   onDeleteSelected,
   onToggleWordSelection,
@@ -95,6 +101,22 @@ export default function StudyModeView({
               🔀 섞기
             </Text>
           </TouchableOpacity>
+
+          {/* 삭제 모드 토글 버튼 */}
+          <TouchableOpacity
+            style={[
+              styles.filterTab,
+              isDeletionMode ? styles.deletionBtnActive : styles.deletionBtn
+            ]}
+            onPress={onToggleDeletionMode}
+          >
+            <Text style={[
+              styles.filterTabText,
+              isDeletionMode ? styles.deletionBtnTextActive : styles.deletionBtnText
+            ]}>
+              🗑️ {isDeletionMode ? '완료' : '삭제'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -142,15 +164,17 @@ export default function StudyModeView({
         </View>
       </View>
 
-      {/* 전체 선택 */}
-      <View style={styles.selectAllContainer}>
-        <TouchableOpacity style={styles.selectAllCheckbox} onPress={onToggleSelectAll}>
-          <Text style={styles.selectAllText}>전체 선택</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onDeleteSelected}>
-          <Text style={styles.deleteBtnText}>🗑 삭제</Text>
-        </TouchableOpacity>
-      </View>
+      {/* 전체 선택 - 삭제 기능 숨김 */}
+      {selectedWords.size > 0 && (
+        <View style={styles.selectAllContainer}>
+          <TouchableOpacity style={styles.selectAllCheckbox} onPress={onToggleSelectAll}>
+            <Text style={styles.selectAllText}>전체 선택</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onDeleteSelected}>
+            <Text style={styles.deleteBtnText}>🗑 삭제</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* 단어 그리드 */}
       <View style={styles.wordGrid}>
@@ -164,38 +188,53 @@ export default function StudyModeView({
             ]}
             onPress={() => onWordPress(word)}
           >
+            {/* 외운 단어 체크박스 - 단어 앞쪽 왼쪽에 배치 */}
             <TouchableOpacity
-              style={styles.wordCheckbox}
-              onPress={(e) => {
-                e.stopPropagation();
-                onToggleWordSelection(word.english);
-              }}
-            >
-              <Text>{selectedWords.has(word.english) ? '☑️' : '☐'}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.pronunciationBtn}
+              style={styles.memorizeBtn}
               activeOpacity={0.7}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              onPress={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onPlayPronunciation(word.english);
-              }}
-            >
-              <Text>🔊</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.memorizeBtn, word.memorized && styles.memorizeBtnActive]}
+              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
               onPress={(e) => {
                 e.stopPropagation();
                 onToggleMemorized(word.english);
               }}
             >
-              <Text>{word.memorized ? '✅' : '⭕'}</Text>
+              <View style={[
+                styles.memorizeBtnBox,
+                word.memorized && styles.memorizeBtnBoxChecked
+              ]}>
+                {word.memorized && (
+                  <Text style={styles.memorizeBtnCheck}>✓</Text>
+                )}
+              </View>
             </TouchableOpacity>
+
+            {/* 삭제 모드일 때 빨간 ❌ 버튼 표시 */}
+            {isDeletionMode ? (
+              <TouchableOpacity
+                style={styles.deleteBtn}
+                activeOpacity={0.7}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onDeleteWord(word.english);
+                }}
+              >
+                <Text style={styles.deleteBtnIcon}>❌</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.pronunciationBtn}
+                activeOpacity={0.7}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onPlayPronunciation(word.english);
+                }}
+              >
+                <Text>🔊</Text>
+              </TouchableOpacity>
+            )}
 
             <View style={[styles.wordLevel, { backgroundColor: getLevelColor(word.level) }]}>
               <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '500' }}>
@@ -271,6 +310,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
+  deletionBtn: {
+    backgroundColor: '#FEE2E2',
+    borderColor: '#EF4444',
+  },
+  deletionBtnActive: {
+    backgroundColor: '#EF4444',
+    borderColor: '#EF4444',
+  },
+  deletionBtnText: {
+    color: '#EF4444',
+    fontWeight: '600',
+  },
+  deletionBtnTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
   selectAllContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -299,7 +354,7 @@ const styles = StyleSheet.create({
     borderColor: '#E9ECEF',
     borderRadius: 12,
     padding: 20,
-    paddingLeft: 50,
+    paddingLeft: 60,
     minHeight: 120,
     position: 'relative',
   },
@@ -309,14 +364,6 @@ const styles = StyleSheet.create({
   },
   wordCardFlipped: {
     backgroundColor: '#F8FAFF',
-  },
-  wordCheckbox: {
-    position: 'absolute',
-    left: 15,
-    top: '50%',
-    marginTop: -9,
-    width: 18,
-    height: 18,
   },
   pronunciationBtn: {
     position: 'absolute',
@@ -333,24 +380,53 @@ const styles = StyleSheet.create({
     zIndex: 999,
     elevation: 999,
   },
-  memorizeBtn: {
+  deleteBtn: {
     position: 'absolute',
     top: 10,
     right: 10,
     backgroundColor: 'transparent',
     padding: 4,
-    fontSize: 18,
-    opacity: 0.3,
+    zIndex: 999,
+    elevation: 999,
   },
-  memorizeBtnActive: {
-    opacity: 1,
+  deleteBtnIcon: {
+    fontSize: 24,
+  },
+  memorizeBtn: {
+    position: 'absolute',
+    top: '50%',
+    left: 15,
+    marginTop: -16,
+    backgroundColor: 'transparent',
+    padding: 4,
+    zIndex: 10,
+  },
+  memorizeBtnBox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#4F46E5',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  memorizeBtnBoxChecked: {
+    backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
+  },
+  memorizeBtnCheck: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 16,
   },
   wordLevel: {
     position: 'absolute',
-    top: 10,
-    left: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    top: 15,
+    left: 55,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 4,
     fontSize: 11,
     fontWeight: '500',

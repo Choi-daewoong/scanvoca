@@ -102,7 +102,9 @@ export default function SmartWordCard({
               { color: theme.colors.text.primary }
             ]}
           >
-            {primaryMeaning?.korean}
+            {typeof primaryMeaning?.korean === 'string'
+              ? primaryMeaning.korean
+              : primaryMeaning?.korean?.ko || primaryMeaning?.korean?.korean || JSON.stringify(primaryMeaning?.korean)}
           </Text>
         </View>
 

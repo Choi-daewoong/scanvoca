@@ -1,90 +1,119 @@
-📌 지적 사항: '단어장 목록'과 '단어 상세' 간의 불일치
-다만, UX(사용자 경험) 일관성 측면에서 한 가지 치명적인 문제를 발견했으며, 이를 수정하기 위한 보완책을 제안합니다.
+plan.md의 복잡한 요구사항들이 코드에 잘 반영되었습니다.
 
-문제 상황: 계획안의 [문제 2]와 [데이터 우선순위 시스템]을 보면, 데이터가 저장되는 방식과 표시되는 방식이 분리되어 있습니다.
+1. 가상 단어장 구현 (Source 11361):
 
-단어장에 저장되는 데이터:
+wordbookService.ts의 getWordbookWords() 함수에 '가상 단어장' 로직이 완벽하게 구현되었습니다.
 
-"이 단어장만"으로 커스텀한 단어 (A)
+isCustomized (단어장 개별 커스텀) -> userDefaultsService (사용자 기본값) -> 원본 데이터 순서로 우선순위를 적용하여, StudyModeView (목록)와 WordDetailScreen (상세) 간의 데이터 일관성을 확보했습니다. (plan.md Source 6751, 6798 리뷰 반영)
 
-또는 표준 DB에서 가져온 원본 단어 (B)
+2. 데이터 추가 우선순위 (Source 10963):
 
-화면에 표시되는 데이터:
+smartDictionaryService.ts의 getWordDefinitions() 함수가 plan.md의 계획대로 수정되었습니다.
 
-단어장 목록 (StudyModeView): 위 (1)번에 저장된 데이터 (A 또는 B)를 그대로 표시합니다.
+메모리 캐시 -> 사용자 기본값 (Source 10967) -> 로컬 JSON (Source 10973) -> AsyncStorage 캐시 (Source 10976) -> GPT 순서로 데이터를 조회합니다.
 
-단어 상세 (WordDetailScreen): "사용자 기본값" (C)이 있는지 확인하여, (C)가 존재하면 (A)나 (B) 대신 (C)를 표시합니다.
+3. 신규 페이지 및 모달 구현:
 
-이것이 왜 문제인가요?
+WordDetailScreen.tsx (Source 10550)가 wordbookService.getWordDetail() (Source 10558)을 통해 가상 단어장 데이터를 올바르게 불러오고 있습니다.
 
-사용자는 단어장 목록(StudyModeView)에서 본 내용과 상세 화면(WordDetailScreen)에서 본 내용이 다를 수 있습니다.
+EditWordModal.tsx (Source 8725)과 SaveOptionDialog.tsx (Source 8850)가 plan.md의 UI 흐름대로 정확히 구현되었습니다.
 
-예시 시나리오:
+4. 네비게이션 연결 (Source 10617):
 
-사용자가 "apple"의 '내 기본값'을 "사과 (스티브 잡스)"로 설정합니다.
+WordbookDetailScreen.tsx가 StudyModeView의 onWordPress 이벤트를 받아 WordDetailScreen으로 wordbookId, wordId, word 파라미터를 정확하게 전달합니다. (plan.md Source 6767, 6769)
 
-이후, '수능 단어장'에 "apple"을 추가합니다.
+⚠️ 수정/검토가 필요한 잠재적 오류
+테스트 전에 수정하면 좋을 몇 가지 잠재적 오류를 확인했습니다.
 
-'수능 단어장'에는 **표준 정의("사과")**가 저장됩니다.
+1. (중요) 단어장 내보내기 시 커스텀 데이터 누락 (Source 11221)
+plan.md에서 정의한 customNote, customExamples, isCustomized 필드가 단어장 내보내기 기능에서 누락됩니다.
 
-사용자가 StudyModeView에서 '수능 단어장'을 엽니다.
+파일: app/src/services/wordbookExportImport.ts
 
-목록에는 **"apple: 사과"**라고 표시됩니다. (저장된 원본이 표시됨)
+함수: exportWordbookToFile
 
-사용자가 이 카드를 클릭해서 WordDetailScreen으로 들어갑니다.
+문제: (Source 11216)에서 wordbookService.getWordbookWords()를 호출하여 커스텀 데이터가 포함된 '가상 단어' 목록을 올바르게 가져옵니다.
 
-상세 화면은 우선순위 로직에 따라 '사용자 기본값'을 가져와서 **"apple: 사과 (스티브 잡스)"**를 표시합니다.
+오류: 하지만 (Source 11221)의 words.map(...) 부분에서, 가져온 word 객체를 그대로 사용하지 않고 word: word.word, pronunciation: word.pronunciation처럼 기본 필드만으로 새 객체를 만들고 있습니다.
 
-결과: 사용자는 목록에서 '사과'를 보고 클릭했는데, 상세 화면에서 갑자기 '사과 (스티브 잡스)'를 보게 됩니다. 이는 매우 혼란스러운 경험입니다.
+결과: 사용자가 "이 단어장만"으로 편집한 customNote 등의 데이터가 JSON 파일에 포함되지 않아, 내보내기/가저오기 시 편집 내용이 사라집니다.
 
-💡 해결 방안: '가상 단어장' 로직 적용
-이 문제를 해결하려면, 단어장 목록(StudyModeView)을 불러올 때부터 최종 우선순위가 적용된 **"가상(Virtual) 단어장"**을 만들어서 보여줘야 합니다.
+수정제안
+// app/src/services/wordbookExportImport.ts (Source 11221)
 
-wordbookService.getWordbookWords 함수의 로직 수정 (핵심):
+// 수정 전:
+words: words.map((word: any) => ({
+  word: word.word,
+  pronunciation: word.pronunciation,
+  difficulty: word.difficulty,
+  meanings: word.meanings,
+  confidence: 1.0,
+  source: word.source || 'gpt'
+})),
 
-현재 이 함수는 단순히 AsyncStorage['wordbook_1']에 저장된 데이터를 반환합니다.
+// 수정 후 (단순화):
+// word 객체는 이미 WordInWordbook 타입이므로 그대로 사용합니다.
+words: words, 
 
-이것을 다음과 같이 변경해야 합니다.
+// 또는 필요한 필드만 선택하되 커스텀 필드를 추가:
+words: words.map((word: any) => ({
+  word: word.word,
+  pronunciation: word.pronunciation,
+  difficulty: word.difficulty,
+  meanings: word.meanings,
+  source: word.source || 'gpt',
 
-AsyncStorage['wordbook_1']에 저장된 단어 목록을 불러옵니다. (예: 100개)
+  // --- 누락된 필드 추가 ---
+  isCustomized: word.isCustomized,
+  customNote: word.customNote,
+  customExamples: word.customExamples,
+  tags: word.tags
+  // ---
+})),
 
-AsyncStorage['user_custom_defaults'] (사용자 기본값 맵)을 한 번에 불러옵니다.
+2. (시급) 107개의 TypeScript 타입 오류 (Source 7573)
+제공해주신 typecheck_output.txt (Source 7573-7752)에 107개의 타입 오류가 있습니다. 이 중 다수는 ANALYSIS_REPORT.md (Source 6368)에도 언급된 내용이며, 앱 실행에 치명적일 수 있습니다.
 
-100개의 단어를 순회(loop)하면서 새로운 배열을 만듭니다.
+주요 오류 파일 1: app/src/components/common/Typography.tsx (오류 13개)
 
-각 단어(word)에 대해:
+문제: (Source 7607-7669) StyleSheet.create에 전달된 객체의 타입이 TextStyle과 맞지 않습니다. 예를 들어 colorStyles의 primary는 TextStyle 타입이지만, StyleSheet.create는 includeFontPadding 같은 특정 속성을 가진 객체를 기대하고 있습니다. (ANALYSIS_REPORT.md Source 6370)
 
-If word.isCustomized === true (이 단어장에서 개별 커스텀됨)
+해결: ANALYSIS_REPORT.md (Source 6372)의 제안대로 StyleSheet.create를 제거하고 as TextStyle로 타입 캐스팅을 사용하거나, StyleSheet.flatten을 사용해야 합니다.
 
-→ 새 배열에 word를 그대로 추가합니다. (최우선)
+주요 오류 파일 2: app/src/screens/ForgotPasswordScreen.tsx (오류 15개)
 
-Else If user_custom_defaults[word.word] (사용자 기본값이 존재함)
+문제: (Source 7694-7697) style 속성에 스타일 배열(예: style={[styles.input, {color: 'red'}]})을 전달하고 있지만, 해당 컴포넌트(아마도 Typography 또는 커스텀 TextInput)가 style prop을 TextStyle (단일 객체)로 타입 지정했을 가능성이 높습니다.
 
-→ 새 배열에 사용자 기본값을 word 객체와 합쳐서 추가합니다.
+해결: StyleSheet.flatten을 사용하거나, as TextStyle로 타입 캐스팅이 필요합니다.
 
-Else (둘 다 해당 없음)
+주요 오류 파일 3: app/src/screens/CameraScreen.tsx (오류 8개)
 
-→ 새 배열에 word를 (원본) 그대로 추가합니다.
+문제: (Source 7688) Camera.requestCameraPermission()이 반환하는 'granted' 타입을 'authorized'를 기대하는 setCameraPermission에 할당하려 하고 있습니다.
 
-이 새롭게 조합된 배열을 StudyModeView로 반환합니다.
+해결: ANALYSIS_REPORT.md (Source 6382)의 제안대로 상태를 매핑해야 합니다.
 
-⚙️ 수정안에 따른 추가 변경 사항
-1. 장점 (UX 일관성 확보)
-이 방식을 사용하면 StudyModeView (목록)과 WordDetailScreen (상세)에 표시되는 내용이 항상 100% 일치하게 됩니다.
+TypeScript
 
-사용자는 목록에서 본 커스텀된 내용을 상세 화면에서도 그대로 볼 수 있습니다.
+const status = await Camera.requestCameraPermission();
+const mappedStatus = status === 'granted' ? 'authorized' :
+                     status === 'denied' ? 'denied' : 'not-determined';
+setCameraPermission(mappedStatus); 
+3. (확인 필요) SmartWordDefinition 타입 불일치 (Source 7718)
+typecheck_output.txt (Source 7718-7729)를 보면 SmartWordDefinition의 difficulty 타입이 1-5 (5단계)와 1-4 (4단계)로 충돌하는 것으로 나옵니다.
 
-2. 성능 고려 (중요)
-단점: 이 방식은 단어장을 열 때마다 모든 단어를 반복 확인하고 '사용자 기본값'과 비교해야 하므로, 단어장이 매우 커지면(1,000개 이상) 약간의 성능 저하가 발생할 수 있습니다.
+파일: ocrFiltering.ts, ocrService.ts 등
 
-해결: user_custom_defaults를 Map 객체로 미리 변환하여 메모리에 올려두고 O(1) 시간 복잡도로 조회하면, 성능 저하를 최소화할 수 있습니다. 현재 구조에서는 이것이 최선의 절충안입니다.
+문제: smartDictionaryService의 5단계 난이도(1 | 2 | 3 | 4 | 5)를 types/types.ts의 4단계 난이도(1 | 2 | 3 | 4)에 할당하려 하여 오류가 발생합니다.
 
-3. WordDetailScreen 로직 단순화
-wordbookService.getWordDetail 함수가 매우 단순해집니다.
+검토:
 
-(기존 계획) getWordDetail이 복잡한 우선순위 로직을 수행
+app/src/types/types.ts (Source 11508)를 보니 difficulty: 1 | 2 | 3 | 4 | 5; (5단계)로 올바르게 수정되어 있습니다.
 
-(수정 제안) getWordDetail은 getWordbookWords가 이미 만들어준 '가상 단어장' 배열에서 wordId로 단어를 찾아 반환하기만 하면 됩니다. (로직 중복 제거)
+app/src/services/smartDictionaryService.ts (Source 10940) 역시 difficulty: 1 | 2 | 3 | 4 | 5; (5단계)로 올바릅니다.
 
-결론
-이 한 가지 UX 문제를 제외하면, 계획의 나머지 부분(타입 정의, 모달 구현, 서비스 레이어 분리, 저장 옵션)은 모두 매우 훌륭하고 체계적입니다.
+결론: 이 오류는 typecheck_output.txt가 생성된 이후에 수정된 것으로 보입니다. 이 문제는 이미 해결된 것으로 판단됩니다.
+
+💡 추가 개선 제안 (UX)
+편집 모달 로딩 상태: EditWordModal.tsx (Source 8725)의 handleSaveOption (Source 8745) 함수는 async이지만, 저장 중 로딩 상태(spinner)가 없습니다. 사용자가 저장 버튼을 여러 번 누를 수 있습니다. 저장 시작 시 isLoading 상태를 true로 설정하고 버튼을 비활성화하는 것을 권장합니다.
+
+상세 화면 Empty State: WordDetailScreen.tsx (Source 10550)에서 word.meanings, word.customExamples, word.customNote가 비어 있을 때 "데이터가 없습니다" 또는 "메모를 추가해보세요" 같은 UI를 보여주면 사용자 경험이 향상됩니다.

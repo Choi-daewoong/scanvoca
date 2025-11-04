@@ -143,6 +143,22 @@ export default function ExamModeView({
       )}
 
       {/* 시험 문제 */}
+      {examStage === 'question' && examQuestions.length === 0 && (
+        <View style={styles.examSetup}>
+          <View style={styles.examHeader}>
+            <Text style={styles.examIcon}>⚠️</Text>
+            <Text style={styles.examTitle}>문제가 없습니다</Text>
+            <Text style={styles.examSubtitle}>
+              외운 단어가 충분하지 않습니다. 먼저 단어를 학습하고 외운 상태로 표시해주세요.
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.startExamBtn} onPress={onRetryExam}>
+            <Text>↩️</Text>
+            <Text style={styles.startExamBtnText}>돌아가기</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {examStage === 'question' && examQuestions.length > 0 && (
         <View style={styles.examQuestion}>
           <View style={styles.progressBar}>

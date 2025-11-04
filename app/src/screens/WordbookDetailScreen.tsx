@@ -25,6 +25,7 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
     selectedWords,
     isShuffled,
     flippedCards,
+    isDeletionMode,
     examStage,
     selectedQuestionCount,
     customQuestionCount,
@@ -53,6 +54,8 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
     flipCard,
     shuffleWords,
     deleteSelectedWords,
+    toggleDeletionMode,
+    deleteWord,
     startExam,
     nextQuestion,
     previousQuestion,
@@ -94,9 +97,12 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
           currentLevelFilters={currentLevelFilters}
           selectedWords={selectedWords}
           flippedCards={flippedCards}
+          isDeletionMode={isDeletionMode}
           onFilterChange={setCurrentDisplayFilter}
           onLevelFilterChange={setCurrentLevelFilters}
           onShuffle={shuffleWords}
+          onToggleDeletionMode={toggleDeletionMode}
+          onDeleteWord={deleteWord}
           onToggleSelectAll={toggleSelectAll}
           onDeleteSelected={deleteSelectedWords}
           onToggleWordSelection={toggleWordSelection}

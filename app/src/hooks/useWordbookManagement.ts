@@ -68,16 +68,52 @@ export function useWordbookManagement(): UseWordbookManagementReturn {
     try {
       await loadWordbooks();
       const list = hookWordbooks;
-      const mapped: WordbookItem[] = list.map((wb: Wordbook) => ({
-        id: wb.id,
-        name: wb.name,
-        wordCount: (wb as any).word_count || 0,
-        icon: '📖',
-        lastStudied: '—',
-        progressPercent: 0,
-        order: (wb as any).display_order || 0,
-        groupId: (wb as any).group_id || undefined,
-      }));
+
+      // 각 단어장의 단어 개수와 진행률을 계산
+      const mapped: WordbookItem[] = await Promise.all(
+        list.map(async (wb: Wordbook) => {
+          try {
+            // 단어장의 모든 단어 가져오기
+            const words = await wordbookService.getWordbookWords(wb.id);
+            const wordCount = words.length;
+
+            // 외운 단어 개수 계산 (study_progress.correct_count >= 3)
+            const memorizedCount = words.filter(w => {
+              const sp = w.study_progress;
+              return sp && sp.correct_count >= 3 && sp.correct_count > (sp.incorrect_count || 0);
+            }).length;
+
+            // 진행률 계산
+            const progressPercent = wordCount > 0
+              ? Math.round((memorizedCount / wordCount) * 100)
+              : 0;
+
+            return {
+              id: wb.id,
+              name: wb.name,
+              wordCount,
+              icon: '📖',
+              lastStudied: '—',
+              progressPercent,
+              order: (wb as any).display_order || 0,
+              groupId: (wb as any).group_id || undefined,
+            };
+          } catch (err) {
+            console.error(`Failed to load words for wordbook ${wb.id}`, err);
+            return {
+              id: wb.id,
+              name: wb.name,
+              wordCount: 0,
+              icon: '📖',
+              lastStudied: '—',
+              progressPercent: 0,
+              order: (wb as any).display_order || 0,
+              groupId: (wb as any).group_id || undefined,
+            };
+          }
+        })
+      );
+
       setWordbooks(mapped);
       setGroups([]);
     } catch (e) {

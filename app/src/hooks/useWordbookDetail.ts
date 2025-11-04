@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Alert } from 'react-native';
 import { WordWithMeaning } from '../types/types';
 import ttsService from '../services/ttsService';
 import { wordbookService } from '../services/wordbookService';
@@ -22,6 +23,7 @@ export interface UseWordbookDetailReturn {
   selectedWords: Set<string>;
   isShuffled: boolean;
   flippedCards: Set<string>;
+  isDeletionMode: boolean;
 
   // 시험 모드 상태
   examStage: 'setup' | 'question' | 'result';
@@ -68,6 +70,8 @@ export interface UseWordbookDetailReturn {
   flipCard: (englishWord: string) => void;
   shuffleWords: () => void;
   deleteSelectedWords: () => void;
+  toggleDeletionMode: () => void;
+  deleteWord: (englishWord: string) => Promise<void>;
 
   startExam: () => void;
   nextQuestion: () => void;
@@ -95,6 +99,7 @@ export function useWordbookDetail(
   const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
   const [isShuffled, setIsShuffled] = useState(false);
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
+  const [isDeletionMode, setIsDeletionMode] = useState(false);
 
   // 시험 모드 상태
   const [examStage, setExamStage] = useState<'setup' | 'question' | 'result'>('setup');
@@ -129,7 +134,11 @@ export function useWordbookDetail(
           english: w.word,
           korean: w.meanings.map((m: any) => ({
             pos: m.partOfSpeech || '—',
-            meanings: [m.korean],
+            meanings: [
+              typeof m.korean === 'string'
+                ? m.korean
+                : m.korean?.ko || m.korean?.korean || JSON.stringify(m.korean)
+            ],
           })),
           level: w.difficulty || 1,
           memorized: Boolean(w.study_progress && w.study_progress.correct_count >= 3 && (w.study_progress.correct_count > (w.study_progress.incorrect_count || 0))),
@@ -159,7 +168,11 @@ export function useWordbookDetail(
         english: w.word,
         korean: w.meanings.map((m: any) => ({
           pos: m.partOfSpeech || '—',
-          meanings: [m.korean],
+          meanings: [
+            typeof m.korean === 'string'
+              ? m.korean
+              : m.korean?.ko || m.korean?.korean || JSON.stringify(m.korean)
+          ],
         })),
         level: w.difficulty || 1,
         memorized: Boolean(w.study_progress && w.study_progress.correct_count >= 3 && (w.study_progress.correct_count > (w.study_progress.incorrect_count || 0))),
@@ -272,9 +285,52 @@ export function useWordbookDetail(
     setSelectedWords(new Set());
   };
 
+  // 삭제 모드 토글
+  const toggleDeletionMode = () => {
+    setIsDeletionMode(prev => !prev);
+  };
+
+  // 단어 삭제 (즉시 삭제)
+  const deleteWord = async (englishWord: string) => {
+    try {
+      // 단어장에서 단어 삭제
+      await wordbookService.removeWordFromWordbook(wordbookId, englishWord);
+
+      // UI 업데이트
+      setVocabulary(prev => prev.filter(word => word.english !== englishWord));
+      setShuffledVocabulary(prev => prev.filter(word => word.english !== englishWord));
+
+      console.log(`✅ 단어 "${englishWord}" 삭제 완료`);
+    } catch (error) {
+      console.error('Failed to delete word:', error);
+      Alert.alert('오류', '단어 삭제에 실패했습니다.');
+    }
+  };
+
   // 시험 시작
   const startExam = () => {
     const memorized = vocabulary.filter(word => word.memorized);
+
+    // 외운 단어가 없으면 경고
+    if (memorized.length === 0) {
+      Alert.alert(
+        '외운 단어 없음',
+        '외운 단어가 없습니다. 먼저 단어를 학습하고 외운 상태로 표시해주세요.',
+        [{ text: '확인' }]
+      );
+      return;
+    }
+
+    // 선택한 문제 수가 외운 단어보다 많으면 경고
+    if (selectedQuestionCount > memorized.length) {
+      Alert.alert(
+        '외운 단어 부족',
+        `외운 단어가 ${memorized.length}개밖에 없습니다. ${memorized.length}개 이하로 선택해주세요.`,
+        [{ text: '확인' }]
+      );
+      return;
+    }
+
     const selected = memorized.slice(0, selectedQuestionCount).sort(() => Math.random() - 0.5);
     setExamQuestions(selected);
     setCurrentQuestionIndex(0);
@@ -376,6 +432,7 @@ export function useWordbookDetail(
     selectedWords,
     isShuffled,
     flippedCards,
+    isDeletionMode,
 
     examStage,
     selectedQuestionCount,
@@ -418,6 +475,8 @@ export function useWordbookDetail(
     flipCard,
     shuffleWords,
     deleteSelectedWords,
+    toggleDeletionMode,
+    deleteWord,
 
     startExam,
     nextQuestion,

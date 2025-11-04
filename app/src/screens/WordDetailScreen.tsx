@@ -399,7 +399,11 @@ export default function WordDetailScreen({ route, navigation }: WordDetailScreen
             <View key={index} style={styles.meaningItem}>
               <View style={styles.meaningLine}>
                 <Text style={styles.posTag}>{meaning.partOfSpeech}</Text>
-                <Text style={styles.koreanMeaning}>{meaning.korean}</Text>
+                <Text style={styles.koreanMeaning}>
+                  {typeof meaning.korean === 'string'
+                    ? meaning.korean
+                    : meaning.korean?.ko || meaning.korean?.korean || JSON.stringify(meaning.korean)}
+                </Text>
               </View>
               {meaning.english && (
                 <Text style={styles.englishMeaning}>{meaning.english}</Text>
@@ -410,7 +414,12 @@ export default function WordDetailScreen({ route, navigation }: WordDetailScreen
                 <View style={{ marginTop: 12 }}>
                   {meaning.examples.map((example, exIdx) => (
                     <View key={exIdx} style={styles.exampleItem}>
-                      <Text style={styles.exampleEn}>{example}</Text>
+                      <Text style={styles.exampleEn}>
+                        {typeof example === 'string' ? example : example?.en || ''}
+                      </Text>
+                      {typeof example === 'object' && example?.ko && (
+                        <Text style={styles.exampleKo}>{example.ko}</Text>
+                      )}
                     </View>
                   ))}
                 </View>
@@ -425,7 +434,12 @@ export default function WordDetailScreen({ route, navigation }: WordDetailScreen
             <Text style={styles.sectionTitle}>추가 예문</Text>
             {word.customExamples.map((example, index) => (
               <View key={index} style={styles.exampleItem}>
-                <Text style={styles.exampleEn}>{example}</Text>
+                <Text style={styles.exampleEn}>
+                  {typeof example === 'string' ? example : example?.en || ''}
+                </Text>
+                {typeof example === 'object' && example?.ko && (
+                  <Text style={styles.exampleKo}>{example.ko}</Text>
+                )}
               </View>
             ))}
           </View>
