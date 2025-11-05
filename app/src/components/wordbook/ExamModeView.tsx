@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 
 interface WordItemUI {
@@ -56,6 +56,8 @@ export default function ExamModeView({
   onPlayPronunciation,
   calculateExamScore,
 }: ExamModeViewProps) {
+  const [questionMode, setQuestionMode] = useState<'all' | 'custom'>('all');
+
   const getWordMeaningsHTML = (word: WordItemUI) => {
     return word.korean.map((item, index) => (
       <View key={index} style={styles.wordLine}>
@@ -65,8 +67,22 @@ export default function ExamModeView({
     ));
   };
 
+  const handleModeSelect = (mode: 'all' | 'custom') => {
+    setQuestionMode(mode);
+    if (mode === 'all') {
+      onQuestionCountChange(memorizedWords);
+      onCustomCountChange('');
+    } else {
+      onCustomCountChange('');
+    }
+  };
+
   return (
-    <ScrollView style={styles.examMode} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.examMode}
+      contentContainerStyle={styles.examModeContent}
+      showsVerticalScrollIndicator={false}
+    >
       {/* 시험 설정 */}
       {examStage === 'setup' && (
         <View style={styles.examSetup}>
@@ -91,52 +107,84 @@ export default function ExamModeView({
 
           <View style={styles.questionSelector}>
             <Text style={styles.selectorTitle}>문제 개수 선택</Text>
-            <View style={styles.countOptions}>
-              {[5, 10, 15, 20].map((count) => (
-                <TouchableOpacity
-                  key={count}
+            <View style={styles.modeOptions}>
+              <TouchableOpacity
+                style={[
+                  styles.modeBtn,
+                  questionMode === 'all' && styles.modeBtnSelected,
+                ]}
+                onPress={() => handleModeSelect('all')}
+              >
+                <Text
                   style={[
-                    styles.countBtn,
-                    selectedQuestionCount === count && styles.countBtnSelected,
+                    styles.modeNumber,
+                    questionMode === 'all' && styles.modeNumberSelected,
                   ]}
-                  onPress={() => onQuestionCountChange(count)}
                 >
-                  <Text
-                    style={[
-                      styles.countNumber,
-                      selectedQuestionCount === count && styles.countNumberSelected,
-                    ]}
-                  >
-                    {count}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.countLabel,
-                      selectedQuestionCount === count && styles.countLabelSelected,
-                    ]}
-                  >
-                    문제
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                  {memorizedWords}
+                </Text>
+                <Text
+                  style={[
+                    styles.modeLabel,
+                    questionMode === 'all' && styles.modeLabelSelected,
+                  ]}
+                >
+                  전체
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modeBtn,
+                  questionMode === 'custom' && styles.modeBtnSelected,
+                ]}
+                onPress={() => handleModeSelect('custom')}
+              >
+                <Text
+                  style={[
+                    styles.modeIcon,
+                    questionMode === 'custom' && styles.modeIconSelected,
+                  ]}
+                >
+                  ✏️
+                </Text>
+                <Text
+                  style={[
+                    styles.modeLabel,
+                    questionMode === 'custom' && styles.modeLabelSelected,
+                  ]}
+                >
+                  직접 입력
+                </Text>
+              </TouchableOpacity>
             </View>
 
-            <View style={styles.customCountSection}>
-              <View style={styles.customInputWrapper}>
-                <TextInput
-                  style={styles.customInput}
-                  value={customQuestionCount}
-                  onChangeText={onCustomCountChange}
-                  placeholder="직접입력"
-                  keyboardType="numeric"
-                />
+            {questionMode === 'custom' && (
+              <View style={styles.customCountSection}>
+                <View style={styles.customInputWrapper}>
+                  <TextInput
+                    style={styles.customInput}
+                    value={customQuestionCount}
+                    onChangeText={(text) => {
+                      onCustomCountChange(text);
+                      const num = parseInt(text);
+                      if (!isNaN(num) && num > 0) {
+                        onQuestionCountChange(num);
+                      }
+                    }}
+                    placeholder="문제 개수 입력"
+                    keyboardType="numeric"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
+                <Text style={styles.customHint}>
+                  최대 {memorizedWords}개까지 입력 가능
+                </Text>
               </View>
-              <Text style={styles.inputLabel}>문제</Text>
-            </View>
+            )}
           </View>
 
           <TouchableOpacity style={styles.startExamBtn} onPress={onStartExam}>
-            <Text>🚀</Text>
+            <Text style={styles.startExamBtnEmoji}>🚀</Text>
             <Text style={styles.startExamBtnText}>시험 시작하기</Text>
           </TouchableOpacity>
         </View>
@@ -153,7 +201,7 @@ export default function ExamModeView({
             </Text>
           </View>
           <TouchableOpacity style={styles.startExamBtn} onPress={onRetryExam}>
-            <Text>↩️</Text>
+            <Text style={styles.startExamBtnEmoji}>↩️</Text>
             <Text style={styles.startExamBtnText}>돌아가기</Text>
           </TouchableOpacity>
         </View>
@@ -305,12 +353,17 @@ export default function ExamModeView({
 
 const styles = StyleSheet.create({
   examMode: {
+    flex: 1,
+  },
+  examModeContent: {
     padding: 20,
+    paddingBottom: 100, // 안드로이드 네비게이션 바 대응
   },
   examSetup: {
     paddingHorizontal: 16,
     maxWidth: 480,
     alignSelf: 'center',
+    width: '100%',
   },
   examHeader: {
     alignItems: 'center',
@@ -361,98 +414,111 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   questionSelector: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   selectorTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: 'center',
   },
-  countOptions: {
+  modeOptions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: 12,
     justifyContent: 'center',
-    marginBottom: 16,
   },
-  countBtn: {
+  modeBtn: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
     borderWidth: 2,
     borderColor: '#E5E7EB',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    borderRadius: 12,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
     alignItems: 'center',
-    minWidth: 80,
+    minHeight: 100,
+    justifyContent: 'center',
   },
-  countBtnSelected: {
+  modeBtnSelected: {
     backgroundColor: '#4F46E5',
     borderColor: '#4F46E5',
   },
-  countNumber: {
-    fontSize: 18,
+  modeNumber: {
+    fontSize: 28,
     fontWeight: '700',
     color: '#111827',
+    marginBottom: 4,
   },
-  countNumberSelected: {
+  modeNumberSelected: {
     color: '#FFFFFF',
   },
-  countLabel: {
-    fontSize: 12,
-    fontWeight: '500',
+  modeIcon: {
+    fontSize: 32,
+    marginBottom: 4,
+  },
+  modeIconSelected: {
+    opacity: 1,
+  },
+  modeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
     color: '#6B7280',
-    marginTop: 2,
   },
-  countLabelSelected: {
+  modeLabelSelected: {
     color: '#FFFFFF',
-    opacity: 0.8,
+    opacity: 0.9,
   },
   customCountSection: {
-    flexDirection: 'row',
+    marginTop: 20,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 12,
   },
   customInputWrapper: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
     borderColor: '#E2E8F0',
     borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minWidth: 80,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    width: '100%',
+    maxWidth: 300,
   },
   customInput: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
     color: '#111827',
   },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
+  customHint: {
+    fontSize: 13,
     color: '#6B7280',
+    marginTop: 8,
+    textAlign: 'center',
   },
   startExamBtn: {
     backgroundColor: '#4F46E5',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 28,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
+    gap: 8,
     alignSelf: 'center',
+    minWidth: 200,
+    marginBottom: 20, // 추가 여백
+  },
+  startExamBtnEmoji: {
+    fontSize: 20,
   },
   startExamBtnText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   examQuestion: {
     alignItems: 'center',
+    paddingBottom: 60, // 네비게이션 바 대응
   },
   progressBar: {
     backgroundColor: '#E9ECEF',
@@ -479,6 +545,7 @@ const styles = StyleSheet.create({
     padding: 30,
     marginBottom: 30,
     alignItems: 'center',
+    width: '100%',
   },
   examButtons: {
     flexDirection: 'row',
@@ -521,6 +588,12 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: 20,
   },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 8,
+  },
   textInput: {
     borderWidth: 1,
     borderColor: '#DEE2E6',
@@ -534,10 +607,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     width: '100%',
+    marginBottom: 20, // 추가 여백
   },
   navBtn: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderWidth: 1,
     borderColor: '#DEE2E6',
     backgroundColor: '#FFFFFF',
@@ -551,9 +625,11 @@ const styles = StyleSheet.create({
   navBtnText: {
     fontSize: 16,
     color: '#495057',
+    fontWeight: '600',
   },
   navBtnTextPrimary: {
     color: '#FFFFFF',
+    fontWeight: '600',
   },
   navBtnDisabled: {
     opacity: 0.5,
@@ -561,6 +637,7 @@ const styles = StyleSheet.create({
   examResult: {
     alignItems: 'center',
     padding: 20,
+    paddingBottom: 60, // 네비게이션 바 대응
   },
   resultScore: {
     backgroundColor: '#4F46E5',
@@ -602,14 +679,15 @@ const styles = StyleSheet.create({
   },
   retryBtn: {
     backgroundColor: '#28A745',
-    borderRadius: 8,
-    paddingVertical: 15,
-    paddingHorizontal: 30,
+    borderRadius: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    marginBottom: 20, // 추가 여백
   },
   retryBtnText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   wordEn: {
     fontSize: 20,
