@@ -3,13 +3,14 @@
     "name": "Scan Voca",
     "slug": "scan-voca",
     "version": "1.0.0",
+    "description": "스마트한 영단어 학습 앱 - 사진으로 스캔하고, AI로 학습하세요",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "assetBundlePatterns": [
       "**/*"
     ],
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",

@@ -14,6 +14,7 @@ import { useWordbookManagement, WordbookItem, WordbookGroup } from '../hooks/use
 // import ImportWordbookButton from '../components/common/ImportWordbookButton'; // TODO: expo-document-picker 네이티브 모듈 필요
 import CreateWordbookModal from '../components/wordbook/CreateWordbookModal';
 import CreateGroupModal from '../components/wordbook/CreateGroupModal';
+import RenameGroupModal from '../components/wordbook/RenameGroupModal';
 
 export default function WordbookScreen({ navigation }: WordbookScreenProps) {
   const { theme } = useTheme();
@@ -24,12 +25,17 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
     selectedWordbooks,
     showNewWordbookModal,
     showGroupModal,
+    showRenameGroupModal,
     newWordbookName,
     newGroupName,
+    renameGroupName,
+    renamingGroupId,
     setShowNewWordbookModal,
     setShowGroupModal,
+    setShowRenameGroupModal,
     setNewWordbookName,
     setNewGroupName,
+    setRenameGroupName,
     toggleSelectionMode,
     toggleWordbookSelection,
     handleLongPress,
@@ -41,6 +47,8 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
     moveWordbookDown,
     toggleGroupExpansion,
     ungroupWordbooks,
+    confirmRenameGroup,
+    handleGroupOptions,
     loadWordbooksData,
   } = useWordbookManagement();
 
@@ -85,7 +93,7 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
           </View>
           <TouchableOpacity
             style={styles.groupOptionsBtn}
-            onPress={() => ungroupWordbooks(group.id)}
+            onPress={() => handleGroupOptions(group.id)}
           >
             <Text style={styles.groupOptionsText}>⋯</Text>
           </TouchableOpacity>
@@ -293,6 +301,18 @@ export default function WordbookScreen({ navigation }: WordbookScreenProps) {
         onClose={() => {
           setShowGroupModal(false);
           setNewGroupName('');
+        }}
+      />
+
+      <RenameGroupModal
+        visible={showRenameGroupModal}
+        currentName={groups.find(g => g.id === renamingGroupId)?.name || ''}
+        newName={renameGroupName}
+        onChangeName={setRenameGroupName}
+        onRename={confirmRenameGroup}
+        onClose={() => {
+          setShowRenameGroupModal(false);
+          setRenameGroupName('');
         }}
       />
     </SafeAreaView>

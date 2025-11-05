@@ -32,14 +32,19 @@ export interface UseWordbookManagementReturn {
   selectedWordbooks: number[];
   showNewWordbookModal: boolean;
   showGroupModal: boolean;
+  showRenameGroupModal: boolean;
   newWordbookName: string;
   newGroupName: string;
+  renameGroupName: string;
+  renamingGroupId: number | null;
 
   // 액션
   setShowNewWordbookModal: (show: boolean) => void;
   setShowGroupModal: (show: boolean) => void;
+  setShowRenameGroupModal: (show: boolean) => void;
   setNewWordbookName: (name: string) => void;
   setNewGroupName: (name: string) => void;
+  setRenameGroupName: (name: string) => void;
   toggleSelectionMode: () => void;
   toggleWordbookSelection: (id: number) => void;
   handleLongPress: (id: number) => void;
@@ -51,6 +56,8 @@ export interface UseWordbookManagementReturn {
   moveWordbookDown: (id: number) => Promise<void>;
   toggleGroupExpansion: (id: number) => void;
   ungroupWordbooks: (id: number) => void;
+  confirmRenameGroup: () => void;
+  handleGroupOptions: (groupId: number) => void;
   loadWordbooksData: () => Promise<void>;
 }
 
@@ -60,8 +67,11 @@ export function useWordbookManagement(): UseWordbookManagementReturn {
   const [groups, setGroups] = useState<WordbookGroup[]>([]);
   const [showNewWordbookModal, setShowNewWordbookModal] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
+  const [showRenameGroupModal, setShowRenameGroupModal] = useState(false);
   const [newWordbookName, setNewWordbookName] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
+  const [renameGroupName, setRenameGroupName] = useState('');
+  const [renamingGroupId, setRenamingGroupId] = useState<number | null>(null);
   const [selectedWordbooks, setSelectedWordbooks] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
@@ -367,6 +377,59 @@ export function useWordbookManagement(): UseWordbookManagementReturn {
     );
   }, []);
 
+  const confirmRenameGroup = useCallback(() => {
+    if (!renameGroupName.trim() || renamingGroupId === null) {
+      Alert.alert('알림', '그룹 이름을 입력해주세요.');
+      return;
+    }
+
+    setGroups(prev => {
+      const updated = prev.map(group =>
+        group.id === renamingGroupId
+          ? { ...group, name: renameGroupName.trim() }
+          : group
+      );
+      // AsyncStorage에 저장
+      AsyncStorage.setItem('wordbook_groups', JSON.stringify(updated))
+        .then(() => console.log('✅ 그룹 이름 변경 완료'))
+        .catch(err => console.error('❌ 그룹 정보 저장 실패:', err));
+      return updated;
+    });
+
+    setShowRenameGroupModal(false);
+    setRenameGroupName('');
+    setRenamingGroupId(null);
+  }, [renameGroupName, renamingGroupId]);
+
+  const handleGroupOptions = useCallback((groupId: number) => {
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return;
+
+    Alert.alert(
+      group.name,
+      '작업을 선택하세요',
+      [
+        {
+          text: '이름 변경',
+          onPress: () => {
+            setRenamingGroupId(groupId);
+            setRenameGroupName(group.name);
+            setShowRenameGroupModal(true);
+          }
+        },
+        {
+          text: '그룹 해제',
+          style: 'destructive',
+          onPress: () => ungroupWordbooks(groupId)
+        },
+        {
+          text: '취소',
+          style: 'cancel'
+        }
+      ]
+    );
+  }, [groups, ungroupWordbooks]);
+
   const handleCreateWordbook = useCallback(async () => {
     if (!newWordbookName.trim()) return;
     try {
@@ -402,12 +465,17 @@ export function useWordbookManagement(): UseWordbookManagementReturn {
     selectedWordbooks,
     showNewWordbookModal,
     showGroupModal,
+    showRenameGroupModal,
     newWordbookName,
     newGroupName,
+    renameGroupName,
+    renamingGroupId,
     setShowNewWordbookModal,
     setShowGroupModal,
+    setShowRenameGroupModal,
     setNewWordbookName,
     setNewGroupName,
+    setRenameGroupName,
     toggleSelectionMode,
     toggleWordbookSelection,
     handleLongPress,
@@ -419,6 +487,8 @@ export function useWordbookManagement(): UseWordbookManagementReturn {
     moveWordbookDown,
     toggleGroupExpansion,
     ungroupWordbooks,
+    confirmRenameGroup,
+    handleGroupOptions,
     loadWordbooksData,
   };
 }

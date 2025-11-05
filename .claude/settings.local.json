@@ -61,7 +61,9 @@
       "Bash(awk:*)",
       "Bash(cmd //c \"taskkill /F /PID 22384\")",
       "WebFetch(domain:expo.dev)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(tree:*)",
+      "Bash(git check-ignore:*)"
     ],
     "deny": [],
     "ask": []

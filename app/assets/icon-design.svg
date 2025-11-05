@@ -1,0 +1,44 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="180" fill="#4F46E5"/>
+
+  <!-- Book -->
+  <g transform="translate(220, 280)">
+    <!-- Left page -->
+    <path d="M 0 0 L 0 400 Q 10 420 30 420 L 270 420 L 270 0 Z" fill="#ffffff" opacity="0.95"/>
+    <!-- Right page -->
+    <path d="M 300 0 L 300 420 L 540 420 Q 560 420 570 400 L 570 0 Z" fill="#ffffff" opacity="0.95"/>
+    <!-- Book spine -->
+    <rect x="270" y="0" width="30" height="420" fill="#e0e7ff"/>
+    <!-- Text lines on left page -->
+    <line x1="40" y1="80" x2="230" y2="80" stroke="#4F46E5" stroke-width="8" opacity="0.3"/>
+    <line x1="40" y1="140" x2="230" y2="140" stroke="#4F46E5" stroke-width="8" opacity="0.3"/>
+    <line x1="40" y1="200" x2="230" y2="200" stroke="#4F46E5" stroke-width="8" opacity="0.3"/>
+    <!-- Text lines on right page -->
+    <line x1="340" y1="80" x2="530" y2="80" stroke="#4F46E5" stroke-width="8" opacity="0.3"/>
+    <line x1="340" y1="140" x2="530" y2="140" stroke="#4F46E5" stroke-width="8" opacity="0.3"/>
+    <line x1="340" y1="200" x2="530" y2="200" stroke="#4F46E5" stroke-width="8" opacity="0.3"/>
+  </g>
+
+  <!-- Camera/Scan Icon -->
+  <g transform="translate(650, 200)">
+    <!-- Camera body -->
+    <rect x="0" y="40" width="200" height="160" rx="20" fill="#10B981"/>
+    <!-- Lens -->
+    <circle cx="100" cy="120" r="60" fill="#ffffff" opacity="0.9"/>
+    <circle cx="100" cy="120" r="40" fill="#10B981" opacity="0.5"/>
+    <!-- Camera top -->
+    <rect x="60" y="10" width="80" height="40" rx="10" fill="#059669"/>
+    <!-- Shutter button -->
+    <circle cx="160" cy="30" r="12" fill="#ffffff" opacity="0.8"/>
+    <!-- Scan lines -->
+    <line x1="-20" y1="60" x2="220" y2="60" stroke="#ffffff" stroke-width="3" opacity="0.4" stroke-dasharray="10,10"/>
+    <line x1="-20" y1="180" x2="220" y2="180" stroke="#ffffff" stroke-width="3" opacity="0.4" stroke-dasharray="10,10"/>
+  </g>
+
+  <!-- Sparkle effects -->
+  <circle cx="180" cy="200" r="8" fill="#fbbf24" opacity="0.8"/>
+  <circle cx="840" cy="760" r="10" fill="#fbbf24" opacity="0.8"/>
+  <circle cx="200" cy="780" r="6" fill="#fbbf24" opacity="0.8"/>
+  <path d="M 850 250 L 860 270 L 880 280 L 860 290 L 850 310 L 840 290 L 820 280 L 840 270 Z" fill="#fbbf24" opacity="0.9"/>
+</svg>
