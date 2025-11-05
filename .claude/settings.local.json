@@ -60,7 +60,8 @@
       "Bash(EXPO_NO_METRO_LAZY=1 npx expo start:*)",
       "Bash(awk:*)",
       "Bash(cmd //c \"taskkill /F /PID 22384\")",
-      "WebFetch(domain:expo.dev)"
+      "WebFetch(domain:expo.dev)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []

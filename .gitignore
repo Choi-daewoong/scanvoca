@@ -1,27 +1,31 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# Worklog files (local development only)
+worklog.md
+worklog*.md
+WORKLOG*.md
 
-# dependencies
+# Node modules
 node_modules/
 
 # Expo
 .expo/
+.expo-shared/
 dist/
 web-build/
-expo-env.d.ts
 
 # Native
-.kotlin/
 *.orig.*
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*.ipa
+*.apk
 
 # Metro
 .metro-health-check*
 
-# debug
+# Debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
@@ -36,6 +40,14 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android
+# Build artifacts
+app/android/build/
+app/android/app/build/
+app/ios/build/
+app/.expo/
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+.cache/
