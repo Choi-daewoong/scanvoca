@@ -4,8 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { HomeScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { wordbookService } from '../services/wordbookService';
-import initialDataService from '../services/initialDataService';
-import smartDictionaryService from '../services/smartDictionaryService';
 
 interface HomeStats {
   totalWords: number;
@@ -72,51 +70,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     loadHomeStats(true);
   }, [loadHomeStats]);
 
-  const handleLoadCompleteWordbook = useCallback(async () => {
-    try {
-      Alert.alert('🚀 테스트 시작', '완전한 단어장 로딩을 시작합니다...');
-
-      await initialDataService.forceCompleteWordbookInit();
-
-      const info = await initialDataService.getInitializationInfo();
-      Alert.alert(
-        '✅ 로딩 완료!',
-        `단어 수: ${info.wordCount}개\n버전: ${info.version}`,
-        [{ text: '확인', onPress: () => loadHomeStats() }]
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      Alert.alert('❌ 로딩 실패', `오류: ${message}`);
-    }
-  }, []);
-
-  // 개발 모드에서만 사용할 캐시 초기화 함수
-  const handleClearCache = useCallback(async () => {
-    Alert.alert(
-      '🗑️ 캐시 초기화',
-      'SmartDictionary 캐시를 모두 삭제하고 새로 시작하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await smartDictionaryService.clearCache();
-              Alert.alert(
-                '✅ 캐시 초기화 완료',
-                '다음 스캔부터 GPT API로 새로운 정의를 생성합니다.',
-                [{ text: '확인', onPress: () => loadHomeStats() }]
-              );
-            } catch (error) {
-              const message = error instanceof Error ? error.message : String(error);
-              Alert.alert('❌ 초기화 실패', `오류: ${message}`);
-            }
-          }
-        }
-      ]
-    );
-  }, []);
 
   const styles = StyleSheet.create({
     container: {
@@ -297,14 +250,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <Text style={styles.navIcon}>📚</Text>
           <Text style={styles.navText}>단어장</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => navigation.navigate('QuizSession', {})}
-        >
-          <Text style={styles.navIcon}>🧠</Text>
-          <Text style={styles.navText}>퀴즈</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Content */}
@@ -361,13 +306,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
           <TouchableOpacity
             style={[styles.btn, styles.btnSecondary]}
-            onPress={() => navigation.navigate('QuizSession', {})}
-          >
-            <Text style={styles.btnSecondaryText}>🧠 퀴즈 시작하기</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.btn, styles.btnSecondary]}
             onPress={() => navigation.navigate('StudyStats')}
           >
             <Text style={styles.btnSecondaryText}>📊 통계 보기</Text>
@@ -379,25 +317,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           >
             <Text style={styles.btnSecondaryText}>⚙️ 설정</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.btn, styles.btnPrimary]}
-            onPress={handleLoadCompleteWordbook}
-          >
-            <Text style={styles.btnPrimaryText}>🚀 전체 단어장 로드 테스트</Text>
-          </TouchableOpacity>
-
-          {/* 개발 모드에서만 보이는 캐시 초기화 버튼 */}
-          {__DEV__ && (
-            <TouchableOpacity
-              style={[styles.btn, { backgroundColor: '#EF4444' }]}
-              onPress={handleClearCache}
-            >
-              <Text style={[styles.btnPrimaryText, { color: '#FFFFFF' }]}>
-                🗑️ 캐시 초기화 (개발용)
-              </Text>
-            </TouchableOpacity>
-          )}
         </View>
       </ScrollView>
 

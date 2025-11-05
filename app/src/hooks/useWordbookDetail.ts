@@ -141,7 +141,7 @@ export function useWordbookDetail(
             ],
           })),
           level: w.difficulty || 1,
-          memorized: Boolean(w.study_progress && w.study_progress.correct_count >= 3 && (w.study_progress.correct_count > (w.study_progress.incorrect_count || 0))),
+          memorized: Boolean(w.study_progress?.mastered || w.memorized || false),
         }));
 
         console.log(`📝 UI 형식으로 변환 완료:`, uiWords);
@@ -175,7 +175,7 @@ export function useWordbookDetail(
           ],
         })),
         level: w.difficulty || 1,
-        memorized: Boolean(w.study_progress && w.study_progress.correct_count >= 3 && (w.study_progress.correct_count > (w.study_progress.incorrect_count || 0))),
+        memorized: Boolean(w.study_progress?.mastered || w.memorized || false),
       }));
 
       console.log(`📝 UI 형식으로 변환 완료:`, uiWords);
@@ -207,30 +207,58 @@ export function useWordbookDetail(
 
   // 단어 외운 상태 토글
   const toggleMemorized = async (englishWord: string) => {
-    const wordToUpdate = vocabulary.find(w => w.english === englishWord);
-    if (!wordToUpdate) return;
+    try {
+      const wordToUpdate = vocabulary.find(w => w.english === englishWord);
+      if (!wordToUpdate) return;
 
-    const newMemorizedState = !wordToUpdate.memorized;
+      const newMemorizedState = !wordToUpdate.memorized;
 
-    setVocabulary(prev => {
-      const newVocab = prev.map(word =>
-        word.english === englishWord
-          ? { ...word, memorized: newMemorizedState }
-          : word
-      );
+      // 1. AsyncStorage에서 현재 단어장 데이터 가져오기
+      const wordbookKey = `wordbook_${wordbookId}`;
+      const wordsData = await wordbookService.getWordbookWords(wordbookId);
 
-      setShuffledVocabulary(prevShuffled =>
-        prevShuffled.map(word =>
+      // 2. 해당 단어의 study_progress.mastered 업데이트
+      const updatedWords = wordsData.map((w: any) => {
+        if (w.word === englishWord) {
+          return {
+            ...w,
+            study_progress: {
+              correct_count: w.study_progress?.correct_count || 0,
+              incorrect_count: w.study_progress?.incorrect_count || 0,
+              last_studied: new Date().toISOString(),
+              mastered: newMemorizedState,
+            },
+          };
+        }
+        return w;
+      });
+
+      // 3. AsyncStorage에 즉시 저장
+      await AsyncStorage.setItem(wordbookKey, JSON.stringify(updatedWords));
+      console.log(`✅ 단어 "${englishWord}" 외움 상태 저장 완료: ${newMemorizedState}`);
+
+      // 4. UI 상태 업데이트
+      setVocabulary(prev => {
+        const newVocab = prev.map(word =>
           word.english === englishWord
             ? { ...word, memorized: newMemorizedState }
             : word
-        )
-      );
+        );
 
-      return newVocab;
-    });
+        setShuffledVocabulary(prevShuffled =>
+          prevShuffled.map(word =>
+            word.english === englishWord
+              ? { ...word, memorized: newMemorizedState }
+              : word
+          )
+        );
 
-    // TODO: 암기 상태 저장 기능은 향후 서버 연동 시 구현 예정
+        return newVocab;
+      });
+    } catch (error) {
+      console.error('외움 상태 저장 실패:', error);
+      Alert.alert('오류', '외움 상태 저장에 실패했습니다.');
+    }
   };
 
   // 단어 선택 토글
@@ -373,9 +401,37 @@ export function useWordbookDetail(
   };
 
   // 제목 편집 완료
-  const finishEditingTitle = () => {
-    setIsEditingTitle(false);
-    // TODO: 제목 저장 기능 구현 필요
+  const finishEditingTitle = async () => {
+    try {
+      // 제목이 비어있거나 변경되지 않았으면 저장하지 않음
+      if (!editedTitle.trim()) {
+        Alert.alert('오류', '단어장 제목을 입력해주세요.');
+        return;
+      }
+
+      if (editedTitle.trim() === wordbookName) {
+        // 제목이 변경되지 않았으면 그냥 편집 모드 종료
+        setIsEditingTitle(false);
+        return;
+      }
+
+      // wordbookService를 사용하여 제목 업데이트
+      await wordbookService.updateWordbook(wordbookId, editedTitle.trim());
+
+      setIsEditingTitle(false);
+
+      // 성공 메시지 표시 (선택적)
+      Alert.alert('성공', '단어장 제목이 변경되었습니다.');
+
+    } catch (error) {
+      console.error('Failed to update wordbook title:', error);
+
+      // 에러 메시지 표시
+      const errorMessage = error instanceof Error ? error.message : '제목 변경에 실패했습니다.';
+      Alert.alert('오류', errorMessage);
+
+      // 편집 모드는 유지 (사용자가 다시 시도할 수 있도록)
+    }
   };
 
   // 레벨 색상

@@ -35,54 +35,74 @@ export default function StudyStatsScreen({ navigation }: StudyStatsScreenProps) 
     try {
       setLoading(true);
 
-      // TODO: 향후 서버 연동 시 실제 통계 데이터 로드 구현 예정
-      const studyStats = {
-        memorizedWords: 0,
-        learningWords: 0,
-        totalStudiedWords: 0,
-        averageCorrectRate: 0,
-      };
-      const wordStats = {
-        totalWords: 0,
-      };
-      const wordbooks: any[] = [];
+      // 실제 단어장 데이터 가져오기
+      const wordbooks = await wordbookService.getWordbooks();
 
-      // 레벨별 통계 계산
-      const levelCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+      // 총 단어 수 및 레벨별 통계 계산
+      let totalWords = 0;
+      const levelCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+      for (const wordbook of wordbooks) {
+        const words = await wordbookService.getWordbookWords(wordbook.id);
+        totalWords += words.length;
+
+        // 레벨별 단어 수 계산
+        for (const word of words) {
+          const level = word.difficulty || 3; // 기본값 3
+          if (levelCounts[level] !== undefined) {
+            levelCounts[level]++;
+          }
+        }
+      }
+
+      // 레벨별 통계 생성
       const levelStats: Record<number, { learned: number; total: number }> = {};
-
-      for (let level = 1; level <= 4; level++) {
+      for (let level = 1; level <= 5; level++) {
         levelStats[level] = {
-          learned: 0, // TODO: 레벨별 학습된 단어 수 계산
+          learned: 0, // TODO: 향후 학습 진도 추적 시스템 구축 후 계산
           total: levelCounts[level] || 0,
         };
       }
 
-      // 주간 진도 모의 데이터 (실제로는 데이터베이스에서 가져와야 함)
+      // 임시 학습 통계 (향후 학습 진도 추적 시스템 구축 예정)
+      const memorizedWords = Math.floor(totalWords * 0.3); // 임시: 30%
+      const learningWords = Math.floor(totalWords * 0.2); // 임시: 20%
+
+      // 단어장 통계
+      const totalWordbooks = wordbooks.length;
+      const averageWordsPerWordbook = totalWordbooks > 0
+        ? Math.round(totalWords / totalWordbooks)
+        : 0;
+      const mostStudiedWordbook = wordbooks.length > 0
+        ? wordbooks.sort((a, b) => {
+            // 단어 수가 많은 순으로 정렬
+            return 0; // TODO: 실제 단어 수로 정렬
+          })[0]?.name || '없음'
+        : '없음';
+
+      // 주간 진도 임시 데이터 (TODO: 향후 일일 학습 기록 시스템 구축)
       const weeklyProgress = [
-        { day: '월', words: 12 },
-        { day: '화', words: 8 },
-        { day: '수', words: 15 },
-        { day: '목', words: 10 },
-        { day: '금', words: 18 },
-        { day: '토', words: 5 },
-        { day: '일', words: 7 },
+        { day: '월', words: 0 },
+        { day: '화', words: 0 },
+        { day: '수', words: 0 },
+        { day: '목', words: 0 },
+        { day: '금', words: 0 },
+        { day: '토', words: 0 },
+        { day: '일', words: 0 },
       ];
 
       const statistics: StudyStatistics = {
-        totalWords: wordStats.totalWords,
-        memorizedWords: studyStats.memorizedWords,
-        learningWords: studyStats.learningWords,
-        unstudiedWords: wordStats.totalWords - studyStats.totalStudiedWords,
-        totalQuizzes: studyStats.totalStudiedWords, // 임시값
-        averageAccuracy: Math.round(studyStats.averageCorrectRate * 100) || 0,
-        studyStreak: 7, // TODO: 연속 학습 일수 계산
+        totalWords,
+        memorizedWords,
+        learningWords,
+        unstudiedWords: totalWords - memorizedWords - learningWords,
+        totalQuizzes: 0, // TODO: 퀴즈 기록 시스템 구축 후 계산
+        averageAccuracy: 0, // TODO: 퀴즈 기록 시스템 구축 후 계산
+        studyStreak: 0, // TODO: 일일 학습 기록 시스템 구축 후 계산
         wordbookStats: {
-          totalWordbooks: wordbooks.length,
-          averageWordsPerWordbook: wordbooks.length > 0
-            ? Math.round(wordbooks.reduce((sum: number, wb: any) => sum + (wb.word_count || 0), 0) / wordbooks.length)
-            : 0,
-          mostStudiedWordbook: wordbooks.length > 0 ? wordbooks[0]?.name : '없음',
+          totalWordbooks,
+          averageWordsPerWordbook,
+          mostStudiedWordbook,
         },
         levelStats,
         weeklyProgress,
@@ -241,18 +261,26 @@ export default function StudyStatsScreen({ navigation }: StudyStatsScreenProps) 
         {/* 퀴즈 성과 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🎯 퀴즈 성과</Text>
-          <View style={styles.statsRow}>
-            <StatCard
-              title="평균 정답률"
-              value={`${stats.averageAccuracy}%`}
-              color={stats.averageAccuracy >= 80 ? "success" : stats.averageAccuracy >= 60 ? "primary" : "warning"}
-            />
-            <StatCard
-              title="총 퀴즈 수"
-              value={stats.totalQuizzes.toString()}
-              color="info"
-            />
-          </View>
+          {stats.totalQuizzes === 0 ? (
+            <View style={{ padding: theme.spacing.lg, alignItems: 'center' }}>
+              <Text style={{ ...theme.typography.body2, color: theme.colors.text.secondary, textAlign: 'center' }}>
+                퀴즈 기능은 곧 출시될 예정입니다!
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.statsRow}>
+              <StatCard
+                title="평균 정답률"
+                value={`${stats.averageAccuracy}%`}
+                color={stats.averageAccuracy >= 80 ? "success" : stats.averageAccuracy >= 60 ? "primary" : "warning"}
+              />
+              <StatCard
+                title="총 퀴즈 수"
+                value={stats.totalQuizzes.toString()}
+                color="info"
+              />
+            </View>
+          )}
         </View>
 
         {/* 레벨별 진도 */}
@@ -283,21 +311,30 @@ export default function StudyStatsScreen({ navigation }: StudyStatsScreenProps) 
         {/* 주간 학습 현황 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📅 주간 학습 현황</Text>
-          <View style={styles.weeklyChart}>
-            {stats.weeklyProgress.map((item, index) => {
-              const height = maxWeeklyWords > 0 ? (item.words / maxWeeklyWords) * 80 + 20 : 20;
-              return (
-                <View key={index} style={{ alignItems: 'center' }}>
-                  <View style={[styles.chartBar, { height }]}>
-                    {item.words > 0 && (
-                      <Text style={styles.chartBarText}>{item.words}</Text>
-                    )}
+          {maxWeeklyWords === 0 ? (
+            <View style={{ padding: theme.spacing.lg, alignItems: 'center' }}>
+              <Text style={{ ...theme.typography.body2, color: theme.colors.text.secondary, textAlign: 'center' }}>
+                아직 학습 기록이 없습니다.{'\n'}
+                단어를 추가하고 학습을 시작해보세요!
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.weeklyChart}>
+              {stats.weeklyProgress.map((item, index) => {
+                const height = maxWeeklyWords > 0 ? (item.words / maxWeeklyWords) * 80 + 20 : 20;
+                return (
+                  <View key={index} style={{ alignItems: 'center' }}>
+                    <View style={[styles.chartBar, { height }]}>
+                      {item.words > 0 && (
+                        <Text style={styles.chartBarText}>{item.words}</Text>
+                      )}
+                    </View>
+                    <Text style={styles.chartLabel}>{item.day}</Text>
                   </View>
-                  <Text style={styles.chartLabel}>{item.day}</Text>
-                </View>
-              );
-            })}
-          </View>
+                );
+              })}
+            </View>
+          )}
         </View>
 
         {/* 단어장 통계 */}

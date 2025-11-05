@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Switch, ActivityIndicator } from 'react-native';
 import { SettingsScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { wordbookService } from '../services/wordbookService';
 import { useAuthStore } from '../stores/authStore';
 import { InputModal } from '../components/common';
 import { useOCRFilterSettings } from '../hooks/useOCRFilterSettings';
+import { shareWordbook, exportWordbookToFile } from '../services/wordbookExportImport';
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { theme } = useTheme();
@@ -28,6 +29,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [autoFilter, setAutoFilter] = useState(true);
   const [loading, setLoading] = useState(true);
   const [showGoalModal, setShowGoalModal] = useState(false);
+  const [isExportingAll, setIsExportingAll] = useState(false);
 
   useEffect(() => {
     loadDatabaseStats();
@@ -122,19 +124,152 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       [
         { text: '취소', style: 'cancel' },
         { text: '단어장만', onPress: () => exportWordbooks() },
-        { text: '학습기록 포함', onPress: () => exportAllData() }
+        { text: '전체 백업', onPress: () => exportAllData() }
       ]
     );
   };
 
-  const exportWordbooks = () => {
-    // TODO: 단어장 내보내기 기능 구현
-    Alert.alert('알림', '단어장 내보내기 기능은 향후 업데이트에서 제공됩니다.');
+  const exportWordbooks = async () => {
+    try {
+      console.log('단어장 내보내기 시작...');
+
+      // 1. 단어장 목록 조회
+      const wordbooks = await wordbookService.getWordbooks();
+
+      if (wordbooks.length === 0) {
+        Alert.alert('알림', '내보낼 단어장이 없습니다.');
+        return;
+      }
+
+      // 2. 단어장 선택 다이얼로그 표시
+      const buttons = wordbooks.map((wb) => ({
+        text: wb.name,
+        onPress: () => handleWordbookSelected(wb.id),
+      }));
+
+      // 취소 버튼 추가
+      buttons.push({
+        text: '취소',
+        onPress: () => Promise.resolve(),
+      });
+
+      Alert.alert(
+        '단어장 선택',
+        '내보낼 단어장을 선택하세요',
+        buttons
+      );
+
+    } catch (error) {
+      console.error('단어장 목록 조회 실패:', error);
+      Alert.alert('오류', '단어장 목록을 불러오지 못했습니다.');
+    }
   };
 
-  const exportAllData = () => {
-    // TODO: 전체 데이터 내보내기 기능 구현
-    Alert.alert('알림', '전체 데이터 내보내기 기능은 향후 업데이트에서 제공됩니다.');
+  const handleWordbookSelected = async (wordbookId: number) => {
+    try {
+      console.log(`단어장 ${wordbookId} 내보내기 시작...`);
+
+      // 선택한 단어장 내보내기
+      await shareWordbook(wordbookId);
+
+      console.log('단어장 공유 완료');
+
+    } catch (error: any) {
+      console.error('단어장 내보내기 실패:', error);
+
+      // 에러 메시지 표시
+      if (error.message === '단어장을 찾을 수 없습니다.') {
+        Alert.alert('오류', '단어장을 찾을 수 없습니다.');
+      } else if (error.message === '단어장에 단어가 없습니다.') {
+        Alert.alert('공유 불가', '단어가 없는 단어장은 공유할 수 없습니다.');
+      } else if (error.message === '이 기기에서는 공유 기능을 사용할 수 없습니다.') {
+        Alert.alert('공유 불가', '이 기기에서는 공유 기능을 사용할 수 없습니다.');
+      } else {
+        Alert.alert('오류', '단어장 내보내기에 실패했습니다.');
+      }
+    }
+  };
+
+  const exportAllData = async () => {
+    if (isExportingAll) return;
+
+    try {
+      setIsExportingAll(true);
+      console.log('전체 단어장 백업 시작...');
+
+      // 1. 단어장 목록 조회
+      const wordbooks = await wordbookService.getWordbooks();
+
+      if (wordbooks.length === 0) {
+        Alert.alert('알림', '백업할 단어장이 없습니다.');
+        setIsExportingAll(false);
+        return;
+      }
+
+      // 2. 모든 단어장을 하나의 JSON으로 묶기
+      const bulkData: any = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        wordbooks: [],
+        metadata: {
+          totalWordbooks: wordbooks.length,
+          totalWords: 0
+        }
+      };
+
+      // 3. 각 단어장 데이터 수집
+      for (const wb of wordbooks) {
+        const jsonString = await exportWordbookToFile(wb.id);
+        const sharedWordbook = JSON.parse(jsonString);
+        bulkData.wordbooks.push(sharedWordbook);
+        bulkData.metadata.totalWords += sharedWordbook.words.length;
+      }
+
+      // 4. JSON 문자열로 변환
+      const bulkJsonString = JSON.stringify(bulkData, null, 2);
+
+      // 5. 파일로 저장 및 공유
+      const FileSystem = await import('expo-file-system/legacy');
+      const { cacheDirectory, writeAsStringAsync, deleteAsync, EncodingType } = FileSystem;
+
+      const fileName = `scan_voca_backup_${Date.now()}.json`;
+      const fileUri = `${cacheDirectory}${fileName}`;
+
+      await writeAsStringAsync(fileUri, bulkJsonString, {
+        encoding: EncodingType.UTF8
+      });
+
+      console.log(`전체 백업 파일 생성: ${fileUri}`);
+
+      // 6. 공유 다이얼로그 호출
+      const Sharing = await import('expo-sharing');
+      const isAvailable = await Sharing.isAvailableAsync();
+
+      if (!isAvailable) {
+        throw new Error('이 기기에서는 공유 기능을 사용할 수 없습니다.');
+      }
+
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'application/json',
+        dialogTitle: '전체 단어장 백업',
+        UTI: 'public.json'
+      });
+
+      console.log('전체 백업 공유 완료');
+
+      // 7. 임시 파일 삭제
+      try {
+        await deleteAsync(fileUri, { idempotent: true });
+      } catch (error) {
+        console.warn('임시 파일 삭제 실패:', error);
+      }
+
+    } catch (error: any) {
+      console.error('전체 백업 실패:', error);
+      Alert.alert('오류', error.message || '전체 데이터 백업에 실패했습니다.');
+    } finally {
+      setIsExportingAll(false);
+    }
   };
 
   const handleLogout = () => {
@@ -250,6 +385,24 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     loadingText: {
       ...theme.typography.body1,
       color: theme.colors.text.secondary,
+    },
+    loadingOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000,
+    },
+    loadingCard: {
+      backgroundColor: theme.colors.background.primary,
+      borderRadius: 12,
+      padding: theme.spacing.xl,
+      alignItems: 'center',
+      minWidth: 200,
     },
   });
 
@@ -452,6 +605,18 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         confirmText="설정"
         cancelText="취소"
       />
+
+      {/* 전체 백업 로딩 오버레이 */}
+      {isExportingAll && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" color={theme.colors.primary.main} />
+            <Text style={[styles.loadingText, { marginTop: theme.spacing.md }]}>
+              전체 단어장 백업 중...
+            </Text>
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 }

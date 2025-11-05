@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WordbookDetailScreenProps } from '../navigation/types';
@@ -66,6 +66,15 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
     calculateExamScore,
     reloadWords,
   } = useWordbookDetail(wordbookId, wordbookName);
+
+  // 제목 변경 시 네비게이션 헤더 업데이트
+  useEffect(() => {
+    if (!isEditingTitle && editedTitle && editedTitle !== wordbookName) {
+      navigation.setOptions({
+        title: editedTitle,
+      });
+    }
+  }, [isEditingTitle, editedTitle, wordbookName, navigation]);
 
   const styles = StyleSheet.create({
     container: {

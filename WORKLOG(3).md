@@ -600,6 +600,382 @@ interface SaveWordsResult {
 
 ---
 
+## 📅 2025년 11월 4일 (오후)
+
+### 🎯 작업 목표
+단어장 UI/UX 개선 및 렌더링 버그 수정
+
+### 🐛 버그 수정
+
+#### 1. 단어 상세 화면 렌더링 오류 수정
+**파일**: `app/src/screens/WordDetailScreen.tsx`
+
+**문제 현상**:
+- 단어 상세 화면에서 "Objects are not valid as a React child (found: object with keys {en, ko})" 에러 발생
+- 단어장 목록에서는 정상 동작하지만 상세 화면 진입 시 크래시
+
+**원인 분석**:
+```typescript
+// 문제 코드 (line 417)
+<Text>{example}</Text>  // example이 {en, ko} 객체
+
+// examples 구조
+examples: [
+  { en: "English sentence", ko: "한글 번역" }
+]
+```
+
+**해결 방법**:
+```typescript
+// 수정 후 (lines 412-426)
+{meaning.examples?.map((example, exIdx) => (
+  <View key={exIdx} style={styles.exampleItem}>
+    <Text style={styles.exampleEn}>
+      {typeof example === 'string' ? example : example?.en || ''}
+    </Text>
+    {typeof example === 'object' && example?.ko && (
+      <Text style={styles.exampleKo}>{example.ko}</Text>
+    )}
+  </View>
+))}
+```
+
+**추가 수정**:
+- customExamples도 동일한 처리 (lines 437-442)
+- korean 필드 안전 처리 추가 (lines 402-406)
+- `SmartWordCard.tsx`도 동일 패턴 적용 (line 105-107)
+
+---
+
+#### 2. 시험 모드 빈 화면 문제 해결
+**파일**: `app/src/hooks/useWordbookDetail.ts`, `app/src/components/wordbook/ExamModeView.tsx`
+
+**문제 현상**:
+- 시험 설정 화면에서 "시험 시작" 클릭 시 빈 화면만 표시
+- examStage는 'question'으로 변경되지만 examQuestions 배열이 비어있음
+
+**원인**:
+```typescript
+// useWordbookDetail.ts (line 284)
+const startExam = () => {
+  const memorized = vocabulary.filter(word => word.memorized);
+  const selected = memorized.slice(0, selectedQuestionCount);
+  // 외운 단어 개수 검증 없음!
+  setExamStage('question');
+};
+```
+
+**해결 방법**:
+```typescript
+// 수정 후 (lines 284-313)
+const startExam = () => {
+  const memorized = vocabulary.filter(word => word.memorized);
+
+  // 외운 단어 개수 검증
+  if (memorized.length === 0) {
+    Alert.alert('외운 단어 없음', '먼저 단어를 학습하고 외운 상태로 표시해주세요.');
+    return;
+  }
+
+  if (selectedQuestionCount > memorized.length) {
+    Alert.alert('외운 단어 부족',
+      `외운 단어가 ${memorized.length}개밖에 없습니다. ${memorized.length}개 이하로 선택해주세요.`
+    );
+    return;
+  }
+
+  const selected = memorized.slice(0, selectedQuestionCount).sort(() => Math.random() - 0.5);
+  setExamQuestions(selected);
+  setExamStage('question');
+};
+```
+
+**UI 개선** (ExamModeView.tsx, lines 146-160):
+```typescript
+// examQuestions가 비어있을 때 안내 메시지 표시
+{examStage === 'question' && examQuestions.length === 0 && (
+  <View style={styles.examSetup}>
+    <Text style={styles.examIcon}>⚠️</Text>
+    <Text style={styles.examTitle}>문제가 없습니다</Text>
+    <Text style={styles.examSubtitle}>
+      외운 단어가 충분하지 않습니다. 먼저 단어를 학습하고 외운 상태로 표시해주세요.
+    </Text>
+  </View>
+)}
+```
+
+---
+
+### 🎨 UI/UX 개선
+
+#### 3. 단어장 목록 화면 - 단어 개수 및 진행률 표시
+**파일**: `app/src/hooks/useWordbookManagement.ts`
+
+**문제**:
+- 단어장 목록에서 모든 단어장이 "0개 단어", "학습 진행률 0%" 표시
+- 실제 단어가 있어도 카운트 안 됨
+
+**원인**:
+```typescript
+// 이전 코드 (lines 74-77)
+wordCount: (wb as any).word_count || 0,  // 존재하지 않는 필드
+progressPercent: 0,  // 하드코딩
+```
+
+**해결** (lines 67-122):
+```typescript
+const loadWordbooksData = useCallback(async () => {
+  const list = hookWordbooks;
+
+  // 각 단어장의 실제 단어 개수 계산
+  const mapped: WordbookItem[] = await Promise.all(
+    list.map(async (wb: Wordbook) => {
+      // wordbookService로 단어 로드
+      const words = await wordbookService.getWordbookWords(wb.id);
+      const wordCount = words.length;
+
+      // 외운 단어 개수 계산 (study_progress.correct_count >= 3)
+      const memorizedCount = words.filter(w => {
+        const sp = w.study_progress;
+        return sp && sp.correct_count >= 3 && sp.correct_count > (sp.incorrect_count || 0);
+      }).length;
+
+      // 진행률 계산
+      const progressPercent = wordCount > 0
+        ? Math.round((memorizedCount / wordCount) * 100)
+        : 0;
+
+      return { ...wb, wordCount, progressPercent };
+    })
+  );
+}, [loadWordbooks, hookWordbooks]);
+```
+
+**효과**:
+- 단어장 목록에 실제 단어 개수 표시
+- 외운 단어 비율로 학습 진행률 계산 (0-100%)
+- 사용자가 학습 현황을 한눈에 파악 가능
+
+---
+
+#### 4. 외운 단어 체크박스 UI 개선
+**파일**: `app/src/components/wordbook/StudyModeView.tsx`
+
+**사용자 피드백**:
+- "네모박스는 보이지도 않고 투표함같은것만 있는데"
+- "필요없는 기능이면 삭제하고 박스나 제대로 넣어줘"
+- "손가락 두꺼운 사람도 잘 누를 수 있도록"
+
+**이전 UI**:
+- wordCheckbox (☐): 단어 선택용 체크박스 (삭제용)
+- memorizeBtn (⭕/✅): 외운 단어 표시
+- 두 개의 체크박스가 겹쳐서 혼란
+
+**개선 사항**:
+
+1. **선택용 체크박스 제거** (wordCheckbox 삭제)
+   - 삭제 기능은 별도 삭제 모드로 분리
+
+2. **외운 단어 체크박스 디자인 개선** (lines 169-187):
+```typescript
+<TouchableOpacity
+  style={styles.memorizeBtn}
+  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}  // 터치 영역 확대
+  onPress={(e) => {
+    e.stopPropagation();
+    onToggleMemorized(word.english);
+  }}
+>
+  <View style={[
+    styles.memorizeBtnBox,
+    word.memorized && styles.memorizeBtnBoxChecked
+  ]}>
+    {word.memorized && (
+      <Text style={styles.memorizeBtnCheck}>✓</Text>
+    )}
+  </View>
+</TouchableOpacity>
+```
+
+3. **스타일 개선** (lines 373-391):
+```typescript
+memorizeBtnBox: {
+  width: 20,
+  height: 20,
+  borderRadius: 4,
+  borderWidth: 2,
+  borderColor: '#4F46E5',
+  backgroundColor: '#FFFFFF',
+  alignItems: 'center',
+  justifyContent: 'center',
+}
+```
+
+**결과**:
+- 빈 상태: 흰색 배경 + 파란 테두리 네모박스 (☐)
+- 체크 상태: 파란 배경 + 흰색 체크마크 (☑️)
+- 터치 영역: hitSlop 15px로 확대 (실제 박스보다 넓음)
+- 위치: 단어 카드 왼쪽 중앙 (left: 15, 세로 가운데)
+
+---
+
+#### 5. 단어 삭제 기능 추가
+**파일**: `app/src/components/wordbook/StudyModeView.tsx`, `app/src/hooks/useWordbookDetail.ts`
+
+**사용자 요구사항**:
+- "섞기 옆에 휴지통 모양 넣어주고"
+- "그걸 누르면 단어카드 우측 상단에 빨간-모양이 생기도록"
+- "팝업으로 삭제할거냐고 다시 묻지말고 바로 삭제"
+
+**구현 내용**:
+
+1. **삭제 모드 토글 버튼** (StudyModeView.tsx, lines 105-119):
+```typescript
+<TouchableOpacity
+  style={[
+    styles.filterTab,
+    isDeletionMode ? styles.deletionBtnActive : styles.deletionBtn
+  ]}
+  onPress={onToggleDeletionMode}
+>
+  <Text>🗑️ {isDeletionMode ? '완료' : '삭제'}</Text>
+</TouchableOpacity>
+```
+
+2. **삭제 모드 상태 관리** (useWordbookDetail.ts):
+```typescript
+const [isDeletionMode, setIsDeletionMode] = useState(false);
+
+const toggleDeletionMode = () => {
+  setIsDeletionMode(prev => !prev);
+};
+
+const deleteWord = async (englishWord: string) => {
+  try {
+    await wordbookService.removeWordFromWordbook(wordbookId, englishWord);
+    setVocabulary(prev => prev.filter(word => word.english !== englishWord));
+    console.log(`✅ 단어 "${englishWord}" 삭제 완료`);
+  } catch (error) {
+    Alert.alert('오류', '단어 삭제에 실패했습니다.');
+  }
+};
+```
+
+3. **삭제 버튼 표시** (StudyModeView.tsx, lines 208-234):
+```typescript
+{isDeletionMode ? (
+  // 삭제 모드: 빨간 ❌ 버튼
+  <TouchableOpacity style={styles.deleteBtn} onPress={(e) => {
+    e.stopPropagation();
+    onDeleteWord(word.english);
+  }}>
+    <Text style={styles.deleteBtnIcon}>❌</Text>
+  </TouchableOpacity>
+) : (
+  // 일반 모드: 발음 버튼 🔊
+  <TouchableOpacity style={styles.pronunciationBtn} onPress={...}>
+    <Text>🔊</Text>
+  </TouchableOpacity>
+)}
+```
+
+**사용 흐름**:
+```
+1. [🗑️ 삭제] 버튼 클릭 (분홍 배경 → 빨간 배경으로 변경)
+2. 모든 단어 카드 우측 상단에 빨간 ❌ 표시
+3. ❌ 클릭 → 즉시 삭제 (확인 팝업 없음)
+4. [완료] 버튼 클릭 → 일반 모드로 복귀 (🔊 버튼으로 전환)
+```
+
+**UI 디자인**:
+```typescript
+// 삭제 버튼 스타일
+deletionBtn: {
+  backgroundColor: '#FEE2E2',  // 분홍 배경
+  borderColor: '#EF4444',       // 빨간 테두리
+},
+deletionBtnActive: {
+  backgroundColor: '#EF4444',   // 빨간 배경 (활성화)
+  borderColor: '#EF4444',
+},
+```
+
+---
+
+### 📊 작업 결과 요약
+
+#### 변경된 파일 목록
+| 파일 | 추가 | 삭제 | 설명 |
+|-----|------|------|------|
+| `SmartWordCard.tsx` | 2 | 2 | korean 필드 안전 처리 |
+| `ExamModeView.tsx` | 16 | 0 | 빈 화면 처리 추가 |
+| `StudyModeView.tsx` | 115 | 63 | 체크박스 UI 개선, 삭제 모드 |
+| `useWordbookDetail.ts` | 46 | 17 | 시험 검증, 삭제 기능 |
+| `useWordbookManagement.ts` | 47 | 9 | 단어 개수/진행률 계산 |
+| `WordDetailScreen.tsx` | 12 | 8 | 예문 렌더링 수정 |
+| `WordbookDetailScreen.tsx` | 4 | 2 | 삭제 모드 props 추가 |
+| `plan_review.md` | 69 | 58 | 리뷰 업데이트 |
+| **합계** | **354** | **116** | **238줄 순증** |
+
+#### 주요 개선사항
+1. ✅ **렌더링 버그 수정**: 객체를 직접 렌더링하던 문제 해결
+2. ✅ **시험 모드 검증**: 외운 단어 개수 확인 후 시작
+3. ✅ **단어장 통계**: 실제 단어 개수 및 학습 진행률 표시
+4. ✅ **체크박스 UI**: 네모박스 디자인 + 터치 영역 확대
+5. ✅ **삭제 기능**: 직관적인 삭제 모드 (❌ 아이콘)
+6. ✅ **즉시 삭제**: 확인 팝업 제거, 빠른 UX
+
+---
+
+### 🐛 발생한 문제 및 해결
+
+#### 문제 1: 예문 객체 렌더링
+**현상**: "Objects are not valid as a React child (found: object with keys {en, ko})"
+**원인**: `<Text>{example}</Text>` - example이 `{en, ko}` 객체
+**해결**: `example?.en`, `example?.ko` 개별 추출
+
+#### 문제 2: 시험 모드 빈 화면
+**현상**: 시험 시작 후 빈 화면만 표시
+**원인**: examQuestions 배열이 비어있어도 'question' stage로 전환
+**해결**: 외운 단어 개수 검증 로직 추가
+
+#### 문제 3: 단어장 목록 통계 오류
+**현상**: 모든 단어장이 "0개 단어, 0%" 표시
+**원인**: 존재하지 않는 필드(`word_count`) 참조, 하드코딩된 0
+**해결**: `wordbookService.getWordbookWords()`로 실제 단어 카운트
+
+#### 문제 4: 체크박스 혼란
+**현상**: 투표함 같은 체크박스가 단어와 겹침
+**원인**: wordCheckbox(선택용)와 memorizeBtn(외운 단어)가 중복
+**해결**: wordCheckbox 제거, memorizeBtn만 유지
+
+---
+
+### 🎓 배운 점
+
+1. **React 렌더링 제약**: 객체를 직접 렌더링 불가 → 문자열/숫자로 변환 필요
+2. **사용자 피드백 중요성**: "투표함같은것" 지적으로 UI 혼란 발견
+3. **검증 로직 필수**: 시험 모드 같은 기능은 사전 조건 확인 필요
+4. **터치 영역 최적화**: hitSlop으로 실제 박스보다 넓은 터치 영역 제공
+5. **즉시 피드백**: 불필요한 확인 팝업 제거로 UX 개선
+
+---
+
+### 🔄 커밋 내역
+
+**커밋 해시**: fd9cd25
+**메시지**: fix: 단어장 UI 개선 및 버그 수정
+
+**주요 변경사항**:
+- 단어 상세 화면 예문 렌더링 버그 수정 (examples 객체 처리)
+- 시험 모드 빈 화면 문제 해결 (외운 단어 검증 로직 추가)
+- 단어장 목록 화면 단어 개수 및 학습 진행률 계산 로직 구현
+- 외운 단어 체크박스 UI 개선 (동그라미 → 네모박스)
+- 단어 삭제 기능 추가 (삭제 모드 + 빨간 ❌ 아이콘)
+- 체크박스 터치 영역 확대 (hitSlop 15px)
+
+---
+
 ## 파일 링크
 - **이전 파일**: [WORKLOG(2).md](./worklog(2).md)
 - **다음 파일**: 600줄 도달 시 WORKLOG(4).md 생성

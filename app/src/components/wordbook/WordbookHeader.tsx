@@ -31,11 +31,6 @@ export default function WordbookHeader({
 }: WordbookHeaderProps) {
   return (
     <>
-      {/* Back Button */}
-      <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-        <Text style={styles.backBtnText}>←</Text>
-      </TouchableOpacity>
-
       {/* Header */}
       <View style={styles.detailHeader}>
         <View style={styles.headerTitleSection}>
@@ -51,13 +46,13 @@ export default function WordbookHeader({
           ) : (
             <Text style={styles.headerTitleText}>{editedTitle}</Text>
           )}
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <TouchableOpacity style={styles.editBtn} onPress={onStartEdit}>
-              <Text style={styles.editBtnText}>편집</Text>
+          <View style={{ flexDirection: 'row', gap: 4 }}>
+            <TouchableOpacity style={styles.iconButton} onPress={onStartEdit}>
+              <Text style={styles.iconButtonText}>✏️</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.addBtn} onPress={onAddWord}>
-              <Text style={styles.addBtnText}>+</Text>
+            <TouchableOpacity style={styles.iconButton} onPress={onAddWord}>
+              <Text style={styles.iconButtonText}>➕</Text>
             </TouchableOpacity>
 
             <ShareWordbookButton
@@ -102,108 +97,68 @@ export default function WordbookHeader({
 }
 
 const styles = StyleSheet.create({
-  backBtn: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 10,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  backBtnText: {
-    fontSize: 20,
-    color: '#4F46E5',
-    fontWeight: 'bold',
-  },
   detailHeader: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    paddingTop: 60,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
-    textAlign: 'center',
   },
   headerTitleSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
+    gap: 8,
     marginBottom: 8,
   },
   headerTitleText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#212529',
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#111827',
+    flex: 1,
   },
   titleInput: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#212529',
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#111827',
     borderBottomWidth: 2,
     borderBottomColor: '#4F46E5',
     paddingVertical: 4,
     paddingHorizontal: 8,
-    textAlign: 'center',
+    flex: 1,
   },
-  editBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#4F46E5',
-    borderRadius: 6,
-  },
-  editBtnText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  addBtn: {
+  iconButton: {
     width: 36,
     height: 36,
-    backgroundColor: '#10B981',
-    borderRadius: 6,
+    borderRadius: 18,
+    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  addBtnText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-    lineHeight: 20,
+  iconButtonText: {
+    fontSize: 16,
   },
   totalWordsText: {
     fontSize: 14,
-    color: '#6C757D',
-    marginBottom: 20,
+    color: '#6B7280',
+    marginBottom: 8,
+    paddingHorizontal: 4,
   },
   modeSelector: {
     flexDirection: 'row',
     backgroundColor: '#F8F9FA',
-    borderRadius: 10,
+    borderRadius: 8,
     padding: 4,
     borderWidth: 1,
     borderColor: '#E9ECEF',
+    gap: 8,
   },
   modeBtn: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     backgroundColor: 'transparent',
-    borderRadius: 8,
+    borderRadius: 6,
     alignItems: 'center',
   },
   modeBtnActive: {

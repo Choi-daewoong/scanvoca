@@ -276,8 +276,16 @@ export interface WordInWordbook {
   isCustomized: boolean; // 이 단어장에서 커스텀 여부 (가상 단어장 우선순위 최고)
   source: 'complete-wordbook' | 'gpt' | 'user-custom' | 'user-default';
 
-  // 학습 관련
-  memorized?: boolean; // 암기 완료 여부
+  // 학습 진도 추적
+  study_progress?: {
+    correct_count: number;
+    incorrect_count: number;
+    last_studied?: string;
+    mastered: boolean; // 암기 완료 여부
+  };
+
+  // 하위 호환성 (deprecated - study_progress.mastered 사용 권장)
+  memorized?: boolean;
 }
 
 // 사용자 기본값 저장 구조 (AsyncStorage의 user_custom_defaults)

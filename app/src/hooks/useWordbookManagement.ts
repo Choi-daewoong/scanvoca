@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BackHandler, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useWordbook } from './useWordbook';
 import { wordbookService } from '../services/wordbookService';
 import { Wordbook } from '../types/types';
@@ -66,8 +67,8 @@ export function useWordbookManagement(): UseWordbookManagementReturn {
 
   const loadWordbooksData = useCallback(async () => {
     try {
-      await loadWordbooks();
-      const list = hookWordbooks;
+      // wordbookService에서 직접 최신 데이터 가져오기
+      const list = await wordbookService.getWordbooks();
 
       // 각 단어장의 단어 개수와 진행률을 계산
       const mapped: WordbookItem[] = await Promise.all(
@@ -77,10 +78,9 @@ export function useWordbookManagement(): UseWordbookManagementReturn {
             const words = await wordbookService.getWordbookWords(wb.id);
             const wordCount = words.length;
 
-            // 외운 단어 개수 계산 (study_progress.correct_count >= 3)
+            // 외운 단어 개수 계산 (study_progress.mastered 또는 memorized)
             const memorizedCount = words.filter(w => {
-              const sp = w.study_progress;
-              return sp && sp.correct_count >= 3 && sp.correct_count > (sp.incorrect_count || 0);
+              return w.study_progress?.mastered || w.memorized || false;
             }).length;
 
             // 진행률 계산
@@ -114,16 +114,50 @@ export function useWordbookManagement(): UseWordbookManagementReturn {
         })
       );
 
-      setWordbooks(mapped);
-      setGroups([]);
+      // AsyncStorage에서 메타데이터 불러오기 (groupId, order)
+      try {
+        const metadataString = await AsyncStorage.getItem('wordbook_metadata');
+        if (metadataString) {
+          const metadata = JSON.parse(metadataString);
+          // 메타데이터를 mapped에 적용
+          const withMetadata = mapped.map(wb => {
+            const meta = metadata.find((m: any) => m.id === wb.id);
+            return {
+              ...wb,
+              groupId: meta?.groupId,
+              order: meta?.order ?? wb.order
+            };
+          });
+          setWordbooks(withMetadata);
+          console.log('✅ 단어장 메타데이터 적용 완료');
+        } else {
+          setWordbooks(mapped);
+        }
+      } catch (err) {
+        console.error('메타데이터 로드 실패:', err);
+        setWordbooks(mapped);
+      }
+
+      // AsyncStorage에서 그룹 정보 불러오기
+      try {
+        const groupsData = await AsyncStorage.getItem('wordbook_groups');
+        if (groupsData) {
+          const savedGroups: WordbookGroup[] = JSON.parse(groupsData);
+          setGroups(savedGroups);
+          console.log('✅ 그룹 정보 로드 완료:', savedGroups.length + '개');
+        } else {
+          setGroups([]);
+        }
+      } catch (err) {
+        console.error('그룹 정보 로드 실패:', err);
+        setGroups([]);
+      }
     } catch (e) {
       console.error('Failed to load wordbooks', e);
     }
-  }, [loadWordbooks, hookWordbooks]);
-
-  useEffect(() => {
-    loadWordbooksData();
   }, []);
+
+  // 초기 로드는 WordbookScreen의 useFocusEffect에서 처리
 
   // 안드로이드 뒤로가기 버튼 처리
   useEffect(() => {
@@ -209,24 +243,45 @@ export function useWordbookManagement(): UseWordbookManagementReturn {
     setShowGroupModal(true);
   }, [selectedWordbooks]);
 
-  const confirmCreateGroup = useCallback(() => {
+  const confirmCreateGroup = useCallback(async () => {
     if (newGroupName.trim() && selectedWordbooks.length >= 2) {
       const newGroup: WordbookGroup = {
         id: Date.now(),
         name: newGroupName.trim(),
         wordbookIds: selectedWordbooks,
-        isExpanded: true,
+        isExpanded: false,
       };
 
-      setGroups(prev => [...prev, newGroup]);
+      // 그룹 상태 업데이트
+      setGroups(prev => {
+        const updated = [...prev, newGroup];
+        // AsyncStorage에 저장
+        AsyncStorage.setItem('wordbook_groups', JSON.stringify(updated))
+          .then(() => console.log('✅ 그룹 정보 저장 완료'))
+          .catch(err => console.error('❌ 그룹 정보 저장 실패:', err));
+        return updated;
+      });
 
-      setWordbooks(prev =>
-        prev.map(wb =>
+      // 단어장에 groupId 설정 및 메타데이터 저장
+      setWordbooks(prev => {
+        const updated = prev.map(wb =>
           selectedWordbooks.includes(wb.id)
             ? { ...wb, groupId: newGroup.id }
             : wb
-        )
-      );
+        );
+
+        // 단어장 메타데이터 저장
+        const metadata = updated.map(wb => ({
+          id: wb.id,
+          groupId: wb.groupId,
+          order: wb.order
+        }));
+        AsyncStorage.setItem('wordbook_metadata', JSON.stringify(metadata))
+          .then(() => console.log('✅ 단어장 메타데이터 저장 완료'))
+          .catch(err => console.error('❌ 단어장 메타데이터 저장 실패:', err));
+
+        return updated;
+      });
 
       setNewGroupName('');
       setShowGroupModal(false);
@@ -257,13 +312,17 @@ export function useWordbookManagement(): UseWordbookManagementReturn {
   }, [selectedWordbooks]);
 
   const toggleGroupExpansion = useCallback((groupId: number) => {
-    setGroups(prev =>
-      prev.map(group =>
+    setGroups(prev => {
+      const updated = prev.map(group =>
         group.id === groupId
           ? { ...group, isExpanded: !group.isExpanded }
           : group
-      )
-    );
+      );
+      // AsyncStorage에 저장
+      AsyncStorage.setItem('wordbook_groups', JSON.stringify(updated))
+        .catch(err => console.error('❌ 그룹 정보 저장 실패:', err));
+      return updated;
+    });
   }, []);
 
   const ungroupWordbooks = useCallback((groupId: number) => {
@@ -275,14 +334,33 @@ export function useWordbookManagement(): UseWordbookManagementReturn {
         {
           text: '해제',
           onPress: () => {
-            setWordbooks(prev =>
-              prev.map(wb =>
+            setWordbooks(prev => {
+              const updated = prev.map(wb =>
                 wb.groupId === groupId
                   ? { ...wb, groupId: undefined }
                   : wb
-              )
-            );
-            setGroups(prev => prev.filter(g => g.id !== groupId));
+              );
+
+              // 메타데이터 저장
+              const metadata = updated.map(wb => ({
+                id: wb.id,
+                groupId: wb.groupId,
+                order: wb.order
+              }));
+              AsyncStorage.setItem('wordbook_metadata', JSON.stringify(metadata))
+                .catch(err => console.error('❌ 단어장 메타데이터 저장 실패:', err));
+
+              return updated;
+            });
+
+            setGroups(prev => {
+              const updated = prev.filter(g => g.id !== groupId);
+              // AsyncStorage에 저장
+              AsyncStorage.setItem('wordbook_groups', JSON.stringify(updated))
+                .then(() => console.log('✅ 그룹 해제 완료'))
+                .catch(err => console.error('❌ 그룹 정보 저장 실패:', err));
+              return updated;
+            });
           }
         }
       ]

@@ -21,7 +21,36 @@
       "infoPlist": {
         "NSCameraUsageDescription": "$(PRODUCT_NAME) needs access to your Camera to scan text for vocabulary learning.",
         "NSMicrophoneUsageDescription": "Camera access requires microphone permission.",
-        "NSPhotoLibraryUsageDescription": "This app needs access to photo library to select images for text recognition."
+        "NSPhotoLibraryUsageDescription": "This app needs access to photo library to select images for text recognition.",
+        "UIFileSharingEnabled": true,
+        "LSSupportsOpeningDocumentsInPlace": true,
+        "CFBundleDocumentTypes": [
+          {
+            "CFBundleTypeName": "Scan Voca Wordbook",
+            "LSHandlerRank": "Owner",
+            "LSItemContentTypes": [
+              "public.json"
+            ]
+          }
+        ],
+        "UTImportedTypeDeclarations": [
+          {
+            "UTTypeIdentifier": "com.scanvoca.wordbook",
+            "UTTypeDescription": "Scan Voca Wordbook File",
+            "UTTypeConformsTo": [
+              "public.json",
+              "public.data"
+            ],
+            "UTTypeTagSpecification": {
+              "public.filename-extension": [
+                "json"
+              ],
+              "public.mime-type": [
+                "application/json"
+              ]
+            }
+          }
+        ]
       }
     },
     "android": {
@@ -42,7 +71,29 @@
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.READ_MEDIA_AUDIO"
       ],
-      "package": "com.twostwo.scanvoca"
+      "package": "com.twostwo.scanvoca",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "file",
+              "host": "*",
+              "mimeType": "application/json"
+            },
+            {
+              "scheme": "content",
+              "host": "*",
+              "mimeType": "application/json"
+            }
+          ],
+          "category": [
+            "DEFAULT",
+            "BROWSABLE"
+          ]
+        }
+      ]
     },
     "scheme": "com.scanvoca.app",
     "extra": {
