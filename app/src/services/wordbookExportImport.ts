@@ -231,7 +231,6 @@ export async function shareWordbook(wordbookId: number): Promise<void> {
     await Sharing.shareAsync(fileUri, {
       mimeType: 'application/json',
       dialogTitle: '단어장 공유',
-      UTI: 'public.json'
     });
 
     console.log(`✅ 공유 완료`);

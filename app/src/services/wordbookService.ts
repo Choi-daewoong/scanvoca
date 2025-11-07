@@ -87,7 +87,13 @@ class WordbookService {
             difficulty: wordDef.difficulty,
             meanings: wordDef.meanings,
             addedAt: new Date().toISOString(),
-            source: 'gpt'
+            source: wordDef.source, // Use the source from the definition
+            study_progress: {
+              correct_count: 0,
+              incorrect_count: 0,
+              last_studied: null,
+              mastered: false,
+            }
           };
 
           existingWords.push(wordToSave);
@@ -146,20 +152,6 @@ class WordbookService {
     try {
       const wordbooksData = await AsyncStorage.getItem('wordbooks');
       const wordbooks = wordbooksData ? JSON.parse(wordbooksData) : [];
-
-      // 기본 단어장이 없으면 생성
-      if (wordbooks.length === 0) {
-        const defaultWordbook: Wordbook = {
-          id: 1,
-          name: '기본 단어장',
-          description: '스캔한 단어들을 저장하는 기본 단어장',
-          is_default: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        wordbooks.push(defaultWordbook);
-        await AsyncStorage.setItem('wordbooks', JSON.stringify(wordbooks));
-      }
 
       return wordbooks;
     } catch (error) {
@@ -396,18 +388,29 @@ class WordbookService {
 
       // 3. 가상 단어장 생성 (각 단어마다 우선순위 적용)
       const virtualWordbook: WordInWordbook[] = rawWords.map((word: any) => {
+        // study_progress 기본값 추가 (기존 단어 호환성)
+        const baseWord = {
+          ...word,
+          study_progress: word.study_progress || {
+            correct_count: 0,
+            incorrect_count: 0,
+            last_studied: null,
+            mastered: false,
+          }
+        };
+
         // 최우선: 이 단어장에서 개별 커스텀된 단어
-        if (word.isCustomized === true) {
-          return word;
+        if (baseWord.isCustomized === true) {
+          return baseWord;
         }
 
         // 차순위: 사용자 기본값 존재 시
-        const userDefault = defaultsMap.get(word.word?.toLowerCase() || '');
+        const userDefault = defaultsMap.get(baseWord.word?.toLowerCase() || '');
         if (userDefault) {
           return {
-            ...word,
-            pronunciation: userDefault.pronunciation || word.pronunciation,
-            difficulty: userDefault.difficulty || word.difficulty,
+            ...baseWord,
+            pronunciation: userDefault.pronunciation || baseWord.pronunciation,
+            difficulty: userDefault.difficulty || baseWord.difficulty,
             meanings: userDefault.meanings,
             customNote: userDefault.customNote,
             customExamples: userDefault.customExamples,
@@ -416,8 +419,8 @@ class WordbookService {
           };
         }
 
-        // 최하위: 원본 그대로
-        return word;
+        // 최하위: 원본 (study_progress 포함)
+        return baseWord;
       });
 
       return virtualWordbook;

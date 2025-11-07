@@ -93,6 +93,13 @@
             "DEFAULT",
             "BROWSABLE"
           ]
+        },
+        {
+          "action": "SEND",
+          "data": {
+            "mimeType": "application/json"
+          },
+          "category": "DEFAULT"
         }
       ]
     },

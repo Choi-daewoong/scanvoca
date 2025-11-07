@@ -22,6 +22,7 @@ export interface SmartWordDefinition {
   confidence: number;
   source: 'cache' | 'gpt';
   cached_at?: string;
+  rootWord?: string; // 파생어의 어근 단어
 }
 
 export interface GPTBatchResponse {
@@ -263,6 +264,18 @@ class SmartDictionaryService {
     }
   }
 
+  // AsyncStorage 캐시 무효화 (단일 단어)
+  private async invalidateCache(word: string): Promise<void> {
+    try {
+      const key = this.CACHE_KEY_PREFIX + word.toLowerCase();
+      await AsyncStorage.removeItem(key);
+      this.memoryCache.delete(word.toLowerCase());
+      console.log(`🗑️ 캐시 무효화: "${word}"`);
+    } catch (error) {
+      console.warn(`캐시 무효화 실패: ${word}`, error);
+    }
+  }
+
   // 메모리 캐시에 추가 (LRU 방식)
   private addToMemoryCache(word: string, definition: SmartWordDefinition): void {
     // 메모리 캐시 크기 제한
@@ -325,17 +338,53 @@ class SmartDictionaryService {
       }
     }
 
-    // 3. 로컬 DB에 없는 단어들을 GPT로 처리 (GPT가 알아서 복수형, 과거형 등 설명해줌)
+    // 3. 로컬 DB에 없는 단어들을 GPT로 처리 (GPT가 기본형으로 변환)
     if (unknownWords.length > 0) {
       console.log(`🤖 GPT로 ${unknownWords.length}개 신규 단어 처리 시작...`);
       const gptResults = await this.callGPTAPI(unknownWords);
 
-      // GPT로 생성된 단어들을 로컬 캐시에 저장 (향후 재사용)
+      // GPT가 변환한 단어가 로컬 DB에 있는지 재확인 (어근 우선)
       for (const gptDef of gptResults) {
-        await this.addWordToCache(gptDef);
-      }
+        const baseForm = gptDef.word.toLowerCase();
+        const rootWord = gptDef.rootWord?.toLowerCase();
+        let foundInDB: any = null;
 
-      definitions.push(...gptResults);
+        // 1순위: rootWord로 DB 검색
+        if (rootWord) {
+          foundInDB = completeWordbook.words?.find((w: any) =>
+            w.word.toLowerCase() === rootWord
+          );
+          if (foundInDB) {
+            console.log(`✅ GPT가 "${gptDef.word}"의 어근 "${rootWord}" 발견 → 로컬 DB에서 레벨 참조 (Lv.${foundInDB.difficulty})`);
+          }
+        }
+
+        // 2순위: rootWord가 없거나 DB에 없으면, baseForm으로 DB 검색
+        if (!foundInDB) {
+          foundInDB = completeWordbook.words?.find((w: any) =>
+            w.word.toLowerCase() === baseForm
+          );
+          if (foundInDB) {
+            console.log(`✅ GPT가 "${baseForm}"로 변환 → 로컬 DB에서 발견 (Lv.${foundInDB.difficulty})`);
+          }
+        }
+
+        if (foundInDB) {
+          // 로컬 DB에서 레벨을 찾은 경우
+          const definition: SmartWordDefinition = {
+            ...gptDef,
+            difficulty: foundInDB.difficulty, // DB에서 찾은 레벨 사용
+            source: 'gpt', // 출처는 gpt로 유지
+          };
+          definitions.push(definition);
+          await this.addWordToCache(definition);
+        } else {
+          // DB에 어근/기본형 모두 없는 신규 단어 - GPT 데이터 그대로 사용 (Lv.4)
+          console.log(`❓ "${baseForm}" (어근: ${rootWord || '없음'}) → 로컬 DB에 없음 (Lv.4 설정)`);
+          definitions.push(gptDef);
+          await this.addWordToCache(gptDef);
+        }
+      }
     }
 
     // 4. 로컬 DB 결과와 GPT 결과 합치기
@@ -473,19 +522,25 @@ class SmartDictionaryService {
 
 단어들: ${words.join(', ')}
 
+중요 지시사항:
+1.  입력된 단어의 정의, 의미, 예문 등 모든 정보는 **입력된 단어 그대로**를 기준으로 작성해주세요. (예: 'musician'이 입력되면 'music'이 아닌 'musician'에 대한 설명)
+2.  만약 입력된 단어가 파생어(예: musician, quickly, hopeful)일 경우, 그 단어의 어근(root word)을 `rootWord` 필드에 추가해주세요. (예: musician -> music)
+3.  변형된 단어(복수형, 과거형 등)가 입력되면, 기본형(원형)을 찾아 `word` 필드에 넣어주세요. (예: running -> run)
+
 각 단어에 대해 다음 정보를 제공해주세요:
-1. 정확한 발음기호 (IPA 형식)
-2. 중고등학생 수준에 맞는 난이도 (1-5)
-3. 주요 의미들 (품사, 한국어 뜻, 영어 설명)
-4. 간단한 예문 (영어, 한국어)
+1.  기본형 단어 (`word`)
+2.  어근 단어 (`rootWord`, 파생어일 경우에만)
+3.  정확한 발음기호 (IPA 형식)
+4.  주요 의미들 (품사, 한국어 뜻, 영어 설명)
+5.  간단하고 실용적인 예문 (영어, 한국어) - **반드시 입력된 단어를 사용**
 
 응답 형식:
 {
   "definitions": [
     {
-      "word": "단어",
+      "word": "기본형 단어",
+      "rootWord": "어근 단어",
       "pronunciation": "/발음/",
-      "difficulty": 1-5,
       "meanings": [
         {
           "partOfSpeech": "품사",
@@ -518,7 +573,7 @@ class SmartDictionaryService {
         const definition: SmartWordDefinition = {
           word: def.word,
           pronunciation: def.pronunciation || `/${def.word}/`,
-          difficulty: Math.max(1, Math.min(5, def.difficulty || 3)) as 1 | 2 | 3 | 4 | 5,
+          difficulty: 4, // GPT로 생성된 신규 단어는 무조건 Lv.4 (DB 외 단어)
           meanings: def.meanings?.map((m: any) => ({
             partOfSpeech: m.partOfSpeech,
             korean: m.korean,
@@ -526,11 +581,12 @@ class SmartDictionaryService {
             examples: m.examples || []
           })) || [],
           confidence: 0.9,
-          source: 'gpt' as 'gpt'
+          source: 'gpt' as 'gpt',
+          rootWord: def.rootWord, // 어근 단어 추가
         };
 
         definitions.push(definition);
-        console.log(`✅ GPT에서 "${def.word}" 정의 생성 완료`);
+        console.log(`✅ GPT에서 "${def.word}" 정의 생성 완료 (난이도: Lv.4)`);
       } catch (error) {
         console.error(`❌ "${def.word}" 파싱 실패:`, error);
       }

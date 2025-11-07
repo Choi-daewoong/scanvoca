@@ -63,7 +63,10 @@
       "WebFetch(domain:expo.dev)",
       "Bash(git rm:*)",
       "Bash(tree:*)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(if exist .expo rd /s /q .expo)",
+      "Bash(if exist node_modules.cache rd /s /q node_modules.cache)",
+      "Bash(jq:*)"
     ],
     "deny": [],
     "ask": []

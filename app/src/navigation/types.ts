@@ -39,7 +39,13 @@ export type RootStackParamList = {
     imageUri?: string;
     detectedWords?: DetectedWord[];
     excludedCount?: number;
-    excludedWords?: DetectedWord[];
+    excludedWords?: Array<{
+      word: string;
+      reason: string;
+      meaning?: string;
+      partOfSpeech?: string;
+      level?: number;
+    }>;
   };
   QuizSession: { wordbookId?: number; questionCount?: number };
   QuizResults: {

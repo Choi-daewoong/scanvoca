@@ -73,6 +73,18 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
           settings
         );
 
+      // 디버깅: 제외된 단어 정보 출력
+      console.log('📋 CameraScreen - 필터링 결과:');
+      console.log(`  - 처리된 단어: ${processedWords.length}개`);
+      console.log(`  - 제외된 단어: ${excludedCount}개`);
+      console.log(`  - excludedWords 배열:`, excludedWords);
+      if (excludedWords && excludedWords.length > 0) {
+        console.log('  - 제외된 단어 목록:');
+        excludedWords.forEach(w => {
+          console.log(`    * "${w.word}" - ${w.reason}`);
+        });
+      }
+
       // processedWords에서 실제 찾은 단어들만 필터링
       interface DetectedWordData {
         word: string;
@@ -153,6 +165,18 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
             (text: string) => ocrService.cleanWord(text),
             settings
           );
+
+        // 디버깅: 제외된 단어 정보 출력
+        console.log('📋 CameraScreen (갤러리) - 필터링 결과:');
+        console.log(`  - 처리된 단어: ${processedWords.length}개`);
+        console.log(`  - 제외된 단어: ${excludedCount}개`);
+        console.log(`  - excludedWords 배열:`, excludedWords);
+        if (excludedWords && excludedWords.length > 0) {
+          console.log('  - 제외된 단어 목록:');
+          excludedWords.forEach(w => {
+            console.log(`    * "${w.word}" - ${w.reason}`);
+          });
+        }
 
         // processedWords에서 실제 찾은 단어들만 필터링
         interface DetectedWordData {

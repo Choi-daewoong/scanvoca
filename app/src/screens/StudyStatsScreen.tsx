@@ -40,33 +40,41 @@ export default function StudyStatsScreen({ navigation }: StudyStatsScreenProps) 
 
       // 총 단어 수 및 레벨별 통계 계산
       let totalWords = 0;
-      const levelCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      let memorizedWords = 0;
+      const levelCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+      const levelLearned: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
 
       for (const wordbook of wordbooks) {
         const words = await wordbookService.getWordbookWords(wordbook.id);
         totalWords += words.length;
 
-        // 레벨별 단어 수 계산
+        // 레벨별 단어 수 및 학습된 단어 수 계산
         for (const word of words) {
-          const level = word.difficulty || 3; // 기본값 3
+          const level = word.level || word.difficulty || 3; // level 또는 difficulty 사용, 기본값 3
           if (levelCounts[level] !== undefined) {
             levelCounts[level]++;
+            if ((word as any).study_progress?.mastered === true) {
+              levelLearned[level]++;
+            }
+          }
+          // study_progress.mastered 단어 총 개수 카운팅
+          if ((word as any).study_progress?.mastered === true) {
+            memorizedWords++;
           }
         }
       }
 
       // 레벨별 통계 생성
       const levelStats: Record<number, { learned: number; total: number }> = {};
-      for (let level = 1; level <= 5; level++) {
+      for (let level = 1; level <= 4; level++) {
         levelStats[level] = {
-          learned: 0, // TODO: 향후 학습 진도 추적 시스템 구축 후 계산
+          learned: levelLearned[level] || 0,
           total: levelCounts[level] || 0,
         };
       }
 
-      // 임시 학습 통계 (향후 학습 진도 추적 시스템 구축 예정)
-      const memorizedWords = Math.floor(totalWords * 0.3); // 임시: 30%
-      const learningWords = Math.floor(totalWords * 0.2); // 임시: 20%
+      // 학습 통계 (실제 데이터 기반)
+      const learningWords = 0; // TODO: 현재 학습중인 단어 추적 시스템 구축 필요
 
       // 단어장 통계
       const totalWordbooks = wordbooks.length;

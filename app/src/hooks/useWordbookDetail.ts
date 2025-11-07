@@ -4,6 +4,7 @@ import { WordWithMeaning } from '../types/types';
 import ttsService from '../services/ttsService';
 import { wordbookService } from '../services/wordbookService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import masteredWordsCache from '../services/masteredWordsCache';
 
 interface WordItemUI {
   id: number;
@@ -237,6 +238,10 @@ export function useWordbookDetail(
       await AsyncStorage.setItem(wordbookKey, JSON.stringify(updatedWords));
       console.log(`✅ 단어 "${englishWord}" 외움 상태 저장 완료: ${newMemorizedState}`);
 
+      // 4. 전역 캐시 업데이트 (OCR 필터링 속도 향상)
+      await masteredWordsCache.updateWord(englishWord, newMemorizedState);
+      console.log(`🔄 외운 단어 캐시 업데이트: "${englishWord}" → ${newMemorizedState}`);
+
       // 4. UI 상태 업데이트
       setVocabulary(prev => {
         const newVocab = prev.map(word =>
@@ -323,6 +328,10 @@ export function useWordbookDetail(
     try {
       // 단어장에서 단어 삭제
       await wordbookService.removeWordFromWordbook(wordbookId, englishWord);
+
+      // 전역 캐시에서도 제거
+      const masteredWordsCache = (await import('../services/masteredWordsCache')).default;
+      await masteredWordsCache.removeWord(englishWord);
 
       // UI 업데이트
       setVocabulary(prev => prev.filter(word => word.english !== englishWord));

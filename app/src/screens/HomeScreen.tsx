@@ -38,15 +38,15 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       // AsyncStorage에서 통계 가져오기
       const wordbooks = await wordbookService.getWordbooks();
 
-      // 총 단어 수 계산
+      // 총 단어 수 및 외운 단어 수 계산
       let totalWords = 0;
+      let learnedWords = 0;
       for (const wordbook of wordbooks) {
         const words = await wordbookService.getWordbookWords(wordbook.id);
         totalWords += words.length;
+        // study_progress.mastered가 true인 단어만 카운팅
+        learnedWords += words.filter((w: any) => w.study_progress?.mastered === true).length;
       }
-
-      // 학습된 단어 수는 임시로 총 단어 수의 30%로 계산 (향후 학습 진도 추적 시 개선)
-      const learnedWords = Math.floor(totalWords * 0.3);
 
       // 일일 진행률 계산 (임시로 학습된 단어 수 기반)
       const dailyProgress = Math.min(learnedWords % 10, 10);

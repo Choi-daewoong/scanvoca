@@ -23,6 +23,18 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
   // route params에서 실제 OCR 결과 받기
   const { scannedText = '', detectedWords = [], imageUri = '', excludedCount = 0, excludedWords = [] } = route.params || {};
 
+  // 디버깅: 받은 데이터 확인
+  console.log('🎯 ScanResultsScreen - 받은 params:');
+  console.log(`  - detectedWords: ${detectedWords.length}개`);
+  console.log(`  - excludedCount: ${excludedCount}개`);
+  console.log(`  - excludedWords: ${excludedWords.length}개`);
+  if (excludedWords && excludedWords.length > 0) {
+    console.log('  - excludedWords 내용:');
+    excludedWords.forEach((w: any) => {
+      console.log(`    * "${w.word}" - ${w.reason}`);
+    });
+  }
+
   // 커스텀 훅 사용
   const {
     words,
@@ -31,13 +43,21 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
     showExcludedDetail,
     filteredWords,
     selectedWordsCount,
+    excludeMasteredWords,
+    masteredWordsCount,
     setActiveFilter,
     setShowExcludedDetail,
     toggleWordSelection,
     toggleSelectAll,
     handleDeleteSelected,
     getLevelColor,
-  } = useScanResults(detectedWords);
+    toggleExcludeMastered,
+  } = useScanResults(detectedWords, excludedWords);
+
+  // 디버깅: Hook 결과 확인
+  console.log('🎯 ScanResultsScreen - useScanResults 결과:');
+  console.log(`  - words: ${words.length}개`);
+  console.log(`  - masteredWordsCount: ${masteredWordsCount}개`);
 
   // 단어장 저장 버튼 클릭 핸들러
   const handleSaveToWordbook = () => {
@@ -333,43 +353,51 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
       flex: 1,
       lineHeight: 20,
     },
-    excludedBanner: {
+    // 스마트 배너 스타일
+    smartBanner: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      padding: 14,
+      borderRadius: 10,
+      marginBottom: 16,
+      marginHorizontal: 20,
+      borderWidth: 1,
+    },
+    smartBannerExcluded: {
       backgroundColor: '#E8F5E9',
-      padding: 12,
-      borderRadius: 8,
-      marginBottom: 16,
-      marginHorizontal: 20,
+      borderColor: '#4CAF50',
     },
-    excludedText: {
-      fontSize: 14,
+    smartBannerIncluded: {
+      backgroundColor: '#E3F2FD',
+      borderColor: '#2196F3',
+    },
+    smartBannerText: {
+      fontSize: 15,
+      fontWeight: '600',
+      flex: 1,
+    },
+    smartBannerTextExcluded: {
       color: '#2E7D32',
-      fontWeight: '600',
     },
-    detailLink: {
-      fontSize: 14,
-      color: '#1976D2',
-      textDecorationLine: 'underline',
+    smartBannerTextIncluded: {
+      color: '#1565C0',
     },
-    excludedDetail: {
-      backgroundColor: '#F5F5F5',
-      padding: 12,
-      borderRadius: 8,
-      marginBottom: 16,
-      marginHorizontal: 20,
+    smartBannerButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 6,
+      marginLeft: 8,
     },
-    excludedTitle: {
-      fontSize: 14,
-      fontWeight: '600',
-      marginBottom: 8,
-      color: '#424242',
-    },
-    excludedItem: {
+    smartBannerButtonText: {
       fontSize: 13,
-      color: '#616161',
-      marginBottom: 4,
+      fontWeight: '600',
+    },
+    smartBannerButtonTextExcluded: {
+      color: '#1976D2',
+    },
+    smartBannerButtonTextIncluded: {
+      color: '#F57C00',
     },
   });
 
@@ -398,27 +426,32 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
 
       {/* Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* 제외된 단어 배너 */}
-        {excludedCount > 0 && (
-          <View style={styles.excludedBanner}>
-            <Text style={styles.excludedText}>
-              ✅ 외운 단어 {excludedCount}개 제외됨
+        {/* 스마트 배너: 외운 단어 제외/포함 토글 */}
+        {masteredWordsCount > 0 && (
+          <View style={[
+            styles.smartBanner,
+            excludeMasteredWords ? styles.smartBannerExcluded : styles.smartBannerIncluded
+          ]}>
+            <Text style={[
+              styles.smartBannerText,
+              excludeMasteredWords ? styles.smartBannerTextExcluded : styles.smartBannerTextIncluded
+            ]}>
+              {excludeMasteredWords
+                ? `✅ 외운 단어 ${masteredWordsCount}개 제외됨`
+                : `📊 외운 단어 ${masteredWordsCount}개 포함됨`
+              }
             </Text>
-            <TouchableOpacity onPress={() => setShowExcludedDetail(!showExcludedDetail)}>
-              <Text style={styles.detailLink}>자세히</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* 제외된 단어 상세 */}
-        {showExcludedDetail && excludedWords && excludedWords.length > 0 && (
-          <View style={styles.excludedDetail}>
-            <Text style={styles.excludedTitle}>제외된 단어:</Text>
-            {excludedWords.map(({ word, reason }: { word: string; reason?: string }) => (
-              <Text key={word} style={styles.excludedItem}>
-                • {word} ({reason || '알 수 없음'})
+            <TouchableOpacity
+              onPress={toggleExcludeMastered}
+              style={styles.smartBannerButton}
+            >
+              <Text style={[
+                styles.smartBannerButtonText,
+                excludeMasteredWords ? styles.smartBannerButtonTextExcluded : styles.smartBannerButtonTextIncluded
+              ]}>
+                {excludeMasteredWords ? '↩️ 다시 포함' : '🎯 제외하기'}
               </Text>
-            ))}
+            </TouchableOpacity>
           </View>
         )}
 

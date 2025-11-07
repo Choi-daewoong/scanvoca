@@ -7,6 +7,7 @@ import * as FileSystem from 'expo-file-system';
 
 // Smart Dictionary Service (GPT + Local JSON)
 import smartDictionaryService from './src/services/smartDictionaryService';
+import masteredWordsCache from './src/services/masteredWordsCache';
 
 // Environment & Configuration
 import { validateEnv, debugEnv } from './src/utils/env';
@@ -22,6 +23,7 @@ import { LoadingScreen, ErrorScreen } from './src/components/common';
 
 // Wordbook Import
 import { importWordbookFromFile } from './src/services/wordbookExportImport';
+import { initialDataService } from './src/services/initialDataService';
 
 // Deep Linking 구성
 const linking: LinkingOptions<RootStackParamList> = {
@@ -252,6 +254,14 @@ export default function App() {
       // Smart Dictionary Service 초기화 (GPT + Local JSON)
       console.log('🤖 Smart Dictionary Service 초기화 중...');
       await smartDictionaryService.initialize();
+
+      // 외운 단어 캐시 초기화 (OCR 필터링 속도 향상)
+      console.log('📚 외운 단어 캐시 초기화 중...');
+      await masteredWordsCache.initialize();
+
+      // 앱 최초 실행 시 기본 단어장 생성
+      console.log('📖 기본 단어장 생성 확인 중...');
+      await initialDataService.setupInitialWordbooks();
 
       setIsAppInitialized(true);
       console.log('✅ 앱 초기화 완료!');

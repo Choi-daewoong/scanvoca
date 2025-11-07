@@ -1,242 +1,127 @@
-/**
- * 초기 단어장 데이터 로딩 서비스
- * 앱 첫 실행시 100개 기초 단어를 로드
- */
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// Metro 번들러 문제 해결을 위해 기본 데이터만 import
-import basicWordbook from '../../assets/basic-wordbook.json';
+import { wordbookService } from './wordbookService';
+import allWords from '../../assets/complete-wordbook.json';
 
-export interface InitialWord {
-  word: string;
-  pronunciation: string;
-  difficulty: number;
-  meanings: Array<{
-    korean: string;
-    partOfSpeech: string;
-    english: string;
-  }>;
-  examples: Array<{
-    en: string;
-    ko: string;
-  }>;
-}
+// --- Configuration ---
+const INIT_KEY = '@app/initial_wordbooks_created_v2';
 
-export interface InitialWordbook {
-  version: string;
-  generatedAt: string;
-  totalWords: number;
-  description: string;
-  words: InitialWord[];
-}
+const INITIAL_WORDBOOKS_CONFIG = [
+  {
+    name: '중학 기초 영단어',
+    description: '중학교 수준의 필수 기초 단어 100개입니다.',
+    difficulty: 1,
+    count: 100,
+  },
+  {
+    name: '고등 기초 영단어',
+    description: '고등학교 수준의 필수 기초 단어 100개입니다.',
+    difficulty: 2,
+    count: 100,
+  },
+  {
+    name: 'TOEIC 기초 영단어',
+    description: '토익 시험 대비를 위한 기초 단어 100개입니다.',
+    difficulty: 3,
+    count: 100,
+  },
+  {
+    name: '생활영어 기초 단어',
+    description: '일상 회화에서 자주 사용되는 기초 단어 100개입니다.',
+    difficulty: 1, // 중학 기초와 같은 레벨이지만, 다른 단어를 추출
+    count: 100,
+  },
+];
 
 class InitialDataService {
-  private readonly INIT_KEY = 'app_initialized_basic';
-  private readonly DEFAULT_WORDBOOK_KEY = 'wordbook_1';
-  private readonly WORDBOOKS_KEY = 'wordbooks';
-  private readonly COMPLETE_DATA_KEY = 'complete_wordbook_loaded';
-
   /**
-   * 완전한 단어장 데이터를 동적으로 로드
+   * 앱 최초 실행 시 기본 단어장들을 설정합니다.
+   * 이미 생성된 경우 아무 작업도 수행하지 않습니다.
    */
-  async loadCompleteWordbook(): Promise<InitialWordbook | null> {
+  async setupInitialWordbooks(): Promise<void> {
     try {
-      console.log('📚 완전한 단어장 데이터 동적 로딩 시도 중...');
-
-      // 동적 import로 complete-wordbook.json 로드 시도
-      const completeWordbook = await import('../../assets/complete-wordbook.json');
-      console.log(`✅ 완전한 단어장 로드 성공: ${completeWordbook.default.totalWords}개 단어`);
-
-      return completeWordbook.default as InitialWordbook;
-    } catch (error) {
-      console.warn('⚠️ 완전한 단어장 로드 실패, 기본 데이터 사용:', error);
-      return null;
-    }
-  }
-
-  /**
-   * 앱이 초기화되었는지 확인
-   */
-  async isAppInitialized(): Promise<boolean> {
-    try {
-      const initialized = await AsyncStorage.getItem(this.INIT_KEY);
-      return initialized === 'true';
-    } catch (error) {
-      console.error('Failed to check app initialization:', error);
-      return false;
-    }
-  }
-
-  /**
-   * 기본 단어장 생성
-   */
-  async createDefaultWordbook(): Promise<void> {
-    try {
-      console.log('📚 기본 단어장 생성 중...');
-
-      // 1. 완전한 단어장 데이터 로드 시도
-      const completeWordbook = await this.loadCompleteWordbook();
-
-      let sourceWordbook: InitialWordbook;
-      let description: string;
-
-      if (completeWordbook) {
-        sourceWordbook = completeWordbook;
-        description = `앱에 포함된 ${completeWordbook.totalWords}개 완전한 영단어`;
-        console.log(`🎉 완전한 단어장 사용: ${completeWordbook.totalWords}개 단어`);
-      } else {
-        sourceWordbook = basicWordbook as InitialWordbook;
-        description = "앱에 포함된 100개 기초 영단어";
-        console.log('⚠️ 기본 단어장 사용: 100개 단어');
+      const isAlreadyInitialized = await AsyncStorage.getItem(INIT_KEY);
+      if (isAlreadyInitialized === 'true') {
+        console.log('✅ 기본 단어장이 이미 생성되어 있습니다. 건너뜁니다.');
+        return;
       }
 
-      // 2. 단어장 메타데이터 생성
-      const defaultWordbook = {
-        id: 1,
-        name: "기본 단어장",
-        description,
-        is_default: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+      console.log('🚀 앱 최초 실행! 기본 단어장 생성을 시작합니다...');
+
+      // 1. 난이도별로 단어 풀 생성
+      const wordsByDifficulty: Record<number, string[]> = {
+        1: [],
+        2: [],
+        3: [],
       };
 
-      // 3. 단어장 목록에 추가
-      const wordbooks = [defaultWordbook];
-      await AsyncStorage.setItem(this.WORDBOOKS_KEY, JSON.stringify(wordbooks));
-
-      // 4. 단어 데이터 변환 및 저장
-      const sourceWords = sourceWordbook.words;
-
-      const convertedWords = sourceWords.map((word: any, index: number) => ({
-        id: index + 1,
-        word: word.word,
-        pronunciation: word.pronunciation,
-        difficulty_level: word.difficulty,
-        meanings: word.meanings.map((meaning: any) => ({
-          korean_meaning: meaning.korean,
-          part_of_speech: meaning.partOfSpeech,
-          definition_en: meaning.english
-        })),
-        examples: word.examples || [],
-        addedAt: new Date().toISOString()
-      }));
-
-      // 4. 기본 단어장에 단어들 저장
-      await AsyncStorage.setItem(this.DEFAULT_WORDBOOK_KEY, JSON.stringify(convertedWords));
-
-      console.log(`✅ 기본 단어장 생성 완료: ${convertedWords.length}개 단어`);
-
-      // 5. 초기화 완료 마킹
-      await AsyncStorage.setItem(this.INIT_KEY, 'true');
-
-    } catch (error) {
-      console.error('❌ 기본 단어장 생성 실패:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * 앱 초기화 (필요시에만 실행)
-   */
-  async initializeApp(): Promise<boolean> {
-    try {
-      const isInitialized = await this.isAppInitialized();
-
-      if (isInitialized) {
-        console.log('✅ 앱이 이미 초기화되어 있습니다');
-        return false; // 이미 초기화됨
+      for (const word of allWords.words) {
+        if (wordsByDifficulty[word.difficulty]) {
+          wordsByDifficulty[word.difficulty].push(word.word);
+        }
       }
 
-      console.log('🚀 앱 초기화 시작...');
-      await this.createDefaultWordbook();
-      console.log('🎉 앱 초기화 완료!');
+      // 2. 각 단어장 설정에 따라 단어장 생성 및 단어 추가
+      for (const config of INITIAL_WORDBOOKS_CONFIG) {
+        console.log(`⏳ "${config.name}" 단어장 생성 중...`);
 
-      return true; // 새로 초기화됨
+        const wordPool = wordsByDifficulty[config.difficulty];
+        if (!wordPool || wordPool.length < config.count) {
+          console.warn(`⚠️ "${config.name}" 생성에 필요한 단어가 부족합니다. 건너뜁니다.`);
+          continue;
+        }
 
-    } catch (error) {
-      console.error('❌ 앱 초기화 실패:', error);
-      throw error;
-    }
-  }
+        // 단어 풀에서 무작위로 단어 선택 (중복 방지)
+        const selectedWords = this.getRandomWords(wordPool, config.count);
 
-  /**
-   * 초기화 상태 리셋 (개발/테스트용)
-   */
-  async resetInitialization(): Promise<void> {
-    try {
-      console.log('🔄 초기화 상태 리셋...');
+        // 단어장 생성
+        const newWordbookId = await wordbookService.createWordbook(
+          config.name,
+          config.description
+        );
 
-      await AsyncStorage.multiRemove([
-        this.INIT_KEY,
-        this.DEFAULT_WORDBOOK_KEY,
-        this.WORDBOOKS_KEY,
-        this.COMPLETE_DATA_KEY
-      ]);
+        // 생성된 단어장에 단어 추가
+        await wordbookService.addWordsToWordbook(newWordbookId, selectedWords);
 
-      console.log('✅ 초기화 상태 리셋 완료');
+        // 사용된 단어는 풀에서 제거하여 다음 단어장에서 중복 선택 방지
+        wordsByDifficulty[config.difficulty] = wordPool.filter(
+          (word) => !selectedWords.includes(word)
+        );
 
-    } catch (error) {
-      console.error('❌ 초기화 리셋 실패:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * 완전한 단어장으로 강제 재초기화 (개발/테스트용)
-   */
-  async forceCompleteWordbookInit(): Promise<void> {
-    try {
-      console.log('🚀 완전한 단어장으로 강제 재초기화 시작...');
-
-      // 기존 데이터 삭제
-      await this.resetInitialization();
-
-      // 새로운 초기화 실행
-      await this.initializeApp();
-
-      console.log('✅ 완전한 단어장 재초기화 완료!');
-    } catch (error) {
-      console.error('❌ 강제 재초기화 실패:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * 초기화 정보 조회
-   */
-  async getInitializationInfo(): Promise<{
-    isInitialized: boolean;
-    version?: string;
-    wordCount?: number;
-    initDate?: string;
-  }> {
-    try {
-      const isInitialized = await this.isAppInitialized();
-
-      if (!isInitialized) {
-        return { isInitialized: false };
+        console.log(`✅ "${config.name}" 단어장 생성 완료 (${selectedWords.length}개 단어 추가)`);
       }
 
-      const wordbooks = await AsyncStorage.getItem(this.WORDBOOKS_KEY);
-      const defaultWords = await AsyncStorage.getItem(this.DEFAULT_WORDBOOK_KEY);
-
-      const wordbookData = wordbooks ? JSON.parse(wordbooks) : [];
-      const defaultWordbook = wordbookData.find((wb: any) => wb.id === 1);
-      const words = defaultWords ? JSON.parse(defaultWords) : [];
-
-      return {
-        isInitialized: true,
-        version: (basicWordbook as InitialWordbook).version,
-        wordCount: words.length,
-        initDate: defaultWordbook?.created_at
-      };
+      // 3. 모든 작업 완료 후 플래그 설정
+      await AsyncStorage.setItem(INIT_KEY, 'true');
+      console.log('🎉 모든 기본 단어장 생성이 완료되었습니다.');
 
     } catch (error) {
-      console.error('Failed to get initialization info:', error);
-      return { isInitialized: false };
+      console.error('❌ 기본 단어장 생성 중 오류가 발생했습니다:', error);
+      // 오류 발생 시 플래그를 설정하지 않아 다음 실행 시 재시도하도록 함
+    }
+  }
+
+  /**
+   * 단어 배열에서 지정된 수만큼 무작위로 단어를 추출합니다.
+   * @param words - 단어 배열
+   * @param count - 추출할 단어 수
+   * @returns 무작위로 선택된 단어 배열
+   */
+  private getRandomWords(words: string[], count: number): string[] {
+    const shuffled = [...words].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  }
+
+  /**
+   * 개발/테스트용: 초기화 플래그를 제거하여 재생성을 유도합니다.
+   */
+  async resetInitializationFlag(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(INIT_KEY);
+      console.log('🔄 초기화 플래그가 성공적으로 제거되었습니다.');
+    } catch (error) {
+      console.error('❌ 초기화 플래그 제거 중 오류 발생:', error);
     }
   }
 }
 
 export const initialDataService = new InitialDataService();
-export default initialDataService;

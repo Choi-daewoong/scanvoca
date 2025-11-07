@@ -27,7 +27,7 @@ export default function DataSourceBadge({
       case 'gpt':
         return {
           icon: '🤖',
-          text: 'GPT',
+          text: 'AI',
           color: theme.colors.primary.main,
           backgroundColor: `${theme.colors.primary.main}15`,
           description: 'AI Generated'
