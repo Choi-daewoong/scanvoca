@@ -524,12 +524,12 @@ class SmartDictionaryService {
 
 중요 지시사항:
 1.  입력된 단어의 정의, 의미, 예문 등 모든 정보는 **입력된 단어 그대로**를 기준으로 작성해주세요. (예: 'musician'이 입력되면 'music'이 아닌 'musician'에 대한 설명)
-2.  만약 입력된 단어가 파생어(예: musician, quickly, hopeful)일 경우, 그 단어의 어근(root word)을 `rootWord` 필드에 추가해주세요. (예: musician -> music)
-3.  변형된 단어(복수형, 과거형 등)가 입력되면, 기본형(원형)을 찾아 `word` 필드에 넣어주세요. (예: running -> run)
+2.  만약 입력된 단어가 파생어(예: musician, quickly, hopeful)일 경우, 그 단어의 어근(root word)을 'rootWord' 필드에 추가해주세요. (예: musician -> music)
+3.  변형된 단어(복수형, 과거형 등)가 입력되면, 기본형(원형)을 찾아 'word' 필드에 넣어주세요. (예: running -> run)
 
 각 단어에 대해 다음 정보를 제공해주세요:
-1.  기본형 단어 (`word`)
-2.  어근 단어 (`rootWord`, 파생어일 경우에만)
+1.  기본형 단어 ('word')
+2.  어근 단어 ('rootWord', 파생어일 경우에만)
 3.  정확한 발음기호 (IPA 형식)
 4.  주요 의미들 (품사, 한국어 뜻, 영어 설명)
 5.  간단하고 실용적인 예문 (영어, 한국어) - **반드시 입력된 단어를 사용**

@@ -326,8 +326,15 @@ export function useWordbookDetail(
   // 단어 삭제 (즉시 삭제)
   const deleteWord = async (englishWord: string) => {
     try {
+      // 단어 ID 찾기
+      const wordToDelete = vocabulary.find(word => word.english === englishWord);
+      if (!wordToDelete) {
+        console.error(`단어 "${englishWord}"를 찾을 수 없습니다.`);
+        return;
+      }
+
       // 단어장에서 단어 삭제
-      await wordbookService.removeWordFromWordbook(wordbookId, englishWord);
+      await wordbookService.removeWordFromWordbook(wordbookId, wordToDelete.id);
 
       // 전역 캐시에서도 제거
       const masteredWordsCache = (await import('../services/masteredWordsCache')).default;

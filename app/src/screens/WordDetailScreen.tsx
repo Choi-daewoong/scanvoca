@@ -399,11 +399,7 @@ export default function WordDetailScreen({ route, navigation }: WordDetailScreen
             <View key={index} style={styles.meaningItem}>
               <View style={styles.meaningLine}>
                 <Text style={styles.posTag}>{meaning.partOfSpeech}</Text>
-                <Text style={styles.koreanMeaning}>
-                  {typeof meaning.korean === 'string'
-                    ? meaning.korean
-                    : meaning.korean?.ko || meaning.korean?.korean || JSON.stringify(meaning.korean)}
-                </Text>
+                <Text style={styles.koreanMeaning}>{meaning.korean || ''}</Text>
               </View>
               {meaning.english && (
                 <Text style={styles.englishMeaning}>{meaning.english}</Text>
@@ -412,7 +408,7 @@ export default function WordDetailScreen({ route, navigation }: WordDetailScreen
               {/* 의미별 예문 */}
               {meaning.examples && meaning.examples.length > 0 && (
                 <View style={{ marginTop: 12 }}>
-                  {meaning.examples.map((example, exIdx) => (
+                  {meaning.examples.map((example: any, exIdx: number) => (
                     <View key={exIdx} style={styles.exampleItem}>
                       <Text style={styles.exampleEn}>
                         {typeof example === 'string' ? example : example?.en || ''}
@@ -432,7 +428,7 @@ export default function WordDetailScreen({ route, navigation }: WordDetailScreen
         {word.customExamples && word.customExamples.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>추가 예문</Text>
-            {word.customExamples.map((example, index) => (
+            {word.customExamples.map((example: any, index: number) => (
               <View key={index} style={styles.exampleItem}>
                 <Text style={styles.exampleEn}>
                   {typeof example === 'string' ? example : example?.en || ''}

@@ -50,7 +50,7 @@ export default function StudyStatsScreen({ navigation }: StudyStatsScreenProps) 
 
         // 레벨별 단어 수 및 학습된 단어 수 계산
         for (const word of words) {
-          const level = word.level || word.difficulty || 3; // level 또는 difficulty 사용, 기본값 3
+          const level = word.difficulty || 3; // difficulty 사용, 기본값 3
           if (levelCounts[level] !== undefined) {
             levelCounts[level]++;
             if ((word as any).study_progress?.mastered === true) {
