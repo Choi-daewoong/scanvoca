@@ -1,0 +1,141 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1b4b;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#312e81;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="lens-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#EC4899;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#06B6D4;stop-opacity:1" />
+    </linearGradient>
+
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:0.8" />
+      <stop offset="50%" style="stop-color:#EC4899;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#06B6D4;stop-opacity:0" />
+    </radialGradient>
+
+    <filter id="glow-filter">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="226" fill="url(#bg-gradient)"/>
+
+  <!-- Glow effect background -->
+  <circle cx="512" cy="512" r="400" fill="url(#glow)" opacity="0.3"/>
+
+  <!-- Neural network pattern -->
+  <!-- Top-left nodes -->
+  <circle cx="300" cy="280" r="8" fill="#8B5CF6" opacity="0.6"/>
+  <circle cx="350" cy="250" r="6" fill="#A78BFA" opacity="0.5"/>
+  <circle cx="250" cy="320" r="7" fill="#C084FC" opacity="0.6"/>
+
+  <!-- Top-right nodes -->
+  <circle cx="724" cy="280" r="8" fill="#EC4899" opacity="0.6"/>
+  <circle cx="674" cy="250" r="6" fill="#F472B6" opacity="0.5"/>
+  <circle cx="774" cy="320" r="7" fill="#F9A8D4" opacity="0.6"/>
+
+  <!-- Bottom-left nodes -->
+  <circle cx="300" cy="744" r="8" fill="#06B6D4" opacity="0.6"/>
+  <circle cx="350" cy="774" r="6" fill="#22D3EE" opacity="0.5"/>
+  <circle cx="250" cy="704" r="7" fill="#67E8F9" opacity="0.6"/>
+
+  <!-- Bottom-right nodes -->
+  <circle cx="724" cy="744" r="8" fill="#8B5CF6" opacity="0.6"/>
+  <circle cx="674" cy="774" r="6" fill="#A78BFA" opacity="0.5"/>
+  <circle cx="774" cy="704" r="7" fill="#C084FC" opacity="0.6"/>
+
+  <!-- Neural connections (lines) -->
+  <line x1="300" y1="280" x2="512" y2="400" stroke="#8B5CF6" stroke-width="2" opacity="0.3"/>
+  <line x1="350" y1="250" x2="512" y2="400" stroke="#A78BFA" stroke-width="2" opacity="0.3"/>
+  <line x1="724" y1="280" x2="512" y2="400" stroke="#EC4899" stroke-width="2" opacity="0.3"/>
+  <line x1="300" y1="744" x2="512" y2="624" stroke="#06B6D4" stroke-width="2" opacity="0.3"/>
+  <line x1="724" y1="744" x2="512" y2="624" stroke="#8B5CF6" stroke-width="2" opacity="0.3"/>
+
+  <!-- Main camera lens circle -->
+  <circle cx="512" cy="512" r="220" fill="none" stroke="url(#lens-gradient)" stroke-width="6" filter="url(#glow-filter)"/>
+  <circle cx="512" cy="512" r="200" fill="#1e293b" opacity="0.9"/>
+
+  <!-- Inner lens details -->
+  <circle cx="512" cy="512" r="160" fill="none" stroke="url(#lens-gradient)" stroke-width="3" opacity="0.6"/>
+  <circle cx="512" cy="512" r="120" fill="none" stroke="url(#lens-gradient)" stroke-width="2" opacity="0.4"/>
+
+  <!-- AI Brain pattern inside lens -->
+  <!-- Center nodes -->
+  <circle cx="512" cy="450" r="10" fill="#8B5CF6" filter="url(#glow-filter)"/>
+  <circle cx="480" cy="500" r="8" fill="#EC4899" filter="url(#glow-filter)"/>
+  <circle cx="544" cy="500" r="8" fill="#06B6D4" filter="url(#glow-filter)"/>
+  <circle cx="512" cy="550" r="10" fill="#A78BFA" filter="url(#glow-filter)"/>
+  <circle cx="450" cy="512" r="7" fill="#F472B6" filter="url(#glow-filter)"/>
+  <circle cx="574" cy="512" r="7" fill="#22D3EE" filter="url(#glow-filter)"/>
+
+  <!-- Neural connections inside -->
+  <line x1="512" y1="450" x2="480" y2="500" stroke="#8B5CF6" stroke-width="2" opacity="0.6"/>
+  <line x1="512" y1="450" x2="544" y2="500" stroke="#EC4899" stroke-width="2" opacity="0.6"/>
+  <line x1="480" y1="500" x2="512" y2="550" stroke="#A78BFA" stroke-width="2" opacity="0.6"/>
+  <line x1="544" y1="500" x2="512" y2="550" stroke="#06B6D4" stroke-width="2" opacity="0.6"/>
+  <line x1="450" y1="512" x2="480" y2="500" stroke="#F472B6" stroke-width="2" opacity="0.6"/>
+  <line x1="574" y1="512" x2="544" y2="500" stroke="#22D3EE" stroke-width="2" opacity="0.6"/>
+
+  <!-- Scan lines effect -->
+  <line x1="380" y1="512" x2="644" y2="512" stroke="#06B6D4" stroke-width="1" opacity="0.3">
+    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2s" repeatCount="indefinite"/>
+  </line>
+  <line x1="380" y1="492" x2="644" y2="492" stroke="#8B5CF6" stroke-width="1" opacity="0.2">
+    <animate attributeName="opacity" values="0.2;0.6;0.2" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+  </line>
+  <line x1="380" y1="532" x2="644" y2="532" stroke="#EC4899" stroke-width="1" opacity="0.2">
+    <animate attributeName="opacity" values="0.2;0.6;0.2" dur="2s" begin="1s" repeatCount="indefinite"/>
+  </line>
+
+  <!-- Lens highlight -->
+  <ellipse cx="450" cy="450" rx="40" ry="30" fill="#ffffff" opacity="0.15"/>
+
+  <!-- VOCA Text at bottom -->
+  <defs>
+    <linearGradient id="text-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#EC4899;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#06B6D4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <text
+    x="512"
+    y="820"
+    font-family="'Arial Black', 'Helvetica', sans-serif"
+    font-size="120"
+    font-weight="900"
+    text-anchor="middle"
+    fill="url(#text-gradient)"
+    filter="url(#glow-filter)"
+    letter-spacing="12">
+    VOCA
+  </text>
+
+  <!-- Text outline for depth -->
+  <text
+    x="512"
+    y="820"
+    font-family="'Arial Black', 'Helvetica', sans-serif"
+    font-size="120"
+    font-weight="900"
+    text-anchor="middle"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="2"
+    opacity="0.3"
+    letter-spacing="12">
+    VOCA
+  </text>
+</svg>
