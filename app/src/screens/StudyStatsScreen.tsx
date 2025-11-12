@@ -50,7 +50,7 @@ export default function StudyStatsScreen({ navigation }: StudyStatsScreenProps) 
 
         // 레벨별 단어 수 및 학습된 단어 수 계산
         for (const word of words) {
-          const level = word.level || word.difficulty || 3; // level 또는 difficulty 사용, 기본값 3
+          const level = word.difficulty || 3; // difficulty 사용, 기본값 3
           if (levelCounts[level] !== undefined) {
             levelCounts[level]++;
             if ((word as any).study_progress?.mastered === true) {
@@ -74,7 +74,49 @@ export default function StudyStatsScreen({ navigation }: StudyStatsScreenProps) 
       }
 
       // 학습 통계 (실제 데이터 기반)
-      const learningWords = 0; // TODO: 현재 학습중인 단어 추적 시스템 구축 필요
+      // 학습중인 단어 = 전체 단어 - 외운 단어
+      const learningWords = totalWords - memorizedWords;
+
+      // 연속 학습일 계산
+      let studyStreak = 0;
+      const allWords: any[] = [];
+      for (const wordbook of wordbooks) {
+        const words = await wordbookService.getWordbookWords(wordbook.id);
+        allWords.push(...words);
+      }
+
+      // 오늘부터 거슬러 올라가면서 연속 학습일 계산
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      let checkDate = new Date(today);
+      let consecutiveDays = 0;
+
+      // 최대 365일까지만 체크
+      for (let i = 0; i < 365; i++) {
+        const checkTimestamp = checkDate.getTime();
+
+        // 해당 날짜에 학습한 단어가 있는지 확인
+        const hasStudiedOnThisDay = allWords.some(word => {
+          if (word.study_progress?.last_studied) {
+            const lastStudiedDate = new Date(word.study_progress.last_studied);
+            lastStudiedDate.setHours(0, 0, 0, 0);
+            return lastStudiedDate.getTime() === checkTimestamp;
+          }
+          return false;
+        });
+
+        if (hasStudiedOnThisDay) {
+          consecutiveDays++;
+          // 하루 전으로 이동
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          // 연속 학습이 끊김
+          break;
+        }
+      }
+
+      studyStreak = consecutiveDays;
 
       // 단어장 통계
       const totalWordbooks = wordbooks.length;
@@ -103,10 +145,10 @@ export default function StudyStatsScreen({ navigation }: StudyStatsScreenProps) 
         totalWords,
         memorizedWords,
         learningWords,
-        unstudiedWords: totalWords - memorizedWords - learningWords,
+        unstudiedWords: 0, // 학습중인 단어가 아직 외우지 않은 단어이므로 별도로 카운트하지 않음
         totalQuizzes: 0, // TODO: 퀴즈 기록 시스템 구축 후 계산
         averageAccuracy: 0, // TODO: 퀴즈 기록 시스템 구축 후 계산
-        studyStreak: 0, // TODO: 일일 학습 기록 시스템 구축 후 계산
+        studyStreak,
         wordbookStats: {
           totalWordbooks,
           averageWordsPerWordbook,

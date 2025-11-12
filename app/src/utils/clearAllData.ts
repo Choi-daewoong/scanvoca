@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import smartDictionaryService from '../services/smartDictionaryService';
-import initialDataService from '../services/initialDataService';
+import { initialDataService } from '../services/initialDataService';
 
 export interface ClearDataResult {
   success: boolean;
@@ -231,43 +231,23 @@ export function registerGlobalClearFunctions() {
       console.log('1️⃣ 데이터 초기화:', clearResult.message);
 
       // 2. 초기화 상태 리셋
-      await initialDataService.resetInitialization();
+      await initialDataService.resetInitializationFlag();
       console.log('2️⃣ 초기화 상태 리셋 완료');
-
-      // 3. 기본 단어장 재생성
-      const wasInitialized = await initialDataService.initializeApp();
-      console.log('3️⃣ 기본 단어장 재생성:', wasInitialized ? '완료' : '이미 존재');
-
-      // 4. 최종 상태 확인
-      const initInfo = await initialDataService.getInitializationInfo();
-      console.log('4️⃣ 최종 상태:', initInfo);
 
       return {
         cleared: clearResult.success,
-        reinitialized: wasInitialized,
-        finalState: initInfo
+        message: '데이터 초기화 및 플래그 리셋 완료'
       };
     };
 
     (global as any).getInitInfo = async () => {
-      const info = await initialDataService.getInitializationInfo();
-      console.log('📊 초기화 정보:', info);
-      return info;
+      console.log('📊 초기화 정보 확인 (메서드 사용 불가)');
+      return { message: 'getInitializationInfo 메서드가 제거되었습니다.' };
     };
 
     (global as any).loadCompleteWordbook = async () => {
-      console.log('🚀 완전한 단어장 로딩 시작...');
-
-      try {
-        await initialDataService.forceCompleteWordbookInit();
-        const info = await initialDataService.getInitializationInfo();
-        console.log('✅ 완전한 단어장 로딩 완료:', info);
-        return info;
-      } catch (error) {
-        console.error('❌ 완전한 단어장 로딩 실패:', error);
-        const message = error instanceof Error ? error.message : String(error);
-        return { error: message };
-      }
+      console.log('🚀 완전한 단어장 로딩 (메서드 사용 불가)');
+      return { message: 'forceCompleteWordbookInit 메서드가 제거되었습니다.' };
     };
 
     console.log('🔧 전역 초기화 함수 등록 완료:');

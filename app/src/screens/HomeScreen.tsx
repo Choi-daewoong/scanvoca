@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { HomeScreenProps } from '../navigation/types';
 import { useTheme } from '../styles/ThemeProvider';
 import { wordbookService } from '../services/wordbookService';
@@ -23,9 +24,12 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadHomeStats();
-  }, []);
+  // 화면이 focus될 때마다 통계 다시 로드
+  useFocusEffect(
+    useCallback(() => {
+      loadHomeStats();
+    }, [])
+  );
 
   const loadHomeStats = useCallback(async (isRefresh = false) => {
     try {
@@ -41,15 +45,35 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       // 총 단어 수 및 외운 단어 수 계산
       let totalWords = 0;
       let learnedWords = 0;
+      let dailyProgress = 0;
+
+      // 오늘 날짜 (자정 기준)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayTimestamp = today.getTime();
+
       for (const wordbook of wordbooks) {
         const words = await wordbookService.getWordbookWords(wordbook.id);
         totalWords += words.length;
-        // study_progress.mastered가 true인 단어만 카운팅
-        learnedWords += words.filter((w: any) => w.study_progress?.mastered === true).length;
-      }
 
-      // 일일 진행률 계산 (임시로 학습된 단어 수 기반)
-      const dailyProgress = Math.min(learnedWords % 10, 10);
+        for (const word of words) {
+          // study_progress.mastered가 true인 단어만 카운팅
+          if (word.study_progress?.mastered === true) {
+            learnedWords++;
+          }
+
+          // 오늘 학습한 단어 카운트 (last_studied가 오늘인 경우)
+          if (word.study_progress?.last_studied) {
+            const lastStudiedDate = new Date(word.study_progress.last_studied);
+            lastStudiedDate.setHours(0, 0, 0, 0);
+            const lastStudiedTimestamp = lastStudiedDate.getTime();
+
+            if (lastStudiedTimestamp === todayTimestamp) {
+              dailyProgress++;
+            }
+          }
+        }
+      }
 
       setStats(prev => ({
         ...prev,

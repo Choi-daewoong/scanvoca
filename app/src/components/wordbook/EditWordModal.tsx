@@ -59,11 +59,26 @@ export default function EditWordModal({
   }, [visible, word]);
 
   /**
+   * 품사 선택 옵션 (한글로 표시)
+   */
+  const partOfSpeechOptions = [
+    { value: '명사', label: '명사' },
+    { value: '동사', label: '동사' },
+    { value: '형용사', label: '형용사' },
+    { value: '부사', label: '부사' },
+    { value: '전치사', label: '전치사' },
+    { value: '접속사', label: '접속사' },
+    { value: '감탄사', label: '감탄사' },
+    { value: '대명사', label: '대명사' },
+    { value: '한정사', label: '한정사' },
+  ];
+
+  /**
    * 뜻 추가
    */
   const handleAddMeaning = () => {
     const newMeaning: CustomMeaning = {
-      partOfSpeech: 'noun',
+      partOfSpeech: '명사',
       korean: '',
       english: '',
       examples: [],
@@ -195,19 +210,6 @@ export default function EditWordModal({
       Alert.alert('오류', '단어 저장에 실패했습니다.');
     }
   };
-
-  /**
-   * 품사 선택 옵션
-   */
-  const partOfSpeechOptions = [
-    { value: 'noun', label: '명사' },
-    { value: 'verb', label: '동사' },
-    { value: 'adjective', label: '형용사' },
-    { value: 'adverb', label: '부사' },
-    { value: 'preposition', label: '전치사' },
-    { value: 'conjunction', label: '접속사' },
-    { value: 'interjection', label: '감탄사' },
-  ];
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>

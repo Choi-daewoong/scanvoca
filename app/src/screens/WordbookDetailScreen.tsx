@@ -21,6 +21,7 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
     vocabulary,
     currentMode,
     currentDisplayFilter,
+    showOnlyUnlearned,
     currentLevelFilters,
     selectedWords,
     isShuffled,
@@ -40,6 +41,7 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
     memorizedWords,
     setCurrentMode,
     setCurrentDisplayFilter,
+    setShowOnlyUnlearned,
     setCurrentLevelFilters,
     setIsEditingTitle,
     setEditedTitle,
@@ -103,11 +105,13 @@ export default function WordbookDetailScreen({ navigation, route }: WordbookDeta
         <StudyModeView
           words={getFilteredWords()}
           currentDisplayFilter={currentDisplayFilter}
+          showOnlyUnlearned={showOnlyUnlearned}
           currentLevelFilters={currentLevelFilters}
           selectedWords={selectedWords}
           flippedCards={flippedCards}
           isDeletionMode={isDeletionMode}
           onFilterChange={setCurrentDisplayFilter}
+          onToggleUnlearned={() => setShowOnlyUnlearned(!showOnlyUnlearned)}
           onLevelFilterChange={setCurrentLevelFilters}
           onShuffle={shuffleWords}
           onToggleDeletionMode={toggleDeletionMode}

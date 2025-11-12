@@ -116,6 +116,22 @@ data-scripts/              # ✅ 완성된 데이터 처리 스크립트
 
 ## 🎯 명령어 (Commands)
 
+### ⚠️ 서버 시작 전 필수 체크리스트 (CRITICAL!)
+**서버 실행 전 반드시 다음 순서대로 실행:**
+
+```bash
+# 1️⃣ 타입 체크 (문법 오류 확인) - 필수!
+cd app && npm run typecheck
+
+# 2️⃣ 오류가 있으면 먼저 수정 후 진행
+# 3️⃣ 모든 체크가 통과하면 서버 시작
+```
+
+**❌ 절대 하지 말 것:**
+- 타입 체크 없이 바로 서버 시작
+- 백그라운드로 실행하면서 오류 확인 늦어짐
+- 오류 발생 시 서버만 재시작 (코드 수정 먼저!)
+
 ### 개발 환경 (🔧 Dev Client 사용 중)
 ```bash
 # 개발 서버 (앱 디렉토리에서 실행) - Dev Client 모드
@@ -142,8 +158,10 @@ cd app && eas build --profile development --platform ios       # Dev Client IPA 
 # - localhost/127.0.0.1은 모바일 기기에서 접근 불가
 # - 동일한 Wi-Fi 네트워크에서 192.168.0.3:8087로 접속
 
-# 웹 실행 (제한적 - 네이티브 모듈 미지원)
-cd app && npm run web                # 웹 브라우저 (TTS, 카메라 등 제한적)
+# ❌ 웹 실행 (지원하지 않음)
+# 웹 플랫폼에서는 import.meta 오류 등으로 정상 작동하지 않습니다.
+# 네이티브 모듈(TTS, 카메라, OCR)을 사용하므로 Dev Client 전용입니다.
+# cd app && npm run web  # ← 사용하지 마세요!
 
 # 코드 품질 검사
 cd app && npm run typecheck          # TypeScript 타입 체크
@@ -462,6 +480,116 @@ npm install react-native-image-editor
 
 ---
 
+## 🚨 트러블슈팅 (Troubleshooting)
+
+### 서버가 "Waiting on" 상태에서 멈춤
+
+**원인:** 코드 문법 오류 또는 타입 오류로 번들링 실패
+
+**해결 방법:**
+```bash
+# 1. 서버 중지 (Ctrl+C 또는 터미널 종료)
+# 2. 타입 체크 실행
+cd app && npm run typecheck
+
+# 3. 오류가 있으면 수정 후 다시 실행
+# 4. 모든 오류 수정 후 서버 재시작
+cd app && npx expo start --dev-client --port 8090 --host lan
+```
+
+### 포트 충돌 오류 (Port already in use)
+
+**원인:** 이전 서버 프로세스가 포트를 점유 중
+
+**해결 방법:**
+```bash
+# Windows
+netstat -ano | findstr :8090
+taskkill //F //PID [PID번호]
+
+# 또는 다른 포트 사용
+cd app && npx expo start --dev-client --port 8091 --host lan
+```
+
+### 웹에서 import.meta 오류
+
+**원인:** 웹 플랫폼은 지원하지 않음 (정상)
+
+**해결 방법:**
+- ❌ 웹 브라우저 사용 금지
+- ✅ Dev Client APK/IPA 사용
+- ✅ Android/iOS 기기에서만 테스트
+
+### TypeScript 타입 오류
+
+**자주 발생하는 오류:**
+
+1. **템플릿 리터럴 내부의 백틱 충돌**
+   ```typescript
+   // ❌ 잘못된 예
+   const text = `이것은 \`example\` 입니다`;
+
+   // ✅ 올바른 예
+   const text = `이것은 'example' 입니다`;
+   ```
+
+2. **Import 문 오류**
+   ```typescript
+   // ❌ 잘못된 예
+   import initialDataService from '../services/initialDataService';
+
+   // ✅ 올바른 예
+   import { initialDataService } from '../services/initialDataService';
+   ```
+
+3. **타입 단언 필요**
+   ```typescript
+   // 복잡한 배열 타입 오류 시
+   array.map((item: any, index: number) => ...)
+   ```
+
+### 앱이 Dev Client에서 연결 안 됨
+
+**확인 사항:**
+1. Dev Client APK/IPA가 기기에 설치되어 있는지 확인
+2. 서버가 `--host lan` 옵션으로 실행 중인지 확인
+3. 실제 LAN IP 주소 사용 (localhost 아님!)
+   ```
+   ✅ http://192.168.0.3:8090
+   ❌ http://localhost:8090
+   ```
+4. 동일한 Wi-Fi 네트워크에 연결되어 있는지 확인
+
+### 서버 재시작 프로토콜
+
+**올바른 순서:**
+```bash
+# 1. 기존 서버 중지
+# 2. 타입 체크
+cd app && npm run typecheck
+
+# 3. 오류 없으면 캐시 정리 후 재시작
+cd app && npx expo start --dev-client --clear --port 8090 --host lan
+
+# 4. 오류가 있으면 수정 → 타입 체크 → 서버 시작
+```
+
+### 자주 발생하는 실수
+
+**❌ 절대 하지 말 것:**
+- 타입 체크 없이 서버 시작
+- 문법 오류를 무시하고 서버만 재시작
+- 여러 포트에서 동시에 서버 실행
+- 웹 브라우저로 테스트 시도
+
+**✅ 올바른 방법:**
+- 항상 타입 체크 먼저 실행
+- 오류는 즉시 수정
+- 사용하지 않는 서버 프로세스 종료
+- Dev Client로만 테스트
+
+---
+
 ## 🔗 참고 파일
 - `mockup-v1.html`: 시각적 디자인 참조
 - `docs/`: 전체 설계 문서
@@ -469,4 +597,4 @@ npm install react-native-image-editor
 - `src/styles/theme.ts`: 디자인 시스템
 
 ---
-*마지막 업데이트: 2025년 11월 4일*
+*마지막 업데이트: 2025년 11월 10일*

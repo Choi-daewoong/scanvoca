@@ -34,11 +34,12 @@ export default function ScanResultsScreenWrapper({ navigation, route }: ScanResu
   console.log('📥 ScanResultsWrapper에서 받은 데이터:', { scannedText, detectedWords: detectedWords.length });
 
   // 상태 관리
-  const [activeFilter, setActiveFilter] = useState('모두');
+  const [activeFilter, setActiveFilter] = useState<'모두' | '암기 단어 제외'>('모두');
   const [selectAll, setSelectAll] = useState(true);
   const [words, setWords] = useState<ScannedWord[]>([]);
   const [showWordbookModal, setShowWordbookModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [masteredWords, setMasteredWords] = useState<Set<string>>(new Set());
 
   // 텍스트 줄이기 함수 (최대 2줄, 높이 제한)
   const truncateText = (text: string, maxLines: number = 2) => {
@@ -56,6 +57,21 @@ export default function ScanResultsScreenWrapper({ navigation, route }: ScanResu
   };
 
   const truncatedText = truncateText(scannedText);
+
+  // 컴포넌트 마운트 시 암기 단어 로드
+  useEffect(() => {
+    const loadMasteredWords = async () => {
+      try {
+        const mastered = await wordbookService.getAllMasteredWords();
+        setMasteredWords(new Set(mastered));
+        console.log(`✅ 암기된 단어 ${mastered.length}개 로드됨`);
+      } catch (error) {
+        console.error('암기 단어 로드 실패:', error);
+      }
+    };
+
+    loadMasteredWords();
+  }, []);
 
   // 컴포넌트 마운트 시 카메라에서 받은 데이터를 words 상태로 설정
   useEffect(() => {
@@ -109,31 +125,40 @@ export default function ScanResultsScreenWrapper({ navigation, route }: ScanResu
     setWords(formattedWords);
   }, [detectedWords]);
 
+  // 스캔 결과에서 실제로 제외된 암기 단어 개수 계산
+  const excludedMasteredCount = words.filter(word =>
+    masteredWords.has(word.word.toLowerCase())
+  ).length;
+
   const filteredWords = words.filter(word => {
-    if (activeFilter === '모두') return true;
-    return word.level.toString() === activeFilter.replace('Lv.', '');
+    // 암기 단어 제외 모드일 때
+    if (activeFilter === '암기 단어 제외') {
+      // 암기된 단어인지 확인 (대소문자 구분 없이)
+      const isMastered = masteredWords.has(word.word.toLowerCase());
+      if (isMastered) {
+        return false; // 암기된 단어는 제외
+      }
+    }
+
+    // 나머지 단어는 표시
+    return true;
   });
 
-  // 레벨 필터 변경 시 해당 레벨의 모든 단어 자동 선택
-  const handleFilterChange = (filter: string) => {
+  // 필터 변경 핸들러
+  const handleFilterChange = (filter: '모두' | '암기 단어 제외') => {
     setActiveFilter(filter);
-    
-    if (filter === '모두') {
-      // '모두' 선택 시 모든 단어 선택
+
+    // 암기 단어 제외 선택 시 해당 단어들 체크 해제
+    if (filter === '암기 단어 제외') {
       setWords(prevWords =>
-        prevWords.map(word => ({ ...word, isSelected: true }))
+        prevWords.map(word => {
+          const isMastered = masteredWords.has(word.word.toLowerCase());
+          if (isMastered) {
+            return { ...word, isSelected: false };
+          }
+          return word;
+        })
       );
-      setSelectAll(true);
-    } else {
-      // 특정 레벨 선택 시 해당 레벨의 모든 단어 선택
-      const targetLevel = parseInt(filter.replace('Lv.', ''));
-      setWords(prevWords =>
-        prevWords.map(word => ({
-          ...word,
-          isSelected: word.level === targetLevel
-        }))
-      );
-      setSelectAll(false);
     }
   };
 
@@ -156,22 +181,11 @@ export default function ScanResultsScreenWrapper({ navigation, route }: ScanResu
   const toggleSelectAll = () => {
     const newSelectAll = !selectAll;
     setSelectAll(newSelectAll);
-    
-    if (activeFilter === '모두') {
-      // '모두' 필터일 때는 모든 단어 선택/해제
-      setWords(prevWords =>
-        prevWords.map(word => ({ ...word, isSelected: newSelectAll }))
-      );
-    } else {
-      // 특정 레벨 필터일 때는 해당 레벨의 단어만 선택/해제
-      const targetLevel = parseInt(activeFilter.replace('Lv.', ''));
-      setWords(prevWords =>
-        prevWords.map(word => ({
-          ...word,
-          isSelected: word.level === targetLevel ? newSelectAll : word.isSelected
-        }))
-      );
-    }
+
+    // 모든 단어 선택/해제
+    setWords(prevWords =>
+      prevWords.map(word => ({ ...word, isSelected: newSelectAll }))
+    );
   };
 
   const handleSaveToWordbook = async (wordbookId: number) => {
@@ -308,7 +322,7 @@ export default function ScanResultsScreenWrapper({ navigation, route }: ScanResu
         {/* 필터 탭들 */}
         <View style={styles.filterTabsContainer}>
           <View style={styles.filterTabs}>
-            {['모두', 'Lv.1', 'Lv.2', 'Lv.3', 'Lv.4'].map((filter) => (
+            {(['모두', '암기 단어 제외'] as const).map((filter) => (
               <TouchableOpacity
                 key={filter}
                 style={[
@@ -328,11 +342,20 @@ export default function ScanResultsScreenWrapper({ navigation, route }: ScanResu
           </View>
         </View>
 
+        {/* 암기 단어 제외 시 정보 표시 */}
+        {activeFilter === '암기 단어 제외' && excludedMasteredCount > 0 && (
+          <View style={styles.infoBar}>
+            <Text style={styles.infoText}>
+              ✅ {excludedMasteredCount}개의 암기 단어가 제외되었습니다
+            </Text>
+          </View>
+        )}
+
         {/* 선택 컨트롤 */}
         <View style={styles.selectAllContainer}>
           <TouchableOpacity style={styles.selectAllButton} onPress={toggleSelectAll}>
             <Text style={styles.selectAllText}>
-              {activeFilter === '모두' ? '전체 선택' : `${activeFilter} 선택`} ({selectedWordsCount}개 선택됨)
+              전체 선택 ({selectedWordsCount}개 선택됨)
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleDeleteSelected}>
@@ -401,9 +424,19 @@ export default function ScanResultsScreenWrapper({ navigation, route }: ScanResu
             onPress={() => setShowWordbookModal(true)}
             disabled={selectedWordsCount === 0 || saving}
           >
-            <Text style={styles.saveBtnText}>
+            <Text style={[
+              styles.saveBtnText,
+              selectedWordsCount === 0 && styles.saveBtnTextDisabled
+            ]}>
               {saving ? '저장 중...' : '단어장 저장'}
             </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.wordbookListBtn}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Wordbook' })}
+          >
+            <Text style={styles.wordbookListBtnText}>목록 보기</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -510,6 +543,22 @@ const styles = StyleSheet.create({
   },
   filterTabTextActive: {
     color: '#FFFFFF',
+  },
+  infoBar: {
+    backgroundColor: '#E8F5E9',
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginHorizontal: 20,
+    marginBottom: 12,
+  },
+  infoText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#2E7D32',
+    textAlign: 'center',
   },
   selectAllContainer: {
     flexDirection: 'row',
@@ -628,37 +677,70 @@ const styles = StyleSheet.create({
   bottomButtons: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 12,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
-    gap: 12,
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 4,
   },
   rescanBtn: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
+    paddingVertical: 13,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#D1D5DB',
     alignItems: 'center',
   },
   rescanBtnText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#6B7280',
   },
   saveBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
+    flex: 1.2,
+    paddingVertical: 13,
+    borderRadius: 10,
     backgroundColor: '#4F46E5',
     alignItems: 'center',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   saveBtnDisabled: {
-    backgroundColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   saveBtnText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  saveBtnTextDisabled: {
+    color: '#9CA3AF',
+  },
+  wordbookListBtn: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+  },
+  wordbookListBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#6B7280',
   },
 });
