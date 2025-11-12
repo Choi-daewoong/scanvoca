@@ -14,6 +14,16 @@ from app.schemas.word import (
     WordGenerateResult,
     WordGenerateResponse,
 )
+from app.schemas.wordbook import (
+    WordbookBase,
+    WordbookCreate,
+    WordbookUpdate,
+    WordbookResponse,
+    WordbookWordBase,
+    WordbookWordCreate,
+    WordbookWordUpdate,
+    WordbookWordResponse,
+)
 
 __all__ = [
     "UserBase",
@@ -27,4 +37,12 @@ __all__ = [
     "WordGenerateRequest",
     "WordGenerateResult",
     "WordGenerateResponse",
+    "WordbookBase",
+    "WordbookCreate",
+    "WordbookUpdate",
+    "WordbookResponse",
+    "WordbookWordBase",
+    "WordbookWordCreate",
+    "WordbookWordUpdate",
+    "WordbookWordResponse",
 ]
