@@ -1,5 +1,5 @@
 """Word model"""
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import String, Integer, Boolean, DateTime, JSON, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import Base
@@ -30,7 +30,7 @@ class Word(Base):
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
 
