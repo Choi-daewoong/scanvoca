@@ -302,7 +302,7 @@ export function useWordbookManagement(): UseWordbookManagementReturn {
     }
   }, [newGroupName, selectedWordbooks]);
 
-  const deleteSelectedWordbooks = useCallback(() => {
+  const deleteSelectedWordbooks = useCallback(async () => {
     Alert.alert(
       '단어장 삭제',
       `선택된 ${selectedWordbooks.length}개 단어장을 삭제하시겠습니까?`,
@@ -311,15 +311,49 @@ export function useWordbookManagement(): UseWordbookManagementReturn {
         {
           text: '삭제',
           style: 'destructive',
-          onPress: () => {
-            setWordbooks(prev => prev.filter(wb => !selectedWordbooks.includes(wb.id)));
-            setIsSelectionMode(false);
-            setSelectedWordbooks([]);
+          onPress: async () => {
+            try {
+              // 실제로 AsyncStorage에서 단어장 삭제
+              for (const wordbookId of selectedWordbooks) {
+                await wordbookService.deleteWordbook(wordbookId);
+                console.log(`✅ 단어장 ${wordbookId} 삭제 완료`);
+              }
+
+              // 메타데이터와 그룹 정보도 정리
+              const metadata = wordbooks
+                .filter(wb => !selectedWordbooks.includes(wb.id))
+                .map(wb => ({
+                  id: wb.id,
+                  groupId: wb.groupId,
+                  order: wb.order
+                }));
+              await AsyncStorage.setItem('wordbook_metadata', JSON.stringify(metadata));
+
+              // 삭제된 단어장이 속한 그룹 정리
+              const updatedGroups = groups.map(group => ({
+                ...group,
+                wordbookIds: group.wordbookIds.filter(id => !selectedWordbooks.includes(id))
+              })).filter(group => group.wordbookIds.length > 0); // 빈 그룹 제거
+
+              await AsyncStorage.setItem('wordbook_groups', JSON.stringify(updatedGroups));
+              setGroups(updatedGroups);
+
+              // UI 업데이트 및 최신 데이터 다시 로드
+              await loadWordbooksData();
+
+              setIsSelectionMode(false);
+              setSelectedWordbooks([]);
+
+              console.log(`✅ ${selectedWordbooks.length}개 단어장 삭제 완료`);
+            } catch (error) {
+              console.error('❌ 단어장 삭제 실패:', error);
+              Alert.alert('오류', '단어장 삭제 중 오류가 발생했습니다.');
+            }
           }
         }
       ]
     );
-  }, [selectedWordbooks]);
+  }, [selectedWordbooks, wordbooks, groups, loadWordbooksData]);
 
   const toggleGroupExpansion = useCallback((groupId: number) => {
     setGroups(prev => {

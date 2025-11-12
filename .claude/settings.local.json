@@ -69,7 +69,12 @@
       "Bash(jq:*)",
       "Bash(git push:*)",
       "Bash(git remote add:*)",
-      "Bash(timeout 30 npx expo start:*)"
+      "Bash(timeout 30 npx expo start:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git stash push:*)"
     ],
     "deny": [],
     "ask": []

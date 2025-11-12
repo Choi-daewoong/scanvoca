@@ -153,7 +153,29 @@ class WordbookService {
       const wordbooksData = await AsyncStorage.getItem('wordbooks');
       const wordbooks = wordbooksData ? JSON.parse(wordbooksData) : [];
 
-      return wordbooks;
+      // 각 단어장의 단어 수 계산
+      const wordbooksWithCount = await Promise.all(
+        wordbooks.map(async (wordbook: Wordbook) => {
+          try {
+            const wordbookKey = `wordbook_${wordbook.id}`;
+            const wordsData = await AsyncStorage.getItem(wordbookKey);
+            const words = wordsData ? JSON.parse(wordsData) : [];
+
+            return {
+              ...wordbook,
+              word_count: words.length, // 단어 수 추가
+            };
+          } catch (error) {
+            console.error(`Failed to get word count for wordbook ${wordbook.id}:`, error);
+            return {
+              ...wordbook,
+              word_count: 0,
+            };
+          }
+        })
+      );
+
+      return wordbooksWithCount;
     } catch (error) {
       console.error('Failed to get wordbooks:', error);
       throw error;
@@ -221,9 +243,17 @@ class WordbookService {
       const wordbooks = await this.getWordbooks();
       const wordbook = wordbooks.find(wb => wb.id === wordbookId);
 
-      if (wordbook?.is_default) {
-        throw new Error('기본 단어장은 삭제할 수 없습니다.');
+      // ⚠️ 제거됨: is_default 체크
+      // 사용자가 원하는 모든 단어장을 삭제할 수 있도록 허용
+      // if (wordbook?.is_default) {
+      //   throw new Error('기본 단어장은 삭제할 수 없습니다.');
+      // }
+
+      if (!wordbook) {
+        throw new Error('단어장을 찾을 수 없습니다.');
       }
+
+      console.log(`🗑️ 단어장 "${wordbook.name}" (ID: ${wordbookId}) 삭제 시작...`);
 
       // 트랜잭션: 원본 데이터 보관
       const originalWordbooksData = await AsyncStorage.getItem('wordbooks');
@@ -523,6 +553,43 @@ class WordbookService {
     } catch (error) {
       console.error('Failed to remove words from wordbook:', error);
       throw error;
+    }
+  }
+
+  // 모든 단어장에서 암기된 단어 목록 조회
+  async getAllMasteredWords(): Promise<string[]> {
+    try {
+      console.log('📚 모든 단어장에서 암기된 단어 조회 시작...');
+
+      // 1. 모든 단어장 목록 가져오기
+      const wordbooks = await this.getWordbooks();
+      console.log(`📖 총 ${wordbooks.length}개의 단어장 확인`);
+
+      // 2. 각 단어장의 단어 데이터 조회
+      const masteredWordSet = new Set<string>();
+
+      for (const wordbook of wordbooks) {
+        const wordbookKey = `wordbook_${wordbook.id}`;
+        const wordsData = await AsyncStorage.getItem(wordbookKey);
+        const words = wordsData ? JSON.parse(wordsData) : [];
+
+        // 3. 암기된 단어만 필터링 (study_progress.mastered === true)
+        words.forEach((wordData: any) => {
+          if (wordData.study_progress?.mastered === true) {
+            // 영어 단어를 소문자로 저장 (대소문자 구분 없이)
+            masteredWordSet.add(wordData.word.toLowerCase());
+          }
+        });
+      }
+
+      // 4. Set을 배열로 변환하여 반환
+      const masteredWordsArray = Array.from(masteredWordSet);
+      console.log(`✅ 암기된 단어 ${masteredWordsArray.length}개 발견`);
+
+      return masteredWordsArray;
+    } catch (error) {
+      console.error('Failed to get mastered words:', error);
+      return [];
     }
   }
 }

@@ -203,7 +203,7 @@ export interface SmartWordDefinition {
   meanings: GPTMeaning[];
   usage_notes?: string;
   confidence: number;
-  source: 'cache' | 'gpt';
+  source: 'cache' | 'gpt' | 'complete-wordbook';
   cached_at?: string;
   access_count?: number;
 }
@@ -214,7 +214,7 @@ export interface ProcessedWordV2 {
   cleaned: string;
   found: boolean;
   wordData?: SmartWordDefinition;
-  processing_source: 'cache' | 'gpt' | 'none';
+  processing_source: 'cache' | 'gpt' | 'none' | 'complete-wordbook';
   error?: string;
 }
 

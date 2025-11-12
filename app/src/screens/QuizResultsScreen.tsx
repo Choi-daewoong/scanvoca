@@ -110,6 +110,29 @@ export default function QuizResultsScreen({ navigation, route }: QuizResultsScre
   const total = totalCount;
   const accuracyPercentage = Math.round((score / total) * 100);
 
+  console.log('📊 QuizResults 화면 - 받은 데이터:');
+  console.log('  correctCount:', correctCount);
+  console.log('  totalCount:', totalCount);
+  console.log('  계산된 정답률:', accuracyPercentage + '%');
+  console.log('  session.questions.length:', session?.questions?.length);
+  console.log('  session.answers:', session?.answers);
+
+  // 답안 검증
+  if (session && session.answers) {
+    const answerKeys = Object.keys(session.answers);
+    console.log('  실제 제출한 답안 수:', answerKeys.length);
+    console.log('  답안 인덱스:', answerKeys.join(', '));
+
+    let actualCorrect = 0;
+    let actualTotal = 0;
+    Object.entries(session.answers).forEach(([idx, ans]: [string, any]) => {
+      actualTotal++;
+      if (ans.isCorrect) actualCorrect++;
+      console.log(`    문제 ${parseInt(idx) + 1}: ${ans.isCorrect ? '⭕' : '❌'}`);
+    });
+    console.log(`  실제 계산: ${actualCorrect}/${actualTotal} = ${Math.round((actualCorrect/actualTotal)*100)}%`);
+  }
+
   // 틀린 단어들 추출
   const wrongWords: WrongWord[] = [];
   if (session && session.questions && session.answers) {

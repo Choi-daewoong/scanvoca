@@ -11,12 +11,14 @@ interface WordItemUI {
 
 interface StudyModeViewProps {
   words: WordItemUI[];
-  currentDisplayFilter: 'english' | 'meaning' | 'unlearned' | 'all';
+  currentDisplayFilter: 'english' | 'meaning' | 'all';
+  showOnlyUnlearned: boolean;
   currentLevelFilters: Set<string | number>;
   selectedWords: Set<string>;
   flippedCards: Set<string>;
   isDeletionMode: boolean;
-  onFilterChange: (filter: 'english' | 'meaning' | 'unlearned' | 'all') => void;
+  onFilterChange: (filter: 'english' | 'meaning' | 'all') => void;
+  onToggleUnlearned: () => void;
   onLevelFilterChange: (filters: Set<string | number>) => void;
   onShuffle: () => void;
   onToggleDeletionMode: () => void;
@@ -35,11 +37,13 @@ interface StudyModeViewProps {
 export default function StudyModeView({
   words,
   currentDisplayFilter,
+  showOnlyUnlearned,
   currentLevelFilters,
   selectedWords,
   flippedCards,
   isDeletionMode,
   onFilterChange,
+  onToggleUnlearned,
   onLevelFilterChange,
   onShuffle,
   onToggleDeletionMode,
@@ -91,6 +95,22 @@ export default function StudyModeView({
               </Text>
             </TouchableOpacity>
           ))}
+
+          {/* 미암기 필터 버튼 */}
+          <TouchableOpacity
+            style={[
+              styles.filterTab,
+              showOnlyUnlearned && styles.unlearnedBtnActive
+            ]}
+            onPress={onToggleUnlearned}
+          >
+            <Text style={[
+              styles.filterTabText,
+              showOnlyUnlearned && styles.unlearnedBtnTextActive
+            ]}>
+              미암기
+            </Text>
+          </TouchableOpacity>
 
           {/* 섞기 버튼 */}
           <TouchableOpacity
@@ -268,15 +288,15 @@ export default function StudyModeView({
 
 const styles = StyleSheet.create({
   studyMode: {
-    padding: 20,
+    padding: 12,
   },
   filterTabsContainer: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   filterTabs: {
     flexDirection: 'row',
     gap: 6,
-    marginBottom: 10,
+    marginBottom: 6,
     flexWrap: 'wrap',
   },
   levelTabs: {
@@ -310,6 +330,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
+  unlearnedBtnActive: {
+    backgroundColor: '#F59E0B',
+    borderColor: '#F59E0B',
+  },
+  unlearnedBtnTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
   deletionBtn: {
     backgroundColor: '#FEE2E2',
     borderColor: '#EF4444',
@@ -330,7 +358,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 8,
     paddingHorizontal: 5,
   },
   selectAllCheckbox: {
@@ -346,16 +374,16 @@ const styles = StyleSheet.create({
     color: '#DC2626',
   },
   wordGrid: {
-    gap: 10,
+    gap: 8,
   },
   wordCard: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E9ECEF',
     borderRadius: 10,
-    padding: 14,
-    paddingLeft: 60,
-    minHeight: 100,
+    padding: 10,
+    paddingLeft: 55,
+    minHeight: 75,
     position: 'relative',
   },
   wordCardSelected: {
@@ -394,8 +422,8 @@ const styles = StyleSheet.create({
   },
   memorizeBtn: {
     position: 'absolute',
-    top: 14,
-    left: 15,
+    top: 10,
+    left: 12,
     backgroundColor: 'transparent',
     padding: 4,
     zIndex: 10,
@@ -422,11 +450,11 @@ const styles = StyleSheet.create({
   },
   wordLevel: {
     position: 'absolute',
-    top: 52,
-    left: 10,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 5,
+    top: 42,
+    left: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
     fontSize: 10,
     fontWeight: '600',
     color: '#FFFFFF',
@@ -438,16 +466,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: '#4F46E5',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   wordMeanings: {
-    gap: 4,
+    gap: 2,
   },
   wordLine: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
-    marginBottom: 6,
+    gap: 6,
+    marginBottom: 3,
   },
   wordPosTag: {
     fontSize: 12,
@@ -460,19 +488,19 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   wordKo: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#6C757D',
     flex: 1,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   addWordBtn: {
     backgroundColor: '#4F46E5',
     borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 24,
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 40,
+    marginTop: 12,
+    marginBottom: 20,
     marginHorizontal: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

@@ -124,7 +124,7 @@ export default function WordDetailScreen({ route, navigation }: WordDetailScreen
       case 'complete-wordbook':
         return '📚 기본 사전';
       case 'gpt':
-        return '🤖 GPT';
+        return '🤖 AI';
       case 'user-custom':
         return '✏️  사용자 커스텀';
       case 'user-default':

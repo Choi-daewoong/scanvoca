@@ -19,7 +19,7 @@ export interface TestResults {
   };
   details: Array<{
     word: string;
-    source: 'cache' | 'gpt' | 'none';
+    source: 'cache' | 'gpt' | 'none' | 'complete-wordbook';
     success: boolean;
     error?: string;
     processingTime: number;
