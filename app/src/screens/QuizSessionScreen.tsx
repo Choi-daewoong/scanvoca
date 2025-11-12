@@ -94,6 +94,10 @@ export default function QuizSessionScreen({ navigation, route }: QuizSessionScre
       // 퀴즈 문제 생성
       const questions = await generateQuizQuestions(words.slice(0, 10));
 
+      console.log(`🎲 퀴즈 생성 완료:`);
+      console.log(`  총 문제 수: ${questions.length}개`);
+      console.log(`  문제 목록: ${questions.map(q => q.word.word).join(', ')}`);
+
       const session: QuizSession = {
         questions,
         currentQuestionIndex: 0,
@@ -157,6 +161,11 @@ export default function QuizSessionScreen({ navigation, route }: QuizSessionScre
     const currentQuestion = quizSession.questions[quizSession.currentQuestionIndex];
     const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
 
+    console.log(`📝 문제 ${quizSession.currentQuestionIndex + 1} 답안 제출:`);
+    console.log('  선택한 답:', selectedAnswer);
+    console.log('  정답:', currentQuestion.correctAnswer);
+    console.log('  정답 여부:', isCorrect);
+
     // 답안 기록
     const updatedAnswers = {
       ...quizSession.answers,
@@ -165,6 +174,9 @@ export default function QuizSessionScreen({ navigation, route }: QuizSessionScre
         isCorrect,
       }
     };
+
+    console.log('  현재까지 답안 수:', Object.keys(updatedAnswers).length);
+    console.log('  현재까지 정답 수:', Object.values(updatedAnswers).filter(a => a.isCorrect).length);
 
     // TODO: 학습 진도 업데이트 기능은 향후 서버 연동 시 구현 예정
 
@@ -184,13 +196,22 @@ export default function QuizSessionScreen({ navigation, route }: QuizSessionScre
         endTime: new Date(),
       };
 
+      // ⚠️ 수정: 답한 문제 수를 기준으로 계산
+      const answeredCount = Object.keys(updatedAnswers).length;
       const correctCount = Object.values(updatedAnswers).filter(a => a.isCorrect).length;
       const totalCount = quizSession.questions.length;
+
+      console.log('🎯 퀴즈 완료 - 점수 계산:');
+      console.log('  생성된 총 문제 수:', totalCount);
+      console.log('  실제 답한 문제 수:', answeredCount);
+      console.log('  맞춘 문제 수:', correctCount);
+      console.log('  틀린 문제 수:', answeredCount - correctCount);
+      console.log('  정답률:', Math.round((correctCount / answeredCount) * 100) + '%');
 
       navigation.navigate('QuizResults', {
         session: finalSession,
         correctCount,
-        totalCount,
+        totalCount: answeredCount,  // ⚠️ 수정: 답한 문제 수를 전달
         wordbookId,
       });
     }

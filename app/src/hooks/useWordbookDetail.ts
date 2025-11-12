@@ -19,7 +19,8 @@ export interface UseWordbookDetailReturn {
   vocabulary: WordItemUI[];
   shuffledVocabulary: WordItemUI[];
   currentMode: 'study' | 'exam';
-  currentDisplayFilter: 'english' | 'meaning' | 'unlearned' | 'all';
+  currentDisplayFilter: 'english' | 'meaning' | 'all';
+  showOnlyUnlearned: boolean;
   currentLevelFilters: Set<string | number>;
   selectedWords: Set<string>;
   isShuffled: boolean;
@@ -46,7 +47,8 @@ export interface UseWordbookDetailReturn {
 
   // 액션
   setCurrentMode: (mode: 'study' | 'exam') => void;
-  setCurrentDisplayFilter: (filter: 'english' | 'meaning' | 'unlearned' | 'all') => void;
+  setCurrentDisplayFilter: (filter: 'english' | 'meaning' | 'all') => void;
+  setShowOnlyUnlearned: (show: boolean) => void;
   setCurrentLevelFilters: (filters: Set<string | number>) => void;
   setSelectedWords: (words: Set<string>) => void;
   setIsShuffled: (shuffled: boolean) => void;
@@ -95,7 +97,8 @@ export function useWordbookDetail(
   const [currentMode, setCurrentMode] = useState<'study' | 'exam'>('study');
 
   // 학습 모드 상태
-  const [currentDisplayFilter, setCurrentDisplayFilter] = useState<'english' | 'meaning' | 'unlearned' | 'all'>('all');
+  const [currentDisplayFilter, setCurrentDisplayFilter] = useState<'english' | 'meaning' | 'all'>('all');
+  const [showOnlyUnlearned, setShowOnlyUnlearned] = useState(false);
   const [currentLevelFilters, setCurrentLevelFilters] = useState<Set<string | number>>(new Set(['all']));
   const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
   const [isShuffled, setIsShuffled] = useState(false);
@@ -195,10 +198,12 @@ export function useWordbookDetail(
   const getFilteredWords = () => {
     let words = isShuffled ? shuffledVocabulary : vocabulary;
 
-    if (currentDisplayFilter === 'unlearned') {
+    // 미암기 필터 (독립적으로 작동)
+    if (showOnlyUnlearned) {
       words = words.filter(word => !word.memorized);
     }
 
+    // 레벨 필터
     if (!currentLevelFilters.has('all')) {
       words = words.filter(word => currentLevelFilters.has(word.level));
     }
@@ -206,14 +211,41 @@ export function useWordbookDetail(
     return words;
   };
 
-  // 단어 외운 상태 토글
+  // 단어 외운 상태 토글 (낙관적 업데이트)
   const toggleMemorized = async (englishWord: string) => {
+    const wordToUpdate = vocabulary.find(w => w.english === englishWord);
+    if (!wordToUpdate) return;
+
+    const newMemorizedState = !wordToUpdate.memorized;
+
+    // ✅ 1단계: UI 먼저 즉시 업데이트 (터치 즉시 체크 표시!)
+    setVocabulary(prev =>
+      prev.map(word =>
+        word.english === englishWord
+          ? { ...word, memorized: newMemorizedState }
+          : word
+      )
+    );
+
+    setShuffledVocabulary(prev =>
+      prev.map(word =>
+        word.english === englishWord
+          ? { ...word, memorized: newMemorizedState }
+          : word
+      )
+    );
+
+    // ✅ 2단계: 백그라운드에서 저장 (사용자는 기다릴 필요 없음)
+    saveMemorizedStateInBackground(englishWord, newMemorizedState, wordToUpdate.memorized);
+  };
+
+  // 백그라운드 저장 함수 (실패 시 롤백)
+  const saveMemorizedStateInBackground = async (
+    englishWord: string,
+    newState: boolean,
+    oldState: boolean
+  ) => {
     try {
-      const wordToUpdate = vocabulary.find(w => w.english === englishWord);
-      if (!wordToUpdate) return;
-
-      const newMemorizedState = !wordToUpdate.memorized;
-
       // 1. AsyncStorage에서 현재 단어장 데이터 가져오기
       const wordbookKey = `wordbook_${wordbookId}`;
       const wordsData = await wordbookService.getWordbookWords(wordbookId);
@@ -227,42 +259,42 @@ export function useWordbookDetail(
               correct_count: w.study_progress?.correct_count || 0,
               incorrect_count: w.study_progress?.incorrect_count || 0,
               last_studied: new Date().toISOString(),
-              mastered: newMemorizedState,
+              mastered: newState,
             },
           };
         }
         return w;
       });
 
-      // 3. AsyncStorage에 즉시 저장
+      // 3. AsyncStorage에 저장
       await AsyncStorage.setItem(wordbookKey, JSON.stringify(updatedWords));
-      console.log(`✅ 단어 "${englishWord}" 외움 상태 저장 완료: ${newMemorizedState}`);
+      console.log(`✅ 단어 "${englishWord}" 외움 상태 저장 완료: ${newState}`);
 
       // 4. 전역 캐시 업데이트 (OCR 필터링 속도 향상)
-      await masteredWordsCache.updateWord(englishWord, newMemorizedState);
-      console.log(`🔄 외운 단어 캐시 업데이트: "${englishWord}" → ${newMemorizedState}`);
+      await masteredWordsCache.updateWord(englishWord, newState);
+      console.log(`🔄 외운 단어 캐시 업데이트: "${englishWord}" → ${newState}`);
 
-      // 4. UI 상태 업데이트
-      setVocabulary(prev => {
-        const newVocab = prev.map(word =>
-          word.english === englishWord
-            ? { ...word, memorized: newMemorizedState }
-            : word
-        );
-
-        setShuffledVocabulary(prevShuffled =>
-          prevShuffled.map(word =>
-            word.english === englishWord
-              ? { ...word, memorized: newMemorizedState }
-              : word
-          )
-        );
-
-        return newVocab;
-      });
     } catch (error) {
       console.error('외움 상태 저장 실패:', error);
-      Alert.alert('오류', '외움 상태 저장에 실패했습니다.');
+
+      // ❌ 실패 시 UI 롤백 (원래 상태로 되돌림)
+      setVocabulary(prev =>
+        prev.map(word =>
+          word.english === englishWord
+            ? { ...word, memorized: oldState }
+            : word
+        )
+      );
+
+      setShuffledVocabulary(prev =>
+        prev.map(word =>
+          word.english === englishWord
+            ? { ...word, memorized: oldState }
+            : word
+        )
+      );
+
+      Alert.alert('오류', '외움 상태 저장에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -326,8 +358,15 @@ export function useWordbookDetail(
   // 단어 삭제 (즉시 삭제)
   const deleteWord = async (englishWord: string) => {
     try {
+      // 단어 ID 찾기
+      const wordToDelete = vocabulary.find(word => word.english === englishWord);
+      if (!wordToDelete) {
+        console.error(`단어 "${englishWord}"를 찾을 수 없습니다.`);
+        return;
+      }
+
       // 단어장에서 단어 삭제
-      await wordbookService.removeWordFromWordbook(wordbookId, englishWord);
+      await wordbookService.removeWordFromWordbook(wordbookId, wordToDelete.id);
 
       // 전역 캐시에서도 제거
       const masteredWordsCache = (await import('../services/masteredWordsCache')).default;
@@ -368,7 +407,14 @@ export function useWordbookDetail(
       return;
     }
 
-    const selected = memorized.slice(0, selectedQuestionCount).sort(() => Math.random() - 0.5);
+    // ⚠️ 수정: 먼저 전체를 섞고 나서 N개 선택 (랜덤 문제 생성)
+    const shuffled = [...memorized].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, selectedQuestionCount);
+
+    console.log('🎲 시험 문제 생성:');
+    console.log(`  외운 단어 총 ${memorized.length}개 중 ${selectedQuestionCount}개 선택`);
+    console.log(`  선택된 단어: ${selected.map(w => w.english).join(', ')}`);
+
     setExamQuestions(selected);
     setCurrentQuestionIndex(0);
     setExamAnswers([]);
@@ -473,18 +519,42 @@ export function useWordbookDetail(
   // 시험 점수 계산
   const calculateExamScore = () => {
     let correctCount = 0;
-    examAnswers.forEach((answer, index) => {
-      const question = examQuestions[index];
-      if (question) {
+
+    console.log('📊 점수 계산 시작:');
+    console.log('  전체 문제 수:', examQuestions.length);
+    console.log('  제출된 답안 수:', examAnswers.length);
+
+    // ⚠️ 수정: 전체 문제를 순회하면서 답한 것만 체크
+    examQuestions.forEach((question, index) => {
+      const answer = examAnswers[index];
+
+      console.log(`  문제 ${index + 1}: ${question.english}`);
+      console.log(`    답안:`, answer);
+
+      // 답을 입력하지 않았거나 빈 문자열이면 틀린 것으로 처리
+      if (answer && (answer.spelling.trim() !== '' || answer.meaning.trim() !== '')) {
         const isSpellingCorrect = answer.spelling.trim().toLowerCase() === question.english.toLowerCase();
         const isMeaningCorrect = question.korean.some(k =>
-          k.meanings.some(m => answer.meaning.includes(m) || m.includes(answer.meaning))
+          k.meanings.some(m => answer.meaning.trim() !== '' && (answer.meaning.includes(m) || m.includes(answer.meaning)))
         );
+
+        console.log(`    스펠링 체크: ${isSpellingCorrect}`);
+        console.log(`    의미 체크: ${isMeaningCorrect}`);
+
         if (isSpellingCorrect || isMeaningCorrect) {
           correctCount++;
+          console.log(`    ✅ 정답!`);
+        } else {
+          console.log(`    ❌ 오답`);
         }
+      } else {
+        console.log(`    ⚠️ 미입력 (오답 처리)`);
       }
     });
+
+    console.log(`📊 최종 점수: ${correctCount}/${examQuestions.length}`);
+
+    // totalCount는 전체 문제 수
     return { correctCount, totalCount: examQuestions.length };
   };
 
@@ -493,6 +563,7 @@ export function useWordbookDetail(
     shuffledVocabulary,
     currentMode,
     currentDisplayFilter,
+    showOnlyUnlearned,
     currentLevelFilters,
     selectedWords,
     isShuffled,
@@ -516,6 +587,7 @@ export function useWordbookDetail(
 
     setCurrentMode,
     setCurrentDisplayFilter,
+    setShowOnlyUnlearned,
     setCurrentLevelFilters,
     setSelectedWords,
     setIsShuffled,

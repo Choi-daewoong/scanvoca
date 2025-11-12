@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import theme from '../../styles/theme';
 
 interface DataSourceBadgeProps {
-  source: 'cache' | 'gpt' | 'none';
+  source: 'cache' | 'gpt' | 'none' | 'complete-wordbook';
   size?: 'small' | 'medium';
   style?: ViewStyle;
 }
@@ -16,6 +16,14 @@ export default function DataSourceBadge({
 
   const getBadgeConfig = () => {
     switch (source) {
+      case 'complete-wordbook':
+        return {
+          icon: '📚',
+          text: 'Dictionary',
+          color: theme.colors.semantic.info,
+          backgroundColor: `${theme.colors.semantic.info}15`,
+          description: 'Basic Dictionary'
+        };
       case 'cache':
         return {
           icon: '💾',

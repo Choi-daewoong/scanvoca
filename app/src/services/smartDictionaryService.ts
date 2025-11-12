@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import completeWordbook from '../../assets/complete-wordbook.json';
 import { userDefaultsService } from './userDefaultsService';
+import { normalizePartOfSpeech } from '../utils/partOfSpeechUtils';
 
 // GPT Response Types
 export interface GPTMeaning {
@@ -20,7 +21,7 @@ export interface SmartWordDefinition {
   meanings: GPTMeaning[];
   usage_notes?: string;
   confidence: number;
-  source: 'cache' | 'gpt';
+  source: 'cache' | 'gpt' | 'complete-wordbook';
   cached_at?: string;
   rootWord?: string; // 파생어의 어근 단어
 }
@@ -225,13 +226,13 @@ class SmartDictionaryService {
       pronunciation: localData.pronunciation || '',
       difficulty: localData.difficulty || 4,
       meanings: localData.meanings.map((m: any) => ({
-        partOfSpeech: m.partOfSpeech || 'noun',
+        partOfSpeech: m.partOfSpeech || '명사',
         korean: m.korean,
         english: m.english || '',
         examples: localData.examples || [] // 예문 포함!
       })),
       confidence: 1.0,
-      source: 'cache', // 로컬 DB도 캐시로 취급
+      source: 'complete-wordbook', // 로컬 워드북 출처 명시
     };
   }
 
@@ -327,7 +328,7 @@ class SmartDictionaryService {
             }] : undefined
           })),
           confidence: 1.0,
-          source: 'cache'
+          source: 'complete-wordbook'
         };
         knownResults.push(definition);
         console.log(`✅ "${word}" - 로컬 DB에서 찾음`);
@@ -524,14 +525,15 @@ class SmartDictionaryService {
 
 중요 지시사항:
 1.  입력된 단어의 정의, 의미, 예문 등 모든 정보는 **입력된 단어 그대로**를 기준으로 작성해주세요. (예: 'musician'이 입력되면 'music'이 아닌 'musician'에 대한 설명)
-2.  만약 입력된 단어가 파생어(예: musician, quickly, hopeful)일 경우, 그 단어의 어근(root word)을 `rootWord` 필드에 추가해주세요. (예: musician -> music)
-3.  변형된 단어(복수형, 과거형 등)가 입력되면, 기본형(원형)을 찾아 `word` 필드에 넣어주세요. (예: running -> run)
+2.  만약 입력된 단어가 파생어(예: musician, quickly, hopeful)일 경우, 그 단어의 어근(root word)을 'rootWord' 필드에 추가해주세요. (예: musician -> music)
+3.  변형된 단어(복수형, 과거형 등)가 입력되면, 기본형(원형)을 찾아 'word' 필드에 넣어주세요. (예: running -> run)
+4.  **품사(partOfSpeech)는 반드시 영어로만 표기해주세요**: noun, verb, adjective, adverb, preposition, conjunction, interjection, pronoun, determiner 중 하나를 사용하세요.
 
 각 단어에 대해 다음 정보를 제공해주세요:
-1.  기본형 단어 (`word`)
-2.  어근 단어 (`rootWord`, 파생어일 경우에만)
+1.  기본형 단어 ('word')
+2.  어근 단어 ('rootWord', 파생어일 경우에만)
 3.  정확한 발음기호 (IPA 형식)
-4.  주요 의미들 (품사, 한국어 뜻, 영어 설명)
+4.  주요 의미들 (품사는 반드시 영어로: noun, verb, adjective, adverb, preposition, conjunction, interjection, pronoun, determiner)
 5.  간단하고 실용적인 예문 (영어, 한국어) - **반드시 입력된 단어를 사용**
 
 응답 형식:
@@ -543,7 +545,7 @@ class SmartDictionaryService {
       "pronunciation": "/발음/",
       "meanings": [
         {
-          "partOfSpeech": "품사",
+          "partOfSpeech": "noun|verb|adjective|adverb|preposition|conjunction|interjection|pronoun|determiner (반드시 영어로)",
           "korean": "한국어 뜻",
           "english": "영어 설명",
           "examples": [
@@ -575,7 +577,7 @@ class SmartDictionaryService {
           pronunciation: def.pronunciation || `/${def.word}/`,
           difficulty: 4, // GPT로 생성된 신규 단어는 무조건 Lv.4 (DB 외 단어)
           meanings: def.meanings?.map((m: any) => ({
-            partOfSpeech: m.partOfSpeech,
+            partOfSpeech: normalizePartOfSpeech(m.partOfSpeech), // 품사 정규화 (한글/약어 → 영어 표준)
             korean: m.korean,
             english: m.english,
             examples: m.examples || []

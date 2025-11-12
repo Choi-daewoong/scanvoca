@@ -399,6 +399,42 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
     smartBannerButtonTextIncluded: {
       color: '#F57C00',
     },
+    // 하단 고정 버튼 스타일
+    bottomButtonContainer: {
+      flexDirection: 'row',
+      gap: 8,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: '#FFFFFF',
+      borderTopWidth: 1,
+      borderTopColor: '#E5E7EB',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    bottomBtn: {
+      flex: 1,
+      paddingVertical: 14,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    rescanBtn: {
+      backgroundColor: '#6B7280',
+    },
+    saveBtn: {
+      backgroundColor: '#4F46E5',
+    },
+    listBtn: {
+      backgroundColor: '#10B981',
+    },
+    bottomBtnText: {
+      color: '#FFFFFF',
+      fontSize: 14,
+      fontWeight: '600',
+    },
   });
 
 
@@ -565,6 +601,28 @@ export default function ScanResultsScreen({ navigation, route }: ScanResultsScre
           ))}
         </View>
       </ScrollView>
+
+      {/* 하단 고정 버튼 영역 */}
+      <View style={styles.bottomButtonContainer}>
+        <TouchableOpacity
+          style={[styles.bottomBtn, styles.rescanBtn]}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.bottomBtnText}>📷 다시 스캔</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.bottomBtn, styles.saveBtn]}
+          onPress={handleSaveToWordbook}
+        >
+          <Text style={styles.bottomBtnText}>💾 단어장 저장</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.bottomBtn, styles.listBtn]}
+          onPress={() => navigation.navigate('MainTabs', { screen: 'Wordbook' })}
+        >
+          <Text style={styles.bottomBtnText}>📚 단어장 목록</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* 단어장 선택 모달 */}
       <WordbookSelectionModal

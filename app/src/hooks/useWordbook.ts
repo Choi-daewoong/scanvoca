@@ -242,6 +242,8 @@ export function useWordbook(): UseWordbookReturn {
     }
   }, [currentWordbook, loadWordbookWords]);
 
+  // ⚠️ 제거됨: 사용자가 삭제한 단어장이 자동으로 재생성되는 문제 방지
+  // 필요한 경우 사용자에게 명시적으로 단어장 생성을 요청해야 함
   const getOrCreateDefaultWordbook = useCallback(async (): Promise<Wordbook> => {
     try {
       const allWordbooks = await wordbookService.getWordbooks();
@@ -251,22 +253,10 @@ export function useWordbook(): UseWordbookReturn {
         return defaultWordbook;
       }
 
-      // 기본 단어장이 없으면 생성
-      const newWordbookId = await wordbookService.createWordbook(
-        '기본 단어장',
-        '스캔한 단어들을 저장하는 기본 단어장'
-      );
-
-      const updatedWordbooks = await wordbookService.getWordbooks();
-      const newDefaultWordbook = updatedWordbooks.find(wb => wb.id === newWordbookId);
-
-      if (newDefaultWordbook) {
-        return newDefaultWordbook;
-      }
-
-      throw new Error('기본 단어장 생성 실패');
+      // 기본 단어장이 없을 때는 에러를 던짐 (자동 생성하지 않음)
+      throw new Error('기본 단어장이 없습니다. 새 단어장을 생성해주세요.');
     } catch (err) {
-      console.error('❌ 기본 단어장 생성/조회 실패:', err);
+      console.error('❌ 기본 단어장 조회 실패:', err);
       throw err;
     }
   }, []);
