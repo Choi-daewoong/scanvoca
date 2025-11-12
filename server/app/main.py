@@ -42,12 +42,10 @@ async def health_check():
     }
 
 
-# Import and include routers
-# TODO: Add API routers here
-# from app.api.v1 import auth, words, wordbooks
-# app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
-# app.include_router(words.router, prefix="/api/v1/words", tags=["words"])
-# app.include_router(wordbooks.router, prefix="/api/v1/wordbooks", tags=["wordbooks"])
+# Import and include API routers
+from app.api.v1 import api_router as v1_router
+
+app.include_router(v1_router, prefix="/api/v1")
 
 
 if __name__ == "__main__":
