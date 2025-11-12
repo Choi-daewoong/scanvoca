@@ -1,6 +1,6 @@
 """Wordbook model"""
-from datetime import datetime
-from sqlalchemy import String, Integer, Boolean, DateTime, JSON, ForeignKey, Text
+from datetime import datetime, timezone
+from sqlalchemy import String, Integer, Boolean, DateTime, JSON, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
 
@@ -24,13 +24,13 @@ class Wordbook(Base):
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
         nullable=False
     )
 
@@ -64,8 +64,13 @@ class WordbookWord(Base):
     # Timestamps
     added_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
         nullable=False
+    )
+
+    # Unique constraint: one word per wordbook
+    __table_args__ = (
+        UniqueConstraint('wordbook_id', 'word_id', name='uq_wordbook_word'),
     )
 
     def __repr__(self) -> str:

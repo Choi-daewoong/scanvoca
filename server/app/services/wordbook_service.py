@@ -12,28 +12,19 @@ class WordbookService:
 
     @staticmethod
     def get_user_wordbooks(db: Session, user_id: int) -> List[Wordbook]:
-        """Get all wordbooks for a user"""
+        """Get all wordbooks for a user with word counts"""
         stmt = select(Wordbook).where(Wordbook.user_id == user_id).order_by(Wordbook.created_at.desc())
-        wordbooks = db.scalars(stmt).all()
+        wordbooks = list(db.scalars(stmt).all())
 
-        # Add word count to each wordbook
-        result = []
+        # Add word count to each wordbook (dynamic attribute for Pydantic)
         for wordbook in wordbooks:
-            word_count = db.query(WordbookWord).filter(WordbookWord.wordbook_id == wordbook.id).count()
-            # Dynamically add word_count attribute
-            wordbook_dict = {
-                **wordbook.__dict__,
-                "word_count": word_count
-            }
-            # Create a simple object
-            class WordbookWithCount:
-                def __init__(self, **kwargs):
-                    for key, value in kwargs.items():
-                        setattr(self, key, value)
+            word_count = db.query(WordbookWord).filter(
+                WordbookWord.wordbook_id == wordbook.id
+            ).count()
+            # Add as a simple attribute (Pydantic will serialize this with from_attributes=True)
+            wordbook.word_count = word_count
 
-            result.append(WordbookWithCount(**wordbook_dict))
-
-        return result
+        return wordbooks
 
     @staticmethod
     def get_wordbook(db: Session, wordbook_id: int, user_id: int) -> Optional[Wordbook]:

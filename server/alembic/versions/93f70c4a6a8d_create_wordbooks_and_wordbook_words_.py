@@ -47,7 +47,8 @@ def upgrade() -> None:
     sa.Column('added_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['word_id'], ['words.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['wordbook_id'], ['wordbooks.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('wordbook_id', 'word_id', name='uq_wordbook_word')
     )
     op.create_index(op.f('ix_wordbook_words_word_id'), 'wordbook_words', ['word_id'], unique=False)
     op.create_index(op.f('ix_wordbook_words_wordbook_id'), 'wordbook_words', ['wordbook_id'], unique=False)
