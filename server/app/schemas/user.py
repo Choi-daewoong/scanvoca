@@ -44,3 +44,10 @@ class TokenPayload(BaseModel):
     sub: str  # user_id
     exp: datetime
     type: str  # "access" or "refresh"
+
+
+class GoogleLoginRequest(BaseModel):
+    """Schema for Google login"""
+    email: EmailStr
+    name: Optional[str] = None
+    google_id: str

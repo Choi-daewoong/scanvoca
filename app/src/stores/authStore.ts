@@ -1,28 +1,111 @@
 // src/stores/authStore.ts
+/**
+ * Phase 1: 로컬 전용 인증 시스템 (AsyncStorage)
+ * Phase 2: 백엔드 서버 연동으로 전환 예정
+ *
+ * WARNING: Phase 1에서는 비밀번호를 평문으로 저장합니다.
+ * 이는 MVP 테스트용이며, Phase 2에서 서버 기반 인증으로 전환됩니다.
+ */
 
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '../utils/logger';
 import type {
   User,
   LoginCredentials,
   RegisterData,
-  AuthResponse,
   SocialLoginRequest,
-  SocialLoginResult,
 } from '../types/auth';
 
-// 간단한 사용자 데이터 타입 (로컬 저장용)
+// 로컬 사용자 저장 키
+const LOCAL_USERS_KEY = '@local_users';
+
+// 로컬 사용자 데이터 구조
 interface LocalUser {
   id: string;
   email: string;
-  username: string;
-  full_name: string;
-  password: string; // 실제 앱에서는 해싱 필요
-  phone?: string;
-  role: string;
+  password: string; // Phase 1: 평문 저장 (MVP용)
+  display_name: string;
+  is_active: boolean;
   created_at: string;
+  updated_at: string;
 }
+
+// UUID 생성 함수 (간단한 버전)
+const generateUUID = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
+// 로컬 사용자 DB 헬퍼 함수들
+const localUserDB = {
+  async getAll(): Promise<LocalUser[]> {
+    try {
+      const data = await AsyncStorage.getItem(LOCAL_USERS_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      logger.error('[LocalUserDB] 사용자 목록 조회 실패:', error);
+      return [];
+    }
+  },
+
+  async save(users: LocalUser[]): Promise<void> {
+    try {
+      await AsyncStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+    } catch (error) {
+      logger.error('[LocalUserDB] 사용자 목록 저장 실패:', error);
+      throw error;
+    }
+  },
+
+  async findByEmail(email: string): Promise<LocalUser | null> {
+    const users = await this.getAll();
+    return users.find((u) => u.email.toLowerCase() === email.toLowerCase()) || null;
+  },
+
+  async create(userData: Omit<LocalUser, 'id' | 'created_at' | 'updated_at'>): Promise<LocalUser> {
+    const users = await this.getAll();
+
+    // 이메일 중복 확인
+    const exists = users.find((u) => u.email.toLowerCase() === userData.email.toLowerCase());
+    if (exists) {
+      throw new Error('이미 사용 중인 이메일입니다.');
+    }
+
+    const newUser: LocalUser = {
+      ...userData,
+      id: generateUUID(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    users.push(newUser);
+    await this.save(users);
+    return newUser;
+  },
+
+  async update(userId: string, updates: Partial<LocalUser>): Promise<LocalUser> {
+    const users = await this.getAll();
+    const index = users.findIndex((u) => u.id === userId);
+
+    if (index === -1) {
+      throw new Error('사용자를 찾을 수 없습니다.');
+    }
+
+    users[index] = {
+      ...users[index],
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+
+    await this.save(users);
+    return users[index];
+  },
+};
 
 interface AuthState {
   user: User | null;
@@ -41,44 +124,6 @@ interface AuthState {
   setUser: (user: User) => void;
 }
 
-// AsyncStorage 키
-const USERS_KEY = 'local_users';
-
-// 로컬 사용자 관리 헬퍼 함수들
-const saveUser = async (user: LocalUser): Promise<void> => {
-  try {
-    const existingUsers = await getUsers();
-    const updatedUsers = [...existingUsers.filter(u => u.email !== user.email), user];
-    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
-  } catch (error) {
-    console.error('사용자 저장 실패:', error);
-    throw error;
-  }
-};
-
-const getUsers = async (): Promise<LocalUser[]> => {
-  try {
-    const usersData = await AsyncStorage.getItem(USERS_KEY);
-    return usersData ? JSON.parse(usersData) : [];
-  } catch (error) {
-    console.error('사용자 목록 조회 실패:', error);
-    return [];
-  }
-};
-
-const findUserByEmail = async (email: string): Promise<LocalUser | null> => {
-  const users = await getUsers();
-  return users.find(user => user.email === email) || null;
-};
-
-const authenticateUser = async (email: string, password: string): Promise<LocalUser | null> => {
-  const user = await findUserByEmail(email);
-  if (user && user.password === password) {
-    return user;
-  }
-  return null;
-};
-
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -89,42 +134,49 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (credentials: LoginCredentials) => {
         try {
-          console.log('[AuthStore] 로그인 시도:', credentials.email);
+          logger.debug('[AuthStore] 백엔드 로그인 시도:', credentials.email);
           set({ isLoading: true });
 
-          // AsyncStorage에서 사용자 인증
-          const user = await authenticateUser(credentials.email, credentials.password);
+          // 백엔드 API 호출
+          const { apiService } = await import('../services/apiService');
+          const response = await apiService.login({
+            email: credentials.email,
+            password: credentials.password,
+          });
 
-          if (!user) {
-            throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.');
-          }
+          // 사용자 정보 가져오기
+          apiService.setAuthToken(response.access_token);
+          const userProfile = await apiService.getMe();
 
-          // 간단한 토큰 생성 (실제 앱에서는 JWT 사용)
-          const access_token = `local_token_${user.id}_${Date.now()}`;
-          const refresh_token = `refresh_token_${user.id}_${Date.now()}`;
+          // User 객체 생성
+          const user: User = {
+            id: String(userProfile.id),
+            email: userProfile.email,
+            username: userProfile.display_name || userProfile.email,
+            full_name: userProfile.display_name || userProfile.email,
+            role: 'user' as any,
+            is_active: userProfile.is_active,
+            is_approved: userProfile.is_verified,
+            is_superuser: false,
+            created_at: userProfile.created_at,
+            updated_at: userProfile.updated_at,
+          };
 
           set({
-            user: {
-              id: user.id,
-              email: user.email,
-              username: user.username,
-              full_name: user.full_name,
-              phone: user.phone,
-              role: user.role as any,
-              is_active: true,
-              is_approved: true,
-              is_superuser: false,
-              created_at: user.created_at,
-              updated_at: new Date().toISOString(),
-            },
-            access_token,
-            refresh_token,
+            user,
+            access_token: response.access_token,
+            refresh_token: response.refresh_token,
             isLoading: false,
           });
 
-          console.log('[AuthStore] 로그인 성공:', user.email);
+          logger.info('[AuthStore] 백엔드 로그인 성공:', user.email);
+
+          // 로그인 후 기본 단어장 생성 확인
+          logger.debug('[AuthStore] 기본 단어장 생성 확인 중...');
+          const { initialDataService } = await import('../services/initialDataService');
+          await initialDataService.setupInitialWordbooks();
         } catch (error: any) {
-          console.error('[AuthStore] 로그인 실패:', error.message);
+          logger.error('[AuthStore] 백엔드 로그인 실패:', error);
           set({ isLoading: false });
           throw new Error(error.message || '로그인에 실패했습니다.');
         }
@@ -132,34 +184,55 @@ export const useAuthStore = create<AuthState>()(
 
       register: async (userData: RegisterData) => {
         try {
-          console.log('[AuthStore] 회원가입 시도:', userData.email);
+          logger.debug('[AuthStore] 백엔드 회원가입 시도:', userData.email);
           set({ isLoading: true });
 
-          // 이미 존재하는 이메일인지 확인
-          const existingUser = await findUserByEmail(userData.email);
-          if (existingUser) {
-            throw new Error('이미 사용 중인 이메일입니다.');
-          }
-
-          // 새 사용자 생성
-          const newUser: LocalUser = {
-            id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          // 백엔드 API 호출
+          const { apiService } = await import('../services/apiService');
+          const userProfile = await apiService.register({
             email: userData.email,
-            username: userData.name,
-            full_name: userData.name,
-            password: userData.password, // 실제 앱에서는 해싱 필요
-            phone: userData.phone,
-            role: userData.role.toUpperCase(),
-            created_at: new Date().toISOString(),
+            password: userData.password,
+            display_name: userData.name,
+          });
+
+          // 회원가입 후 자동 로그인
+          const response = await apiService.login({
+            email: userData.email,
+            password: userData.password,
+          });
+
+          // 토큰 설정
+          apiService.setAuthToken(response.access_token);
+
+          // User 객체 생성
+          const user: User = {
+            id: String(userProfile.id),
+            email: userProfile.email,
+            username: userProfile.display_name || userProfile.email,
+            full_name: userProfile.display_name || userProfile.email,
+            role: 'user' as any,
+            is_active: userProfile.is_active,
+            is_approved: userProfile.is_verified,
+            is_superuser: false,
+            created_at: userProfile.created_at,
+            updated_at: userProfile.updated_at,
           };
 
-          // AsyncStorage에 저장
-          await saveUser(newUser);
+          set({
+            user,
+            access_token: response.access_token,
+            refresh_token: response.refresh_token,
+            isLoading: false,
+          });
 
-          set({ isLoading: false });
-          console.log('[AuthStore] 회원가입 성공:', newUser.email);
+          logger.info('[AuthStore] 백엔드 회원가입 성공:', user.email);
+
+          // 회원가입 후 기본 단어장 생성
+          logger.debug('[AuthStore] 기본 단어장 생성 확인 중...');
+          const { initialDataService } = await import('../services/initialDataService');
+          await initialDataService.setupInitialWordbooks();
         } catch (error: any) {
-          console.error('[AuthStore] 회원가입 실패:', error.message);
+          logger.error('[AuthStore] 백엔드 회원가입 실패:', error);
           set({ isLoading: false });
           throw new Error(error.message || '회원가입에 실패했습니다.');
         }
@@ -167,14 +240,80 @@ export const useAuthStore = create<AuthState>()(
 
       socialLogin: async (request: SocialLoginRequest) => {
         try {
-          console.log('[AuthStore] 소셜 로그인 시도:', request.provider);
+          logger.debug('[AuthStore] 소셜 로그인 시도:', request.provider);
           set({ isLoading: true });
 
-          // 소셜 로그인은 현재 미구현 상태
-          set({ isLoading: false });
-          throw new Error('소셜 로그인은 현재 지원하지 않습니다.');
+          if (request.provider === 'google') {
+            // socialAuthService를 통해 Google Sign-In 수행 (이미 완료된 경우 건너뜀)
+            let authResult = request;
+
+            // code나 id_token이 없으면 socialAuthService로 로그인 수행
+            if (!request.code && !request.id_token) {
+              const { socialAuthService } = await import('../services/socialAuth');
+              const result = await socialAuthService.signInWithGoogle();
+
+              if (!result.email) {
+                throw new Error('구글 로그인에서 이메일 정보를 가져올 수 없습니다.');
+              }
+
+              authResult = {
+                provider: 'google',
+                code: result.accessToken,
+                id_token: result.idToken,
+              };
+            }
+
+            // 백엔드 API 호출 - Google ID와 이메일로 로그인/회원가입
+            const { socialAuthService } = await import('../services/socialAuth');
+            const googleUserInfo = await socialAuthService.getCurrentGoogleUser();
+
+            if (!googleUserInfo?.data?.user) {
+              throw new Error('구글 사용자 정보를 가져올 수 없습니다.');
+            }
+
+            const { apiService } = await import('../services/apiService');
+            const response = await apiService.googleLogin({
+              email: googleUserInfo.data.user.email,
+              name: googleUserInfo.data.user.name || googleUserInfo.data.user.email.split('@')[0],
+              google_id: googleUserInfo.data.user.id,
+            });
+
+            // 사용자 정보 가져오기
+            apiService.setAuthToken(response.access_token);
+            const userProfile = await apiService.getMe();
+
+            // User 객체 생성
+            const user: User = {
+              id: String(userProfile.id),
+              email: userProfile.email,
+              username: userProfile.display_name || userProfile.email,
+              full_name: userProfile.display_name || userProfile.email,
+              role: 'USER' as any,
+              is_active: userProfile.is_active,
+              is_approved: userProfile.is_verified,
+              is_superuser: false,
+              created_at: userProfile.created_at,
+              updated_at: userProfile.updated_at,
+            };
+
+            set({
+              user,
+              access_token: response.access_token,
+              refresh_token: response.refresh_token,
+              isLoading: false,
+            });
+
+            logger.info('[AuthStore] 구글 로그인 성공:', user.email);
+
+            // 로그인 후 기본 단어장 생성 확인
+            logger.debug('[AuthStore] 기본 단어장 생성 확인 중...');
+            const { initialDataService } = await import('../services/initialDataService');
+            await initialDataService.setupInitialWordbooks();
+          } else {
+            throw new Error(`${request.provider} 로그인은 현재 지원하지 않습니다.`);
+          }
         } catch (error: any) {
-          console.error('[AuthStore] 소셜 로그인 실패:', error.message);
+          logger.error('[AuthStore] 소셜 로그인 실패:', error.message);
           set({ isLoading: false });
           throw new Error(error.message || '소셜 로그인에 실패했습니다.');
         }
@@ -184,21 +323,26 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { refresh_token } = get();
           if (!refresh_token) {
-            console.log('[AuthStore] 리프레시 토큰이 없습니다.');
+            logger.debug('[AuthStore] 리프레시 토큰이 없습니다.');
             return false;
           }
 
-          console.log('[AuthStore] 로컬 앱에서는 토큰 갱신이 필요하지 않습니다.');
+          // Phase 1: 로컬 전용이므로 토큰 갱신 불필요
+          logger.debug('[AuthStore] 로컬 앱에서는 토큰 갱신이 필요하지 않습니다.');
           return true;
         } catch (error: any) {
-          console.error('[AuthStore] 토큰 갱신 실패:', error.message);
+          logger.error('[AuthStore] 토큰 갱신 실패:', error.message);
           return false;
         }
       },
 
       logout: async () => {
         try {
-          console.log('[AuthStore] 로그아웃 진행');
+          logger.debug('[AuthStore] 로그아웃 진행');
+
+          // API 클라이언트 토큰 제거
+          const { apiService } = await import('../services/apiService');
+          apiService.removeAuthToken();
 
           // 상태 클리어
           set({
@@ -208,9 +352,9 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
           });
 
-          console.log('[AuthStore] 로그아웃 완료');
+          logger.info('[AuthStore] 로그아웃 완료');
         } catch (error) {
-          console.error('[AuthStore] 로그아웃 중 오류:', error);
+          logger.error('[AuthStore] 로그아웃 중 오류:', error);
           // 오류가 발생해도 강제로 클리어
           set({
             user: null,
@@ -223,25 +367,30 @@ export const useAuthStore = create<AuthState>()(
 
       updateProfile: async (profileData: Partial<User>) => {
         try {
-          console.log('[AuthStore] 프로필 업데이트 시도');
+          logger.debug('[AuthStore] 프로필 업데이트 시도');
           const { user: currentUser } = get();
 
           if (!currentUser) {
             throw new Error('로그인이 필요합니다.');
           }
 
-          // 로컬에서는 메모리 상태만 업데이트
-          const newUser = {
+          // 로컬 DB 업데이트
+          const updatedLocalUser = await localUserDB.update(currentUser.id, {
+            display_name: profileData.full_name || profileData.username,
+          });
+
+          // User 객체 업데이트
+          const newUser: User = {
             ...currentUser,
-            ...profileData,
-            id: String(currentUser.id),
-            updated_at: new Date().toISOString(),
+            username: updatedLocalUser.display_name,
+            full_name: updatedLocalUser.display_name,
+            updated_at: updatedLocalUser.updated_at,
           };
 
           set({ user: newUser });
-          console.log('[AuthStore] 프로필 업데이트 성공');
+          logger.info('[AuthStore] 프로필 업데이트 성공');
         } catch (error: any) {
-          console.error('[AuthStore] 프로필 업데이트 실패:', error.message);
+          logger.error('[AuthStore] 프로필 업데이트 실패:', error.message);
           throw new Error(error.message || '프로필 업데이트에 실패했습니다.');
         }
       },
@@ -263,7 +412,7 @@ export const useAuthStore = create<AuthState>()(
         refresh_token: state.refresh_token,
       }),
       onRehydrateStorage: () => (state) => {
-        console.log('[AuthStore] 스토리지에서 상태 복원');
+        logger.debug('[AuthStore] AsyncStorage에서 상태 복원');
 
         if (state?.access_token) {
           // 사용자 ID를 문자열로 변환
@@ -271,9 +420,15 @@ export const useAuthStore = create<AuthState>()(
             state.user.id = String(state.user.id);
           }
 
-          console.log('[AuthStore] 상태 복원 완료');
+          // API 클라이언트에 토큰 설정 (비동기 import)
+          import('../services/apiService').then(({ apiService }) => {
+            apiService.setAuthToken(state.access_token!);
+            logger.debug('[AuthStore] API 클라이언트에 토큰 설정 완료');
+          });
+
+          logger.info('[AuthStore] 상태 복원 완료 - 로그인 상태 유지됨');
         } else {
-          console.log('[AuthStore] 저장된 토큰이 없습니다.');
+          logger.debug('[AuthStore] 저장된 토큰이 없습니다.');
         }
       },
     }

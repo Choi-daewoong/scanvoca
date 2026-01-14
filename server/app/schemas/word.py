@@ -1,5 +1,6 @@
 """Word schemas for API request/response"""
 from typing import List, Optional, Dict, Any
+from datetime import datetime
 from pydantic import BaseModel
 
 
@@ -21,6 +22,8 @@ class WordResponse(BaseModel):
     source: str  # 'json-db', 'gpt', 'user-manual'
     gpt_generated: bool
     usage_count: int
+    created_at: datetime
+    updated_at: datetime
 
     model_config = {"from_attributes": True}
 
@@ -44,4 +47,4 @@ class WordGenerateResponse(BaseModel):
     results: List[WordGenerateResult]
     cache_hits: int
     db_hits: int
-    gpt_calls: int
+    gemini_calls: int

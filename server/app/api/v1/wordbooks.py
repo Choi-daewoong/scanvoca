@@ -208,6 +208,67 @@ async def add_word_to_wordbook(
     return wordbook_word
 
 
+@router.patch("/{wordbook_id}/words/{word_id}", response_model=WordbookWordResponse)
+async def update_wordbook_word(
+    wordbook_id: int,
+    word_id: int,
+    update_data: WordbookWordUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update wordbook-word relationship (study progress, custom fields)
+
+    - **custom_pronunciation**: Update custom pronunciation (optional)
+    - **custom_difficulty**: Update custom difficulty 1-5 (optional)
+    - **custom_note**: Update personal note (optional)
+    - **correct_count**: Update correct answer count (optional)
+    - **incorrect_count**: Update incorrect answer count (optional)
+    - **mastered**: Mark as mastered/unmastered (optional)
+    """
+    # Verify ownership
+    wordbook = WordbookService.get_wordbook(db, wordbook_id, current_user.id)
+    if not wordbook:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Wordbook not found"
+        )
+
+    # Get wordbook-word relationship
+    from sqlalchemy import and_
+    from app.models.wordbook import WordbookWord
+    wordbook_word = db.query(WordbookWord).filter(
+        and_(
+            WordbookWord.wordbook_id == wordbook_id,
+            WordbookWord.word_id == word_id
+        )
+    ).first()
+
+    if not wordbook_word:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Word not found in wordbook"
+        )
+
+    # Update
+    wordbook_word = WordbookService.update_wordbook_word(db, wordbook_word, update_data)
+
+    # Attach word details
+    from app.models.word import Word
+    word = db.query(Word).filter(Word.id == word_id).first()
+    if word:
+        wordbook_word.word = {
+            "id": word.id,
+            "word": word.word,
+            "pronunciation": word.pronunciation,
+            "difficulty": word.difficulty,
+            "meanings": word.meanings,
+            "source": word.source
+        }
+
+    return wordbook_word
+
+
 @router.delete("/{wordbook_id}/words/{word_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_word_from_wordbook(
     wordbook_id: int,
