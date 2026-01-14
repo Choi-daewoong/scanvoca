@@ -1,6 +1,7 @@
 """Application configuration"""
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional
+from typing import Optional, Union
+import json
 
 
 class Settings(BaseSettings):
@@ -23,11 +24,33 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60  # 1 hour
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days
 
-    # OpenAI
-    OPENAI_API_KEY: Optional[str] = None
+    # Google Gemini
+    GEMINI_API_KEY: Optional[str] = None
 
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:8081", "http://localhost:19000"]
+    CORS_ORIGINS: str = "*"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Parse CORS_ORIGINS into list format for FastAPI middleware"""
+        # Handle "*" for allow all origins
+        if self.CORS_ORIGINS.strip() == "*":
+            return ["*"]
+        # Try to parse as JSON array
+        try:
+            parsed = json.loads(self.CORS_ORIGINS)
+            if isinstance(parsed, list):
+                return parsed
+        except (json.JSONDecodeError, ValueError):
+            pass
+        # Fallback: split by comma
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
+    # Version Management
+    LATEST_VERSION: str = "1.0.0"
+    MIN_SUPPORTED_VERSION: str = "1.0.0"
+    ANDROID_STORE_URL: str = "https://play.google.com/store/apps/details?id=com.twostwo.scanvoca"
+    IOS_STORE_URL: str = "https://apps.apple.com/app/scan-voca/id123456789"
 
     model_config = SettingsConfigDict(
         env_file=".env",
