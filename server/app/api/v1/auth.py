@@ -2,11 +2,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import verify_password, create_access_token, create_refresh_token
+from app.core.security import verify_password, create_access_token, create_refresh_token, hash_password
 from app.core.dependencies import get_current_user
-from app.schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse
+from app.schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse, GoogleLoginRequest
 from app.services.user_service import UserService
 from app.models.user import User
+import secrets
 
 router = APIRouter()
 
@@ -88,3 +89,49 @@ async def get_current_user_info(
     Requires authentication (Bearer token)
     """
     return current_user
+
+
+@router.post("/google-login", response_model=TokenResponse)
+async def google_login(
+    google_data: GoogleLoginRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Login or register with Google
+
+    - If user exists with this email, login
+    - If user doesn't exist, create new user and login
+    - Returns access token and refresh token
+    """
+    # Check if user already exists
+    user = UserService.get_by_email(db, google_data.email)
+
+    if not user:
+        # Create new user with Google info
+        # Generate random password (user won't need it for Google login)
+        random_password = secrets.token_urlsafe(32)
+
+        user_create = UserCreate(
+            email=google_data.email,
+            password=random_password,
+            display_name=google_data.name or google_data.email.split('@')[0]
+        )
+
+        user = UserService.create(db, user_create)
+
+    # Check if user is active
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive"
+        )
+
+    # Create tokens
+    access_token = create_access_token(str(user.id))
+    refresh_token = create_refresh_token(str(user.id))
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
