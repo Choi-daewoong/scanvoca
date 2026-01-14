@@ -27,24 +27,11 @@ class Settings(BaseSettings):
     # Google Gemini
     GEMINI_API_KEY: Optional[str] = None
 
-    # CORS
-    CORS_ORIGINS: str = "*"
-
+    # CORS - 하드코딩 (환경변수 파싱 문제 방지)
     @property
     def cors_origins_list(self) -> list[str]:
-        """Parse CORS_ORIGINS into list format for FastAPI middleware"""
-        # Handle "*" for allow all origins
-        if self.CORS_ORIGINS.strip() == "*":
-            return ["*"]
-        # Try to parse as JSON array
-        try:
-            parsed = json.loads(self.CORS_ORIGINS)
-            if isinstance(parsed, list):
-                return parsed
-        except (json.JSONDecodeError, ValueError):
-            pass
-        # Fallback: split by comma
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+        """CORS origins - allow all for development/testing"""
+        return ["*"]
 
     # Version Management
     LATEST_VERSION: str = "1.0.0"
