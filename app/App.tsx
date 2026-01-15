@@ -9,6 +9,9 @@ import * as FileSystem from 'expo-file-system';
 import smartDictionaryService from './src/services/smartDictionaryService';
 import masteredWordsCache from './src/services/masteredWordsCache';
 
+// Version Check Service
+// import { versionCheckService } from './src/services/versionCheckService';
+
 // Environment & Configuration
 import { validateEnv, debugEnv } from './src/utils/env';
 
@@ -23,7 +26,9 @@ import { LoadingScreen, ErrorScreen } from './src/components/common';
 
 // Wordbook Import
 import { importWordbookFromFile } from './src/services/wordbookExportImport';
-import { initialDataService } from './src/services/initialDataService';
+
+// Logger
+import { logger } from './src/utils/logger';
 
 // Deep Linking 구성
 const linking: LinkingOptions<RootStackParamList> = {
@@ -69,7 +74,7 @@ export default function App() {
     // Zustand 스토어가 AsyncStorage에서 데이터를 복원한 후 초기화 완료로 표시
     const timer = setTimeout(() => {
       setIsAuthInitialized(true);
-      console.log('🔐 인증 상태 초기화 완료:', {
+      logger.debug('🔐 인증 상태 초기화 완료:', {
         hasUser: !!user,
         hasToken: !!access_token,
         userEmail: user?.email
@@ -86,7 +91,7 @@ export default function App() {
       return;
     }
 
-    console.log('📥 딥링크 리스너 등록...');
+    logger.debug('📥 딥링크 리스너 등록...');
 
     // 앱이 실행 중일 때 파일 열기
     const subscription = Linking.addEventListener('url', handleDeepLink);
@@ -94,7 +99,7 @@ export default function App() {
     // 앱이 종료된 상태에서 파일로 실행될 때
     Linking.getInitialURL().then((url) => {
       if (url) {
-        console.log('📥 초기 URL 감지:', url);
+        logger.debug('📥 초기 URL 감지:', url);
         handleDeepLink({ url });
       }
     });
@@ -106,11 +111,11 @@ export default function App() {
 
   const handleDeepLink = async ({ url }: { url: string }) => {
     try {
-      console.log('📥 파일 URL 수신:', url);
+      logger.debug('📥 파일 URL 수신:', url);
 
       // URL이 파일인지 확인
       if (!url.startsWith('file://') && !url.startsWith('content://')) {
-        console.log('⚠️ 파일 URL이 아님, 무시');
+        logger.debug('⚠️ 파일 URL이 아님, 무시');
         return;
       }
 
@@ -121,18 +126,18 @@ export default function App() {
         if (url.startsWith('file://')) {
           // iOS: file:// URL
           const filePath = url.replace('file://', '');
-          console.log('📄 파일 경로:', filePath);
+          logger.debug('📄 파일 경로:', filePath);
           fileContent = await FileSystem.readAsStringAsync(filePath);
         } else if (url.startsWith('content://')) {
           // Android: content:// URI
-          console.log('📄 Content URI:', url);
+          logger.debug('📄 Content URI:', url);
           fileContent = await FileSystem.readAsStringAsync(url);
         } else {
-          console.warn('⚠️ 지원하지 않는 URL 스킴:', url);
+          logger.warn('⚠️ 지원하지 않는 URL 스킴:', url);
           return;
         }
       } catch (readError) {
-        console.error('❌ 파일 읽기 실패:', readError);
+        logger.error('❌ 파일 읽기 실패:', readError);
         Alert.alert('오류', '파일을 읽을 수 없습니다.');
         return;
       }
@@ -142,7 +147,7 @@ export default function App() {
       try {
         data = JSON.parse(fileContent);
       } catch (parseError) {
-        console.error('❌ JSON 파싱 실패:', parseError);
+        logger.error('❌ JSON 파싱 실패:', parseError);
         Alert.alert('오류', '올바른 JSON 파일이 아닙니다.');
         return;
       }
@@ -152,7 +157,7 @@ export default function App() {
       const isBulkBackup = data.version && data.wordbooks && Array.isArray(data.wordbooks);
 
       if (!isSingleWordbook && !isBulkBackup) {
-        console.warn('⚠️ 단어장 파일이 아님');
+        logger.warn('⚠️ 단어장 파일이 아님');
         Alert.alert('오류', '올바른 단어장 파일이 아닙니다.');
         return;
       }
@@ -168,7 +173,7 @@ export default function App() {
               text: '가져오기',
               onPress: async () => {
                 try {
-                  console.log('📥 단어장 가져오기 시작...');
+                  logger.debug('📥 단어장 가져오기 시작...');
                   const wordbookId = await importWordbookFromFile(fileContent);
 
                   Alert.alert(
@@ -190,7 +195,7 @@ export default function App() {
                     ]
                   );
                 } catch (error: any) {
-                  console.error('❌ 단어장 가져오기 실패:', error);
+                  logger.error('❌ 단어장 가져오기 실패:', error);
                   Alert.alert('오류', error.message || '단어장 가져오기에 실패했습니다.');
                 }
               }
@@ -209,7 +214,7 @@ export default function App() {
               text: '가져오기',
               onPress: async () => {
                 try {
-                  console.log('📥 전체 백업 가져오기 시작...');
+                  logger.debug('📥 전체 백업 가져오기 시작...');
 
                   let successCount = 0;
                   for (const wb of data.wordbooks) {
@@ -217,7 +222,7 @@ export default function App() {
                       await importWordbookFromFile(JSON.stringify(wb));
                       successCount++;
                     } catch (error) {
-                      console.error(`단어장 "${wb.name}" 가져오기 실패:`, error);
+                      logger.error(`단어장 "${wb.name}" 가져오기 실패:`, error);
                     }
                   }
 
@@ -226,7 +231,7 @@ export default function App() {
                     `${successCount}개의 단어장을 가져왔습니다!`
                   );
                 } catch (error: any) {
-                  console.error('❌ 전체 백업 가져오기 실패:', error);
+                  logger.error('❌ 전체 백업 가져오기 실패:', error);
                   Alert.alert('오류', '백업 가져오기에 실패했습니다.');
                 }
               }
@@ -235,7 +240,7 @@ export default function App() {
         );
       }
     } catch (error) {
-      console.error('❌ 딥링크 처리 실패:', error);
+      logger.error('❌ 딥링크 처리 실패:', error);
       Alert.alert('오류', '파일 처리 중 오류가 발생했습니다.');
     }
   };
@@ -244,29 +249,52 @@ export default function App() {
     try {
       setIsLoading(true);
 
-      console.log('🚀 앱 초기화 시작...');
+      console.time('App Initialization'); // Start overall timer
+      logger.debug('🚀 앱 초기화 시작...');
 
-      // 환경변수 검증
-      console.log('⚙️ 환경변수 검증 중...');
+      console.time('Env Validation');
+      logger.debug('⚙️ 환경변수 검증 중...');
       validateEnv();
       debugEnv();
+      console.timeEnd('Env Validation');
 
-      // Smart Dictionary Service 초기화 (GPT + Local JSON)
-      console.log('🤖 Smart Dictionary Service 초기화 중...');
+//       // 버전 체크 (강제 업데이트 확인) ⭐ 최우선
+//       console.time('Version Check');
+//       logger.debug('📱 앱 버전 체크 중...');
+//       const canContinue = await versionCheckService.checkAndHandleVersion();
+//       if (!canContinue) {
+//         logger.debug('🚨 강제 업데이트 필요 - 앱 초기화 중단');
+//         // 강제 업데이트 필요 시 여기서 중단
+//         // 사용자는 업데이트 알림만 보게 됨
+//         setIsLoading(false);
+//         console.timeEnd('Version Check');
+//         console.timeEnd('App Initialization');
+//         return;
+//       }
+//       console.timeEnd('Version Check');
+
+      console.time('Smart Dictionary Service Init');
+      logger.debug('🤖 Smart Dictionary Service 초기화 중...');
       await smartDictionaryService.initialize();
+      console.timeEnd('Smart Dictionary Service Init');
 
-      // 외운 단어 캐시 초기화 (OCR 필터링 속도 향상)
-      console.log('📚 외운 단어 캐시 초기화 중...');
+      console.time('Mastered Words Cache Init');
+      logger.debug('📚 외운 단어 캐시 초기화 중...');
       await masteredWordsCache.initialize();
+      console.timeEnd('Mastered Words Cache Init');
 
-      // 앱 최초 실행 시 기본 단어장 생성
-      console.log('📖 기본 단어장 생성 확인 중...');
+      console.time('Initial Wordbooks Setup');
+      logger.debug('📚 기본 단어장 생성 확인 중...');
+      const { initialDataService } = await import('./src/services/initialDataService');
       await initialDataService.setupInitialWordbooks();
+      console.timeEnd('Initial Wordbooks Setup');
 
       setIsAppInitialized(true);
-      console.log('✅ 앱 초기화 완료!');
+      logger.debug('✅ 앱 초기화 완료!');
+      console.timeEnd('App Initialization'); // End overall timer
     } catch (error) {
-      console.error('❌ 앱 초기화 실패:', error);
+      console.timeEnd('App Initialization'); // End timer even on error
+      logger.error('❌ 앱 초기화 실패:', error);
       Alert.alert(
         '초기화 오류',
         '앱 초기화 중 오류가 발생했습니다.\n앱을 다시 시작해 주세요.',
