@@ -320,18 +320,29 @@ export const useAuthStore = create<AuthState>()(
       },
 
       refreshAccessToken: async () => {
-        try {
-          const { refresh_token } = get();
-          if (!refresh_token) {
-            logger.debug('[AuthStore] 리프레시 토큰이 없습니다.');
-            return false;
-          }
+        const { refresh_token } = get();
+        if (!refresh_token) {
+          logger.debug('[AuthStore] No refresh token available.');
+          return false;
+        }
 
-          // Phase 1: 로컬 전용이므로 토큰 갱신 불필요
-          logger.debug('[AuthStore] 로컬 앱에서는 토큰 갱신이 필요하지 않습니다.');
+        try {
+          logger.debug('[AuthStore] Attempting to refresh access token...');
+          const { apiService } = await import('../services/apiService');
+          const response = await apiService.refreshToken(refresh_token);
+
+          set({
+            access_token: response.access_token,
+            refresh_token: response.refresh_token,
+          });
+
+          apiService.setAuthToken(response.access_token);
+          logger.info('[AuthStore] Access token refreshed successfully.');
           return true;
         } catch (error: any) {
-          logger.error('[AuthStore] 토큰 갱신 실패:', error.message);
+          logger.error('[AuthStore] Failed to refresh access token:', error.message);
+          // If refresh fails, log the user out completely
+          get().logout();
           return false;
         }
       },

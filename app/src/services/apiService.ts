@@ -153,6 +153,13 @@ class ApiService {
     return response.data;
   }
 
+  async refreshToken(refreshToken: string): Promise<AuthResponse> {
+    const response = await apiClient.post<AuthResponse>('/api/v1/auth/refresh', {
+      refresh_token: refreshToken,
+    });
+    return response.data;
+  }
+
   // ==================== 단어 API ====================
   async searchWords(query: string, limit: number = 20, offset: number = 0): Promise<Word[]> {
     const response = await apiClient.get<Word[]>(

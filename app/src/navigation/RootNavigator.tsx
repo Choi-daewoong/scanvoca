@@ -21,6 +21,7 @@ import QuizResultsScreen from '../screens/QuizResultsScreen';
 import WordbookDetailScreen from '../screens/WordbookDetailScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import StudyStatsScreen from '../screens/StudyStatsScreen';
+import FeedbackScreen from '../screens/FeedbackScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -149,6 +150,16 @@ export default function RootNavigator({ isAuthenticated }: RootNavigatorProps) {
             component={StudyStatsScreen}
             options={{
               title: '학습 통계',
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+            }}
+          />
+
+          <Stack.Screen
+            name="Feedback"
+            component={FeedbackScreen}
+            options={{
+              title: '의견 보내기',
               presentation: 'modal',
               animation: 'slide_from_bottom',
             }}
