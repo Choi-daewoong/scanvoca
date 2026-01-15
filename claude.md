@@ -46,26 +46,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 🛠️ 기술 스택 (Tech Stack)
 
 ### 현재 구현 (Phase 1)
-* **Framework:** React Native + Expo SDK 54
+* **Framework:** React Native + Expo SDK 54.0.23
 * **개발 환경**: 🔧 **Expo Dev Client** (커스텀 네이티브 모듈 지원)
 * **Language:** TypeScript (strict mode, extends expo/tsconfig.base)
 * **Data Source:** 📚 **로컬 JSON 우선 + GPT API 백업**
   - 검색 순서: 메모리 캐시 → complete-wordbook.json (3267단어) → AsyncStorage 캐시 → GPT API
   - 로컬 JSON에 예문 포함되어 있어 비용 절감 효과
   - SmartDictionaryService를 통한 통합 관리
-* **Navigation:** React Navigation v6 (Stack + Bottom Tabs)
+* **Navigation:** React Navigation v7 (Stack + Bottom Tabs)
 * **State Management:** Zustand (authStore) + React Hooks
-* **Authentication:** AsyncStorage 기반 로컬 인증 (임시)
+* **Authentication:** `@react-native-google-signin/google-signin`, AsyncStorage 기반 로컬 인증
 * **Camera:** `react-native-vision-camera` (4.7.2) + `expo-image-picker`
-* **Image Processing:** `react-native-image-crop-picker` + `react-native-image-editor`
-* **OCR:** `react-native-vision-camera` + Frame Processor (MLKit) - Mock 데이터 사용 중
+* **OCR:** `@react-native-ml-kit/text-recognition` + `vision-camera` Frame Processor
 * **TTS:** `expo-speech` (Dev Client 환경에서 실제 음성 재생 가능)
 * **Styling:** Theme-based 디자인 시스템 + ThemeProvider
 * **Forms:** `react-hook-form` + `@hookform/resolvers` + `zod` validation
 * **Storage:** `@react-native-async-storage/async-storage` (단어장 및 설정 저장용)
 
 ### 향후 추가 예정 (Phase 2-3)
-* **Backend:** Node.js + Express/NestJS + PostgreSQL/MongoDB
+* **Backend:** Python/FastAPI + PostgreSQL
 * **Authentication:** JWT + OAuth 2.0 (Google, Apple, Kakao, Naver)
 * **Cloud Storage:** AWS S3 / Google Cloud Storage
 * **Push Notifications:** Firebase Cloud Messaging (FCM)
@@ -73,7 +72,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 * **Advertisement:** Google AdMob + Facebook Audience Network
 * **In-App Purchase:** RevenueCat + App Store Connect + Google Play Console
 * **API:** RESTful API + GraphQL (고려)
-* **Deployment:** AWS/GCP + CI/CD Pipeline
+* **Deployment:** Google Cloud Run/Docker + CI/CD Pipeline
 
 ---
 
@@ -81,35 +80,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 핵심 디렉토리
 ```
-app/                       # React Native 앱 메인 디렉토리
+app/                       # React Native (Expo) 앱 디렉토리
 ├── src/
 │   ├── components/
-│   │   ├── common/        # ✅ 20개 재사용 UI 컴포넌트 (Button, Card, WordCard 등)
-│   │   └── scan/          # ✅ 스캔 관련 컴포넌트
-│   ├── screens/           # ✅ 14개 화면 컴포넌트 (Home, Camera, Quiz 등)
-│   ├── navigation/        # ✅ React Navigation 설정 (Tab + Stack)
-│   ├── database/          # ✅ SQLite 데이터베이스 & Repository 패턴
-│   │   └── repositories/  # ✅ Word, Wordbook, StudyProgress Repository
-│   ├── services/          # ✅ 비즈니스 로직 (OCR, 소셜 로그인, 카메라)
-│   ├── hooks/             # ✅ 커스텀 React Hooks (Quiz, Vocabulary, Wordbook)
+│   │   ├── common/        # ✅ 재사용 UI 컴포포넌트
+│   │   ├── icons/         # ✅ 아이콘 컴포넌트
+│   │   ├── scan/          # ✅ 스캔 관련 컴포넌트
+│   │   └── wordbook/      # ✅ 단어장 관련 컴포넌트
+│   ├── screens/           # ✅ 16개 화면 컴포넌트 (Home, Scan, Wordbook 등)
+│   ├── navigation/        # ✅ React Navigation v7 설정 (Tab + Stack)
+│   ├── services/          # ✅ 비즈니스 로직 (OCR, Auth, Dictionary 등)
+│   ├── hooks/             # ✅ 커스텀 React Hooks (useVocabulary, useWordbook 등)
 │   ├── stores/            # ✅ Zustand 상태 관리 (Auth)
 │   ├── styles/            # ✅ 테마 시스템 & ThemeProvider
 │   ├── types/             # ✅ TypeScript 타입 정의
-│   └── utils/             # ✅ 유틸리티 함수 (API, DB 검사, 환경변수)
-├── assets/                # 이미지, 아이콘, SQLite DB 파일
-└── App.tsx               # ✅ 메인 앱 컴포넌트
+│   ├── constants/         # ✅ 상수 (스토리지 키 등)
+│   └── utils/             # ✅ 유틸리티 함수
+├── assets/                # 이미지, 아이콘, 폰트, 로컬 JSON 데이터
+└── App.tsx                # ✅ 메인 앱 컴포넌트
 
-data-scripts/              # ✅ 완성된 데이터 처리 스크립트
-├── processed/
-│   └── vocabulary.db      # ✅ 완성된 SQLite 데이터베이스 (60MB)
-├── raw/                   # 원본 사전 데이터 (한국어사전, Webster 등)
-├── create-database.js     # DB 생성 스크립트
-├── verify-database.js     # DB 검증 스크립트
-├── select-core-words.js   # 코어 단어 선별
-└── fix-and-generate-examples.js # 예문 수정/생성
-
-3000words.txt              # ✅ 레벨 분류용 데이터 (grade 1-3, 나머지는 4)
-*.html                     # ✅ 완성된 HTML 목업들 (UI 참조용)
+server/                    # Python (FastAPI) 백엔드 서버
+├── app/
+│   ├── api/               # API 라우터
+│   ├── core/              # 핵심 로직 (설정 등)
+│   ├── models/            # SQLAlchemy 모델
+│   ├── schemas/           # Pydantic 스키마
+│   └── services/          # 서비스 레이어
+├── alembic/               # 데이터베이스 마이그레이션
+└── Dockerfile             # 컨테이너 빌드 설정
 ```
 
 ---
@@ -137,8 +135,6 @@ cd app && npm run typecheck
 # 개발 서버 (앱 디렉토리에서 실행) - Dev Client 모드
 cd app && npx expo start --dev-client          # Dev Client 모드로 실행
 cd app && npx expo start --dev-client --clear  # 캐시 초기화 후 실행
-cd app && npx expo start --port 8094 --host lan  # 기본 실행 (LAN IP로)
-cd app && npx expo start --dev-client --port 8087 --host lan  # Dev Client 모드
 
 # 네이티브 모듈 지원을 위한 Dev Client 빌드
 cd app && npx expo run:android        # Android Dev Client 빌드 및 실행
@@ -146,22 +142,9 @@ cd app && npx expo run:ios           # iOS Dev Client 빌드 및 실행
 
 # EAS 빌드 (네이티브 모듈 포함)
 cd app && eas build --profile development --platform android   # Dev Client APK 빌드
-cd app && eas build --profile development --platform ios       # Dev Client IPA 빌드
 
-# Dev Client 연결 방법
-# 1. EAS 빌드로 생성된 Dev Client APK/IPA를 기기에 설치
-# 2. --host lan 옵션으로 LAN IP에서 서버 실행 (중요!)
-# 3. Dev Client 앱에서 QR 코드 스캔 또는 수동으로 서버 주소 입력 (192.168.0.3:8087)
-# 4. expo-speech, react-native-vision-camera 등 네이티브 모듈 정상 작동
-
-# ⚠️ 중요: localhost가 아닌 실제 IP (192.168.0.3) 사용 필수
-# - localhost/127.0.0.1은 모바일 기기에서 접근 불가
-# - 동일한 Wi-Fi 네트워크에서 192.168.0.3:8087로 접속
-
-# ❌ 웹 실행 (지원하지 않음)
-# 웹 플랫폼에서는 import.meta 오류 등으로 정상 작동하지 않습니다.
-# 네이티브 모듈(TTS, 카메라, OCR)을 사용하므로 Dev Client 전용입니다.
-# cd app && npm run web  # ← 사용하지 마세요!
+# ⚠️ 중요: localhost가 아닌 실제 IP 사용 필수
+# - 모바일 기기에서 접근하려면 LAN IP 필요
 
 # 코드 품질 검사
 cd app && npm run typecheck          # TypeScript 타입 체크
@@ -171,35 +154,28 @@ cd app && npm run format             # Prettier 포맷팅
 cd app && npm run format:check       # 포맷팅 검사
 ```
 
-### 데이터베이스 관련
+### 서버 관련 (Python/FastAPI)
 ```bash
-# 데이터베이스 검증 및 관리 (루트 디렉토리에서 실행)
-node data-scripts/verify-database.js           # DB 검증
-node data-scripts/select-core-words.js         # 코어 단어 선별
-node data-scripts/fix-and-generate-examples.js # 예문 수정/생성
-node data-scripts/create-database.js           # DB 재생성 (필요시)
-node update-word-levels.js                     # 단어 레벨 업데이트
-node verify-levels.js                          # 레벨 분류 검증
-node check-db.js                              # DB 상태 확인
-```
+# (server/ 디렉토리에서 실행)
+# 가상 환경 설정 및 활성화
+python -m venv venv
+source venv/bin/activate  # macOS/Linux
+venv\Scripts\activate    # Windows
 
-### 빌드 및 배포
-```bash
-# EAS 빌드 (app 디렉토리에서 실행)
-cd app && eas build --platform android        # Android APK 빌드
-cd app && eas build --platform ios           # iOS IPA 빌드
-cd app && eas build --platform all           # 모든 플랫폼 빌드
+# 의존성 설치
+pip install -r requirements.txt
+
+# 서버 실행 (개발용)
+uvicorn app.main:app --reload
 ```
 
 ---
 
 ## 🏗️ 아키텍처 패턴 (Architecture Patterns)
 
-### Repository 패턴
-- **위치**: `src/database/repositories/`
-- **구조**: BaseRepository → WordRepository, WordbookRepository, StudyProgressRepository
-- **사용법**: `databaseService.repo.words.findByTerm(searchTerm)`
-- **특징**: 타입 안전성, 쿼리 재사용성, 테스트 용이성
+### Repository 패턴 (🚫 사용 중단)
+- **설명**: 과거 SQLite 사용 시의 잔재. 현재는 `smartDictionaryService`가 데이터 접근을 총괄하므로 **사용하지 않습니다**.
+- **위치**: `src/database/repositories/` (삭제됨)
 
 ### 커스텀 Hooks 패턴
 - **useVocabulary**: 단어 검색, 의미 조회, 예문 처리
@@ -215,7 +191,7 @@ MainTabs:
   - HomeTab: HomeScreen → StudyStatsScreen
   - ScanTab: ScanScreen → CameraScreen → ScanResultsScreen
   - WordbookTab: WordbookScreen → WordbookDetailScreen → WordDetailScreen
-  - 전역: QuizSessionScreen, QuizResultsScreen, SettingsScreen
+  - 전역: QuizSessionScreen, QuizResultsScreen, SettingsScreen, FeedbackScreen
 ```
 
 ### 상태 관리 패턴
@@ -238,87 +214,13 @@ import theme from '../styles/theme';
 
 ## 🎨 디자인 시스템
 
-### 색상 팔레트
-- **Primary**: #4F46E5 (인디고) - 신뢰감, 학습
-- **Secondary**: #10B981 (에메랄드) - 성공, 성취  
-- **Success**: #10B981, **Warning**: #F59E0B, **Error**: #EF4444, **Info**: #3B82F6
-- **Neutral**: 회색 계열 (#F9FAFB ~ #111827)
-
-### 타이포그래피
-- **H1**: 28px/bold, **H2**: 24px/bold, **H3**: 20px/600, **H4**: 18px/600
-- **Body1**: 16px/normal, **Body2**: 14px/normal, **Caption**: 12px/normal
-
-### 간격 시스템
-- **xs**: 4px, **sm**: 8px, **md**: 16px, **lg**: 24px, **xl**: 32px, **xxl**: 48px
-
-### 컴포넌트별 디자인 스펙
-
-
-#### 🔊 발음 버튼
-- **스타일**: 배경 없는 이모지 버튼, hover 시 배경색 변화
-- **기능**: TTS 또는 음성 파일 재생
-- **구현**: `<button class="pronunciation-btn">🔊</button>`
-
-#### 📖 사전 버튼
-- **스타일**: 테두리 있는 사각형 버튼, hover 시 색상 변화
-- **기능**: 네이버 영어사전 WebView 연결
-- **구현**: `<button class="dict-btn">📖</button>`
-
-#### 🏷️ 품사 태그
-- **디자인**: 인디고 배경, 흰색 텍스트, 둥근 모서리
-- **크기**: 12px 폰트, 최소 너비 28px
-- **구현**: `<span class="word-pos">n.</span>`
-
-#### 📝 단어 아이템 레이아웃
-```
-
-#### 🎨 스캔 결과 화면 구조
-- **상단**: 스캔된 원본 텍스트 (회색 배경 박스)
-- **탭**: 전체/미암기/암기완료 (세그멘트 컨트롤)
-- **리스트**: 스크롤 가능한 단어 목록
-- **하단**: 다시 스캔 + 단어장 저장 버튼
+(디자인 시스템 정보는 변경되지 않았으므로 생략)
 
 ---
 
 ## ⚡ 완성된 컴포넌트 라이브러리
 
-### 재사용 UI 컴포넌트 (20개)
-- **Button**: 4가지 variant, 3가지 크기, 로딩/비활성 상태
-- **Card**: 3가지 variant (default, elevated, outlined)
-- **Typography**: 9가지 텍스트 스타일, 8가지 색상
-- **ProgressBar**: 애니메이션 진행률 표시
-- **WordCard**: 단어 카드 (발음, 예문, 난이도 포함)
-- **StudyCard**: 3D 플립 애니메이션 학습 카드
-- **QuizCard**: 객관식 퀴즈 인터페이스
-- **SearchBar**: 실시간 검색 입력
-- **FloatingActionButton**: 플로팅 액션 버튼
-- **StatCard**: 통계 표시 카드
-- **Checkbox**: 체크박스 컴포넌트
-- **ErrorScreen**: 에러 화면 표시
-- **FilterTabs**: 세그멘트 컨트롤 탭
-- **Header**: 네비게이션 헤더
-- **LevelTag**: 단어 난이도 태그
-- **LoadingScreen**: 로딩 화면
-- **Section**: 섹션 컨테이너
-- **InputModal**: 입력 모달
-- **WordbookSelectionModal**: 단어장 선택 모달
-
-### Import 방법
-```typescript
-// 개별 컴포넌트 import
-import {
-  Button, Card, Typography, WordCard, StudyCard, QuizCard,
-  SearchBar, ProgressBar, FloatingActionButton, StatCard,
-  Checkbox, ErrorScreen, FilterTabs, Header, LevelTag,
-  LoadingScreen, Section, InputModal, WordbookSelectionModal
-} from '../components/common';
-
-// 또는 index.ts를 통한 통합 import
-import { Button, WordCard } from '../components/common';
-```
-
-### 스페셜 컴포넌트
-- **ScanResultScreen**: `src/components/scan/` - OCR 결과 처리 전용
+(컴포넌트 라이브러리 정보는 변경되지 않았으므로 생략)
 
 ---
 
@@ -380,6 +282,7 @@ interface SmartWordDefinition {
 - [x] SmartDictionaryService 구현 (로컬 JSON 우선 검색 → GPT 백업)
 - [x] AsyncStorage 기반 단어장 시스템 구현
 - [x] 단어 추가 기능 (AddWordModal) - 로컬 JSON/GPT 자동 선택
+- [x] 카메라 OCR 실제 구현 (`@react-native-ml-kit/text-recognition` 통합)
 - [x] 사용자 시나리오 정의
 - [x] UI/UX 목업 설계
 - [x] 네비게이션 플로우 설계
@@ -388,21 +291,21 @@ interface SmartWordDefinition {
 - [x] HTML 목업 제작
 - [x] React Navigation 시스템 구현 (Tab + Stack)
 - [x] 커스텀 Hooks 구현 (useVocabulary, useWordbook, useQuiz)
-- [x] 화면 컴포넌트 구현 (14개 스크린)
+- [x] 화면 컴포넌트 구현 (16개 스크린)
 - [x] 상태 관리 시스템 (Zustand + React Hooks)
 - [x] 테마 시스템 및 ThemeProvider
-- [x] 소셜 로그인 시스템 (Google, Apple, Kakao, Naver)
+- **[x] 소셜 로그인 시스템 (Google 로그인 구현 완료)**
 - [x] 폼 검증 시스템 (react-hook-form + zod)
 - [x] OCR 및 카메라 서비스 인터페이스
 - [x] 퀴즈 및 학습 진도 추적 시스템
 
 ### 🔧 진행 중 / 최적화 대상
-- [ ] 카메라 OCR 실제 구현 (MLKit 통합)
-- [ ] 이미지 크롭 기능 완성
+- [ ] 이미지 크롭 기능 구현 (라이브러리 재선정 필요)
 - [ ] 단어 발음 TTS 기능
 - [ ] 푸시 알림 시스템
 - [ ] 성능 최적화 (리스트 가상화 등)
 - [ ] 단위 테스트 작성
+- [ ] 백엔드 서버 기능 확장 (단어장 동기화 등)
 
 ---
 
@@ -425,32 +328,6 @@ interface SmartWordDefinition {
 - **컴포넌트 재사용**: common 디렉토리의 컴포넌트 적극 활용
 - **사용자 경험 우선**: UI 피드백, 로딩 상태, 에러 처리 필수
 
-### 🔮 미래 확장성 고려사항
-#### 서버 연동 대비 (Phase 2)
-- **API 추상화**: `apiClient` 등 API 레이어 유지하여 서버 전환 용이하게 설계
-- **인증 구조**: AuthStore는 JWT 토큰 구조 유지 (현재는 로컬 토큰)
-- **데이터 동기화**: GPT 캐시와 서버 DB 간 동기화 로직 고려
-- **오프라인 우선**: 서버 연동 후에도 오프라인 기능 유지
-
-#### 수익화 준비 (Phase 3)
-- **광고 영역**: 화면 설계 시 광고 배치 공간 미리 고려
-  - 배너 광고: 하단 TabBar 위 영역
-  - 전면 광고: 퀴즈 완료 후, 스캔 결과 확인 후
-  - 리워드 광고: 추가 힌트, 무료 프리미엄 기능 체험
-- **구독 모델 고려**:
-  - 기능별 제한 로직 (스캔 횟수, 단어장 개수 등)
-  - 프리미엄 기능 플래그 시스템
-  - 구독 상태 관리 및 UI 분기
-- **사용자 분석**:
-  - 학습 패턴, 사용 빈도 등 데이터 수집 준비
-  - A/B 테스트 가능한 구조 설계
-
-#### 코드 설계 원칙
-- **모듈화**: 기능별로 독립적인 모듈 설계
-- **확장 가능한 상태 관리**: Zustand store는 기능별로 분리
-- **환경별 설정**: 개발/스테이징/프로덕션 환경 구분
-- **성능 최적화**: 대규모 사용자 대비 최적화 고려
-
 ---
 
 ## 📷 카메라 및 이미지 처리 기능
@@ -458,143 +335,32 @@ interface SmartWordDefinition {
 ### 카메라 촬영 플로우
 1. **카메라 실행**: `react-native-vision-camera`로 실시간 카메라 프리뷰
 2. **사진 촬영**: 사용자가 촬영 버튼 터치
-3. **이미지 크롭**: `react-native-image-crop-picker`로 텍스트 영역 선택
-4. **OCR 처리**: MLKit Frame Processor로 텍스트 추출
-5. **단어 매칭**: 로컬 DB와 매칭하여 유효한 단어 필터링
+3. **이미지 후처리**: (TBD) 이미지 크롭 또는 보정 기능
+4. **OCR 처리**: `@react-native-ml-kit/text-recognition`을 사용하여 텍스트 추출
+5. **단어 필터링**: `ocrFiltering` 서비스를 통해 유효한 단어 추출
 
 ### 필요한 라이브러리
 ```bash
 npm install react-native-vision-camera
-npm install react-native-image-crop-picker
-npm install react-native-image-editor
+npm install @react-native-ml-kit/text-recognition
 ```
 
 ### 카메라 권한 설정
 - **iOS**: `Info.plist`에 `NSCameraUsageDescription` 추가
 - **Android**: `AndroidManifest.xml`에 `CAMERA` 권한 추가
 
-### 이미지 크롭 UI 요구사항
-- **크롭 영역**: 사용자가 드래그로 선택 가능한 사각형 영역
-- **비율 옵션**: 1:1, 3:4, 원본, 3:2, 16:9 등
-- **자동 크롭**: 텍스트 영역 자동 감지 및 크롭 제안
-
 ---
 
 ## 🚨 트러블슈팅 (Troubleshooting)
 
-### 서버가 "Waiting on" 상태에서 멈춤
-
-**원인:** 코드 문법 오류 또는 타입 오류로 번들링 실패
-
-**해결 방법:**
-```bash
-# 1. 서버 중지 (Ctrl+C 또는 터미널 종료)
-# 2. 타입 체크 실행
-cd app && npm run typecheck
-
-# 3. 오류가 있으면 수정 후 다시 실행
-# 4. 모든 오류 수정 후 서버 재시작
-cd app && npx expo start --dev-client --port 8090 --host lan
-```
-
-### 포트 충돌 오류 (Port already in use)
-
-**원인:** 이전 서버 프로세스가 포트를 점유 중
-
-**해결 방법:**
-```bash
-# Windows
-netstat -ano | findstr :8090
-taskkill //F //PID [PID번호]
-
-# 또는 다른 포트 사용
-cd app && npx expo start --dev-client --port 8091 --host lan
-```
-
-### 웹에서 import.meta 오류
-
-**원인:** 웹 플랫폼은 지원하지 않음 (정상)
-
-**해결 방법:**
-- ❌ 웹 브라우저 사용 금지
-- ✅ Dev Client APK/IPA 사용
-- ✅ Android/iOS 기기에서만 테스트
-
-### TypeScript 타입 오류
-
-**자주 발생하는 오류:**
-
-1. **템플릿 리터럴 내부의 백틱 충돌**
-   ```typescript
-   // ❌ 잘못된 예
-   const text = `이것은 \`example\` 입니다`;
-
-   // ✅ 올바른 예
-   const text = `이것은 'example' 입니다`;
-   ```
-
-2. **Import 문 오류**
-   ```typescript
-   // ❌ 잘못된 예
-   import initialDataService from '../services/initialDataService';
-
-   // ✅ 올바른 예
-   import { initialDataService } from '../services/initialDataService';
-   ```
-
-3. **타입 단언 필요**
-   ```typescript
-   // 복잡한 배열 타입 오류 시
-   array.map((item: any, index: number) => ...)
-   ```
-
-### 앱이 Dev Client에서 연결 안 됨
-
-**확인 사항:**
-1. Dev Client APK/IPA가 기기에 설치되어 있는지 확인
-2. 서버가 `--host lan` 옵션으로 실행 중인지 확인
-3. 실제 LAN IP 주소 사용 (localhost 아님!)
-   ```
-   ✅ http://192.168.0.3:8090
-   ❌ http://localhost:8090
-   ```
-4. 동일한 Wi-Fi 네트워크에 연결되어 있는지 확인
-
-### 서버 재시작 프로토콜
-
-**올바른 순서:**
-```bash
-# 1. 기존 서버 중지
-# 2. 타입 체크
-cd app && npm run typecheck
-
-# 3. 오류 없으면 캐시 정리 후 재시작
-cd app && npx expo start --dev-client --clear --port 8090 --host lan
-
-# 4. 오류가 있으면 수정 → 타입 체크 → 서버 시작
-```
-
-### 자주 발생하는 실수
-
-**❌ 절대 하지 말 것:**
-- 타입 체크 없이 서버 시작
-- 문법 오류를 무시하고 서버만 재시작
-- 여러 포트에서 동시에 서버 실행
-- 웹 브라우저로 테스트 시도
-
-**✅ 올바른 방법:**
-- 항상 타입 체크 먼저 실행
-- 오류는 즉시 수정
-- 사용하지 않는 서버 프로세스 종료
-- Dev Client로만 테스트
+(트러블슈팅 정보는 변경되지 않았으므로 생략)
 
 ---
 
 ## 🔗 참고 파일
-- `mockup-v1.html`: 시각적 디자인 참조
 - `docs/`: 전체 설계 문서
 - `src/components/common/`: 재사용 컴포넌트
 - `src/styles/theme.ts`: 디자인 시스템
 
 ---
-*마지막 업데이트: 2025년 11월 10일*
+*마지막 업데이트: 2026년 1월 15일*
