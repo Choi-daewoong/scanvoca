@@ -94,6 +94,12 @@ class WordService:
             if gemini_result is None:
                 print(f"Gemini failed: {word}")
                 return None, "error"
+
+            # Check if word is valid (OCR noise filtering)
+            if not gemini_result.get("is_valid", True):
+                reason = gemini_result.get("reason", "Invalid word")
+                print(f"Invalid word rejected: {word} - {reason}")
+                return None, "invalid"
         except Exception as e:
             # Gemini API 호출 중 오류 발생 시 안전하게 처리
             error_msg = f"Gemini API call error for '{word}': {str(e)}"
@@ -103,7 +109,7 @@ class WordService:
                 print(error_msg.encode('ascii', errors='ignore').decode('ascii'))
             return None, "error"
 
-        # 4. Save to database
+        # 4. Save to database (only valid words)
         try:
             db_word = self.create_from_ai(db, gemini_result)
 
@@ -216,6 +222,11 @@ class WordService:
                     print(f"Gemini error for {word}: {result}")
                     continue
                 if result:
+                    # Check if word is valid (OCR noise filtering)
+                    if not result.get("is_valid", True):
+                        reason = result.get("reason", "Invalid word")
+                        print(f"Invalid word rejected: {word} - {reason}")
+                        continue  # Skip invalid words
                     gemini_results.append(result)
                     gemini_calls += 1
 

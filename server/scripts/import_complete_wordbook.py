@@ -23,7 +23,7 @@ def import_complete_wordbook():
 
     # Read JSON file
     json_path = Path(__file__).parent.parent.parent / "app" / "assets" / "complete-wordbook.json"
-    print(f"📖 Reading: {json_path}")
+    print(f"Reading: {json_path}")
 
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -31,8 +31,8 @@ def import_complete_wordbook():
     total_words = data.get("totalWords", 0)
     words_data = data.get("words", [])
 
-    print(f"📊 Total words in JSON: {total_words}")
-    print(f"📊 Words array length: {len(words_data)}")
+    print(f"Total words in JSON: {total_words}")
+    print(f"Words array length: {len(words_data)}")
 
     # Create database session
     engine = create_engine(
@@ -44,17 +44,17 @@ def import_complete_wordbook():
 
     # Check existing words
     existing_count = session.query(Word).count()
-    print(f"📊 Existing words in DB: {existing_count}")
+    print(f"Existing words in DB: {existing_count}")
 
     if existing_count > 0:
-        response = input("⚠️  Database already has words. Delete all and re-import? (yes/no): ")
+        response = input("Database already has words. Delete all and re-import? (yes/no): ")
         if response.lower() == "yes":
-            print("🗑️  Deleting existing words...")
+            print("Deleting existing words...")
             session.query(Word).delete()
             session.commit()
-            print("✅ Deleted")
+            print("Deleted")
         else:
-            print("❌ Import cancelled")
+            print("Import cancelled")
             return
 
     # Import words
@@ -92,10 +92,10 @@ def import_complete_wordbook():
             # Commit every 100 words
             if imported % 100 == 0:
                 session.commit()
-                print(f"✅ Imported {imported} words...")
+                print(f"Imported {imported} words...")
 
         except Exception as e:
-            print(f"❌ Error importing '{word_data.get('word')}': {e}")
+            print(f"Error importing '{word_data.get('word')}': {e}")
             skipped += 1
             continue
 
@@ -103,10 +103,10 @@ def import_complete_wordbook():
     session.commit()
     session.close()
 
-    print(f"\n🎉 Import complete!")
-    print(f"✅ Imported: {imported}")
-    print(f"⚠️  Skipped: {skipped}")
-    print(f"📊 Total in DB: {imported + existing_count}")
+    print(f"\nImport complete!")
+    print(f"Imported: {imported}")
+    print(f"Skipped: {skipped}")
+    print(f"Total in DB: {imported + existing_count}")
 
 
 if __name__ == "__main__":

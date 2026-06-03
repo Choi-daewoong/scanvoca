@@ -7,12 +7,24 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Create engine
-engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
-    echo=settings.DEBUG,
-)
+# Create engine with appropriate settings for SQLite or PostgreSQL
+if "sqlite" in settings.DATABASE_URL:
+    # SQLite 설정
+    engine = create_engine(
+        settings.DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        echo=settings.DEBUG,
+    )
+else:
+    # PostgreSQL 설정 (Supabase 등)
+    engine = create_engine(
+        settings.DATABASE_URL,
+        pool_pre_ping=True,      # 연결 유효성 검사
+        pool_recycle=3600,       # 1시간마다 연결 재활용
+        pool_size=5,             # 기본 연결 풀 크기
+        max_overflow=10,         # 추가 허용 연결 수
+        echo=settings.DEBUG,
+    )
 
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

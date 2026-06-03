@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #4F46E5;
+  --primary-dark: #4338CA;
+  --primary-light: #EEF2FF;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: #ffffff;
+  color: #111827;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 모바일 탭바 영역 확보 */
+.has-bottom-nav {
+  padding-bottom: 80px;
+}
+
+/* 터치 타겟 최소 44px */
+button, a, input[type="button"], input[type="submit"] {
+  min-height: 44px;
+}

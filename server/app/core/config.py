@@ -27,6 +27,14 @@ class Settings(BaseSettings):
     # Google Gemini
     GEMINI_API_KEY: Optional[str] = None
 
+    # SMTP (Gmail 비밀번호 재설정 이메일)
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_FROM_NAME: str = "Scan Voca"
+    PASSWORD_RESET_OTP_EXPIRE_MINUTES: int = 10
+
     # CORS - 하드코딩 (환경변수 파싱 문제 방지)
     @property
     def cors_origins_list(self) -> list[str]:

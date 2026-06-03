@@ -21,6 +21,8 @@ async def generate_words(
     """
     Generate/fetch word definitions with GPT proxy
 
+    🔒 PROTECTED ENDPOINT (Authentication required)
+
     - **Cache first**: Check Redis cache
     - **DB second**: Check words table
     - **GPT last**: Call GPT API if not found
@@ -89,6 +91,8 @@ async def search_words(
     """
     Search words by keyword
 
+    🔒 PROTECTED ENDPOINT (Authentication required)
+
     - **q**: Search query (matches word field)
     - **limit**: Maximum number of results (default 20, max 100)
 
@@ -133,6 +137,8 @@ async def get_words_batch(
 ):
     """
     Get multiple words by text (for OCR processing)
+
+    🔒 PROTECTED ENDPOINT (Authentication required)
 
     - **words**: List of word strings to fetch
 

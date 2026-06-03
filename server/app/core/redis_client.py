@@ -1,33 +1,47 @@
 """Redis client for caching"""
 import json
-from typing import Optional, Any
+from typing import Optional, Any, Union
 from redis import Redis, RedisError
 from app.core.config import settings
 
 # Redis client instance (optional)
-redis_client: Optional[Redis] = None
+# None means not checked yet, False means checked and failed, Redis instance means connected
+redis_client: Union[Redis, bool, None] = None
 
 
 def get_redis() -> Optional[Redis]:
     """Get Redis client (returns None if Redis is not available)"""
     global redis_client
 
+    # 이미 확인했고 연결 실패한 경우 즉시 None 반환 (타임아웃 방지)
+    if redis_client is False:
+        return None
+
+    # 이미 연결된 경우 반환
+    if isinstance(redis_client, Redis):
+        return redis_client
+
+    # 최초 연결 시도
     if redis_client is None:
         try:
-            redis_client = Redis.from_url(
+            client = Redis.from_url(
                 settings.REDIS_URL,
                 decode_responses=True,
-                socket_connect_timeout=2
+                socket_connect_timeout=0.5,  # 1초 → 0.5초로 더 단축
+                socket_timeout=0.5
             )
             # Test connection
-            redis_client.ping()
-            print(f"✅ Redis connected: {settings.REDIS_URL}")
+            client.ping()
+            redis_client = client
+            print(f"OK: Redis connected: {settings.REDIS_URL}")
+            return redis_client
         except (RedisError, Exception) as e:
-            print(f"⚠️  Redis not available: {e}")
-            print("📝 Continuing without Redis cache (DB only)")
-            redis_client = None
+            print(f"WARNING: Redis not available: {e}")
+            print("INFO: Continuing without Redis cache (DB only)")
+            redis_client = False  # 실패 표시
+            return None
 
-    return redis_client
+    return None
 
 
 async def get_cached(key: str) -> Optional[dict]:
@@ -44,7 +58,7 @@ async def get_cached(key: str) -> Optional[dict]:
         if data:
             return json.loads(data)
     except (RedisError, json.JSONDecodeError) as e:
-        print(f"⚠️  Redis get error: {e}")
+        print(f"Redis get error: {e}")
 
     return None
 
@@ -62,7 +76,7 @@ async def set_cached(key: str, value: Any, ttl: int = 86400) -> bool:
         client.setex(key, ttl, json.dumps(value))
         return True
     except (RedisError, TypeError) as e:
-        print(f"⚠️  Redis set error: {e}")
+        print(f"Redis set error: {e}")
         return False
 
 
@@ -76,5 +90,5 @@ async def delete_cached(key: str) -> bool:
         client.delete(key)
         return True
     except RedisError as e:
-        print(f"⚠️  Redis delete error: {e}")
+        print(f"Redis delete error: {e}")
         return False

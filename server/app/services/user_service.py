@@ -1,4 +1,5 @@
 """User service for database operations"""
+from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -46,3 +47,32 @@ class UserService:
     def email_exists(db: Session, email: str) -> bool:
         """Check if email already exists"""
         return UserService.get_by_email(db, email) is not None
+
+    @staticmethod
+    def save_reset_otp(db: Session, user: User, otp: str, expires_at: datetime) -> None:
+        """Save password reset OTP and expiration time"""
+        user.password_reset_token = otp
+        user.password_reset_expires_at = expires_at
+        db.commit()
+
+    @staticmethod
+    def verify_reset_otp(db: Session, email: str, otp: str) -> Optional[User]:
+        """Verify reset OTP - returns User if valid, None otherwise"""
+        user = UserService.get_by_email(db, email)
+        if not user:
+            return None
+        if not user.password_reset_token or user.password_reset_token != otp:
+            return None
+        if not user.password_reset_expires_at:
+            return None
+        if datetime.now(timezone.utc) > user.password_reset_expires_at.replace(tzinfo=timezone.utc):
+            return None
+        return user
+
+    @staticmethod
+    def update_password(db: Session, user: User, new_password: str) -> None:
+        """Update password hash and clear OTP fields"""
+        user.password_hash = hash_password(new_password)
+        user.password_reset_token = None
+        user.password_reset_expires_at = None
+        db.commit()

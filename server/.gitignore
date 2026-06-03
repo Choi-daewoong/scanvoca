@@ -33,6 +33,7 @@ poetry.lock
 .env
 .env.local
 .env.*.local
+!.env.example
 
 # IDEs
 .vscode/

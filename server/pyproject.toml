@@ -1,27 +1,32 @@
-[project]
+[tool.poetry]
 name = "scanvoca-server"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "Claude",email = "noreply@anthropic.com"}
-]
+authors = ["Claude <noreply@anthropic.com>"]
 readme = "README.md"
-requires-python = ">=3.11"
-dependencies = [
-    "fastapi (>=0.121.1,<0.122.0)",
-    "uvicorn[standard] (>=0.38.0,<0.39.0)",
-    "sqlalchemy (>=2.0.44,<3.0.0)",
-    "psycopg2-binary (>=2.9.11,<3.0.0)",
-    "redis (>=7.0.1,<8.0.0)",
-    "python-jose[cryptography] (>=3.5.0,<4.0.0)",
-    "passlib[bcrypt] (>=1.7.4,<2.0.0)",
-    "alembic (>=1.17.1,<2.0.0)",
-    "pydantic-settings (>=2.12.0,<3.0.0)",
-    "email-validator (>=2.3.0,<3.0.0)",
-    "bcrypt (==4.0.1)",
-    "openai (>=2.7.2,<3.0.0)"
-]
+package-mode = false
 
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.121.1"
+uvicorn = {extras = ["standard"], version = "^0.38.0"}
+sqlalchemy = "^2.0.44"
+psycopg2-binary = "^2.9.11"
+redis = "^7.0.1"
+python-jose = {extras = ["cryptography"], version = "^3.5.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+alembic = "^1.17.1"
+pydantic-settings = "^2.12.0"
+email-validator = "^2.3.0"
+bcrypt = "4.0.1"
+google-generativeai = "^0.8.0"
+packaging = "^25.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-asyncio = "^0.25.0"
+httpx = "^0.28.0"
+pytest-cov = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

@@ -39,6 +39,11 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class TokenRefreshRequest(BaseModel):
+    """Schema for token refresh request"""
+    refresh_token: str
+
+
 class TokenPayload(BaseModel):
     """Schema for JWT token payload"""
     sub: str  # user_id
@@ -51,3 +56,20 @@ class GoogleLoginRequest(BaseModel):
     email: EmailStr
     name: Optional[str] = None
     google_id: str
+
+
+class PasswordResetRequest(BaseModel):
+    """Schema for requesting password reset OTP"""
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    """Schema for confirming password reset with OTP"""
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6)
+    new_password: str = Field(..., min_length=8, max_length=100)
+
+
+class MessageResponse(BaseModel):
+    """Schema for simple message response"""
+    message: str
