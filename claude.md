@@ -1,366 +1,186 @@
-# CLAUDE.md
+# CLAUDE.md — Scan_Voca 프로젝트 가이드
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-# Claude Code 설정 및 프로젝트 가이드 - Scan_Voca
-
-이 파일은 Claude Code가 Scan_Voca 프로젝트의 코드 생성 및 수정을 지원하기 위한 핵심 가이드입니다.
+Claude Code가 이 프로젝트를 작업할 때 참고하는 핵심 가이드입니다.
 
 ---
 
 ## 📋 프로젝트 정보
+
 - **프로젝트명**: Scan_Voca (스마트 영단어 학습 앱)
-- **개발 접근**: UI/UX 우선 설계 → 시나리오 정의 → 기능 구현
 - **타겟 사용자**: 중/고등학생
-- **현재 개발 환경**: 🔧 **Expo Dev Client 사용 중** (네이티브 모듈 지원)
-
-### 🎯 개발 로드맵 및 비즈니스 계획
-#### Phase 1: MVP 개발 (현재)
-- **목표**: 사용자 흐름에 따른 UX/UI 완성 및 기본 기능 구현
-- **인증**: AsyncStorage 기반 로컬 인증 (임시)
-- **데이터**: 📚 **로컬 JSON 우선 → GPT API** - complete-wordbook.json (3267단어) 먼저 검색 후 없으면 GPT 호출
-- **수익 모델**: 없음 (기능 검증 단계)
-
-#### Phase 2: 서버 구축 및 확장
-- **목표**: 백엔드 서버 구축 및 클라우드 전환
-- **인증**: 서버 기반 회원관리 시스템 구축
-  - JWT 토큰 기반 인증
-  - 소셜 로그인 연동 (Google, Apple, Kakao, Naver)
-  - 비밀번호 재설정, 이메일 인증 등
-- **데이터**: 클라우드 데이터베이스 + 로컬 캐싱
-- **API**: RESTful API 서버 구축
-- **배포**: AWS/GCP 등 클라우드 인프라
-
-#### Phase 3: 수익화 및 고급 기능
-- **광고 시스템**:
-  - 배너 광고, 전면 광고, 리워드 광고 삽입
-  - Google AdMob 또는 Facebook Audience Network 연동
-  - 광고 위치: 퀴즈 결과 화면, 단어장 목록, 학습 완료 후
-- **유료 구독 모델**:
-  - 프리미엄 회원제 도입
-  - 무료 사용자: 광고 포함, 제한된 기능
-  - 유료 사용자: 광고 제거, 고급 기능 제공
-  - 구독 혜택: 무제한 스캔, 고급 통계, 개인 맞춤 학습
-- **인앱 결제**: App Store / Google Play 구독 연동
-
-## 🛠️ 기술 스택 (Tech Stack)
-
-### 현재 구현 (Phase 1)
-* **Framework:** React Native + Expo SDK 54.0.23
-* **개발 환경**: 🔧 **Expo Dev Client** (커스텀 네이티브 모듈 지원)
-* **Language:** TypeScript (strict mode, extends expo/tsconfig.base)
-* **Data Source:** 📚 **로컬 JSON 우선 + GPT API 백업**
-  - 검색 순서: 메모리 캐시 → complete-wordbook.json (3267단어) → AsyncStorage 캐시 → GPT API
-  - 로컬 JSON에 예문 포함되어 있어 비용 절감 효과
-  - SmartDictionaryService를 통한 통합 관리
-* **Navigation:** React Navigation v7 (Stack + Bottom Tabs)
-* **State Management:** Zustand (authStore) + React Hooks
-* **Authentication:** `@react-native-google-signin/google-signin`, AsyncStorage 기반 로컬 인증
-* **Camera:** `react-native-vision-camera` (4.7.2) + `expo-image-picker`
-* **OCR:** `@react-native-ml-kit/text-recognition` + `vision-camera` Frame Processor
-* **TTS:** `expo-speech` (Dev Client 환경에서 실제 음성 재생 가능)
-* **Styling:** Theme-based 디자인 시스템 + ThemeProvider
-* **Forms:** `react-hook-form` + `@hookform/resolvers` + `zod` validation
-* **Storage:** `@react-native-async-storage/async-storage` (단어장 및 설정 저장용)
-
-### 향후 추가 예정 (Phase 2-3)
-* **Backend:** Python/FastAPI + PostgreSQL
-* **Authentication:** JWT + OAuth 2.0 (Google, Apple, Kakao, Naver)
-* **Cloud Storage:** AWS S3 / Google Cloud Storage
-* **Push Notifications:** Firebase Cloud Messaging (FCM)
-* **Analytics:** Firebase Analytics + Crashlytics
-* **Advertisement:** Google AdMob + Facebook Audience Network
-* **In-App Purchase:** RevenueCat + App Store Connect + Google Play Console
-* **API:** RESTful API + GraphQL (고려)
-* **Deployment:** Google Cloud Run/Docker + CI/CD Pipeline
+- **현재 단계**: Phase 2 (백엔드 서버 + 웹앱 운영 중)
 
 ---
 
-## 📁 프로젝트 구조 (Project Structure)
+## 🛠️ 기술 스택
 
-### 핵심 디렉토리
+### Frontend — Next.js 웹앱 (`web/`)
+- **Framework**: Next.js 16 (App Router, Turbopack)
+- **Language**: TypeScript (strict)
+- **Styling**: Tailwind CSS
+- **State**: Zustand (`authStore`)
+- **Auth**: JWT (localStorage) + 자동 토큰 갱신
+- **TTS**: Web Speech API (`utils/tts.ts`)
+
+### Backend — FastAPI 서버 (`server/`)
+- **Framework**: FastAPI + Uvicorn
+- **Database**: Supabase PostgreSQL (Transaction Pooler)
+- **ORM**: SQLAlchemy 2.0 + Alembic 마이그레이션
+- **Auth**: JWT (python-jose) + bcrypt
+- **AI**: Google Gemini API (`gemini_service.py`)
+- **배포**: Google Cloud Run (`asia-northeast3`)
+- **이메일**: Gmail SMTP (비밀번호 재설정 OTP)
+
+---
+
+## 🌐 운영 URL
+
+- **Cloud Run API**: `https://scanvoca-api-313755310624.asia-northeast3.run.app`
+- **API 문서**: `https://scanvoca-api-313755310624.asia-northeast3.run.app/docs`
+- **GitHub**: `https://github.com/Choi-daewoong/scanvoca`
+
+---
+
+## 📁 프로젝트 구조
+
 ```
-app/                       # React Native (Expo) 앱 디렉토리
-├── src/
-│   ├── components/
-│   │   ├── common/        # ✅ 재사용 UI 컴포포넌트
-│   │   ├── icons/         # ✅ 아이콘 컴포넌트
-│   │   ├── scan/          # ✅ 스캔 관련 컴포넌트
-│   │   └── wordbook/      # ✅ 단어장 관련 컴포넌트
-│   ├── screens/           # ✅ 16개 화면 컴포넌트 (Home, Scan, Wordbook 등)
-│   ├── navigation/        # ✅ React Navigation v7 설정 (Tab + Stack)
-│   ├── services/          # ✅ 비즈니스 로직 (OCR, Auth, Dictionary 등)
-│   ├── hooks/             # ✅ 커스텀 React Hooks (useVocabulary, useWordbook 등)
-│   ├── stores/            # ✅ Zustand 상태 관리 (Auth)
-│   ├── styles/            # ✅ 테마 시스템 & ThemeProvider
-│   ├── types/             # ✅ TypeScript 타입 정의
-│   ├── constants/         # ✅ 상수 (스토리지 키 등)
-│   └── utils/             # ✅ 유틸리티 함수
-├── assets/                # 이미지, 아이콘, 폰트, 로컬 JSON 데이터
-└── App.tsx                # ✅ 메인 앱 컴포넌트
-
-server/                    # Python (FastAPI) 백엔드 서버
-├── app/
-│   ├── api/               # API 라우터
-│   ├── core/              # 핵심 로직 (설정 등)
-│   ├── models/            # SQLAlchemy 모델
-│   ├── schemas/           # Pydantic 스키마
-│   └── services/          # 서비스 레이어
-├── alembic/               # 데이터베이스 마이그레이션
-└── Dockerfile             # 컨테이너 빌드 설정
+Scan_Voca/
+├── web/                          # Next.js 웹앱
+│   └── src/
+│       ├── app/
+│       │   ├── (auth)/           # 로그인, 회원가입, 비밀번호 재설정
+│       │   ├── (main)/           # 메인 앱 (홈, 스캔, 단어장, 통계, 설정)
+│       │   │   └── wordbooks/[id]/
+│       │   │       └── _components/  # QuizMode, StudyMode, ExamMode, SpellingComparison
+│       │   └── api/proxy/        # API 프록시 라우트
+│       ├── components/common/    # AuthGuard, BottomNav
+│       ├── services/             # api.ts, authService, wordbookService, wordService, ocrService
+│       ├── stores/               # authStore (Zustand)
+│       ├── types/                # TypeScript 타입 정의
+│       └── utils/                # tts.ts
+│
+├── server/                       # FastAPI 백엔드
+│   ├── app/
+│   │   ├── api/v1/               # auth, words, wordbooks, ocr, version
+│   │   ├── core/                 # config, database, security, dependencies, redis_client
+│   │   ├── models/               # User, Word, Wordbook, WordbookWord
+│   │   ├── schemas/              # Pydantic 스키마
+│   │   └── services/             # gemini_service, user_service, word_service, wordbook_service, email_service
+│   ├── alembic/                  # DB 마이그레이션 (5개 버전)
+│   ├── tests/                    # pytest 테스트
+│   ├── Dockerfile
+│   ├── deploy-final.ps1          # Cloud Run 배포 스크립트 (PowerShell)
+│   └── requirements.txt
+│
+├── CLAUDE.md                     # 이 파일
+├── README.md
+├── PRIVACY_POLICY.md
+├── STORE_LISTING.md
+└── DEPLOYMENT_GUIDE.md
 ```
 
 ---
 
-## 🎯 명령어 (Commands)
+## 🎯 명령어
 
-### ⚠️ 서버 시작 전 필수 체크리스트 (CRITICAL!)
-**서버 실행 전 반드시 다음 순서대로 실행:**
-
+### 웹앱 개발
 ```bash
-# 1️⃣ 타입 체크 (문법 오류 확인) - 필수!
-cd app && npm run typecheck
-
-# 2️⃣ 오류가 있으면 먼저 수정 후 진행
-# 3️⃣ 모든 체크가 통과하면 서버 시작
+cd web && npm run dev          # 개발 서버 (localhost:3000)
+cd web && npm run build        # 프로덕션 빌드
+cd web && npm run typecheck    # 타입 체크
 ```
 
-**❌ 절대 하지 말 것:**
-- 타입 체크 없이 바로 서버 시작
-- 백그라운드로 실행하면서 오류 확인 늦어짐
-- 오류 발생 시 서버만 재시작 (코드 수정 먼저!)
-
-### 개발 환경 (🔧 Dev Client 사용 중)
+### 백엔드 개발
 ```bash
-# 개발 서버 (앱 디렉토리에서 실행) - Dev Client 모드
-cd app && npx expo start --dev-client          # Dev Client 모드로 실행
-cd app && npx expo start --dev-client --clear  # 캐시 초기화 후 실행
+cd server
+venv\Scripts\activate          # 가상환경 활성화 (Windows)
+uvicorn app.main:app --reload  # 개발 서버 (localhost:8000)
 
-# 네이티브 모듈 지원을 위한 Dev Client 빌드
-cd app && npx expo run:android        # Android Dev Client 빌드 및 실행
-cd app && npx expo run:ios           # iOS Dev Client 빌드 및 실행
-
-# EAS 빌드 (네이티브 모듈 포함)
-cd app && eas build --profile development --platform android   # Dev Client APK 빌드
-
-# ⚠️ 중요: localhost가 아닌 실제 IP 사용 필수
-# - 모바일 기기에서 접근하려면 LAN IP 필요
-
-# 코드 품질 검사
-cd app && npm run typecheck          # TypeScript 타입 체크
-cd app && npm run lint               # ESLint 검사
-cd app && npm run lint:fix          # ESLint 자동 수정
-cd app && npm run format             # Prettier 포맷팅
-cd app && npm run format:check       # 포맷팅 검사
+# DB 마이그레이션
+alembic revision --autogenerate -m "설명"
+alembic upgrade head
 ```
 
-### 서버 관련 (Python/FastAPI)
-```bash
-# (server/ 디렉토리에서 실행)
-# 가상 환경 설정 및 활성화
-python -m venv venv
-source venv/bin/activate  # macOS/Linux
-venv\Scripts\activate    # Windows
-
-# 의존성 설치
-pip install -r requirements.txt
-
-# 서버 실행 (개발용)
-uvicorn app.main:app --reload
+### Cloud Run 배포
+```powershell
+cd server
+.\deploy-final.ps1             # Docker 빌드 → GCR 푸시 → Cloud Run 배포
 ```
 
 ---
 
-## 🏗️ 아키텍처 패턴 (Architecture Patterns)
+## 🗄️ 데이터베이스
 
-### Repository 패턴 (🚫 사용 중단)
-- **설명**: 과거 SQLite 사용 시의 잔재. 현재는 `smartDictionaryService`가 데이터 접근을 총괄하므로 **사용하지 않습니다**.
-- **위치**: `src/database/repositories/` (삭제됨)
+- **Production**: Supabase PostgreSQL (`aws-1-ap-northeast-2.pooler.supabase.com:6543`)
+- **테이블**: `users`, `words`, `wordbooks`, `wordbook_words`
+- **연결**: `server/.env`의 `DATABASE_URL` (절대 커밋 금지)
+- **마이그레이션**: alembic 사용, 현재 head: `c2d3e4f5a6b7`
 
-### 커스텀 Hooks 패턴
-- **useVocabulary**: 단어 검색, 의미 조회, 예문 처리
-- **useWordbook**: 단어장 CRUD, 단어 추가/제거
-- **useQuiz**: 퀴즈 생성, 정답 검증, 진도 추적
-- **특징**: 비즈니스 로직 분리, 상태 관리, 재사용성
+---
 
-### Navigation Architecture
-```typescript
-// RootNavigator (Stack) → MainTabNavigator (Tabs) → 개별 스크린들
-AuthStack: LoginScreen, RegisterScreen, ForgotPasswordScreen
-MainTabs:
-  - HomeTab: HomeScreen → StudyStatsScreen
-  - ScanTab: ScanScreen → CameraScreen → ScanResultsScreen
-  - WordbookTab: WordbookScreen → WordbookDetailScreen → WordDetailScreen
-  - 전역: QuizSessionScreen, QuizResultsScreen, SettingsScreen, FeedbackScreen
+## 🔑 환경변수
+
+### `server/.env` (커밋 금지)
+```
+DATABASE_URL=postgresql://...supabase.com.../postgres
+JWT_SECRET_KEY=...
+GEMINI_API_KEY=...
+SMTP_USER=...
+SMTP_PASSWORD=...
 ```
 
-### 상태 관리 패턴
-- **전역 상태**: Zustand (authStore) - 로그인/인증 상태
-- **로컬 상태**: React Hooks - 각 컴포넌트별 UI 상태
-- **서버 상태**: Custom Hooks - 데이터베이스 쿼리 결과
-- **폼 상태**: react-hook-form + zod - 입력 검증 및 제출
-
-### 테마 시스템 패턴
-```typescript
-// 모든 컴포넌트에서 일관된 테마 사용
-import { useTheme } from '../styles/ThemeProvider';
-const theme = useTheme();
-
-// 또는 직접 import
-import theme from '../styles/theme';
+### `web/.env.local` (커밋 금지)
+```
+NEXT_PUBLIC_API_URL=https://scanvoca-api-313755310624.asia-northeast3.run.app
 ```
 
 ---
 
-## 🎨 디자인 시스템
+## 🏗️ API 엔드포인트
 
-(디자인 시스템 정보는 변경되지 않았으므로 생략)
-
----
-
-## ⚡ 완성된 컴포넌트 라이브러리
-
-(컴포넌트 라이브러리 정보는 변경되지 않았으므로 생략)
-
----
-
-## 📝 코드 스타일 및 규칙
-
-* **함수형 컴포넌트**: React Hooks 사용 (useState, useEffect, useContext)
-* **TypeScript**: strict 모드, 모든 Props 인터페이스 정의
-* **네이밍**: 컴포넌트 PascalCase, 함수/변수 camelCase
-* **테마 사용**: `import theme from '../styles/theme'`로 일관된 스타일링
-* **🚫 SQLite DB 접근 금지**: 로컬 SQLite/Realm 등 사용하지 않음
-* **✅ 단어 데이터 소스**: `smartDictionaryService`를 통한 통합 관리
-  - 우선순위: complete-wordbook.json (3267단어, 예문 포함) → GPT API
-  - 비용 절감: 일반 단어는 로컬 JSON 사용, 신조어/전문용어만 GPT 호출
-* **사전 연동**: 네이버 사전 WebView 연결 (`https://en.dict.naver.com/#/search?query={word}`)
-* **파일 크기 제한**: 단일 파일은 400줄 이하로 유지, 초과 시 기능별로 분리
-* **모듈화**: 400줄 초과 시 즉시 별도 파일로 분리하여 유지보수성 확보
+| 경로 | 설명 |
+|---|---|
+| `POST /api/v1/auth/register` | 회원가입 |
+| `POST /api/v1/auth/login` | 로그인 → JWT 발급 |
+| `POST /api/v1/auth/refresh` | 토큰 갱신 |
+| `GET /api/v1/auth/me` | 내 정보 조회 |
+| `POST /api/v1/auth/google-login` | Google 로그인 |
+| `POST /api/v1/auth/forgot-password` | 비밀번호 재설정 OTP 발송 |
+| `POST /api/v1/auth/reset-password` | 비밀번호 변경 |
+| `GET/POST /api/v1/wordbooks/` | 단어장 목록/생성 |
+| `GET/PUT/DELETE /api/v1/wordbooks/{id}` | 단어장 조회/수정/삭제 |
+| `GET/POST /api/v1/wordbooks/{id}/words` | 단어 목록/추가 |
+| `POST /api/v1/words/define` | Gemini 단어 정의 생성 |
+| `POST /api/v1/ocr/extract` | 이미지 OCR 텍스트 추출 |
 
 ---
 
-## 🤖 데이터 소스 정보
+## ⚠️ 핵심 원칙
 
-### 단어 데이터 처리 우선순위
-- **검색 순서**: 메모리 캐시 → 로컬 JSON → AsyncStorage 캐시 → GPT API
-- **로컬 JSON 우선**: `complete-wordbook.json` (3267단어, 예문 포함) 먼저 검색
-- **비용 최적화**: 일반 단어는 로컬 데이터 사용 (무료), 없을 때만 GPT 호출 (~$0.002/단어)
-- **캐싱 시스템**: `SmartDictionaryService`를 통한 통합 관리
-  - 메모리 캐시: 앱 실행 중 임시 저장 (빠른 재검색)
-  - AsyncStorage: 영구 캐시 (GPT로 생성한 단어 저장)
-  - 로컬 JSON: complete-wordbook.json (3267개 미리 정의된 단어)
-- **SQLite 제거**: 로컬 데이터베이스(SQLite, Realm) 사용하지 않음
-
-### GPT 단어 정의 구조
-```typescript
-interface SmartWordDefinition {
-  word: string;
-  pronunciation: string;
-  difficulty: number; // 1-5 레벨
-  meanings: Array<{
-    korean: string;
-    english: string;
-    partOfSpeech: string;
-  }>;
-  source: 'gpt' | 'cache';
-}
-```
-
-### 저장 방식
-- **단어장**: AsyncStorage에 JSON 형태로 저장
-- **사용자 설정**: AsyncStorage 기반 로컬 저장
-- **캐시**: 메모리 기반 임시 저장 (앱 재시작 시 초기화)
-- **인증 정보**: AsyncStorage 기반 로컬 토큰 저장
+- **절대 커밋 금지**: `.env`, `.env.local`, `백엔드.txt`, `서버시작`
+- **DB 직접 접근 금지**: 반드시 SQLAlchemy ORM / 서비스 레이어 사용
+- **단어 데이터**: `gemini_service.py`를 통해서만 생성 (로컬 JSON 제거됨)
+- **인증**: 모든 보호 엔드포인트는 `Bearer {access_token}` 헤더 필수
 
 ---
 
-## 🎯 현재 개발 상황
+## 🚀 개발 로드맵
 
-### ✅ 완료된 작업
-- [x] ✅ **로컬 DB 완전 제거** - SQLite 데이터베이스 삭제 및 JSON+GPT 하이브리드 전환
-- [x] SmartDictionaryService 구현 (로컬 JSON 우선 검색 → GPT 백업)
-- [x] AsyncStorage 기반 단어장 시스템 구현
-- [x] 단어 추가 기능 (AddWordModal) - 로컬 JSON/GPT 자동 선택
-- [x] 카메라 OCR 실제 구현 (`@react-native-ml-kit/text-recognition` 통합)
-- [x] 사용자 시나리오 정의
-- [x] UI/UX 목업 설계
-- [x] 네비게이션 플로우 설계
-- [x] 디자인 시스템 구축
-- [x] 컴포넌트 라이브러리 완성 (20개)
-- [x] HTML 목업 제작
-- [x] React Navigation 시스템 구현 (Tab + Stack)
-- [x] 커스텀 Hooks 구현 (useVocabulary, useWordbook, useQuiz)
-- [x] 화면 컴포넌트 구현 (16개 스크린)
-- [x] 상태 관리 시스템 (Zustand + React Hooks)
-- [x] 테마 시스템 및 ThemeProvider
-- **[x] 소셜 로그인 시스템 (Google 로그인 구현 완료)**
-- [x] 폼 검증 시스템 (react-hook-form + zod)
-- [x] OCR 및 카메라 서비스 인터페이스
-- [x] 퀴즈 및 학습 진도 추적 시스템
+### ✅ 완료
+- Next.js 웹앱 전환 (React Native → Web)
+- FastAPI 백엔드 + JWT 인증
+- Supabase PostgreSQL 전환 (데이터 영구 저장)
+- Cloud Run 배포 자동화
+- 단어장 CRUD + 학습 모드 (Quiz, Study, Exam)
+- Gemini AI 단어 정의 생성
+- 비밀번호 재설정 (이메일 OTP)
 
-### 🔧 진행 중 / 최적화 대상
-- [ ] 이미지 크롭 기능 구현 (라이브러리 재선정 필요)
-- [ ] 단어 발음 TTS 기능
-- [ ] 푸시 알림 시스템
-- [ ] 성능 최적화 (리스트 가상화 등)
-- [ ] 단위 테스트 작성
-- [ ] 백엔드 서버 기능 확장 (단어장 동기화 등)
+### 🔧 진행 예정
+- 게이미피케이션 (스트릭/별/계급 랭킹 시스템)
+- 이미지 스캔 OCR 개선
+- 푸시 알림
+- 모바일 앱 (PWA 또는 React Native 재도입)
 
 ---
 
-## ⚠️ 핵심 개발 원칙
-
-### 🚫 현재 단계 금지사항 (Phase 1 MVP)
-- **🚫 SQLite/Realm 사용 금지**: 로컬 데이터베이스 시스템 사용하지 않음
-- **🚫 Repository 패턴 사용 금지**: 기존 database/repositories 디렉토리 참조하지 않음
-- **🚫 databaseService 참조 금지**: 모든 단어 데이터는 smartDictionaryService를 통해서만 접근
-- **✅ smartDictionaryService 전용**: 로컬 JSON + GPT API 통합 관리
-  - 검색 우선순위: 메모리 캐시 → complete-wordbook.json → AsyncStorage → GPT API
-  - 비용 절감을 위해 로컬 JSON (3267단어) 먼저 검색
-- **✅ AsyncStorage만 허용**: 단어장, 설정, 인증 정보, GPT 캐시는 AsyncStorage 사용
-- **OCR 후처리 필수**: 반드시 단어 매칭 및 사용자 검증 UI 제공
-
-
-### ✅ 필수 준수사항
-- **테마 기반 스타일링**: 모든 컴포넌트는 theme.ts 사용
-- **TypeScript 타입 안전성**: 모든 Props 인터페이스 정의
-- **컴포넌트 재사용**: common 디렉토리의 컴포넌트 적극 활용
-- **사용자 경험 우선**: UI 피드백, 로딩 상태, 에러 처리 필수
-
----
-
-## 📷 카메라 및 이미지 처리 기능
-
-### 카메라 촬영 플로우
-1. **카메라 실행**: `react-native-vision-camera`로 실시간 카메라 프리뷰
-2. **사진 촬영**: 사용자가 촬영 버튼 터치
-3. **이미지 후처리**: (TBD) 이미지 크롭 또는 보정 기능
-4. **OCR 처리**: `@react-native-ml-kit/text-recognition`을 사용하여 텍스트 추출
-5. **단어 필터링**: `ocrFiltering` 서비스를 통해 유효한 단어 추출
-
-### 필요한 라이브러리
-```bash
-npm install react-native-vision-camera
-npm install @react-native-ml-kit/text-recognition
-```
-
-### 카메라 권한 설정
-- **iOS**: `Info.plist`에 `NSCameraUsageDescription` 추가
-- **Android**: `AndroidManifest.xml`에 `CAMERA` 권한 추가
-
----
-
-## 🚨 트러블슈팅 (Troubleshooting)
-
-(트러블슈팅 정보는 변경되지 않았으므로 생략)
-
----
-
-## 🔗 참고 파일
-- `docs/`: 전체 설계 문서
-- `src/components/common/`: 재사용 컴포넌트
-- `src/styles/theme.ts`: 디자인 시스템
-
----
-*마지막 업데이트: 2026년 1월 15일*
+*마지막 업데이트: 2026-06-05*

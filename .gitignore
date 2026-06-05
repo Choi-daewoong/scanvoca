@@ -3,6 +3,11 @@ worklog.md
 worklog*.md
 WORKLOG*.md
 
+# 민감한 로컬 파일
+백엔드.txt
+서버시작
+제목 없음.jpg
+
 # Node modules
 node_modules/
 
