@@ -121,15 +121,16 @@ async def google_login(
     user = UserService.get_by_email(db, google_data.email)
 
     if not user:
-        # Create new user with Google info
-        # Generate random password (user won't need it for Google login)
         random_password = secrets.token_urlsafe(32)
-
         user_create = UserCreate(
             email=google_data.email,
             password=random_password,
             display_name=google_data.name or google_data.email.split('@')[0]
         )
+        user = UserService.create(db, user_create)
+
+    access_token = create_access_token(str(user.id))
+    refresh_token = create_refresh_token(str(user.id))
 
     return {
         "access_token": access_token,

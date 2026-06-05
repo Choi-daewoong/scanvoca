@@ -1,3 +1,4 @@
+// 브라우저/서버 모두 API 서버에 직접 호출 (CORS allow_credentials=False + origins=["*"])
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 function getToken(): string | null {

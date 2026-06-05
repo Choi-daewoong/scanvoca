@@ -6,6 +6,7 @@ import { wordbookService } from '@/services/wordbookService';
 import { wordService } from '@/services/wordService';
 import { OCRScanResponse, WordDefinition, Wordbook } from '@/types';
 import Image from 'next/image';
+import { speakWord } from '@/utils/tts';
 
 type Step = 'upload' | 'processing' | 'result' | 'saving';
 
@@ -256,36 +257,15 @@ export default function ScanPage() {
 
             {/* 저장 영역 */}
             {!saveSuccess && (
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-                <p className="mb-3 text-sm font-medium text-gray-700">단어장에 저장하기</p>
-                {wordbooks.length === 0 ? (
-                  <p className="text-sm text-gray-500">
-                    단어장이 없습니다.{' '}
-                    <a href="/wordbooks" className="text-indigo-600 underline">단어장 만들기</a>
-                  </p>
-                ) : (
-                  <>
-                    <select
-                      value={selectedWbId ?? ''}
-                      onChange={(e) => setSelectedWbId(Number(e.target.value))}
-                      className="mb-3 w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500"
-                    >
-                      {wordbooks.map((wb) => (
-                        <option key={wb.id} value={wb.id}>
-                          {wb.name} ({wb.word_count}개)
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={handleSave}
-                      disabled={step === 'saving' || selectedWords.size === 0}
-                      className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
-                    >
-                      {step === 'saving' ? '저장 중...' : `${selectedWords.size}개 단어 저장`}
-                    </button>
-                  </>
-                )}
-              </div>
+              <SaveToWordbookPanel
+                wordbooks={wordbooks}
+                setWordbooks={setWordbooks}
+                selectedWbId={selectedWbId}
+                setSelectedWbId={setSelectedWbId}
+                selectedCount={selectedWords.size}
+                isSaving={step === 'saving'}
+                onSave={handleSave}
+              />
             )}
           </>
         )}
@@ -294,6 +274,121 @@ export default function ScanPage() {
   }
 
   return null;
+}
+
+function SaveToWordbookPanel({
+  wordbooks,
+  setWordbooks,
+  selectedWbId,
+  setSelectedWbId,
+  selectedCount,
+  isSaving,
+  onSave,
+}: {
+  wordbooks: Wordbook[];
+  setWordbooks: React.Dispatch<React.SetStateAction<Wordbook[]>>;
+  selectedWbId: number | null;
+  setSelectedWbId: (id: number) => void;
+  selectedCount: number;
+  isSaving: boolean;
+  onSave: () => void;
+}) {
+  const [showNew, setShowNew] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  const handleCreate = async () => {
+    if (!newName.trim()) return;
+    setCreating(true);
+    try {
+      const wb = await wordbookService.create(newName.trim());
+      setWordbooks((prev) => [...prev, wb]);
+      setSelectedWbId(wb.id);
+      setShowNew(false);
+      setNewName('');
+    } catch {
+      alert('단어장 생성에 실패했습니다.');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+      <p className="mb-3 text-sm font-medium text-gray-700">단어장에 저장하기</p>
+
+      {/* 기존 단어장 선택 */}
+      {wordbooks.length > 0 && !showNew && (
+        <select
+          value={selectedWbId ?? ''}
+          onChange={(e) => setSelectedWbId(Number(e.target.value))}
+          className="mb-3 w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500"
+        >
+          {wordbooks.map((wb) => (
+            <option key={wb.id} value={wb.id}>
+              {wb.name} ({wb.word_count}개)
+            </option>
+          ))}
+        </select>
+      )}
+
+      {/* 새 단어장 만들기 폼 */}
+      {showNew ? (
+        <div className="mb-3">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+            placeholder="새 단어장 이름"
+            autoFocus
+            className="mb-2 w-full rounded-xl border border-indigo-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={handleCreate}
+              disabled={creating || !newName.trim()}
+              className="flex-1 rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {creating ? '생성 중...' : '만들고 저장하기'}
+            </button>
+            <button
+              onClick={() => { setShowNew(false); setNewName(''); }}
+              className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm text-gray-500"
+            >
+              취소
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowNew(true)}
+          className="mb-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-indigo-300 py-2.5 text-sm font-medium text-indigo-600 transition hover:bg-indigo-50"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          새 단어장 만들기
+        </button>
+      )}
+
+      {/* 저장 버튼 (기존 단어장 선택 시) */}
+      {!showNew && wordbooks.length > 0 && (
+        <button
+          onClick={onSave}
+          disabled={isSaving || selectedCount === 0 || !selectedWbId}
+          className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+        >
+          {isSaving ? '저장 중...' : `${selectedCount}개 단어 저장`}
+        </button>
+      )}
+
+      {/* 단어장이 없고 새 단어장 폼도 안 열린 경우 */}
+      {wordbooks.length === 0 && !showNew && (
+        <p className="text-center text-sm text-gray-400">위에서 새 단어장을 만들어주세요</p>
+      )}
+    </div>
+  );
 }
 
 function WordResultCard({
@@ -308,14 +403,9 @@ function WordResultCard({
   const [expanded, setExpanded] = useState(false);
   const firstMeaning = word.meanings?.[0];
 
-  const speakWord = (e: React.MouseEvent) => {
+  const handleSpeak = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(word.word);
-      utterance.lang = 'en-US';
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utterance);
-    }
+    speakWord(word.word);
   };
 
   return (
@@ -366,7 +456,7 @@ function WordResultCard({
 
         {/* TTS 버튼 */}
         <button
-          onClick={speakWord}
+          onClick={handleSpeak}
           className="flex-shrink-0 rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-indigo-600"
           title="발음 듣기"
         >

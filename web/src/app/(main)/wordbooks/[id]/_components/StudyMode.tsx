@@ -1,0 +1,263 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
+import { WordbookWord } from '@/types';
+import { speakWord } from '@/utils/tts';
+
+type DisplayFilter = 'all' | 'english' | 'meaning';
+
+export default function StudyMode({
+  words,
+  wordbookId,
+  onMastered,
+  onRemove,
+}: {
+  words: WordbookWord[];
+  wordbookId: number;
+  onMastered: (wordId: number, mastered: boolean) => void;
+  onRemove: (wordId: number) => void;
+}) {
+  const [displayFilter, setDisplayFilter] = useState<DisplayFilter>('all');
+  const [showOnlyUnlearned, setShowOnlyUnlearned] = useState(false);
+  const [levelFilters, setLevelFilters] = useState<Set<number | 'all'>>(new Set(['all']));
+  const [isDeletionMode, setIsDeletionMode] = useState(false);
+  const [wordOrder, setWordOrder] = useState<number[]>(() => words.map((_, i) => i));
+  const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
+
+  useEffect(() => { setWordOrder(words.map((_, i) => i)); }, [words.length]);
+  useEffect(() => { setFlippedCards(new Set()); }, [displayFilter]);
+
+  const handleShuffle = () => {
+    const arr = [...wordOrder];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    setWordOrder(arr);
+  };
+
+  const handleLevelFilter = (level: number | 'all') => {
+    if (level === 'all') {
+      setLevelFilters(new Set(['all']));
+    } else {
+      setLevelFilters(prev => {
+        const next = new Set(prev);
+        next.delete('all');
+        if (next.has(level)) {
+          next.delete(level);
+          if (next.size === 0) next.add('all');
+        } else {
+          next.add(level);
+        }
+        return next;
+      });
+    }
+  };
+
+  const toggleFlip = (wordId: number) => {
+    setFlippedCards(prev => {
+      const next = new Set(prev);
+      if (next.has(wordId)) next.delete(wordId);
+      else next.add(wordId);
+      return next;
+    });
+  };
+
+  const filteredWords = useMemo(() => {
+    let list = wordOrder.map(i => words[i]).filter(Boolean);
+    if (showOnlyUnlearned) list = list.filter(w => !w.mastered);
+    if (!levelFilters.has('all')) {
+      list = list.filter(w => levelFilters.has(w.word?.difficulty ?? 0));
+    }
+    return list;
+  }, [words, wordOrder, showOnlyUnlearned, levelFilters]);
+
+  const levelColor = (lv: number) => {
+    if (lv <= 1) return 'bg-green-500';
+    if (lv === 2) return 'bg-blue-500';
+    if (lv === 3) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  const isFlipMode = displayFilter === 'english' || displayFilter === 'meaning';
+
+  return (
+    <div className="flex-1 px-3 pb-4 pt-3">
+      <div className="mb-2 flex flex-wrap gap-1.5">
+        {([['all', '전체'], ['english', '영어만'], ['meaning', '뜻만']] as const).map(([val, label]) => (
+          <button
+            key={val}
+            onClick={() => setDisplayFilter(val)}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+              displayFilter === val
+                ? 'border-indigo-600 bg-indigo-600 text-white'
+                : 'border-gray-200 bg-gray-50 text-gray-600'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+        <button
+          onClick={() => setShowOnlyUnlearned(v => !v)}
+          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+            showOnlyUnlearned
+              ? 'border-amber-500 bg-amber-500 text-white'
+              : 'border-gray-200 bg-gray-50 text-gray-600'
+          }`}
+        >
+          미암기
+        </button>
+        <button
+          onClick={handleShuffle}
+          className="rounded-full border border-emerald-500 bg-emerald-500 px-3 py-1 text-xs font-medium text-white"
+        >
+          🔀 섞기
+        </button>
+        <button
+          onClick={() => setIsDeletionMode(v => !v)}
+          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+            isDeletionMode
+              ? 'border-red-500 bg-red-500 text-white'
+              : 'border-red-200 bg-red-50 text-red-500'
+          }`}
+        >
+          🗑️ {isDeletionMode ? '완료' : '삭제'}
+        </button>
+      </div>
+
+      <div className="mb-3 flex gap-1.5">
+        {(['all', 1, 2, 3, 4] as const).map((lv) => (
+          <button
+            key={lv}
+            onClick={() => handleLevelFilter(lv)}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+              levelFilters.has(lv)
+                ? 'border-indigo-600 bg-indigo-600 text-white'
+                : 'border-gray-200 bg-gray-50 text-gray-600'
+            }`}
+          >
+            {lv === 'all' ? '모두' : `Lv.${lv}`}
+          </button>
+        ))}
+      </div>
+
+      {isFlipMode && (
+        <p className="mb-2 text-center text-xs text-gray-400">
+          카드를 탭하면 {displayFilter === 'english' ? '뜻이' : '단어가'} 보입니다
+        </p>
+      )}
+
+      {filteredWords.length === 0 ? (
+        <div className="py-10 text-center text-sm text-gray-400">
+          {showOnlyUnlearned ? '미암기 단어가 없습니다.' : '표시할 단어가 없습니다.'}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filteredWords.map((ww) => {
+            const w = ww.word;
+            const meanings = w?.meanings ?? [];
+            const isFlipped = flippedCards.has(ww.word_id);
+
+            return (
+              <div
+                key={ww.id}
+                onClick={() => isFlipMode && toggleFlip(ww.word_id)}
+                className={`relative rounded-xl border bg-white p-3 pl-12 transition ${
+                  ww.mastered ? 'border-green-200' : 'border-gray-200'
+                } ${isFlipMode ? 'cursor-pointer active:bg-gray-50' : ''}`}
+              >
+                <button
+                  onClick={(e) => { e.stopPropagation(); onMastered(ww.word_id, !ww.mastered); }}
+                  className={`absolute left-3 top-3.5 flex h-5 w-5 items-center justify-center rounded border-2 transition ${
+                    ww.mastered
+                      ? 'border-emerald-500 bg-emerald-500 text-white'
+                      : 'border-gray-300'
+                  }`}
+                >
+                  {ww.mastered && (
+                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
+
+                {w?.difficulty && (
+                  <span className={`absolute left-3 top-10 rounded px-1.5 py-0.5 text-[10px] font-semibold text-white ${levelColor(w.difficulty)}`}>
+                    Lv.{w.difficulty}
+                  </span>
+                )}
+
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    {(displayFilter !== 'meaning' || isFlipped) && (
+                      <p className={`text-lg font-semibold text-indigo-600 ${
+                        displayFilter === 'meaning' && isFlipped ? 'mt-1 border-t border-dashed border-gray-200 pt-1' : ''
+                      }`}>
+                        {w?.word}
+                        {w?.pronunciation && (
+                          <span className="ml-2 text-sm font-normal text-gray-400">{w.pronunciation}</span>
+                        )}
+                      </p>
+                    )}
+
+                    {(displayFilter !== 'english' || isFlipped) && meanings.length > 0 && (
+                      <div className={`space-y-0.5 ${
+                        displayFilter === 'english' && isFlipped ? 'mt-1 border-t border-dashed border-gray-200 pt-1' : 'mt-1'
+                      }`}>
+                        {meanings.map((m, i) => (
+                          <div key={i} className="flex items-start gap-1.5">
+                            <span className="mt-0.5 shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
+                              {m.partOfSpeech}
+                            </span>
+                            <span className="text-sm text-gray-600">{m.korean}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {isFlipMode && !isFlipped && (
+                      <p className="mt-1 text-xs text-gray-300">
+                        {displayFilter === 'english' ? '탭하여 뜻 보기' : '탭하여 단어 보기'}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex shrink-0 flex-col items-center gap-1">
+                    {isDeletionMode ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`"${w?.word}" 단어를 삭제하시겠습니까?`)) onRemove(ww.word_id);
+                        }}
+                        className="text-xl"
+                      >
+                        ❌
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); speakWord(w?.word ?? ''); }}
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-base transition hover:bg-indigo-100"
+                        >
+                          🔊
+                        </button>
+                        <Link
+                          href={`/wordbooks/${wordbookId}/${ww.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[10px] text-gray-400 hover:text-indigo-500"
+                        >
+                          상세
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

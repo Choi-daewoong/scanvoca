@@ -139,55 +139,80 @@ Important:
             return None
 
         try:
+            # google-generativeai inline_data 형식
             image_part = {
-                "mime_type": mime_type,
-                "data": base64.b64encode(image_bytes).decode("utf-8"),
+                "inline_data": {
+                    "mime_type": mime_type,
+                    "data": base64.b64encode(image_bytes).decode("utf-8"),
+                }
             }
 
-            prompt = """You are an English word extractor. Analyze this image and extract ALL English words you can find.
+            # raw_text를 요청하지 않음 — 토큰 절약 + 잘림 방지
+            # 단어가 많은 이미지에서 raw_text까지 포함하면 2000 토큰 초과 → JSON 잘림
+            prompt = """List all English words visible in this image.
 
-Return ONLY a JSON object in this exact format:
-{
-  "words": ["word1", "word2", "word3"],
-  "raw_text": "full recognized text from image"
-}
+Return ONLY a JSON array, nothing else:
+["word1","word2","word3"]
 
 Rules:
-- Extract all English words (nouns, verbs, adjectives, adverbs, etc.)
-- Include both common words and vocabulary words
-- Normalize to lowercase
-- Remove duplicates
-- Exclude: pure numbers, single letters (except 'a', 'I'), proper nouns (names, brands, cities), non-English words
-- Include: abbreviations that are real English words, phrasal verb components
-- Return ONLY the JSON, no other text"""
+- Every English word you can see, lowercase, no duplicates
+- Exclude: pure numbers, single characters (except 'a', 'I'), punctuation marks
+- Include proper nouns if they are common English words
+- If no English words found, return: []"""
 
             response = self.vision_model.generate_content(
                 [prompt, image_part],
                 generation_config={
                     "temperature": 0.1,
-                    "max_output_tokens": 2000,
+                    "max_output_tokens": 8192,  # 2000 → 8192: 단어 많은 이미지 대응
                 }
             )
 
             content = response.text
-            if content:
-                content = content.strip()
-                if content.startswith("```json"):
-                    content = content[7:]
-                if content.startswith("```"):
-                    content = content[3:]
-                if content.endswith("```"):
-                    content = content[:-3]
+            if not content:
+                return {"words": [], "raw_text": ""}
+
+            content = content.strip()
+
+            # 마크다운 코드블록 제거
+            if content.startswith("```"):
+                content = content.split("```")[1]
+                if content.startswith("json"):
+                    content = content[4:]
                 content = content.strip()
 
-                result = json.loads(content)
-                return result
+            # JSON 배열 블록만 추출
+            start = content.find("[")
+            end = content.rfind("]") + 1
+            if start == -1 or end <= start:
+                return {"words": [], "raw_text": ""}
+
+            content = content[start:end]
+            words_list = json.loads(content)
+
+            if not isinstance(words_list, list):
+                return {"words": [], "raw_text": ""}
+
+            cleaned = [
+                w.lower().strip() for w in words_list
+                if isinstance(w, str) and w.strip()
+            ]
+
+            return {"words": cleaned, "raw_text": ""}
 
         except json.JSONDecodeError as e:
             print(f"Gemini Vision JSON parse error: {e}")
-            return None
+            # 부분적으로 파싱 가능한지 시도
+            try:
+                # 잘린 배열에서 완성된 요소들만 추출
+                import re
+                matches = re.findall(r'"([a-zA-Z][a-zA-Z\'-]*)"', content)
+                if matches:
+                    print(f"Partial recovery: {len(matches)} words extracted")
+                    return {"words": [w.lower() for w in matches], "raw_text": ""}
+            except Exception:
+                pass
+            return {"words": [], "raw_text": ""}
         except Exception as e:
             print(f"Gemini Vision error: {e}")
             return None
-
-        return None

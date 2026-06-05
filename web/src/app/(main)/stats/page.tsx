@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { wordbookService } from '@/services/wordbookService';
 
+interface LevelStat { total: number; mastered: number; }
+interface DayStat { date: string; label: string; count: number; }
+
 interface Stats {
   totalWords: number;
   masteredWords: number;
@@ -11,6 +14,44 @@ interface Stats {
   studiedToday: number;
   studiedThisWeek: number;
   accuracyRate: number;
+  streak: number;
+  levelStats: Record<number, LevelStat>;
+  weeklyData: DayStat[];
+}
+
+function calcStreak(dates: string[]): number {
+  const unique = [...new Set(dates.map(d => d.slice(0, 10)))].sort().reverse();
+  if (unique.length === 0) return 0;
+
+  const toMs = (s: string) => new Date(s).setHours(0, 0, 0, 0);
+  const todayMs = new Date().setHours(0, 0, 0, 0);
+  const dayMs = 86400000;
+
+  // streak starts only if studied today or yesterday
+  if (toMs(unique[0]) < todayMs - dayMs) return 0;
+
+  let streak = 1;
+  for (let i = 1; i < unique.length; i++) {
+    if (toMs(unique[i - 1]) - toMs(unique[i]) === dayMs) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function buildWeeklyData(allStudyDates: string[]): DayStat[] {
+  const days: DayStat[] = [];
+  const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    days.push({
+      date: dateStr,
+      label: i === 0 ? '오늘' : DAY_LABELS[d.getDay()],
+      count: allStudyDates.filter(s => s.slice(0, 10) === dateStr).length,
+    });
+  }
+  return days;
 }
 
 export default function StatsPage() {
@@ -27,6 +68,8 @@ export default function StatsPage() {
         let studiedThisWeek = 0;
         let totalCorrect = 0;
         let totalAnswered = 0;
+        const levelStats: Record<number, LevelStat> = { 1: { total: 0, mastered: 0 }, 2: { total: 0, mastered: 0 }, 3: { total: 0, mastered: 0 }, 4: { total: 0, mastered: 0 } };
+        const allStudyDates: string[] = [];
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -39,11 +82,18 @@ export default function StatsPage() {
             if (w.mastered) masteredWords++;
             if (w.last_studied) {
               const d = new Date(w.last_studied);
+              allStudyDates.push(w.last_studied);
               if (d >= today) studiedToday++;
               if (d >= weekAgo) studiedThisWeek++;
             }
             totalCorrect += w.correct_count;
             totalAnswered += w.correct_count + w.incorrect_count;
+
+            const lv = w.word?.difficulty ?? 0;
+            if (lv >= 1 && lv <= 4) {
+              levelStats[lv].total++;
+              if (w.mastered) levelStats[lv].mastered++;
+            }
           }
         }
 
@@ -54,12 +104,22 @@ export default function StatsPage() {
           studiedToday,
           studiedThisWeek,
           accuracyRate: totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0,
+          streak: calcStreak(allStudyDates),
+          levelStats,
+          weeklyData: buildWeeklyData(allStudyDates),
         });
       } finally {
         setLoading(false);
       }
     })();
   }, []);
+
+  const LEVEL_META: Record<number, { label: string; color: string; bar: string }> = {
+    1: { label: 'Lv.1 쉬움', color: 'text-green-600', bar: 'bg-green-500' },
+    2: { label: 'Lv.2 보통', color: 'text-blue-600', bar: 'bg-blue-500' },
+    3: { label: 'Lv.3 어려움', color: 'text-yellow-600', bar: 'bg-yellow-500' },
+    4: { label: 'Lv.4 매우 어려움', color: 'text-red-600', bar: 'bg-red-500' },
+  };
 
   return (
     <div className="px-4 py-6">
@@ -78,21 +138,31 @@ export default function StatsPage() {
         </div>
       ) : stats ? (
         <div className="space-y-4">
-          {/* 전체 학습 현황 */}
+          {/* 암기 완료율 */}
           <div className="rounded-2xl bg-indigo-600 p-5 text-white">
-            <p className="mb-1 text-sm font-medium text-indigo-200">암기 완료율</p>
-            <p className="text-4xl font-bold">
-              {stats.totalWords > 0 ? Math.round((stats.masteredWords / stats.totalWords) * 100) : 0}%
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="mb-1 text-sm font-medium text-indigo-200">암기 완료율</p>
+                <p className="text-4xl font-bold">
+                  {stats.totalWords > 0 ? Math.round((stats.masteredWords / stats.totalWords) * 100) : 0}%
+                </p>
+                <p className="mt-1 text-sm text-indigo-200">
+                  {stats.masteredWords} / {stats.totalWords}개 단어
+                </p>
+              </div>
+              {stats.streak > 0 && (
+                <div className="rounded-2xl bg-white/20 px-4 py-3 text-center">
+                  <p className="text-2xl font-bold">🔥 {stats.streak}</p>
+                  <p className="text-xs text-indigo-200">일 연속</p>
+                </div>
+              )}
+            </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-indigo-400">
               <div
                 className="h-full rounded-full bg-white transition-all"
                 style={{ width: `${stats.totalWords > 0 ? (stats.masteredWords / stats.totalWords) * 100 : 0}%` }}
               />
             </div>
-            <p className="mt-2 text-sm text-indigo-200">
-              {stats.masteredWords} / {stats.totalWords}개 단어 암기 완료
-            </p>
           </div>
 
           {/* 통계 그리드 */}
@@ -110,6 +180,66 @@ export default function StatsPage() {
                 <p className="mt-0.5 text-xs text-gray-500">{item.label}</p>
               </div>
             ))}
+          </div>
+
+          {/* 주간 학습 차트 */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="mb-4 text-sm font-semibold text-gray-700">📅 최근 7일 학습량</p>
+            {(() => {
+              const maxCount = Math.max(...stats.weeklyData.map(d => d.count), 1);
+              return (
+                <div className="flex items-end gap-1.5">
+                  {stats.weeklyData.map((day) => {
+                    const heightPct = Math.round((day.count / maxCount) * 100);
+                    const isToday = day.label === '오늘';
+                    return (
+                      <div key={day.date} className="flex flex-1 flex-col items-center gap-1">
+                        <span className="text-[10px] font-medium text-gray-500">{day.count > 0 ? day.count : ''}</span>
+                        <div className="flex w-full flex-col justify-end" style={{ height: 60 }}>
+                          <div
+                            className={`w-full rounded-t-md transition-all ${
+                              day.count === 0 ? 'bg-gray-100' : isToday ? 'bg-indigo-600' : 'bg-indigo-300'
+                            }`}
+                            style={{ height: day.count === 0 ? 4 : Math.max(4, (heightPct / 100) * 60) }}
+                          />
+                        </div>
+                        <span className={`text-[10px] font-medium ${isToday ? 'text-indigo-600' : 'text-gray-400'}`}>
+                          {day.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* 레벨별 통계 */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="mb-4 text-sm font-semibold text-gray-700">📊 난이도별 암기 현황</p>
+            <div className="space-y-3">
+              {([1, 2, 3, 4] as const).map((lv) => {
+                const s = stats.levelStats[lv];
+                const meta = LEVEL_META[lv];
+                const pct = s.total > 0 ? Math.round((s.mastered / s.total) * 100) : 0;
+                return (
+                  <div key={lv}>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className={`text-xs font-semibold ${meta.color}`}>{meta.label}</span>
+                      <span className="text-xs text-gray-500">
+                        {s.mastered}/{s.total}개 ({pct}%)
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                      <div
+                        className={`h-full rounded-full transition-all ${meta.bar}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       ) : null}
