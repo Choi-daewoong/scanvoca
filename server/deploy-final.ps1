@@ -1,5 +1,6 @@
 # PowerShell 배포 스크립트 - Cloud Run
 # PowerShell에서 실행: .\deploy-final.ps1
+# 사전 준비: server/.env 파일에 GEMINI_API_KEY, JWT_SECRET_KEY, DATABASE_URL 설정 필요
 
 $ErrorActionPreference = "Stop"
 
@@ -8,12 +9,30 @@ $REGION = "asia-northeast3"
 $SERVICE_NAME = "scanvoca-api"
 $IMAGE_NAME = "gcr.io/$PROJECT_ID/$SERVICE_NAME"
 
-# API 키 설정 (실제 배포 시 환경변수로 관리 권장)
-$GEMINI_API_KEY = "REDACTED_GEMINI_KEY"
-$JWT_SECRET_KEY = "REDACTED_JWT_SECRET"
+# .env 파일에서 환경변수 로드
+$EnvFile = Join-Path $PSScriptRoot ".env"
+if (-not (Test-Path $EnvFile)) {
+    Write-Host "❌ .env 파일이 없습니다: $EnvFile" -ForegroundColor Red
+    Write-Host "   GEMINI_API_KEY, JWT_SECRET_KEY, DATABASE_URL 을 .env 에 설정하세요." -ForegroundColor Yellow
+    exit 1
+}
 
-# Supabase PostgreSQL 연결 (YOUR-PASSWORD를 실제 비밀번호로 교체하세요!)
-$DATABASE_URL = "postgresql://postgres.lcakluqtulahzflzetsa:REDACTED_DB_PASS@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres"
+$EnvVars = @{}
+Get-Content $EnvFile | ForEach-Object {
+    if ($_ -match '^\s*([^#][^=]+)=(.*)$') {
+        $EnvVars[$Matches[1].Trim()] = $Matches[2].Trim()
+    }
+}
+
+$GEMINI_API_KEY = $EnvVars['GEMINI_API_KEY']
+$JWT_SECRET_KEY = $EnvVars['JWT_SECRET_KEY']
+$DATABASE_URL   = $EnvVars['DATABASE_URL']
+
+if (-not $GEMINI_API_KEY -or -not $JWT_SECRET_KEY -or -not $DATABASE_URL) {
+    Write-Host "❌ .env 파일에 필수 변수가 없습니다." -ForegroundColor Red
+    Write-Host "   GEMINI_API_KEY, JWT_SECRET_KEY, DATABASE_URL 을 확인하세요." -ForegroundColor Yellow
+    exit 1
+}
 
 Write-Host "=== Scanvoca API Cloud Run 배포 ===" -ForegroundColor Green
 Write-Host ""
@@ -34,8 +53,8 @@ Write-Host "✅ Docker 인증 완료`n" -ForegroundColor Green
 
 # 3. 환경변수 확인
 Write-Host "[3/7] 환경변수 확인 중..." -ForegroundColor Green
-Write-Host "✅ GEMINI_API_KEY: $($GEMINI_API_KEY.Substring(0,15))..." -ForegroundColor Green
-Write-Host "✅ JWT_SECRET_KEY: $($JWT_SECRET_KEY.Substring(0,15))...`n" -ForegroundColor Green
+Write-Host "✅ GEMINI_API_KEY: $($GEMINI_API_KEY.Substring(0,[Math]::Min(15,$GEMINI_API_KEY.Length)))..." -ForegroundColor Green
+Write-Host "✅ JWT_SECRET_KEY: $($JWT_SECRET_KEY.Substring(0,[Math]::Min(15,$JWT_SECRET_KEY.Length)))...`n" -ForegroundColor Green
 
 # 4. Docker 이미지 빌드
 Write-Host "[4/7] Docker 이미지 빌드 중... (5-7분 소요)" -ForegroundColor Green
@@ -95,45 +114,15 @@ $SERVICE_URL = gcloud run services describe $SERVICE_NAME `
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
-Write-Host "🎉 배포 성공! 🎉" -ForegroundColor Green
+Write-Host "배포 성공!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-
 Write-Host "서비스 URL:" -ForegroundColor Cyan
 Write-Host $SERVICE_URL -ForegroundColor Yellow
 Write-Host ""
-
-Write-Host "Health Check:" -ForegroundColor Cyan
-Write-Host "curl $SERVICE_URL/health" -ForegroundColor Yellow
+Write-Host "Health Check: $SERVICE_URL/health" -ForegroundColor Cyan
+Write-Host "API 문서: $SERVICE_URL/docs" -ForegroundColor Cyan
 Write-Host ""
 
-Write-Host "API 문서:" -ForegroundColor Cyan
-Write-Host "$SERVICE_URL/docs" -ForegroundColor Yellow
-Write-Host ""
-
-Write-Host "========================================" -ForegroundColor Green
-Write-Host "다음 단계" -ForegroundColor Green
-Write-Host "========================================" -ForegroundColor Green
-Write-Host ""
-
-Write-Host "1️⃣ 브라우저에서 Health Check 확인:" -ForegroundColor White
-Write-Host "   $SERVICE_URL/health" -ForegroundColor Yellow
-Write-Host ""
-
-Write-Host "2️⃣ 앱 환경변수 업데이트:" -ForegroundColor White
-Write-Host "   파일: app\.env" -ForegroundColor Cyan
-Write-Host "   추가: EXPO_PUBLIC_API_BASE_URL=$SERVICE_URL" -ForegroundColor Yellow
-Write-Host ""
-
-Write-Host "3️⃣ 앱 재빌드:" -ForegroundColor White
-Write-Host "   cd app\android" -ForegroundColor Cyan
-Write-Host "   .\gradlew assembleRelease" -ForegroundColor Cyan
-Write-Host ""
-
-Write-Host "========================================" -ForegroundColor Green
-Write-Host ""
-
-# URL을 파일에 저장
 $SERVICE_URL | Out-File -FilePath "deployment_url.txt" -Encoding UTF8
 Write-Host "✅ 서비스 URL이 deployment_url.txt에 저장되었습니다" -ForegroundColor Green
-Write-Host ""
