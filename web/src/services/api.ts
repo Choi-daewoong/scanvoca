@@ -3,22 +3,27 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('access_token');
+  return sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
 }
 
 function getRefreshToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('refresh_token');
+  return sessionStorage.getItem('refresh_token') || localStorage.getItem('refresh_token');
 }
 
-function setTokens(accessToken: string, refreshToken: string) {
-  localStorage.setItem('access_token', accessToken);
-  localStorage.setItem('refresh_token', refreshToken);
+// persistent=true → localStorage (브라우저 재시작해도 유지)
+// persistent=false → sessionStorage (탭/브라우저 닫으면 만료)
+function setTokens(accessToken: string, refreshToken: string, persistent = false) {
+  const storage = persistent ? localStorage : sessionStorage;
+  storage.setItem('access_token', accessToken);
+  storage.setItem('refresh_token', refreshToken);
 }
 
 function clearTokens() {
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
+  sessionStorage.removeItem('access_token');
+  sessionStorage.removeItem('refresh_token');
 }
 
 async function refreshAccessToken(): Promise<string | null> {
@@ -36,7 +41,9 @@ async function refreshAccessToken(): Promise<string | null> {
       return null;
     }
     const data = await res.json();
-    setTokens(data.access_token, data.refresh_token);
+    // 기존 스토리지 위치를 유지하며 갱신
+    const persistent = !!localStorage.getItem('refresh_token');
+    setTokens(data.access_token, data.refresh_token, persistent);
     return data.access_token;
   } catch {
     clearTokens();

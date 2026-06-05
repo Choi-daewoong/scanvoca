@@ -2,13 +2,13 @@ import { apiFetch, setTokens, clearTokens } from './api';
 import { User, TokenResponse } from '@/types';
 
 export const authService = {
-  async login(email: string, password: string): Promise<TokenResponse> {
+  async login(email: string, password: string, persistent = false): Promise<TokenResponse> {
     const data = await apiFetch<TokenResponse>('/api/v1/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
       skipAuth: true,
     });
-    setTokens(data.access_token, data.refresh_token);
+    setTokens(data.access_token, data.refresh_token, persistent);
     return data;
   },
 

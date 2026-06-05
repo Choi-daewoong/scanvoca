@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,21 +14,42 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
+const SAVED_EMAIL_KEY = 'saved_email';
+
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuthStore();
   const [serverError, setServerError] = useState('');
+  const [saveEmail, setSaveEmail] = useState(false);
+  const [stayLoggedIn, setStayLoggedIn] = useState(false);
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
+  // 저장된 이메일 불러오기
+  useEffect(() => {
+    const saved = localStorage.getItem(SAVED_EMAIL_KEY);
+    if (saved) {
+      setValue('email', saved);
+      setSaveEmail(true);
+    }
+  }, [setValue]);
+
   const onSubmit = async (data: FormData) => {
     setServerError('');
+
+    if (saveEmail) {
+      localStorage.setItem(SAVED_EMAIL_KEY, data.email);
+    } else {
+      localStorage.removeItem(SAVED_EMAIL_KEY);
+    }
+
     try {
-      await login(data.email, data.password);
+      await login(data.email, data.password, stayLoggedIn);
       router.replace('/home');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '로그인에 실패했습니다.';
@@ -63,6 +84,29 @@ export default function LoginPage() {
             className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           />
           {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+        </div>
+
+        {/* 체크박스 옵션 */}
+        <div className="flex items-center justify-between">
+          <label className="flex cursor-pointer items-center gap-2 select-none">
+            <input
+              type="checkbox"
+              checked={saveEmail}
+              onChange={(e) => setSaveEmail(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 accent-indigo-600"
+            />
+            <span className="text-sm text-gray-600">이메일 저장</span>
+          </label>
+
+          <label className="flex cursor-pointer items-center gap-2 select-none">
+            <input
+              type="checkbox"
+              checked={stayLoggedIn}
+              onChange={(e) => setStayLoggedIn(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 accent-indigo-600"
+            />
+            <span className="text-sm text-gray-600">로그인 유지</span>
+          </label>
         </div>
 
         {serverError && (
