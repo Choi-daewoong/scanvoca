@@ -5,13 +5,16 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
+from app.models.wordbook import WordbookWord
 from app.schemas.wordbook import (
     WordbookCreate,
     WordbookUpdate,
     WordbookResponse,
     WordbookWordCreate,
     WordbookWordUpdate,
-    WordbookWordResponse
+    WordbookWordResponse,
+    ShareCodeResponse,
+    SharedWordbookPreview
 )
 from app.services.wordbook_service import WordbookService
 
@@ -73,7 +76,6 @@ async def get_wordbook(
         )
 
     # Add word_count
-    from app.models.wordbook import WordbookWord
     wordbook.word_count = db.query(WordbookWord).filter(
         WordbookWord.wordbook_id == wordbook.id
     ).count()
@@ -104,7 +106,6 @@ async def update_wordbook(
     wordbook = WordbookService.update_wordbook(db, wordbook, wordbook_data)
 
     # Add word_count
-    from app.models.wordbook import WordbookWord
     wordbook.word_count = db.query(WordbookWord).filter(
         WordbookWord.wordbook_id == wordbook.id
     ).count()
@@ -134,6 +135,90 @@ async def delete_wordbook(
 
     WordbookService.delete_wordbook(db, wordbook)
     return None
+
+
+# Sharing endpoints
+
+@router.post("/{wordbook_id}/share", response_model=ShareCodeResponse)
+async def create_share_code(
+    wordbook_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Generate (or return existing) share code for a wordbook
+
+    Anyone with this code can import a copy of the wordbook
+    """
+    wordbook = WordbookService.get_wordbook(db, wordbook_id, current_user.id)
+
+    if not wordbook:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Wordbook not found"
+        )
+
+    share_code = WordbookService.get_or_create_share_code(db, wordbook)
+    return ShareCodeResponse(share_code=share_code)
+
+
+@router.get("/shared/{share_code}", response_model=SharedWordbookPreview)
+async def preview_shared_wordbook(
+    share_code: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Preview a shared wordbook by its share code (before importing)
+    """
+    wordbook = WordbookService.get_by_share_code(db, share_code)
+
+    if not wordbook:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Shared wordbook not found"
+        )
+
+    word_count = db.query(WordbookWord).filter(
+        WordbookWord.wordbook_id == wordbook.id
+    ).count()
+
+    owner = db.query(User).filter(User.id == wordbook.user_id).first()
+    owner_name = (owner.display_name or owner.email.split('@')[0]) if owner else "알 수 없음"
+
+    return SharedWordbookPreview(
+        name=wordbook.name,
+        description=wordbook.description,
+        word_count=word_count,
+        owner_name=owner_name
+    )
+
+
+@router.post("/shared/{share_code}/import", response_model=WordbookResponse, status_code=status.HTTP_201_CREATED)
+async def import_shared_wordbook(
+    share_code: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Import a copy of a shared wordbook into the current user's account
+    """
+    wordbook = WordbookService.get_by_share_code(db, share_code)
+
+    if not wordbook:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Shared wordbook not found"
+        )
+
+    new_wordbook = WordbookService.import_shared_wordbook(db, wordbook, current_user.id)
+
+    # Add word_count
+    new_wordbook.word_count = db.query(WordbookWord).filter(
+        WordbookWord.wordbook_id == new_wordbook.id
+    ).count()
+
+    return new_wordbook
 
 
 # Wordbook-Word relationship endpoints
@@ -236,7 +321,6 @@ async def update_wordbook_word(
 
     # Get wordbook-word relationship
     from sqlalchemy import and_
-    from app.models.wordbook import WordbookWord
     wordbook_word = db.query(WordbookWord).filter(
         and_(
             WordbookWord.wordbook_id == wordbook_id,

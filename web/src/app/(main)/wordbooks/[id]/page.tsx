@@ -20,6 +20,9 @@ export default function WordbookDetailPage() {
   const [words, setWords] = useState<WordbookWord[]>([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<ViewMode>('study');
+  const [shareCode, setShareCode] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -52,10 +55,32 @@ export default function WordbookDetailPage() {
     } catch { /* ignore */ }
   };
 
+  const handleShare = async () => {
+    setSharing(true);
+    try {
+      const { share_code } = await wordbookService.getShareCode(id);
+      setShareCode(share_code);
+      setCopied(false);
+    } catch {
+      alert('공유 코드를 생성하지 못했습니다.');
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (!shareCode) return;
+    const link = `${window.location.origin}/wordbooks/import?code=${shareCode}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+    } catch { /* ignore */ }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-400 border-t-transparent" />
       </div>
     );
   }
@@ -68,39 +93,76 @@ export default function WordbookDetailPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-80px)] flex-col">
-      <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-3">
+      <div className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-center gap-3">
-          <Link href="/wordbooks" className="rounded-xl p-2 text-gray-500 hover:bg-gray-100">
+          <Link href="/wordbooks" className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
           <div className="flex-1 min-w-0">
-            <h1 className="truncate text-lg font-bold text-gray-900">{wordbook?.name}</h1>
-            <p className="text-xs text-gray-500">
+            <h1 className="truncate text-lg font-bold text-gray-900 dark:text-gray-100">{wordbook?.name}</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {words.length}개 · 암기 {words.filter(w => w.mastered).length}개
             </p>
           </div>
-          <div className="flex rounded-xl border border-gray-200 bg-gray-50 p-0.5">
+          <div className="flex rounded-xl border border-gray-100 bg-gray-50 p-0.5 dark:border-gray-800 dark:bg-gray-800">
             {MODE_TABS.map((m) => (
               <button
                 key={m.key}
                 onClick={() => setMode(m.key)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                  mode === m.key ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'
+                  mode === m.key ? 'bg-white text-indigo-600 shadow-sm dark:bg-gray-900 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
                 {m.label}
               </button>
             ))}
           </div>
+          <button
+            onClick={handleShare}
+            disabled={sharing}
+            className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-60 dark:text-gray-400 dark:hover:bg-gray-800"
+            title="단어장 공유하기"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M8.684 13.342a4 4 0 100-2.684m0 2.684a4 4 0 000-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a4 4 0 105.367-5.367 4 4 0 00-5.367 5.367zm0 9.316a4 4 0 105.368 5.367 4 4 0 00-5.368-5.367z" />
+            </svg>
+          </button>
         </div>
       </div>
 
+      {shareCode && (
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 dark:bg-gray-900">
+            <h3 className="mb-1 text-base font-bold text-gray-900 dark:text-gray-100">단어장 공유하기</h3>
+            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+              친구가 아래 코드나 링크로 이 단어장을 자기 계정에 복사해갈 수 있어요.
+            </p>
+            <div className="mb-3 rounded-xl bg-gray-50 px-4 py-3 text-center dark:bg-gray-800">
+              <p className="text-2xl font-bold tracking-widest text-indigo-600 dark:text-indigo-400">{shareCode}</p>
+            </div>
+            <button
+              onClick={handleCopyLink}
+              className="mb-2 w-full rounded-xl border border-indigo-100 bg-indigo-50 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
+            >
+              {copied ? '링크 복사됨!' : '공유 링크 복사하기'}
+            </button>
+            <button
+              onClick={() => setShareCode(null)}
+              className="w-full rounded-xl border border-gray-200 py-2.5 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+
       {words.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
-          <p className="text-gray-500">단어가 없습니다.</p>
-          <Link href="/scan" className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white">
+          <p className="text-gray-500 dark:text-gray-400">단어가 없습니다.</p>
+          <Link href="/scan" className="rounded-xl border border-indigo-100 bg-indigo-50 px-5 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70">
             단어 스캔하기
           </Link>
         </div>

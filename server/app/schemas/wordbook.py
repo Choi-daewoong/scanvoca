@@ -28,10 +28,24 @@ class WordbookResponse(WordbookBase):
     id: int
     user_id: int
     word_count: int = 0  # Number of words in this wordbook
+    share_code: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ShareCodeResponse(BaseModel):
+    """Schema for share code response"""
+    share_code: str
+
+
+class SharedWordbookPreview(BaseModel):
+    """Schema for previewing a shared wordbook before importing"""
+    name: str
+    description: Optional[str] = None
+    word_count: int
+    owner_name: str
 
 
 class WordbookWordBase(BaseModel):

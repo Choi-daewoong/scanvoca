@@ -1,5 +1,5 @@
 import { apiFetch } from './api';
-import { Wordbook, WordbookWord } from '@/types';
+import { Wordbook, WordbookWord, SharedWordbookPreview } from '@/types';
 
 export const wordbookService = {
   async list(): Promise<Wordbook[]> {
@@ -57,5 +57,17 @@ export const wordbookService = {
 
   async removeWord(wordbookId: number, wordId: number): Promise<void> {
     await apiFetch(`/api/v1/wordbooks/${wordbookId}/words/${wordId}`, { method: 'DELETE' });
+  },
+
+  async getShareCode(id: number): Promise<{ share_code: string }> {
+    return apiFetch<{ share_code: string }>(`/api/v1/wordbooks/${id}/share`, { method: 'POST' });
+  },
+
+  async getSharedPreview(shareCode: string): Promise<SharedWordbookPreview> {
+    return apiFetch<SharedWordbookPreview>(`/api/v1/wordbooks/shared/${shareCode}`);
+  },
+
+  async importShared(shareCode: string): Promise<Wordbook> {
+    return apiFetch<Wordbook>(`/api/v1/wordbooks/shared/${shareCode}/import`, { method: 'POST' });
   },
 };

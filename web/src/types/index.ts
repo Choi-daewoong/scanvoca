@@ -37,8 +37,16 @@ export interface Wordbook {
   description?: string;
   is_default: boolean;
   word_count: number;
+  share_code?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface SharedWordbookPreview {
+  name: string;
+  description?: string;
+  word_count: number;
+  owner_name: string;
 }
 
 export interface WordbookWord {

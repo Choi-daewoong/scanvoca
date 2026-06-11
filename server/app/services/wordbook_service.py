@@ -1,10 +1,17 @@
 """Wordbook service for database operations"""
+import secrets
+import string
+from datetime import datetime, timezone
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import select, and_
 from app.models.wordbook import Wordbook, WordbookWord
 from app.models.word import Word
 from app.schemas.wordbook import WordbookCreate, WordbookUpdate, WordbookWordCreate, WordbookWordUpdate
+
+# Avoid visually ambiguous characters (0/O, 1/I/L) in share codes
+SHARE_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+SHARE_CODE_LENGTH = 8
 
 
 class WordbookService:
@@ -75,6 +82,60 @@ class WordbookService:
         """Delete a wordbook (CASCADE deletes wordbook_words)"""
         db.delete(wordbook)
         db.commit()
+
+    # Sharing methods
+
+    @staticmethod
+    def get_or_create_share_code(db: Session, wordbook: Wordbook) -> str:
+        """Get the wordbook's share code, generating one if it doesn't exist yet"""
+        if wordbook.share_code:
+            return wordbook.share_code
+
+        while True:
+            code = ''.join(secrets.choice(SHARE_CODE_ALPHABET) for _ in range(SHARE_CODE_LENGTH))
+            existing = db.scalar(select(Wordbook).where(Wordbook.share_code == code))
+            if not existing:
+                break
+
+        wordbook.share_code = code
+        db.commit()
+        db.refresh(wordbook)
+        return code
+
+    @staticmethod
+    def get_by_share_code(db: Session, share_code: str) -> Optional[Wordbook]:
+        """Look up a wordbook by its share code"""
+        stmt = select(Wordbook).where(Wordbook.share_code == share_code)
+        return db.scalar(stmt)
+
+    @staticmethod
+    def import_shared_wordbook(db: Session, source_wordbook: Wordbook, user_id: int) -> Wordbook:
+        """Create a copy of a shared wordbook (and its words) for the given user"""
+        new_wordbook = Wordbook(
+            user_id=user_id,
+            name=source_wordbook.name,
+            description=source_wordbook.description,
+            is_default=False
+        )
+        db.add(new_wordbook)
+        db.flush()
+
+        source_words = db.query(WordbookWord).filter(
+            WordbookWord.wordbook_id == source_wordbook.id
+        ).all()
+
+        for sw in source_words:
+            db.add(WordbookWord(
+                wordbook_id=new_wordbook.id,
+                word_id=sw.word_id,
+                custom_pronunciation=sw.custom_pronunciation,
+                custom_difficulty=sw.custom_difficulty,
+                custom_note=sw.custom_note
+            ))
+
+        db.commit()
+        db.refresh(new_wordbook)
+        return new_wordbook
 
     # Wordbook-Word relationship methods
 
@@ -151,6 +212,14 @@ class WordbookService:
             wordbook_word.incorrect_count = update_data.incorrect_count
         if update_data.mastered is not None:
             wordbook_word.mastered = update_data.mastered
+
+        # Any study action (answering or marking mastered) counts as studying today
+        if (
+            update_data.correct_count is not None
+            or update_data.incorrect_count is not None
+            or update_data.mastered is not None
+        ):
+            wordbook_word.last_studied = datetime.now(timezone.utc)
 
         db.commit()
         db.refresh(wordbook_word)

@@ -1,5 +1,6 @@
 """Wordbook model"""
 from datetime import datetime, timezone
+from typing import Optional
 from sqlalchemy import String, Integer, Boolean, DateTime, JSON, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
@@ -20,6 +21,9 @@ class Wordbook(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
     is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # Sharing - unique code that lets other users import a copy of this wordbook
+    share_code: Mapped[Optional[str]] = mapped_column(String(10), unique=True, nullable=True, index=True)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(

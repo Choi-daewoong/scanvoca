@@ -58,32 +58,32 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-gray-200">
-      <h2 className="mb-6 text-xl font-bold text-gray-900">로그인</h2>
+    <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <h2 className="mb-6 text-xl font-bold text-gray-900 dark:text-gray-100">로그인</h2>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-gray-700">이메일</label>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">이메일</label>
           <input
             {...register('email')}
             type="email"
             autoComplete="email"
             placeholder="example@email.com"
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-indigo-950"
           />
-          {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+          {errors.email && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.email.message}</p>}
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-gray-700">비밀번호</label>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">비밀번호</label>
           <input
             {...register('password')}
             type="password"
             autoComplete="current-password"
             placeholder="비밀번호"
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-indigo-950"
           />
-          {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+          {errors.password && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.password.message}</p>}
         </div>
 
         {/* 체크박스 옵션 */}
@@ -93,9 +93,9 @@ export default function LoginPage() {
               type="checkbox"
               checked={saveEmail}
               onChange={(e) => setSaveEmail(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 accent-indigo-600"
+              className="h-4 w-4 rounded border-gray-300 accent-indigo-600 dark:border-gray-600"
             />
-            <span className="text-sm text-gray-600">이메일 저장</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">이메일 저장</span>
           </label>
 
           <label className="flex cursor-pointer items-center gap-2 select-none">
@@ -103,34 +103,34 @@ export default function LoginPage() {
               type="checkbox"
               checked={stayLoggedIn}
               onChange={(e) => setStayLoggedIn(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 accent-indigo-600"
+              className="h-4 w-4 rounded border-gray-300 accent-indigo-600 dark:border-gray-600"
             />
-            <span className="text-sm text-gray-600">로그인 유지</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">로그인 유지</span>
           </label>
         </div>
 
         {serverError && (
-          <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{serverError}</p>
+          <p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">{serverError}</p>
         )}
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+          className="w-full rounded-xl border border-indigo-100 bg-indigo-50 py-3 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
         >
           {isSubmitting ? '로그인 중...' : '로그인'}
         </button>
       </form>
 
       <div className="mt-4 text-center">
-        <Link href="/forgot-password" className="text-sm text-indigo-600 hover:underline">
+        <Link href="/forgot-password" className="text-sm text-indigo-500 hover:underline dark:text-indigo-400">
           비밀번호를 잊으셨나요?
         </Link>
       </div>
 
-      <div className="mt-6 border-t border-gray-100 pt-6 text-center">
-        <span className="text-sm text-gray-500">계정이 없으신가요? </span>
-        <Link href="/register" className="text-sm font-semibold text-indigo-600 hover:underline">
+      <div className="mt-6 border-t border-gray-100 pt-6 text-center dark:border-gray-800">
+        <span className="text-sm text-gray-500 dark:text-gray-400">계정이 없으신가요? </span>
+        <Link href="/register" className="text-sm font-semibold text-indigo-500 hover:underline dark:text-indigo-400">
           회원가입
         </Link>
       </div>

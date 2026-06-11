@@ -115,51 +115,51 @@ export default function StatsPage() {
   }, []);
 
   const LEVEL_META: Record<number, { label: string; color: string; bar: string }> = {
-    1: { label: 'Lv.1 쉬움', color: 'text-green-600', bar: 'bg-green-500' },
-    2: { label: 'Lv.2 보통', color: 'text-blue-600', bar: 'bg-blue-500' },
-    3: { label: 'Lv.3 어려움', color: 'text-yellow-600', bar: 'bg-yellow-500' },
-    4: { label: 'Lv.4 매우 어려움', color: 'text-red-600', bar: 'bg-red-500' },
+    1: { label: 'Lv.1 쉬움', color: 'text-emerald-600 dark:text-emerald-400', bar: 'bg-emerald-400' },
+    2: { label: 'Lv.2 보통', color: 'text-blue-600 dark:text-blue-400', bar: 'bg-blue-400' },
+    3: { label: 'Lv.3 어려움', color: 'text-amber-600 dark:text-amber-400', bar: 'bg-amber-400' },
+    4: { label: 'Lv.4 매우 어려움', color: 'text-red-600 dark:text-red-400', bar: 'bg-red-400' },
   };
 
   return (
     <div className="px-4 py-6">
       <div className="mb-5 flex items-center gap-3">
-        <Link href="/home" className="rounded-xl p-2 text-gray-500 hover:bg-gray-100">
+        <Link href="/home" className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">학습 통계</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">학습 통계</h1>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-400 border-t-transparent" />
         </div>
       ) : stats ? (
         <div className="space-y-4">
           {/* 암기 완료율 */}
-          <div className="rounded-2xl bg-indigo-600 p-5 text-white">
+          <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5 dark:border-indigo-900 dark:bg-indigo-950/40">
             <div className="flex items-center justify-between">
               <div>
-                <p className="mb-1 text-sm font-medium text-indigo-200">암기 완료율</p>
-                <p className="text-4xl font-bold">
+                <p className="mb-1 text-sm font-medium text-indigo-500 dark:text-indigo-400">암기 완료율</p>
+                <p className="text-4xl font-bold text-indigo-600 dark:text-indigo-300">
                   {stats.totalWords > 0 ? Math.round((stats.masteredWords / stats.totalWords) * 100) : 0}%
                 </p>
-                <p className="mt-1 text-sm text-indigo-200">
+                <p className="mt-1 text-sm text-indigo-500 dark:text-indigo-400">
                   {stats.masteredWords} / {stats.totalWords}개 단어
                 </p>
               </div>
               {stats.streak > 0 && (
-                <div className="rounded-2xl bg-white/20 px-4 py-3 text-center">
-                  <p className="text-2xl font-bold">🔥 {stats.streak}</p>
-                  <p className="text-xs text-indigo-200">일 연속</p>
+                <div className="rounded-2xl border border-indigo-100 bg-white px-4 py-3 text-center dark:border-indigo-900 dark:bg-gray-900">
+                  <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-300">🔥 {stats.streak}</p>
+                  <p className="text-xs text-indigo-400 dark:text-indigo-400">일 연속</p>
                 </div>
               )}
             </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-indigo-400">
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-indigo-100 dark:bg-indigo-900/60">
               <div
-                className="h-full rounded-full bg-white transition-all"
+                className="h-full rounded-full bg-indigo-400 transition-all"
                 style={{ width: `${stats.totalWords > 0 ? (stats.masteredWords / stats.totalWords) * 100 : 0}%` }}
               />
             </div>
@@ -168,23 +168,23 @@ export default function StatsPage() {
           {/* 통계 그리드 */}
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: '전체 단어', value: stats.totalWords, unit: '개', color: 'text-gray-900' },
-              { label: '암기한 단어', value: stats.masteredWords, unit: '개', color: 'text-green-600' },
-              { label: '오늘 학습', value: stats.studiedToday, unit: '개', color: 'text-indigo-600' },
-              { label: '이번주 학습', value: stats.studiedThisWeek, unit: '개', color: 'text-blue-600' },
-              { label: '보유 단어장', value: stats.totalWordbooks, unit: '개', color: 'text-gray-900' },
-              { label: '퀴즈 정답률', value: stats.accuracyRate, unit: '%', color: 'text-orange-500' },
+              { label: '전체 단어', value: stats.totalWords, unit: '개', color: 'text-gray-900 dark:text-gray-100' },
+              { label: '암기한 단어', value: stats.masteredWords, unit: '개', color: 'text-emerald-600 dark:text-emerald-400' },
+              { label: '오늘 학습', value: stats.studiedToday, unit: '개', color: 'text-indigo-600 dark:text-indigo-400' },
+              { label: '이번주 학습', value: stats.studiedThisWeek, unit: '개', color: 'text-blue-600 dark:text-blue-400' },
+              { label: '보유 단어장', value: stats.totalWordbooks, unit: '개', color: 'text-gray-900 dark:text-gray-100' },
+              { label: '퀴즈 정답률', value: stats.accuracyRate, unit: '%', color: 'text-orange-500 dark:text-orange-400' },
             ].map((item) => (
-              <div key={item.label} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div key={item.label} className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <p className={`text-2xl font-bold ${item.color}`}>{item.value}{item.unit}</p>
-                <p className="mt-0.5 text-xs text-gray-500">{item.label}</p>
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{item.label}</p>
               </div>
             ))}
           </div>
 
           {/* 주간 학습 차트 */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-            <p className="mb-4 text-sm font-semibold text-gray-700">📅 최근 7일 학습량</p>
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <p className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">최근 7일 학습량</p>
             {(() => {
               const maxCount = Math.max(...stats.weeklyData.map(d => d.count), 1);
               return (
@@ -194,16 +194,16 @@ export default function StatsPage() {
                     const isToday = day.label === '오늘';
                     return (
                       <div key={day.date} className="flex flex-1 flex-col items-center gap-1">
-                        <span className="text-[10px] font-medium text-gray-500">{day.count > 0 ? day.count : ''}</span>
+                        <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400">{day.count > 0 ? day.count : ''}</span>
                         <div className="flex w-full flex-col justify-end" style={{ height: 60 }}>
                           <div
                             className={`w-full rounded-t-md transition-all ${
-                              day.count === 0 ? 'bg-gray-100' : isToday ? 'bg-indigo-600' : 'bg-indigo-300'
+                              day.count === 0 ? 'bg-gray-100 dark:bg-gray-800' : isToday ? 'bg-indigo-400' : 'bg-indigo-200 dark:bg-indigo-900'
                             }`}
                             style={{ height: day.count === 0 ? 4 : Math.max(4, (heightPct / 100) * 60) }}
                           />
                         </div>
-                        <span className={`text-[10px] font-medium ${isToday ? 'text-indigo-600' : 'text-gray-400'}`}>
+                        <span className={`text-[10px] font-medium ${isToday ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'}`}>
                           {day.label}
                         </span>
                       </div>
@@ -215,8 +215,8 @@ export default function StatsPage() {
           </div>
 
           {/* 레벨별 통계 */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-            <p className="mb-4 text-sm font-semibold text-gray-700">📊 난이도별 암기 현황</p>
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <p className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">난이도별 암기 현황</p>
             <div className="space-y-3">
               {([1, 2, 3, 4] as const).map((lv) => {
                 const s = stats.levelStats[lv];
@@ -226,11 +226,11 @@ export default function StatsPage() {
                   <div key={lv}>
                     <div className="mb-1 flex items-center justify-between">
                       <span className={`text-xs font-semibold ${meta.color}`}>{meta.label}</span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         {s.mastered}/{s.total}개 ({pct}%)
                       </span>
                     </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                    <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                       <div
                         className={`h-full rounded-full transition-all ${meta.bar}`}
                         style={{ width: `${pct}%` }}

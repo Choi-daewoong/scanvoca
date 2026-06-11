@@ -98,51 +98,55 @@ export default function QuizMode({
     return (
       <div className="flex flex-1 flex-col px-4 py-6">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-50 text-3xl">🎯</div>
-          <h2 className="text-xl font-bold text-gray-900">퀴즈</h2>
-          <p className="mt-1 text-sm text-gray-500">4지선다로 단어 뜻을 맞춰보세요</p>
+          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-100 bg-violet-50 text-3xl dark:border-violet-900 dark:bg-violet-950/40">🎯</div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">퀴즈</h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">4지선다로 단어 뜻을 맞춰보세요</p>
         </div>
 
         <div className="mb-6 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 text-center">
-            <p className="text-2xl font-bold text-violet-600">📚 {words.length}</p>
-            <p className="mt-0.5 text-xs text-gray-500">전체 단어</p>
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center dark:border-gray-800 dark:bg-gray-900">
+            <p className="text-2xl font-bold text-violet-500 dark:text-violet-400">{words.length}</p>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">전체 단어</p>
           </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 text-center">
-            <p className="text-2xl font-bold text-emerald-600">✅ {words.filter(w => w.mastered).length}</p>
-            <p className="mt-0.5 text-xs text-gray-500">암기한 단어</p>
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center dark:border-gray-800 dark:bg-gray-900">
+            <p className="text-2xl font-bold text-emerald-500 dark:text-emerald-400">{words.filter(w => w.mastered).length}</p>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">암기한 단어</p>
           </div>
         </div>
 
         {!canQuiz ? (
-          <div className="rounded-2xl bg-amber-50 px-5 py-6 text-center">
-            <p className="text-sm font-medium text-amber-700">단어가 4개 이상 필요합니다.</p>
-            <p className="mt-1 text-xs text-amber-600">더 많은 단어를 추가한 후 퀴즈를 풀 수 있습니다.</p>
+          <div className="rounded-2xl border border-amber-100 bg-amber-50 px-5 py-6 text-center dark:border-amber-900 dark:bg-amber-950/30">
+            <p className="text-sm font-medium text-amber-700 dark:text-amber-400">단어가 4개 이상 필요합니다.</p>
+            <p className="mt-1 text-xs text-amber-600 dark:text-amber-500">더 많은 단어를 추가한 후 퀴즈를 풀 수 있습니다.</p>
           </div>
         ) : (
           <>
             <div className="mb-6">
-              <p className="mb-3 text-sm font-semibold text-gray-700">문제 개수 선택</p>
+              <p className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">문제 개수 선택</p>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => { setQuestionMode('all'); setQuestionCount(words.length); }}
-                  className={`rounded-2xl border-2 p-4 text-center transition ${
-                    questionMode === 'all' ? 'border-violet-600 bg-violet-50' : 'border-gray-200 bg-white'
+                  className={`rounded-2xl border p-4 text-center transition ${
+                    questionMode === 'all'
+                      ? 'border-violet-200 bg-violet-50 dark:border-violet-900 dark:bg-violet-950/40'
+                      : 'border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900'
                   }`}
                 >
-                  <p className={`text-2xl font-bold ${questionMode === 'all' ? 'text-violet-600' : 'text-gray-700'}`}>
+                  <p className={`text-2xl font-bold ${questionMode === 'all' ? 'text-violet-500 dark:text-violet-400' : 'text-gray-700 dark:text-gray-300'}`}>
                     {words.length}
                   </p>
-                  <p className="mt-0.5 text-xs text-gray-500">전체</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">전체</p>
                 </button>
                 <button
                   onClick={() => setQuestionMode('custom')}
-                  className={`rounded-2xl border-2 p-4 text-center transition ${
-                    questionMode === 'custom' ? 'border-violet-600 bg-violet-50' : 'border-gray-200 bg-white'
+                  className={`rounded-2xl border p-4 text-center transition ${
+                    questionMode === 'custom'
+                      ? 'border-violet-200 bg-violet-50 dark:border-violet-900 dark:bg-violet-950/40'
+                      : 'border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900'
                   }`}
                 >
-                  <p className={`text-2xl ${questionMode === 'custom' ? 'text-violet-600' : 'text-gray-400'}`}>✏️</p>
-                  <p className="mt-0.5 text-xs text-gray-500">직접 입력</p>
+                  <p className={`text-2xl ${questionMode === 'custom' ? 'text-violet-500 dark:text-violet-400' : 'text-gray-400 dark:text-gray-500'}`}>✏️</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">직접 입력</p>
                 </button>
               </div>
               {questionMode === 'custom' && (
@@ -158,17 +162,17 @@ export default function QuizMode({
                     placeholder="문제 개수 입력"
                     min={4}
                     max={words.length}
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-center text-base outline-none focus:border-violet-500"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-center text-base outline-none focus:border-violet-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                   />
-                  <p className="mt-1.5 text-center text-xs text-gray-400">최소 4개, 최대 {words.length}개</p>
+                  <p className="mt-1.5 text-center text-xs text-gray-400 dark:text-gray-500">최소 4개, 최대 {words.length}개</p>
                 </div>
               )}
             </div>
             <button
               onClick={handleStart}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 py-4 text-sm font-semibold text-white transition hover:bg-violet-700"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-violet-100 bg-violet-50 py-4 text-sm font-semibold text-violet-600 transition hover:bg-violet-100 dark:border-violet-900 dark:bg-violet-950/40 dark:text-violet-400 dark:hover:bg-violet-950/70"
             >
-              🚀 퀴즈 시작하기
+              퀴즈 시작하기
             </button>
           </>
         )}
@@ -184,39 +188,44 @@ export default function QuizMode({
     return (
       <div className="flex flex-1 flex-col px-4 py-5">
         <div className="mb-4">
-          <div className="mb-1.5 flex justify-between text-xs text-gray-500">
+          <div className="mb-1.5 flex justify-between text-xs text-gray-500 dark:text-gray-400">
             <span>문제 {currentIdx + 1} / {questions.length}</span>
             <span>{Math.round((currentIdx / questions.length) * 100)}%</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-gray-200">
+          <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
             <div
-              className="h-full rounded-full bg-violet-600 transition-all"
+              className="h-full rounded-full bg-violet-400 transition-all"
               style={{ width: `${(currentIdx / questions.length) * 100}%` }}
             />
           </div>
         </div>
 
-        <div className="mb-6 flex flex-col items-center justify-center rounded-3xl bg-violet-50 py-8">
+        <div className="mb-6 flex flex-col items-center justify-center rounded-3xl border border-violet-100 bg-violet-50 py-8 dark:border-violet-900 dark:bg-violet-950/30">
           <div className="mb-2 flex items-center gap-2">
-            <p className="text-3xl font-bold text-gray-900">{w?.word}</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{w?.word}</p>
             <button
               onClick={() => speakWord(w?.word ?? '')}
-              className="rounded-full bg-white p-2 text-base shadow-sm"
-            >🔊</button>
+              className="rounded-full bg-white p-2 text-violet-500 shadow-sm transition hover:bg-violet-100 dark:bg-gray-900 dark:text-violet-400 dark:hover:bg-violet-950/40"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H4v4h4l4 4V6zM18.364 5.636a9 9 0 010 12.728" />
+              </svg>
+            </button>
           </div>
-          {w?.pronunciation && <p className="text-sm text-gray-400">{w.pronunciation}</p>}
-          <p className="mt-3 text-sm text-gray-500">다음 단어의 뜻을 고르세요</p>
+          {w?.pronunciation && <p className="text-sm text-gray-400 dark:text-gray-500">{w.pronunciation}</p>}
+          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">다음 단어의 뜻을 고르세요</p>
         </div>
 
         <div className="space-y-2">
           {q.options.map((option, i) => {
-            let style = 'border-gray-200 bg-white text-gray-800';
+            let style = 'border-gray-200 bg-white text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200';
             if (isAnswered) {
-              if (option === q.correct) style = 'border-emerald-500 bg-emerald-50 text-emerald-700';
-              else if (option === selected) style = 'border-red-400 bg-red-50 text-red-600';
-              else style = 'border-gray-100 bg-gray-50 text-gray-400';
+              if (option === q.correct) style = 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400';
+              else if (option === selected) style = 'border-red-200 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400';
+              else style = 'border-gray-100 bg-gray-50 text-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-600';
             } else if (selected === option) {
-              style = 'border-violet-500 bg-violet-50 text-violet-700';
+              style = 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900 dark:bg-violet-950/40 dark:text-violet-400';
             }
             return (
               <button
@@ -235,17 +244,19 @@ export default function QuizMode({
         </div>
 
         {isAnswered && (
-          <div className={`mt-4 rounded-2xl p-3 text-center text-sm font-semibold ${
-            selected === q.correct ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
+          <div className={`mt-4 rounded-2xl border p-3 text-center text-sm font-semibold ${
+            selected === q.correct
+              ? 'border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-400'
+              : 'border-red-100 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400'
           }`}>
-            {selected === q.correct ? '🎉 정답입니다!' : `❌ 틀렸습니다. 정답: ${q.correct}`}
+            {selected === q.correct ? '🎉 정답입니다!' : `틀렸습니다. 정답: ${q.correct}`}
           </div>
         )}
 
         <button
           onClick={handleNext}
           disabled={!isAnswered}
-          className="mt-4 w-full rounded-2xl bg-violet-600 py-4 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-40"
+          className="mt-4 w-full rounded-2xl border border-violet-100 bg-violet-50 py-4 text-sm font-semibold text-violet-600 transition hover:bg-violet-100 disabled:opacity-40 dark:border-violet-900 dark:bg-violet-950/40 dark:text-violet-400 dark:hover:bg-violet-950/70"
         >
           {currentIdx + 1 >= questions.length ? '결과 보기' : '다음 문제'}
         </button>
@@ -261,23 +272,23 @@ export default function QuizMode({
 
     return (
       <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className={`mb-5 rounded-3xl p-6 text-center ${pct >= 80 ? 'bg-emerald-50' : 'bg-amber-50'}`}>
-          <p className={`text-5xl font-bold ${pct >= 80 ? 'text-emerald-600' : 'text-amber-500'}`}>{pct}점</p>
-          <p className="mt-1 text-sm font-semibold text-gray-600">{correct} / {total} 정답</p>
-          <p className="mt-1 text-sm text-gray-500">
+        <div className={`mb-5 rounded-3xl border p-6 text-center ${pct >= 80 ? 'border-emerald-100 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30' : 'border-amber-100 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30'}`}>
+          <p className={`text-5xl font-bold ${pct >= 80 ? 'text-emerald-500 dark:text-emerald-400' : 'text-amber-500 dark:text-amber-400'}`}>{pct}점</p>
+          <p className="mt-1 text-sm font-semibold text-gray-600 dark:text-gray-300">{correct} / {total} 정답</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {pct >= 80 ? '훌륭해요! 계속 학습하세요!' : '좀 더 학습이 필요해요!'}
           </p>
         </div>
 
         {wrongAnswers.length > 0 && (
           <div className="mb-5">
-            <p className="mb-2 text-sm font-semibold text-gray-700">❌ 틀린 단어 ({wrongAnswers.length}개)</p>
+            <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">틀린 단어 ({wrongAnswers.length}개)</p>
             <div className="space-y-2">
               {wrongAnswers.map((a, i) => (
-                <div key={i} className="rounded-xl border border-red-200 bg-red-50 p-3">
-                  <p className="font-semibold text-gray-900">{a.word}</p>
-                  <p className="mt-0.5 text-xs text-gray-500">정답: <span className="font-medium text-emerald-600">{a.correct}</span></p>
-                  <p className="text-xs text-gray-500">내 선택: <span className="font-medium text-red-500">{a.selected}</span></p>
+                <div key={i} className="rounded-xl border border-red-100 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
+                  <p className="font-semibold text-gray-900 dark:text-gray-100">{a.word}</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">정답: <span className="font-medium text-emerald-600 dark:text-emerald-400">{a.correct}</span></p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">내 선택: <span className="font-medium text-red-500 dark:text-red-400">{a.selected}</span></p>
                 </div>
               ))}
             </div>
@@ -286,7 +297,7 @@ export default function QuizMode({
 
         <button
           onClick={handleRetry}
-          className="w-full rounded-2xl bg-violet-600 py-4 text-sm font-semibold text-white transition hover:bg-violet-700"
+          className="w-full rounded-2xl border border-violet-100 bg-violet-50 py-4 text-sm font-semibold text-violet-600 transition hover:bg-violet-100 dark:border-violet-900 dark:bg-violet-950/40 dark:text-violet-400 dark:hover:bg-violet-950/70"
         >
           다시 풀기
         </button>

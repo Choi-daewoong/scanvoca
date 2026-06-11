@@ -95,51 +95,55 @@ export default function ExamMode({
     return (
       <div className="flex flex-1 flex-col px-4 py-6">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-3xl">📝</div>
-          <h2 className="text-xl font-bold text-gray-900">시험 준비</h2>
-          <p className="mt-1 text-sm text-gray-500">외운 단어로 실력을 확인해보세요</p>
+          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 text-3xl dark:border-indigo-900 dark:bg-indigo-950/40">📝</div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">시험 준비</h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">외운 단어로 실력을 확인해보세요</p>
         </div>
 
         <div className="mb-6 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 text-center">
-            <p className="text-2xl font-bold text-emerald-600">✅ {memorizedWords.length}</p>
-            <p className="mt-0.5 text-xs text-gray-500">외운 단어</p>
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center dark:border-gray-800 dark:bg-gray-900">
+            <p className="text-2xl font-bold text-emerald-500 dark:text-emerald-400">{memorizedWords.length}</p>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">외운 단어</p>
           </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 text-center">
-            <p className="text-2xl font-bold text-indigo-600">📚 {words.length}</p>
-            <p className="mt-0.5 text-xs text-gray-500">전체 단어</p>
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center dark:border-gray-800 dark:bg-gray-900">
+            <p className="text-2xl font-bold text-indigo-500 dark:text-indigo-400">{words.length}</p>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">전체 단어</p>
           </div>
         </div>
 
         {memorizedWords.length === 0 ? (
-          <div className="rounded-2xl bg-amber-50 px-5 py-6 text-center">
-            <p className="text-sm font-medium text-amber-700">외운 단어가 없습니다.</p>
-            <p className="mt-1 text-xs text-amber-600">학습 모드에서 단어를 외운 후 시험을 볼 수 있습니다.</p>
+          <div className="rounded-2xl border border-amber-100 bg-amber-50 px-5 py-6 text-center dark:border-amber-900 dark:bg-amber-950/30">
+            <p className="text-sm font-medium text-amber-700 dark:text-amber-400">외운 단어가 없습니다.</p>
+            <p className="mt-1 text-xs text-amber-600 dark:text-amber-500">학습 모드에서 단어를 외운 후 시험을 볼 수 있습니다.</p>
           </div>
         ) : (
           <>
             <div className="mb-6">
-              <p className="mb-3 text-sm font-semibold text-gray-700">문제 개수 선택</p>
+              <p className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">문제 개수 선택</p>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => { setQuestionMode('all'); setQuestionCount(memorizedWords.length); }}
-                  className={`rounded-2xl border-2 p-4 text-center transition ${
-                    questionMode === 'all' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 bg-white'
+                  className={`rounded-2xl border p-4 text-center transition ${
+                    questionMode === 'all'
+                      ? 'border-indigo-200 bg-indigo-50 dark:border-indigo-900 dark:bg-indigo-950/40'
+                      : 'border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900'
                   }`}
                 >
-                  <p className={`text-2xl font-bold ${questionMode === 'all' ? 'text-indigo-600' : 'text-gray-700'}`}>
+                  <p className={`text-2xl font-bold ${questionMode === 'all' ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300'}`}>
                     {memorizedWords.length}
                   </p>
-                  <p className="mt-0.5 text-xs text-gray-500">전체</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">전체</p>
                 </button>
                 <button
                   onClick={() => setQuestionMode('custom')}
-                  className={`rounded-2xl border-2 p-4 text-center transition ${
-                    questionMode === 'custom' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 bg-white'
+                  className={`rounded-2xl border p-4 text-center transition ${
+                    questionMode === 'custom'
+                      ? 'border-indigo-200 bg-indigo-50 dark:border-indigo-900 dark:bg-indigo-950/40'
+                      : 'border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900'
                   }`}
                 >
-                  <p className={`text-2xl ${questionMode === 'custom' ? 'text-indigo-600' : 'text-gray-400'}`}>✏️</p>
-                  <p className="mt-0.5 text-xs text-gray-500">직접 입력</p>
+                  <p className={`text-2xl ${questionMode === 'custom' ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'}`}>✏️</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">직접 입력</p>
                 </button>
               </div>
               {questionMode === 'custom' && (
@@ -155,17 +159,17 @@ export default function ExamMode({
                     placeholder="문제 개수 입력"
                     min={1}
                     max={memorizedWords.length}
-                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-center text-base outline-none focus:border-indigo-500"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-center text-base outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                   />
-                  <p className="mt-1.5 text-center text-xs text-gray-400">최대 {memorizedWords.length}개</p>
+                  <p className="mt-1.5 text-center text-xs text-gray-400 dark:text-gray-500">최대 {memorizedWords.length}개</p>
                 </div>
               )}
             </div>
             <button
               onClick={handleStart}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-4 text-sm font-semibold text-white transition hover:bg-indigo-700"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50 py-4 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
             >
-              🚀 시험 시작하기
+              시험 시작하기
             </button>
           </>
         )}
@@ -181,55 +185,58 @@ export default function ExamMode({
     return (
       <div className="flex flex-1 flex-col px-4 py-5">
         <div className="mb-4">
-          <div className="mb-1.5 flex justify-between text-xs text-gray-500">
+          <div className="mb-1.5 flex justify-between text-xs text-gray-500 dark:text-gray-400">
             <span>문제 {currentIdx + 1} / {questions.length}</span>
             <span>{Math.round((currentIdx / questions.length) * 100)}%</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-gray-200">
+          <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
             <div
-              className="h-full rounded-full bg-indigo-600 transition-all"
+              className="h-full rounded-full bg-indigo-400 transition-all"
               style={{ width: `${(currentIdx / questions.length) * 100}%` }}
             />
           </div>
         </div>
 
-        <div className="mb-6 flex flex-col items-center justify-center rounded-3xl bg-indigo-50 py-8">
-          <p className="mb-1 text-xs text-indigo-400">발음을 듣고 단어와 뜻을 적어보세요</p>
+        <div className="mb-6 flex flex-col items-center justify-center rounded-3xl border border-indigo-100 bg-indigo-50 py-8 dark:border-indigo-900 dark:bg-indigo-950/30">
+          <p className="mb-1 text-xs text-indigo-400 dark:text-indigo-400">발음을 듣고 단어와 뜻을 적어보세요</p>
           <div className="flex items-center gap-3">
             <button
               onClick={() => speakWord(w?.word ?? '')}
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-2xl text-white shadow"
+              className="flex h-14 w-14 items-center justify-center rounded-full border border-indigo-100 bg-white text-indigo-500 shadow-sm transition hover:bg-indigo-50 dark:border-indigo-900 dark:bg-gray-900 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
             >
-              🔊
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H4v4h4l4 4V6zM18.364 5.636a9 9 0 010 12.728" />
+              </svg>
             </button>
             <button
               onClick={() => onMastered(current.word_id, !isMastered)}
               className={`flex h-10 w-10 items-center justify-center rounded-full text-xl transition ${
-                isMastered ? 'bg-emerald-100' : 'bg-white opacity-40'
+                isMastered ? 'bg-emerald-100 dark:bg-emerald-950/50' : 'bg-white opacity-40 dark:bg-gray-900'
               }`}
               title={isMastered ? '암기 해제' : '암기 표시'}
             >
               {isMastered ? '✅' : '⭕'}
             </button>
           </div>
-          {w?.pronunciation && <p className="mt-2 text-sm text-indigo-400">{w.pronunciation}</p>}
+          {w?.pronunciation && <p className="mt-2 text-sm text-indigo-400 dark:text-indigo-400">{w.pronunciation}</p>}
         </div>
 
         <div className="space-y-3">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-500">스펠링 (영어)</label>
+            <label className="mb-1.5 block text-xs font-semibold text-gray-500 dark:text-gray-400">스펠링 (영어)</label>
             <input
               type="text"
               value={spellingInput}
               onChange={e => setSpellingInput(e.target.value)}
               placeholder="영어 단어를 입력하세요"
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base outline-none focus:border-indigo-500"
+              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
               autoCapitalize="none"
               autoComplete="off"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-500">뜻 (한국어)</label>
+            <label className="mb-1.5 block text-xs font-semibold text-gray-500 dark:text-gray-400">뜻 (한국어)</label>
             <input
               type="text"
               value={meaningInput}
@@ -239,7 +246,7 @@ export default function ExamMode({
                 else if (e.key === 'Enter') saveAndNavigate(currentIdx + 1);
               }}
               placeholder="한국어 뜻을 입력하세요"
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base outline-none focus:border-indigo-500"
+              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             />
           </div>
         </div>
@@ -248,13 +255,13 @@ export default function ExamMode({
           <button
             onClick={() => saveAndNavigate(currentIdx - 1)}
             disabled={currentIdx === 0}
-            className="rounded-2xl border border-gray-200 px-6 py-4 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 disabled:opacity-30"
+            className="rounded-2xl border border-gray-200 px-6 py-4 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 disabled:opacity-30 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-800"
           >
             이전
           </button>
           <button
             onClick={() => saveAndNavigate(currentIdx + 1 >= questions.length ? 'result' : currentIdx + 1)}
-            className="flex-1 rounded-2xl bg-indigo-600 py-4 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            className="flex-1 rounded-2xl border border-indigo-100 bg-indigo-50 py-4 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
           >
             {currentIdx + 1 >= questions.length ? '채점하기' : '다음 문제'}
           </button>
@@ -268,10 +275,10 @@ export default function ExamMode({
     const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
     return (
       <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className={`mb-5 rounded-3xl p-6 text-center ${pct >= 80 ? 'bg-emerald-50' : 'bg-amber-50'}`}>
-          <p className={`text-5xl font-bold ${pct >= 80 ? 'text-emerald-600' : 'text-amber-500'}`}>{pct}점</p>
-          <p className="mt-1 text-sm font-semibold text-gray-600">{correct} / {total} 정답</p>
-          <p className="mt-1 text-sm text-gray-500">
+        <div className={`mb-5 rounded-3xl border p-6 text-center ${pct >= 80 ? 'border-emerald-100 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30' : 'border-amber-100 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30'}`}>
+          <p className={`text-5xl font-bold ${pct >= 80 ? 'text-emerald-500 dark:text-emerald-400' : 'text-amber-500 dark:text-amber-400'}`}>{pct}점</p>
+          <p className="mt-1 text-sm font-semibold text-gray-600 dark:text-gray-300">{correct} / {total} 정답</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {pct >= 80 ? '훌륭해요! 계속 학습하세요!' : '좀 더 학습이 필요해요!'}
           </p>
         </div>
@@ -282,17 +289,17 @@ export default function ExamMode({
             return (
               <div
                 key={i}
-                className={`rounded-xl border p-3 ${isCorrect ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'}`}
+                className={`rounded-xl border p-3 ${isCorrect ? 'border-emerald-100 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30' : 'border-red-100 bg-red-50 dark:border-red-900 dark:bg-red-950/30'}`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-gray-900">{a.english}</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">{a.english}</span>
                   <span>{isCorrect ? '✅' : '❌'}</span>
                 </div>
 
                 {questions[i]?.word?.meanings?.map((m, mi) => (
                   <div key={mi} className="mt-0.5 flex items-start gap-1">
-                    <span className="shrink-0 rounded bg-white/60 px-1 py-0.5 text-[10px] text-gray-400">{m.partOfSpeech}</span>
-                    <span className="text-xs text-gray-500">{m.korean}</span>
+                    <span className="shrink-0 rounded bg-white/60 px-1 py-0.5 text-[10px] text-gray-400 dark:bg-gray-900/40 dark:text-gray-500">{m.partOfSpeech}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{m.korean}</span>
                   </div>
                 ))}
 
@@ -300,12 +307,12 @@ export default function ExamMode({
 
                 <div className="mt-1.5 space-y-0.5">
                   {a.meaningInput && (
-                    <p className="text-xs text-gray-600">
-                      내 뜻: <span className="text-gray-700">{a.meaningInput}</span>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      내 뜻: <span className="text-gray-700 dark:text-gray-300">{a.meaningInput}</span>
                     </p>
                   )}
-                  <p className="text-xs text-gray-600">
-                    정답 뜻: <span className="font-medium text-indigo-600">{a.correctMeaning}</span>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    정답 뜻: <span className="font-medium text-indigo-600 dark:text-indigo-400">{a.correctMeaning}</span>
                   </p>
                 </div>
               </div>
@@ -315,7 +322,7 @@ export default function ExamMode({
 
         <button
           onClick={handleRetry}
-          className="w-full rounded-2xl bg-indigo-600 py-4 text-sm font-semibold text-white transition hover:bg-indigo-700"
+          className="w-full rounded-2xl border border-indigo-100 bg-indigo-50 py-4 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
         >
           다시 시험보기
         </button>
