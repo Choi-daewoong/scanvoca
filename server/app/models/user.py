@@ -1,7 +1,7 @@
 """User model"""
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import String, Boolean, DateTime
+from sqlalchemy import String, Boolean, DateTime, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import Base
 
@@ -28,6 +28,7 @@ class User(Base):
     # Password Reset OTP
     password_reset_token: Mapped[Optional[str]] = mapped_column(String(6), nullable=True)
     password_reset_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    password_reset_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(

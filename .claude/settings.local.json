@@ -93,7 +93,19 @@
       "Bash(grep -r \"allowedDevOrigins\" node_modules/next/dist/docs -l)",
       "Bash(npm run *)",
       "Bash(git -C .. log --oneline -5)",
-      "Bash(git -C .. diff --stat .claude/settings.local.json)"
+      "Bash(git -C .. diff --stat .claude/settings.local.json)",
+      "Bash(npm view *)",
+      "Bash(gcloud run services list *)",
+      "Bash(npx eslint *)",
+      "Bash(venv\\\\Scripts\\\\python.exe -m alembic current)",
+      "Bash(git stash *)",
+      "Bash(venv/Scripts/python.exe seed_words.py)",
+      "Bash(venv/Scripts/python.exe seed_idioms.py)",
+      "Bash(cat .gitignore)",
+      "Bash(cat server/.gitignore)",
+      "Bash(cat server/Dockerfile)",
+      "Bash(venv/Scripts/python.exe -m alembic upgrade head)",
+      "Bash(venv/Scripts/python.exe -c \"from app.main import app; print\\('OK'\\)\")"
     ],
     "deny": [],
     "ask": []

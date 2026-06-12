@@ -48,25 +48,43 @@ class UserService:
         """Check if email already exists"""
         return UserService.get_by_email(db, email) is not None
 
+    MAX_RESET_OTP_ATTEMPTS = 5
+
     @staticmethod
     def save_reset_otp(db: Session, user: User, otp: str, expires_at: datetime) -> None:
-        """Save password reset OTP and expiration time"""
+        """Save password reset OTP and expiration time, resetting attempt counter"""
         user.password_reset_token = otp
         user.password_reset_expires_at = expires_at
+        user.password_reset_attempts = 0
         db.commit()
 
     @staticmethod
     def verify_reset_otp(db: Session, email: str, otp: str) -> Optional[User]:
-        """Verify reset OTP - returns User if valid, None otherwise"""
+        """Verify reset OTP - returns User if valid, None otherwise
+
+        OTP당 시도 횟수를 제한해 brute force를 방지한다. 시도 횟수 초과 시
+        토큰을 무효화해 새 OTP를 발급받아야 한다.
+        """
         user = UserService.get_by_email(db, email)
         if not user:
             return None
-        if not user.password_reset_token or user.password_reset_token != otp:
-            return None
-        if not user.password_reset_expires_at:
+        if not user.password_reset_token or not user.password_reset_expires_at:
             return None
         if datetime.now(timezone.utc) > user.password_reset_expires_at.replace(tzinfo=timezone.utc):
             return None
+
+        if user.password_reset_attempts >= UserService.MAX_RESET_OTP_ATTEMPTS:
+            user.password_reset_token = None
+            user.password_reset_expires_at = None
+            user.password_reset_attempts = 0
+            db.commit()
+            return None
+
+        if user.password_reset_token != otp:
+            user.password_reset_attempts += 1
+            db.commit()
+            return None
+
         return user
 
     @staticmethod
@@ -75,4 +93,5 @@ class UserService:
         user.password_hash = hash_password(new_password)
         user.password_reset_token = None
         user.password_reset_expires_at = None
+        user.password_reset_attempts = 0
         db.commit()

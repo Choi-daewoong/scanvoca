@@ -1,7 +1,7 @@
 """Word schemas for API request/response"""
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class WordMeaning(BaseModel):
@@ -30,7 +30,7 @@ class WordResponse(BaseModel):
 
 class WordGenerateRequest(BaseModel):
     """Request to generate/fetch words"""
-    words: List[str]  # List of words to fetch/generate
+    words: List[str] = Field(..., min_length=1, max_length=50)  # List of words to fetch/generate
 
 
 class WordGenerateResult(BaseModel):

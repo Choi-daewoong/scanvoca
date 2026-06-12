@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.rate_limit import RateLimiter
 from app.models.user import User
 from app.services.gemini_service import GeminiService
 from app.services.word_service import WordService
@@ -36,7 +37,7 @@ class OCRScanResponse(BaseModel):
 async def scan_image(
     image: UploadFile = File(..., description="영단어가 포함된 이미지 파일"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(RateLimiter(max_requests=20, window_seconds=3600, scope="ocr_scan")),
 ):
     """
     이미지에서 영단어를 추출하고 각 단어의 정의를 반환합니다.

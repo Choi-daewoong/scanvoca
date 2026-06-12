@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.rate_limit import RateLimiter
 from app.models.user import User
 from app.models.word import Word
 from app.schemas.word import WordGenerateRequest, WordGenerateResponse, WordResponse
@@ -16,7 +17,7 @@ router = APIRouter()
 async def generate_words(
     request: WordGenerateRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(RateLimiter(max_requests=30, window_seconds=3600, scope="words_generate")),
 ):
     """
     Generate/fetch word definitions with GPT proxy
