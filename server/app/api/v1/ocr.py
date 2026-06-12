@@ -44,8 +44,8 @@ async def scan_image(
 
     🔒 인증 필수 (Bearer token)
 
-    - 이미지를 Gemini Vision으로 분석해 영단어 목록 추출
-    - 각 단어를 DB에서 검색하거나 Gemini로 정의 생성
+    - 이미지를 AI Vision으로 분석해 영단어 목록 추출
+    - 각 단어를 DB에서 검색하거나 AI로 정의 생성
     - 지원 형식: JPEG, PNG, WebP, GIF (최대 10MB)
     """
     start_time = time.time()
@@ -79,7 +79,7 @@ async def scan_image(
     if vision_result is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="이미지 분석 서비스를 사용할 수 없습니다. Gemini API 키를 확인하세요."
+            detail="AI 분석 서비스를 사용할 수 없습니다. AI API 키를 확인하세요."
         )
 
     extracted_words: List[str] = vision_result.get("words", [])

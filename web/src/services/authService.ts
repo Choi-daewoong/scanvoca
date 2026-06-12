@@ -12,6 +12,16 @@ export const authService = {
     return data;
   },
 
+  async googleLogin(idToken: string, persistent = false): Promise<TokenResponse> {
+    const data = await apiFetch<TokenResponse>('/api/v1/auth/google-login', {
+      method: 'POST',
+      body: JSON.stringify({ id_token: idToken }),
+      skipAuth: true,
+    });
+    setTokens(data.access_token, data.refresh_token, persistent);
+    return data;
+  },
+
   async register(email: string, password: string, display_name?: string): Promise<User> {
     return apiFetch<User>('/api/v1/auth/register', {
       method: 'POST',

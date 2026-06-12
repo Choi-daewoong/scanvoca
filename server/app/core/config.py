@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # Google Gemini
     GEMINI_API_KEY: Optional[str] = None
 
+    # Google OAuth (구글 로그인 ID 토큰 검증용)
+    GOOGLE_CLIENT_ID: Optional[str] = None
+
     # SMTP (Gmail 비밀번호 재설정 이메일)
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587

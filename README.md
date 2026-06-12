@@ -1,6 +1,6 @@
 # Scan_Voca — 스마트 영단어 학습 앱
 
-카메라로 영어 텍스트를 스캔하고 Gemini AI로 단어를 분석하는 웹 기반 영단어 학습 서비스입니다.
+카메라로 영어 텍스트를 스캔하고 AI로 단어를 분석하는 웹 기반 영단어 학습 서비스입니다.
 
 ---
 
@@ -11,7 +11,7 @@
 | Frontend | Next.js 16 (App Router), TypeScript, Tailwind CSS |
 | Backend | FastAPI (Python), SQLAlchemy 2.0 |
 | Database | Supabase PostgreSQL |
-| AI | Google Gemini API |
+| AI | Google AI API |
 | 배포 | Google Cloud Run (`asia-northeast3`) |
 | 인증 | JWT (access + refresh token) |
 
@@ -55,7 +55,7 @@ npm run dev
 ## 주요 기능
 
 - **OCR 스캔**: 카메라 이미지에서 영어 단어 추출
-- **AI 단어 정의**: Gemini API 기반 한국어 뜻, 품사, 예문 생성
+- **AI 단어 정의**: AI API 기반 한국어 뜻, 품사, 예문 생성
 - **단어장 관리**: 단어장 생성/편집, 단어 추가/삭제
 - **학습 모드**: 플래시카드(Study), 퀴즈(Quiz), 시험(Exam), 철자 연습(Spelling)
 - **학습 통계**: 일별 학습 현황, 습득 단어 추적

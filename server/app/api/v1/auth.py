@@ -113,19 +113,50 @@ async def google_login(
     """
     Login or register with Google
 
+    - Google ID 토큰을 서버에서 직접 검증 (클라이언트가 보낸 값은 신뢰하지 않음)
     - If user exists with this email, login
     - If user doesn't exist, create new user and login
     - Returns access token and refresh token
     """
+    if not settings.GOOGLE_CLIENT_ID:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="구글 로그인이 설정되지 않았습니다."
+        )
+
+    try:
+        from google.oauth2 import id_token as google_id_token
+        from google.auth.transport import requests as google_requests
+
+        payload = google_id_token.verify_oauth2_token(
+            google_data.id_token,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID,
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="유효하지 않은 구글 로그인 토큰입니다."
+        )
+
+    if not payload.get("email_verified", False):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="이메일 인증이 완료되지 않은 구글 계정입니다."
+        )
+
+    email = payload["email"]
+    name = payload.get("name")
+
     # Check if user already exists
-    user = UserService.get_by_email(db, google_data.email)
+    user = UserService.get_by_email(db, email)
 
     if not user:
         random_password = secrets.token_urlsafe(32)
         user_create = UserCreate(
-            email=google_data.email,
+            email=email,
             password=random_password,
-            display_name=google_data.name or google_data.email.split('@')[0]
+            display_name=name or email.split('@')[0]
         )
         user = UserService.create(db, user_create)
 

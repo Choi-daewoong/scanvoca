@@ -1,12 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
+import Script from 'next/script';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential: string }) => void;
+          }) => void;
+          renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void;
+        };
+      };
+    };
+  }
+}
 
 const schema = z.object({
   email: z.string().email('올바른 이메일을 입력하세요'),
@@ -18,10 +35,13 @@ const SAVED_EMAIL_KEY = 'saved_email';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuthStore();
+  const { login, googleLogin } = useAuthStore();
   const [serverError, setServerError] = useState('');
   const [saveEmail, setSaveEmail] = useState(false);
   const [stayLoggedIn, setStayLoggedIn] = useState(false);
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const stayLoggedInRef = useRef(stayLoggedIn);
+  stayLoggedInRef.current = stayLoggedIn;
 
   const {
     register,
@@ -55,6 +75,34 @@ export default function LoginPage() {
       const msg = err instanceof Error ? err.message : '로그인에 실패했습니다.';
       setServerError(msg === 'Incorrect email or password' ? '이메일 또는 비밀번호가 올바르지 않습니다.' : msg);
     }
+  };
+
+  const handleGoogleCredential = async (response: { credential: string }) => {
+    setServerError('');
+    try {
+      await googleLogin(response.credential, stayLoggedInRef.current);
+      router.replace('/home');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '구글 로그인에 실패했습니다.';
+      setServerError(msg);
+    }
+  };
+
+  const initGoogleButton = () => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId || !window.google || !googleButtonRef.current) return;
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: handleGoogleCredential,
+    });
+    window.google.accounts.id.renderButton(googleButtonRef.current, {
+      type: 'standard',
+      theme: 'outline',
+      size: 'large',
+      width: 320,
+      text: 'continue_with',
+      locale: 'ko',
+    });
   };
 
   return (
@@ -127,6 +175,26 @@ export default function LoginPage() {
           비밀번호를 잊으셨나요?
         </Link>
       </div>
+
+      {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+        <>
+          <div className="mt-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
+            <span className="text-xs text-gray-400 dark:text-gray-500">또는</span>
+            <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
+          </div>
+
+          <div className="mt-4 flex justify-center">
+            <div ref={googleButtonRef} />
+          </div>
+
+          <Script
+            src="https://accounts.google.com/gsi/client"
+            strategy="afterInteractive"
+            onLoad={initGoogleButton}
+          />
+        </>
+      )}
 
       <div className="mt-6 border-t border-gray-100 pt-6 text-center dark:border-gray-800">
         <span className="text-sm text-gray-500 dark:text-gray-400">계정이 없으신가요? </span>

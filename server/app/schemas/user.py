@@ -53,9 +53,7 @@ class TokenPayload(BaseModel):
 
 class GoogleLoginRequest(BaseModel):
     """Schema for Google login"""
-    email: EmailStr
-    name: Optional[str] = None
-    google_id: str
+    id_token: str = Field(..., min_length=1)
 
 
 class PasswordResetRequest(BaseModel):

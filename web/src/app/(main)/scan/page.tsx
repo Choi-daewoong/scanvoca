@@ -82,7 +82,7 @@ export default function ScanPage() {
       setStep('result');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '이미지 처리에 실패했습니다.';
-      setError(msg.includes('Gemini') ? 'AI 분석 서비스를 사용할 수 없습니다. 잠시 후 다시 시도하세요.' : msg);
+      setError(msg.includes('AI 분석 서비스') ? 'AI 분석 서비스를 사용할 수 없습니다. 잠시 후 다시 시도하세요.' : msg);
       setStep('upload');
     }
   }, []);
@@ -188,7 +188,7 @@ export default function ScanPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">스마트 단어 스캔</h1>
           <p className="mt-2 text-sm text-gray-500 leading-relaxed dark:text-gray-400">
             교재·노트 사진을 찍으면<br />
-            Gemini AI가 영단어를 자동으로 추출합니다
+            AI가 영단어를 자동으로 추출합니다
           </p>
         </div>
 
@@ -307,7 +307,7 @@ export default function ScanPage() {
         <div className="text-center">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-indigo-400 border-t-transparent" />
           <p className="text-base font-semibold text-gray-900 dark:text-gray-100">AI가 단어를 분석하고 있어요</p>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Gemini Vision이 영단어를 추출 중...</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">AI가 영단어를 추출 중...</p>
         </div>
       </div>
     );
