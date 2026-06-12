@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { WordbookWord } from '@/types';
+import { GPTMeaning, WordbookWord } from '@/types';
 import { speakWord } from '@/utils/tts';
 import { formatPartOfSpeech } from '@/utils/partOfSpeech';
+import { wordbookService } from '@/services/wordbookService';
+import EditMeaningsModal from './EditMeaningsModal';
 
 type DisplayFilter = 'all' | 'english' | 'meaning';
 
@@ -13,17 +15,20 @@ export default function StudyMode({
   wordbookId,
   onMastered,
   onRemove,
+  onMeaningsUpdated,
 }: {
   words: WordbookWord[];
   wordbookId: number;
   onMastered: (wordId: number, mastered: boolean) => void;
   onRemove: (wordId: number) => void;
+  onMeaningsUpdated: (wordId: number, meanings: GPTMeaning[]) => void;
 }) {
   const [displayFilter, setDisplayFilter] = useState<DisplayFilter>('all');
   const [showOnlyUnlearned, setShowOnlyUnlearned] = useState(false);
   const [isDeletionMode, setIsDeletionMode] = useState(false);
   const [wordOrder, setWordOrder] = useState<number[]>(() => words.map((_, i) => i));
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
+  const [editingEntry, setEditingEntry] = useState<WordbookWord | null>(null);
 
   useEffect(() => { setWordOrder(words.map((_, i) => i)); }, [words.length]);
   useEffect(() => { setFlippedCards(new Set()); }, [displayFilter]);
@@ -142,10 +147,16 @@ export default function StudyMode({
                       </span>
                     </button>
                     {(displayFilter !== 'meaning' || isFlipped) && (
-                      <p className={`text-lg font-semibold text-indigo-600 dark:text-indigo-400 ${
+                      <p className={`text-lg font-semibold ${
                         displayFilter === 'meaning' && isFlipped ? 'mt-1 border-t border-dashed border-gray-200 pt-1 dark:border-gray-700' : ''
                       }`}>
-                        {w?.word}
+                        <Link
+                          href={`/wordbooks/${wordbookId}/${ww.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-indigo-600 hover:underline dark:text-indigo-400"
+                        >
+                          {w?.word}
+                        </Link>
                         {w?.pronunciation && (
                           <span className="ml-2 text-sm font-normal text-gray-400 dark:text-gray-500">{w.pronunciation}</span>
                         )}
@@ -198,13 +209,12 @@ export default function StudyMode({
                               d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H4v4h4l4 4V6zM18.364 5.636a9 9 0 010 12.728" />
                           </svg>
                         </button>
-                        <Link
-                          href={`/wordbooks/${wordbookId}/${ww.id}`}
-                          onClick={(e) => e.stopPropagation()}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditingEntry(ww); }}
                           className="text-[10px] text-gray-400 hover:text-indigo-500 dark:text-gray-500 dark:hover:text-indigo-400"
                         >
-                          상세
-                        </Link>
+                          수정
+                        </button>
                       </>
                     )}
                   </div>
@@ -213,6 +223,17 @@ export default function StudyMode({
             );
           })}
         </div>
+      )}
+
+      {editingEntry && (
+        <EditMeaningsModal
+          entry={editingEntry}
+          onClose={() => setEditingEntry(null)}
+          onSave={async (meanings) => {
+            await wordbookService.updateWord(wordbookId, editingEntry.word_id, { custom_meanings: meanings });
+            onMeaningsUpdated(editingEntry.word_id, meanings);
+          }}
+        />
       )}
     </div>
   );

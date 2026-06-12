@@ -2,6 +2,7 @@
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field
+from app.schemas.word import WordMeaning
 
 
 class WordbookBase(BaseModel):
@@ -86,6 +87,7 @@ class WordbookWordUpdate(BaseModel):
     custom_pronunciation: Optional[str] = None
     custom_difficulty: Optional[int] = Field(None, ge=1, le=5)
     custom_note: Optional[str] = None
+    custom_meanings: Optional[List[WordMeaning]] = None
     correct_count: Optional[int] = None
     incorrect_count: Optional[int] = None
     mastered: Optional[bool] = None
@@ -95,6 +97,7 @@ class WordbookWordResponse(WordbookWordBase):
     """Schema for wordbook-word response"""
     id: int
     wordbook_id: int
+    custom_meanings: Optional[List[WordMeaning]] = None
     correct_count: int
     incorrect_count: int
     last_studied: Optional[datetime]

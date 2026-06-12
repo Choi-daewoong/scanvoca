@@ -65,6 +65,7 @@ class WordbookWord(Base):
     custom_pronunciation: Mapped[str] = mapped_column(String(100), nullable=True)
     custom_difficulty: Mapped[int] = mapped_column(Integer, nullable=True)
     custom_note: Mapped[str] = mapped_column(Text, nullable=True)
+    custom_meanings: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
 
     # Study progress
     correct_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

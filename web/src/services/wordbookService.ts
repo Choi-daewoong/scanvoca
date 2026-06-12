@@ -1,5 +1,5 @@
 import { apiFetch } from './api';
-import { Wordbook, WordbookWord, SharedWordbookPreview, WordbookOrderItem } from '@/types';
+import { GPTMeaning, Wordbook, WordbookWord, SharedWordbookPreview, WordbookOrderItem } from '@/types';
 
 export const wordbookService = {
   async list(): Promise<Wordbook[]> {
@@ -44,6 +44,7 @@ export const wordbookService = {
     wordId: number,
     data: {
       custom_note?: string;
+      custom_meanings?: GPTMeaning[];
       correct_count?: number;
       incorrect_count?: number;
       mastered?: boolean;

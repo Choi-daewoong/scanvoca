@@ -312,14 +312,7 @@ async def add_word_to_wordbook(
     wordbook_word = WordbookService.add_word_to_wordbook(db, wordbook_id, word_data)
 
     # Attach word details
-    wordbook_word.word = {
-        "id": word.id,
-        "word": word.word,
-        "pronunciation": word.pronunciation,
-        "difficulty": word.difficulty,
-        "meanings": word.meanings,
-        "source": word.source
-    }
+    wordbook_word.word = WordbookService.build_word_dict(word, wordbook_word)
 
     return wordbook_word
 
@@ -372,14 +365,7 @@ async def update_wordbook_word(
     from app.models.word import Word
     word = db.query(Word).filter(Word.id == word_id).first()
     if word:
-        wordbook_word.word = {
-            "id": word.id,
-            "word": word.word,
-            "pronunciation": word.pronunciation,
-            "difficulty": word.difficulty,
-            "meanings": word.meanings,
-            "source": word.source
-        }
+        wordbook_word.word = WordbookService.build_word_dict(word, wordbook_word)
 
     return wordbook_word
 

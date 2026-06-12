@@ -30,3 +30,19 @@ export function formatPartOfSpeech(pos: string | undefined | null): string {
   const key = pos.trim().toLowerCase();
   return POS_MAP[key] ?? pos;
 }
+
+/** 뜻 수정 화면 등에서 사용할 품사 선택 옵션 목록 */
+export const PART_OF_SPEECH_OPTIONS: { value: string; label: string }[] = [
+  { value: 'noun', label: '명사' },
+  { value: 'pronoun', label: '대명사' },
+  { value: 'verb', label: '동사' },
+  { value: 'adjective', label: '형용사' },
+  { value: 'adverb', label: '부사' },
+  { value: 'preposition', label: '전치사' },
+  { value: 'conjunction', label: '접속사' },
+  { value: 'interjection', label: '감탄사' },
+  { value: 'determiner', label: '관사/한정사' },
+  { value: 'auxiliary verb', label: '조동사' },
+  { value: 'idiom', label: '숙어' },
+  { value: 'phrase', label: '구동사' },
+];

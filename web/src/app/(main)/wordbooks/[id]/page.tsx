@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { wordbookService } from '@/services/wordbookService';
-import { Wordbook, WordbookWord } from '@/types';
+import { GPTMeaning, Wordbook, WordbookWord } from '@/types';
 import StudyMode from './_components/StudyMode';
 import QuizMode from './_components/QuizMode';
 import ExamMode from './_components/ExamMode';
@@ -53,6 +53,13 @@ export default function WordbookDetailPage() {
       await wordbookService.removeWord(id, wordId);
       setWords(prev => prev.filter(w => w.word_id !== wordId));
     } catch { /* ignore */ }
+  };
+
+  const handleMeaningsUpdated = (wordId: number, meanings: GPTMeaning[]) => {
+    setWords(prev => prev.map(w => w.word_id === wordId
+      ? { ...w, custom_meanings: meanings, word: { ...w.word, meanings } }
+      : w
+    ));
   };
 
   const handleShare = async () => {
@@ -167,7 +174,7 @@ export default function WordbookDetailPage() {
           </Link>
         </div>
       ) : mode === 'study' ? (
-        <StudyMode words={words} wordbookId={id} onMastered={handleMastered} onRemove={handleRemove} />
+        <StudyMode words={words} wordbookId={id} onMastered={handleMastered} onRemove={handleRemove} onMeaningsUpdated={handleMeaningsUpdated} />
       ) : mode === 'quiz' ? (
         <QuizMode words={words} onMastered={handleMastered} />
       ) : (

@@ -65,6 +65,7 @@ export interface WordbookWord {
   custom_pronunciation?: string;
   custom_difficulty?: number;
   custom_note?: string;
+  custom_meanings?: GPTMeaning[];
   correct_count: number;
   incorrect_count: number;
   last_studied?: string;

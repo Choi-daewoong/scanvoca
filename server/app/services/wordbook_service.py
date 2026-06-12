@@ -194,7 +194,8 @@ class WordbookService:
                 word_id=sw.word_id,
                 custom_pronunciation=sw.custom_pronunciation,
                 custom_difficulty=sw.custom_difficulty,
-                custom_note=sw.custom_note
+                custom_note=sw.custom_note,
+                custom_meanings=sw.custom_meanings
             ))
 
         db.commit()
@@ -202,6 +203,18 @@ class WordbookService:
         return new_wordbook
 
     # Wordbook-Word relationship methods
+
+    @staticmethod
+    def build_word_dict(word: Word, wordbook_word: WordbookWord) -> dict:
+        """Build the word detail dict, applying the user's custom meanings (if any)"""
+        return {
+            "id": word.id,
+            "word": word.word,
+            "pronunciation": word.pronunciation,
+            "difficulty": word.difficulty,
+            "meanings": wordbook_word.custom_meanings or word.meanings,
+            "source": word.source
+        }
 
     @staticmethod
     def get_wordbook_words(db: Session, wordbook_id: int) -> List[WordbookWord]:
@@ -214,14 +227,7 @@ class WordbookService:
         for ww in wordbook_words:
             word = db.query(Word).filter(Word.id == ww.word_id).first()
             if word:
-                ww.word = {
-                    "id": word.id,
-                    "word": word.word,
-                    "pronunciation": word.pronunciation,
-                    "difficulty": word.difficulty,
-                    "meanings": word.meanings,
-                    "source": word.source
-                }
+                ww.word = WordbookService.build_word_dict(word, ww)
 
         return wordbook_words
 
@@ -270,6 +276,8 @@ class WordbookService:
             wordbook_word.custom_difficulty = update_data.custom_difficulty
         if update_data.custom_note is not None:
             wordbook_word.custom_note = update_data.custom_note
+        if update_data.custom_meanings is not None:
+            wordbook_word.custom_meanings = [m.model_dump() for m in update_data.custom_meanings]
         if update_data.correct_count is not None:
             wordbook_word.correct_count = update_data.correct_count
         if update_data.incorrect_count is not None:
