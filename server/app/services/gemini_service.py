@@ -33,9 +33,10 @@ class GeminiService:
 Input: "{word}"
 
 IMPORTANT - Word Validation Rules:
-1. First, check if "{word}" is a REAL English word (including proper nouns, idioms, common abbreviations)
-2. If it's NOT a valid English word (e.g., random letters, OCR errors like "geet", "alaoa", "sact", gibberish), return: {{"is_valid": false, "word": "{word}", "reason": "Not a valid English word"}}
-3. If it IS a valid English word, return the full definition with "is_valid": true
+1. First, check if "{word}" is a REAL English word or expression (including proper nouns, idioms, phrasal verbs, fixed collocations, common abbreviations)
+2. If it's NOT valid (e.g., random letters, OCR errors like "geet", "alaoa", "sact", gibberish, or words that don't form a real idiom together), return: {{"is_valid": false, "word": "{word}", "reason": "Not a valid English word"}}
+3. If it IS valid, return the full definition with "is_valid": true
+4. If "{word}" consists of multiple words (e.g. "be good at", "give up"), treat it as a single idiom/phrasal verb entry, not as separate words
 
 Return a JSON object with this structure:
 {{
@@ -62,7 +63,7 @@ Return a JSON object with this structure:
 Important:
 1. ALWAYS include "is_valid" field (true or false)
 2. For invalid words, only return is_valid, word, and reason fields
-3. Use standard English part of speech labels (noun, verb, adjective, adverb, preposition, conjunction, pronoun, etc.)
+3. Use standard English part of speech labels (noun, verb, adjective, adverb, preposition, conjunction, pronoun, etc.). For idioms/phrasal verbs/collocations made of multiple words, use "idiom"
 4. Provide at least 1-2 meanings for common words
 5. Include 1-2 example sentences for each meaning
 6. Ensure all JSON is properly formatted and COMPLETE
@@ -149,13 +150,16 @@ Important:
 
             # raw_text를 요청하지 않음 — 토큰 절약 + 잘림 방지
             # 단어가 많은 이미지에서 raw_text까지 포함하면 2000 토큰 초과 → JSON 잘림
-            prompt = """List all English words visible in this image.
+            prompt = """List all English words and idiomatic expressions visible in this image.
 
 Return ONLY a JSON array, nothing else:
-["word1","word2","word3"]
+["word1","word2","be good at","word3"]
 
 Rules:
-- Every English word you can see, lowercase, no duplicates
+- Include every individual English word you can see, lowercase, no duplicates
+- Additionally, if a group of words shown together forms a well-known idiom, phrasal verb, or fixed collocation (e.g. "be good at", "give up", "look forward to", "make up for"), include that full expression as ONE entry, lowercase
+- If you include such an expression as one entry, do NOT also list its individual component words separately
+- Only group words this way if it is a genuinely well-known idiom/phrasal verb/collocation from a dictionary, not just any words that happen to appear near each other
 - Exclude: pure numbers, single characters (except 'a', 'I'), punctuation marks
 - Include proper nouns if they are common English words
 - If no English words found, return: []"""
