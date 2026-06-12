@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { wordbookService } from '@/services/wordbookService';
 import { WordbookWord } from '@/types';
 import { speakWord } from '@/utils/tts';
+import { formatPartOfSpeech } from '@/utils/partOfSpeech';
 
 const LEVEL_COLORS: Record<number, { bg: string; text: string; label: string }> = {
   1: { bg: 'bg-emerald-50 dark:bg-emerald-950/40', text: 'text-emerald-600 dark:text-emerald-400', label: '쉬움' },
@@ -124,7 +125,7 @@ export default function WordDetailPage() {
               <div key={i} className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="mb-2 flex items-center gap-2">
                   <span className="rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-600 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400">
-                    {m.partOfSpeech}
+                    {formatPartOfSpeech(m.partOfSpeech)}
                   </span>
                   <span className="text-sm font-medium text-gray-400 dark:text-gray-500">#{i + 1}</span>
                 </div>

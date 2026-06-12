@@ -14,7 +14,9 @@ from app.schemas.wordbook import (
     WordbookWordUpdate,
     WordbookWordResponse,
     ShareCodeResponse,
-    SharedWordbookPreview
+    SharedWordbookPreview,
+    FolderCreate,
+    WordbookReorderRequest
 )
 from app.services.wordbook_service import WordbookService
 
@@ -53,6 +55,35 @@ async def get_wordbooks(
     Returns list of wordbooks with word counts
     """
     wordbooks = WordbookService.get_user_wordbooks(db, current_user.id)
+    return wordbooks
+
+
+@router.post("/folder", response_model=WordbookResponse, status_code=status.HTTP_201_CREATED)
+async def create_folder(
+    folder_data: FolderCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Create a new folder to group wordbooks
+    """
+    folder = WordbookService.create_folder(db, current_user.id, folder_data.name)
+    folder.word_count = 0
+    return folder
+
+
+@router.put("/reorder", response_model=List[WordbookResponse])
+async def reorder_wordbooks(
+    reorder_data: WordbookReorderRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Reorder wordbooks/folders and/or move them in/out of folders
+
+    - **items**: list of {id, parent_id, sort_order}
+    """
+    wordbooks = WordbookService.reorder_wordbooks(db, current_user.id, reorder_data.items)
     return wordbooks
 
 

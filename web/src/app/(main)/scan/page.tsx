@@ -1,14 +1,47 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import { ocrService } from '@/services/ocrService';
 import { wordbookService } from '@/services/wordbookService';
 import { wordService } from '@/services/wordService';
 import { OCRScanResponse, WordDefinition, Wordbook } from '@/types';
 import Image from 'next/image';
 import { speakWord } from '@/utils/tts';
+import { formatPartOfSpeech } from '@/utils/partOfSpeech';
 
-type Step = 'upload' | 'processing' | 'result' | 'saving';
+type Step = 'upload' | 'crop' | 'processing' | 'result' | 'saving';
+
+async function getCroppedFile(image: HTMLImageElement, crop: PixelCrop, fileName: string): Promise<File> {
+  const scaleX = image.naturalWidth / image.width;
+  const scaleY = image.naturalHeight / image.height;
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(crop.width * scaleX);
+  canvas.height = Math.round(crop.height * scaleY);
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('캔버스를 생성할 수 없습니다.');
+
+  ctx.drawImage(
+    image,
+    crop.x * scaleX,
+    crop.y * scaleY,
+    crop.width * scaleX,
+    crop.height * scaleY,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) { reject(new Error('이미지를 자르지 못했습니다.')); return; }
+      resolve(new File([blob], fileName, { type: 'image/jpeg' }));
+    }, 'image/jpeg', 0.92);
+  });
+}
 
 export default function ScanPage() {
   const [step, setStep] = useState<Step>('upload');
@@ -21,6 +54,13 @@ export default function ScanPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // 크롭 단계 상태
+  const [rawFile, setRawFile] = useState<File | null>(null);
+  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const processImage = useCallback(async (file: File) => {
     setError('');
@@ -49,7 +89,36 @@ export default function ScanPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) processImage(file);
+    if (!file) return;
+    setRawFile(file);
+    setRawImageSrc(URL.createObjectURL(file));
+    setCrop(undefined);
+    setCompletedCrop(undefined);
+    setStep('crop');
+  };
+
+  const onCropImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget;
+    setCrop({ unit: '%', x: 25, y: 25, width: 50, height: 50 });
+    setCompletedCrop({ unit: 'px', x: width * 0.25, y: height * 0.25, width: width * 0.5, height: height * 0.5 });
+  };
+
+  const handleCropConfirm = async () => {
+    if (!rawFile) return;
+    if (!completedCrop || !imgRef.current || completedCrop.width === 0 || completedCrop.height === 0) {
+      processImage(rawFile);
+      return;
+    }
+    try {
+      const cropped = await getCroppedFile(imgRef.current, completedCrop, rawFile.name);
+      processImage(cropped);
+    } catch {
+      processImage(rawFile);
+    }
+  };
+
+  const handleUseFullImage = () => {
+    if (rawFile) processImage(rawFile);
   };
 
   const toggleWord = (word: string) => {
@@ -61,8 +130,8 @@ export default function ScanPage() {
     });
   };
 
-  const handleSave = async () => {
-    if (!selectedWbId || selectedWords.size === 0) return;
+  const handleSave = async (wbId: number) => {
+    if (!wbId || selectedWords.size === 0) return;
     setStep('saving');
     try {
       // 선택한 단어들의 word_id를 서버에서 가져오기
@@ -72,7 +141,7 @@ export default function ScanPage() {
       for (const item of genResult.results) {
         if (item.data?.id) {
           try {
-            await wordbookService.addWord(selectedWbId, item.data.id);
+            await wordbookService.addWord(wbId, item.data.id);
           } catch {
             // 이미 추가된 단어는 무시
           }
@@ -94,6 +163,11 @@ export default function ScanPage() {
     setSelectedWords(new Set());
     setError('');
     setSaveSuccess(false);
+    if (rawImageSrc) URL.revokeObjectURL(rawImageSrc);
+    setRawFile(null);
+    setRawImageSrc(null);
+    setCrop(undefined);
+    setCompletedCrop(undefined);
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
@@ -163,6 +237,60 @@ export default function ScanPage() {
         <p className="mt-6 text-xs text-gray-400 text-center dark:text-gray-500">
           JPEG, PNG, WebP 지원 · 최대 10MB
         </p>
+      </div>
+    );
+  }
+
+  // 영역 선택(크롭) 화면 (하단 네비게이션을 가리는 전체 화면 오버레이)
+  if (step === 'crop' && rawImageSrc) {
+    return (
+      <div className="fixed inset-0 z-[60] flex h-[100dvh] flex-col overflow-hidden bg-white px-4 py-3 dark:bg-gray-950">
+        <div className="mb-2 shrink-0">
+          <h1 className="text-base font-bold text-gray-900 dark:text-gray-100">분석할 영역 선택</h1>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            드래그해서 분석할 부분만 선택하세요.
+          </p>
+        </div>
+
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 p-2 dark:border-gray-800 dark:bg-gray-900">
+          <ReactCrop
+            crop={crop}
+            onChange={(_, percentCrop) => setCrop(percentCrop)}
+            onComplete={(c) => setCompletedCrop(c)}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={imgRef}
+              src={rawImageSrc}
+              alt="원본 이미지"
+              onLoad={onCropImageLoad}
+              className="max-h-full max-w-full w-auto object-contain"
+            />
+          </ReactCrop>
+        </div>
+
+        <div className="mt-2 shrink-0 space-y-1.5">
+          <button
+            onClick={handleCropConfirm}
+            className="w-full rounded-2xl border border-indigo-100 bg-indigo-50 py-3 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 active:scale-95 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
+          >
+            선택 영역 분석하기
+          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleUseFullImage}
+              className="flex-1 rounded-2xl border border-gray-200 bg-white py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 active:scale-95 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              전체 이미지 사용
+            </button>
+            <button
+              onClick={reset}
+              className="flex-1 rounded-2xl border border-gray-200 bg-white py-2.5 text-sm font-medium text-gray-500 transition hover:bg-gray-50 active:scale-95 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800"
+            >
+              취소
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -291,7 +419,7 @@ function SaveToWordbookPanel({
   setSelectedWbId: (id: number) => void;
   selectedCount: number;
   isSaving: boolean;
-  onSave: () => void;
+  onSave: (wbId: number) => void;
 }) {
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState('');
@@ -306,6 +434,7 @@ function SaveToWordbookPanel({
       setSelectedWbId(wb.id);
       setShowNew(false);
       setNewName('');
+      onSave(wb.id);
     } catch {
       alert('단어장 생성에 실패했습니다.');
     } finally {
@@ -347,10 +476,10 @@ function SaveToWordbookPanel({
           <div className="flex gap-2">
             <button
               onClick={handleCreate}
-              disabled={creating || !newName.trim()}
+              disabled={creating || isSaving || !newName.trim() || selectedCount === 0}
               className="flex-1 rounded-xl border border-indigo-100 bg-indigo-50 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
             >
-              {creating ? '생성 중...' : '만들고 저장하기'}
+              {creating || isSaving ? '저장 중...' : '만들고 저장하기'}
             </button>
             <button
               onClick={() => { setShowNew(false); setNewName(''); }}
@@ -375,7 +504,7 @@ function SaveToWordbookPanel({
       {/* 저장 버튼 (기존 단어장 선택 시) */}
       {!showNew && wordbooks.length > 0 && (
         <button
-          onClick={onSave}
+          onClick={() => selectedWbId && onSave(selectedWbId)}
           disabled={isSaving || selectedCount === 0 || !selectedWbId}
           className="w-full rounded-xl border border-indigo-100 bg-indigo-50 py-3 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
         >
@@ -438,19 +567,10 @@ function WordResultCard({
             {word.pronunciation && (
               <span className="text-xs text-gray-400 dark:text-gray-500">{word.pronunciation}</span>
             )}
-            {word.difficulty && (
-              <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full border ${
-                word.difficulty <= 2 ? 'border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400' :
-                word.difficulty <= 3 ? 'border-amber-100 bg-amber-50 text-amber-600 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-400' :
-                'border-red-100 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400'
-              }`}>
-                Lv.{word.difficulty}
-              </span>
-            )}
           </div>
           {firstMeaning && (
             <p className="mt-0.5 text-sm text-gray-600 truncate dark:text-gray-400">
-              <span className="text-gray-400 text-xs dark:text-gray-500">{firstMeaning.partOfSpeech} </span>
+              <span className="text-gray-400 text-xs dark:text-gray-500">{formatPartOfSpeech(firstMeaning.partOfSpeech)} </span>
               {firstMeaning.korean}
             </p>
           )}

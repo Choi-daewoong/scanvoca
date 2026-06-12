@@ -3,11 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { wordbookService } from '@/services/wordbookService';
-import { Wordbook } from '@/types';
-
-interface WordbookWithProgress extends Wordbook {
-  masteredCount?: number;
-}
+import WordbookBoard, { WordbookWithProgress } from './_components/WordbookBoard';
 
 type FilterTab = '전체' | '진행 중' | '완료';
 
@@ -75,6 +71,7 @@ export default function WordbooksPage() {
 
   const filteredWordbooks = wordbooks.filter((wb) => {
     if (filterTab === '전체') return true;
+    if (wb.is_folder) return false;
     const total = wb.word_count;
     const mastered = wb.masteredCount ?? 0;
     if (filterTab === '완료') return total > 0 && mastered === total;
@@ -169,6 +166,13 @@ export default function WordbooksPage() {
             <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">위의 버튼으로 새 단어장을 만들어보세요.</p>
           )}
         </div>
+      ) : filterTab === '전체' ? (
+        <>
+          <p className="mb-3 text-xs text-gray-400 dark:text-gray-500">
+            단어장을 길게 눌러 순서를 바꾸거나, 다른 단어장 위에 겹쳐서 폴더로 묶을 수 있어요.
+          </p>
+          <WordbookBoard wordbooks={wordbooks} setWordbooks={setWordbooks} onDelete={handleDelete} />
+        </>
       ) : (
         <div className="space-y-3">
           {filteredWordbooks.map((wb) => {

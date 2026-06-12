@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { WordbookWord } from '@/types';
 import { speakWord } from '@/utils/tts';
+import { formatPartOfSpeech } from '@/utils/partOfSpeech';
 
 type DisplayFilter = 'all' | 'english' | 'meaning';
 
@@ -20,7 +21,6 @@ export default function StudyMode({
 }) {
   const [displayFilter, setDisplayFilter] = useState<DisplayFilter>('all');
   const [showOnlyUnlearned, setShowOnlyUnlearned] = useState(false);
-  const [levelFilters, setLevelFilters] = useState<Set<number | 'all'>>(new Set(['all']));
   const [isDeletionMode, setIsDeletionMode] = useState(false);
   const [wordOrder, setWordOrder] = useState<number[]>(() => words.map((_, i) => i));
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
@@ -37,24 +37,6 @@ export default function StudyMode({
     setWordOrder(arr);
   };
 
-  const handleLevelFilter = (level: number | 'all') => {
-    if (level === 'all') {
-      setLevelFilters(new Set(['all']));
-    } else {
-      setLevelFilters(prev => {
-        const next = new Set(prev);
-        next.delete('all');
-        if (next.has(level)) {
-          next.delete(level);
-          if (next.size === 0) next.add('all');
-        } else {
-          next.add(level);
-        }
-        return next;
-      });
-    }
-  };
-
   const toggleFlip = (wordId: number) => {
     setFlippedCards(prev => {
       const next = new Set(prev);
@@ -67,11 +49,8 @@ export default function StudyMode({
   const filteredWords = useMemo(() => {
     let list = wordOrder.map(i => words[i]).filter(Boolean);
     if (showOnlyUnlearned) list = list.filter(w => !w.mastered);
-    if (!levelFilters.has('all')) {
-      list = list.filter(w => levelFilters.has(w.word?.difficulty ?? 0));
-    }
     return list;
-  }, [words, wordOrder, showOnlyUnlearned, levelFilters]);
+  }, [words, wordOrder, showOnlyUnlearned]);
 
   const isFlipMode = displayFilter === 'english' || displayFilter === 'meaning';
 
@@ -117,22 +96,6 @@ export default function StudyMode({
         >
           {isDeletionMode ? '완료' : '삭제'}
         </button>
-      </div>
-
-      <div className="mb-3 flex gap-1.5">
-        {(['all', 1, 2, 3, 4] as const).map((lv) => (
-          <button
-            key={lv}
-            onClick={() => handleLevelFilter(lv)}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-              levelFilters.has(lv)
-                ? 'border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400'
-                : 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400'
-            }`}
-          >
-            {lv === 'all' ? '모두' : `Lv.${lv}`}
-          </button>
-        ))}
       </div>
 
       {isFlipMode && (
@@ -196,7 +159,7 @@ export default function StudyMode({
                         {meanings.map((m, i) => (
                           <div key={i} className="flex items-start gap-1.5">
                             <span className="mt-0.5 shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                              {m.partOfSpeech}
+                              {formatPartOfSpeech(m.partOfSpeech)}
                             </span>
                             <span className="text-sm text-gray-600 dark:text-gray-400">{m.korean}</span>
                           </div>

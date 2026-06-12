@@ -29,10 +29,30 @@ class WordbookResponse(WordbookBase):
     user_id: int
     word_count: int = 0  # Number of words in this wordbook
     share_code: Optional[str] = None
+    parent_id: Optional[int] = None
+    sort_order: int = 0
+    is_folder: bool = False
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class FolderCreate(BaseModel):
+    """Schema for creating a folder"""
+    name: str = Field(..., min_length=1, max_length=255)
+
+
+class WordbookOrderItem(BaseModel):
+    """Schema for a single wordbook's position in the reorder request"""
+    id: int
+    parent_id: Optional[int] = None
+    sort_order: int = 0
+
+
+class WordbookReorderRequest(BaseModel):
+    """Schema for reordering/moving wordbooks and folders"""
+    items: List[WordbookOrderItem]
 
 
 class ShareCodeResponse(BaseModel):

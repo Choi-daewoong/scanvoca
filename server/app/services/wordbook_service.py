@@ -4,10 +4,16 @@ import string
 from datetime import datetime, timezone
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func as sa_func
 from app.models.wordbook import Wordbook, WordbookWord
 from app.models.word import Word
-from app.schemas.wordbook import WordbookCreate, WordbookUpdate, WordbookWordCreate, WordbookWordUpdate
+from app.schemas.wordbook import (
+    WordbookCreate,
+    WordbookUpdate,
+    WordbookWordCreate,
+    WordbookWordUpdate,
+    WordbookOrderItem,
+)
 
 # Avoid visually ambiguous characters (0/O, 1/I/L) in share codes
 SHARE_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -20,7 +26,9 @@ class WordbookService:
     @staticmethod
     def get_user_wordbooks(db: Session, user_id: int) -> List[Wordbook]:
         """Get all wordbooks for a user with word counts"""
-        stmt = select(Wordbook).where(Wordbook.user_id == user_id).order_by(Wordbook.created_at.desc())
+        stmt = select(Wordbook).where(Wordbook.user_id == user_id).order_by(
+            Wordbook.sort_order.asc(), Wordbook.created_at.desc()
+        )
         wordbooks = list(db.scalars(stmt).all())
 
         # Add word count to each wordbook (dynamic attribute for Pydantic)
@@ -45,19 +53,75 @@ class WordbookService:
         return db.scalar(stmt)
 
     @staticmethod
+    def _next_sort_order(db: Session, user_id: int, parent_id: Optional[int] = None) -> int:
+        """Get the next sort_order value among siblings (same user + parent)"""
+        max_order = db.scalar(
+            select(sa_func.max(Wordbook.sort_order)).where(
+                and_(Wordbook.user_id == user_id, Wordbook.parent_id == parent_id)
+            )
+        )
+        return (max_order or 0) + 1
+
+    @staticmethod
     def create_wordbook(db: Session, user_id: int, wordbook_data: WordbookCreate) -> Wordbook:
         """Create a new wordbook"""
         wordbook = Wordbook(
             user_id=user_id,
             name=wordbook_data.name,
             description=wordbook_data.description,
-            is_default=wordbook_data.is_default
+            is_default=wordbook_data.is_default,
+            sort_order=WordbookService._next_sort_order(db, user_id)
         )
 
         db.add(wordbook)
         db.commit()
         db.refresh(wordbook)
         return wordbook
+
+    @staticmethod
+    def create_folder(db: Session, user_id: int, name: str) -> Wordbook:
+        """Create a new folder (a wordbook-like container with no words)"""
+        folder = Wordbook(
+            user_id=user_id,
+            name=name,
+            is_folder=True,
+            sort_order=WordbookService._next_sort_order(db, user_id)
+        )
+
+        db.add(folder)
+        db.commit()
+        db.refresh(folder)
+        return folder
+
+    @staticmethod
+    def reorder_wordbooks(db: Session, user_id: int, items: List[WordbookOrderItem]) -> List[Wordbook]:
+        """Reorder and/or move wordbooks/folders for a user"""
+        ids = [item.id for item in items]
+        wordbooks = db.scalars(
+            select(Wordbook).where(and_(Wordbook.id.in_(ids), Wordbook.user_id == user_id))
+        ).all()
+        wordbook_map = {wb.id: wb for wb in wordbooks}
+
+        for item in items:
+            wordbook = wordbook_map.get(item.id)
+            if not wordbook:
+                continue
+            # A folder cannot be nested inside another folder
+            if item.parent_id is not None:
+                parent = wordbook_map.get(item.parent_id) or WordbookService.get_wordbook(db, item.parent_id, user_id)
+                if not parent or parent.is_folder is False and wordbook.is_folder:
+                    continue
+                if wordbook.is_folder:
+                    continue
+            wordbook.parent_id = item.parent_id
+            wordbook.sort_order = item.sort_order
+
+        db.commit()
+
+        for wordbook in wordbook_map.values():
+            db.refresh(wordbook)
+
+        return WordbookService.get_user_wordbooks(db, user_id)
 
     @staticmethod
     def update_wordbook(

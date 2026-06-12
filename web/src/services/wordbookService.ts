@@ -1,5 +1,5 @@
 import { apiFetch } from './api';
-import { Wordbook, WordbookWord, SharedWordbookPreview } from '@/types';
+import { Wordbook, WordbookWord, SharedWordbookPreview, WordbookOrderItem } from '@/types';
 
 export const wordbookService = {
   async list(): Promise<Wordbook[]> {
@@ -69,5 +69,19 @@ export const wordbookService = {
 
   async importShared(shareCode: string): Promise<Wordbook> {
     return apiFetch<Wordbook>(`/api/v1/wordbooks/shared/${shareCode}/import`, { method: 'POST' });
+  },
+
+  async createFolder(name: string): Promise<Wordbook> {
+    return apiFetch<Wordbook>('/api/v1/wordbooks/folder', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+  },
+
+  async reorder(items: WordbookOrderItem[]): Promise<Wordbook[]> {
+    return apiFetch<Wordbook[]>('/api/v1/wordbooks/reorder', {
+      method: 'PUT',
+      body: JSON.stringify({ items }),
+    });
   },
 };

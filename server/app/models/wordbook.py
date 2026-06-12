@@ -25,6 +25,13 @@ class Wordbook(Base):
     # Sharing - unique code that lets other users import a copy of this wordbook
     share_code: Mapped[Optional[str]] = mapped_column(String(10), unique=True, nullable=True, index=True)
 
+    # Folder organization
+    parent_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("wordbooks.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    is_folder: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime,

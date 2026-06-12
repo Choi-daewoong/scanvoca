@@ -38,8 +38,17 @@ export interface Wordbook {
   is_default: boolean;
   word_count: number;
   share_code?: string;
+  parent_id?: number | null;
+  sort_order: number;
+  is_folder: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface WordbookOrderItem {
+  id: number;
+  parent_id: number | null;
+  sort_order: number;
 }
 
 export interface SharedWordbookPreview {

@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { WordbookWord } from '@/types';
 import { speakWord } from '@/utils/tts';
+import { formatPartOfSpeech } from '@/utils/partOfSpeech';
 import SpellingComparison from './SpellingComparison';
 
 type ExamStage = 'setup' | 'question' | 'result';
@@ -298,7 +299,7 @@ export default function ExamMode({
 
                 {questions[i]?.word?.meanings?.map((m, mi) => (
                   <div key={mi} className="mt-0.5 flex items-start gap-1">
-                    <span className="shrink-0 rounded bg-white/60 px-1 py-0.5 text-[10px] text-gray-400 dark:bg-gray-900/40 dark:text-gray-500">{m.partOfSpeech}</span>
+                    <span className="shrink-0 rounded bg-white/60 px-1 py-0.5 text-[10px] text-gray-400 dark:bg-gray-900/40 dark:text-gray-500">{formatPartOfSpeech(m.partOfSpeech)}</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">{m.korean}</span>
                   </div>
                 ))}
