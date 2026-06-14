@@ -156,6 +156,7 @@ Return ONLY a JSON array, nothing else:
 ["word1","word2","be good at","word3"]
 
 Rules:
+- Order the entries by their reading order in the image (top to bottom, left to right) — the order they appear visually, NOT alphabetical order
 - Include every individual English word you can see, lowercase, no duplicates
 - Additionally, if a group of words shown together forms a well-known idiom, phrasal verb, or fixed collocation (e.g. "be good at", "give up", "look forward to", "make up for"), include that full expression as ONE entry, lowercase
 - If you include such an expression as one entry, do NOT also list its individual component words separately
