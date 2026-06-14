@@ -34,6 +34,13 @@ export const authService = {
     return apiFetch<User>('/api/v1/auth/me');
   },
 
+  async updateProfile(display_name: string): Promise<User> {
+    return apiFetch<User>('/api/v1/auth/me', {
+      method: 'PUT',
+      body: JSON.stringify({ display_name }),
+    });
+  },
+
   async forgotPassword(email: string): Promise<void> {
     await apiFetch('/api/v1/auth/forgot-password', {
       method: 'POST',

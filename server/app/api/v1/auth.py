@@ -14,7 +14,7 @@ from app.core.security import (
 )
 from app.core.dependencies import get_current_user
 from app.schemas.user import (
-    UserCreate, UserLogin, UserResponse, TokenResponse,
+    UserCreate, UserLogin, UserResponse, UserUpdate, TokenResponse,
     GoogleLoginRequest, TokenRefreshRequest,
     PasswordResetRequest, PasswordResetConfirm, MessageResponse
 )
@@ -103,6 +103,20 @@ async def get_current_user_info(
     Requires authentication (Bearer token)
     """
     return current_user
+
+
+@router.put("/me", response_model=UserResponse)
+async def update_current_user_info(
+    update_data: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update current user's profile (nickname/display_name)
+
+    Requires authentication (Bearer token)
+    """
+    return UserService.update(db, current_user, update_data)
 
 
 @router.post("/google-login", response_model=TokenResponse)

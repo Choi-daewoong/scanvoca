@@ -62,7 +62,10 @@ export default function SettingsPage() {
       </div>
 
       {/* 프로필 */}
-      <div className="mb-5 rounded-2xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+      <Link
+        href="/settings/profile"
+        className="mb-5 flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-5 transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
+      >
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 text-xl font-bold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
             {(user?.display_name || user?.email || 'U')[0].toUpperCase()}
@@ -72,7 +75,22 @@ export default function SettingsPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
           </div>
         </div>
-      </div>
+        <svg className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </Link>
+
+      {/* 포인트 */}
+      <Link
+        href="/settings/points"
+        className="mb-5 flex items-center justify-between rounded-2xl border border-indigo-100 bg-indigo-50 p-5 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/30 dark:hover:bg-indigo-950/50"
+      >
+        <div>
+          <p className="text-xs text-indigo-400 dark:text-indigo-500">내 포인트</p>
+          <p className="mt-0.5 text-lg font-bold text-indigo-600 dark:text-indigo-400">{user?.points ?? 0}P</p>
+        </div>
+        <span className="text-sm font-medium text-indigo-500 dark:text-indigo-400">포인트 내역 보기 →</span>
+      </Link>
 
       {/* 화면 설정 */}
       <div className="mb-3 overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900">
@@ -160,6 +178,20 @@ export default function SettingsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </Link>
+        {user?.is_admin && (
+          <>
+            <div className="border-t border-gray-100 dark:border-gray-800" />
+            <Link
+              href="/admin"
+              className="flex items-center justify-between px-5 py-4 transition hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">관리자 페이지</span>
+              <svg className="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </>
+        )}
       </div>
 
       {/* 데이터 관리 */}

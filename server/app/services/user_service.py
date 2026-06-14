@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.models.user import User
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import hash_password
 
 
@@ -85,6 +85,16 @@ class UserService:
             db.commit()
             return None
 
+        return user
+
+    @staticmethod
+    def update(db: Session, user: User, update_data: UserUpdate) -> User:
+        """Update user profile fields (currently: display_name)"""
+        if update_data.display_name is not None:
+            user.display_name = update_data.display_name
+
+        db.commit()
+        db.refresh(user)
         return user
 
     @staticmethod

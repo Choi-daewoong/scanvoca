@@ -6,6 +6,8 @@ export interface User {
   display_name?: string;
   is_active: boolean;
   is_verified: boolean;
+  is_admin: boolean;
+  points: number;
   created_at: string;
 }
 
@@ -108,4 +110,44 @@ export interface StudyStats {
 export interface ApiError {
   detail: string;
   status?: number;
+}
+
+export type BoardType = 'notice' | 'share';
+export type ContentFormat = 'plain' | 'markdown' | 'html';
+
+export interface Post {
+  id: number;
+  user_id: number;
+  author_name: string;
+  title: string;
+  content?: string;
+  content_format: ContentFormat;
+  board_type: BoardType;
+  wordbook_id?: number;
+  share_code?: string;
+  tags?: string[];
+  like_count: number;
+  import_count: number;
+  liked_by_me: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PostListResponse {
+  items: Post[];
+  total: number;
+}
+
+export interface PointTransaction {
+  id: number;
+  amount: number;
+  reason: string;
+  post_id?: number;
+  created_at: string;
+}
+
+export interface PointHistoryResponse {
+  items: PointTransaction[];
+  total: number;
+  total_points: number;
 }

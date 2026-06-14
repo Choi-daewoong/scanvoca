@@ -33,6 +33,15 @@ const tabs = [
     ),
   },
   {
+    href: '/board',
+    label: '게시판',
+    icon: (active: boolean) => (
+      <svg className={`h-6 w-6 ${active ? 'text-indigo-500' : 'text-gray-400 dark:text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h10M7 16h6M5 4h14a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z" />
+      </svg>
+    ),
+  },
+  {
     href: '/settings',
     label: '설정',
     icon: (active: boolean) => (

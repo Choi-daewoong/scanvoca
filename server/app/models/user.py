@@ -24,6 +24,10 @@ class User(Base):
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # Points (community board rewards)
+    points: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Password Reset OTP
     password_reset_token: Mapped[Optional[str]] = mapped_column(String(6), nullable=True)

@@ -21,11 +21,18 @@ class UserLogin(BaseModel):
     password: str
 
 
+class UserUpdate(BaseModel):
+    """Schema for updating the current user's profile"""
+    display_name: Optional[str] = Field(None, min_length=1, max_length=100)
+
+
 class UserResponse(UserBase):
     """Schema for user response (without password)"""
     id: int
     is_active: bool
     is_verified: bool
+    is_admin: bool = False
+    points: int = 0
     created_at: datetime
     updated_at: datetime
 

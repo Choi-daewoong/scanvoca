@@ -1,0 +1,170 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useAuthStore } from '@/stores/authStore';
+import { boardService } from '@/services/boardService';
+import { Post } from '@/types';
+
+export default function SharePostDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const id = Number(params.id);
+  const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [importing, setImporting] = useState(false);
+  const [liking, setLiking] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await boardService.get(id);
+        setPost(data);
+      } catch {
+        setPost(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
+  const handleToggleLike = async () => {
+    if (!post || liking) return;
+    setLiking(true);
+    const wasLiked = post.liked_by_me;
+    setPost({
+      ...post,
+      liked_by_me: !wasLiked,
+      like_count: post.like_count + (wasLiked ? -1 : 1),
+    });
+    try {
+      const res = wasLiked ? await boardService.unlike(post.id) : await boardService.like(post.id);
+      setPost((prev) => (prev ? { ...prev, liked_by_me: res.liked, like_count: res.like_count } : prev));
+    } catch {
+      setPost((prev) =>
+        prev ? { ...prev, liked_by_me: wasLiked, like_count: prev.like_count + (wasLiked ? 1 : -1) } : prev
+      );
+    } finally {
+      setLiking(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!post) return;
+    setImporting(true);
+    try {
+      await boardService.importWordbook(post.id);
+      alert('단어장을 내 목록에 추가했습니다.');
+      router.push('/wordbooks');
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '단어장 가져오기에 실패했습니다.');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!post || !confirm('이 게시글을 삭제하시겠습니까?')) return;
+    try {
+      await boardService.delete(post.id);
+      router.push('/board');
+    } catch {
+      alert('삭제에 실패했습니다.');
+    }
+  };
+
+  const isOwner = post && user && post.user_id === user.id;
+
+  return (
+    <div className="px-4 py-6">
+      <div className="mb-5 flex items-center gap-3">
+        <button
+          onClick={() => router.back()}
+          className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">단어장 공유</h1>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-400 border-t-transparent" />
+        </div>
+      ) : !post ? (
+        <div className="rounded-2xl border border-gray-100 bg-gray-50 py-14 text-center dark:border-gray-800 dark:bg-gray-900">
+          <p className="text-gray-500 dark:text-gray-400">게시글을 찾을 수 없습니다.</p>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{post.title}</h2>
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            {post.author_name} · {new Date(post.created_at).toLocaleDateString('ko-KR')}
+          </p>
+
+          {post.tags && post.tags.length > 0 && (
+            <div className="mt-2 flex gap-1.5">
+              {post.tags.map((tg) => (
+                <span
+                  key={tg}
+                  className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                >
+                  #{tg}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {post.content && (
+            <div className="mt-4 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">
+              {post.content}
+            </div>
+          )}
+
+          <div className="mt-5 flex items-center gap-2">
+            <button
+              onClick={handleToggleLike}
+              disabled={liking}
+              className={`flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-semibold transition ${
+                post.liked_by_me
+                  ? 'border-pink-100 bg-pink-50 text-pink-600 dark:border-pink-900 dark:bg-pink-950/40 dark:text-pink-400'
+                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'
+              }`}
+            >
+              <svg className="h-4 w-4" fill={post.liked_by_me ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              좋아요 {post.like_count}
+            </button>
+
+            <button
+              onClick={handleImport}
+              disabled={importing}
+              className="flex-1 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
+            >
+              {importing ? '가져오는 중...' : '단어장 가져오기'}
+            </button>
+          </div>
+
+          <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+            가져가기 {post.import_count}회
+          </p>
+
+          {(isOwner || user?.is_admin) && (
+            <div className="mt-4 flex justify-end gap-2 border-t border-gray-100 pt-4 dark:border-gray-800">
+              <button
+                onClick={handleDelete}
+                className="rounded-xl px-3 py-1.5 text-xs font-medium text-red-500 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+              >
+                삭제
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

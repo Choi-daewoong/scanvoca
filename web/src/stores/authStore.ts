@@ -12,6 +12,7 @@ interface AuthState {
   googleLogin: (idToken: string, persistent?: boolean) => Promise<void>;
   logout: () => void;
   loadUser: () => Promise<void>;
+  setUser: (user: User) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -61,4 +62,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user: null, isInitialized: true });
     }
   },
+
+  setUser: (user) => set({ user }),
 }));

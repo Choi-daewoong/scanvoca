@@ -112,9 +112,9 @@ cd server
 ## 🗄️ 데이터베이스
 
 - **Production**: Supabase PostgreSQL (`aws-1-ap-northeast-2.pooler.supabase.com:6543`)
-- **테이블**: `users`, `words`, `wordbooks`, `wordbook_words`
+- **테이블**: `users`, `words`, `wordbooks`, `wordbook_words`, `posts`, `post_likes`, `point_transactions`
 - **연결**: `server/.env`의 `DATABASE_URL` (절대 커밋 금지)
-- **마이그레이션**: alembic 사용, 현재 head: `c2d3e4f5a6b7`
+- **마이그레이션**: alembic 사용, 현재 head: `a7b8c9d0e1f3`
 
 ---
 
