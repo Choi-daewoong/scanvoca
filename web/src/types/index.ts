@@ -151,3 +151,51 @@ export interface PointHistoryResponse {
   total: number;
   total_points: number;
 }
+
+export interface AdminStats {
+  total_users: number;
+  new_users_today: number;
+  new_users_week: number;
+  total_wordbooks: number;
+  total_words: number;
+  total_wordbook_words: number;
+  total_posts_notice: number;
+  total_posts_share: number;
+  total_points_awarded: number;
+  points_by_reason: Record<string, number>;
+  words_by_source: Record<string, number>;
+}
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  display_name?: string;
+  points: number;
+  is_admin: boolean;
+  is_verified: boolean;
+  created_at: string;
+  wordbook_count: number;
+  post_count: number;
+}
+
+export interface AdminUserListResponse {
+  items: AdminUser[];
+  total: number;
+}
+
+export interface AdminPointTransaction {
+  id: number;
+  user_id: number;
+  user_email: string;
+  user_display_name?: string;
+  amount: number;
+  reason: string;
+  post_id?: number;
+  created_at: string;
+}
+
+export interface AdminPointListResponse {
+  items: AdminPointTransaction[];
+  total: number;
+  points_by_reason: Record<string, number>;
+}

@@ -1,0 +1,30 @@
+import { apiFetch } from './api';
+import { AdminStats, AdminUserListResponse, AdminPointListResponse } from '@/types';
+
+export const adminService = {
+  async getStats(): Promise<AdminStats> {
+    return apiFetch<AdminStats>('/api/v1/admin/stats');
+  },
+
+  async listUsers(options?: { limit?: number; offset?: number; search?: string }): Promise<AdminUserListResponse> {
+    const params = new URLSearchParams();
+    if (options?.limit !== undefined) params.set('limit', String(options.limit));
+    if (options?.offset !== undefined) params.set('offset', String(options.offset));
+    if (options?.search) params.set('search', options.search);
+    return apiFetch<AdminUserListResponse>(`/api/v1/admin/users?${params.toString()}`);
+  },
+
+  async listPointTransactions(options?: {
+    limit?: number;
+    offset?: number;
+    user_id?: number;
+    reason?: string;
+  }): Promise<AdminPointListResponse> {
+    const params = new URLSearchParams();
+    if (options?.limit !== undefined) params.set('limit', String(options.limit));
+    if (options?.offset !== undefined) params.set('offset', String(options.offset));
+    if (options?.user_id !== undefined) params.set('user_id', String(options.user_id));
+    if (options?.reason) params.set('reason', options.reason);
+    return apiFetch<AdminPointListResponse>(`/api/v1/admin/points?${params.toString()}`);
+  },
+};

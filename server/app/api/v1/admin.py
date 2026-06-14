@@ -1,4 +1,5 @@
-"""Admin API endpoints (notice management)"""
+"""Admin API endpoints (dashboard stats, notice management, users, points)"""
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -6,9 +7,51 @@ from app.core.dependencies import get_current_admin_user
 from app.models.user import User
 from app.models.post import Post
 from app.schemas.post import PostCreate, PostUpdate, PostResponse
+from app.schemas.admin import (
+    AdminStatsResponse, AdminUserListResponse, AdminPointListResponse,
+)
 from app.services.post_service import PostService
+from app.services.admin_service import AdminService
 
 router = APIRouter()
+
+
+@router.get("/stats", response_model=AdminStatsResponse)
+async def get_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """Dashboard summary statistics (admin only)"""
+    return AdminService.get_stats(db)
+
+
+@router.get("/users", response_model=AdminUserListResponse)
+async def list_users(
+    limit: int = 20,
+    offset: int = 0,
+    search: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """List users with wordbook/post counts (admin only)"""
+    items, total = AdminService.list_users(db, limit=limit, offset=offset, search=search)
+    return {"items": items, "total": total}
+
+
+@router.get("/points", response_model=AdminPointListResponse)
+async def list_point_transactions(
+    limit: int = 20,
+    offset: int = 0,
+    user_id: Optional[int] = None,
+    reason: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """List point transactions across all users (admin only)"""
+    items, total, points_by_reason = AdminService.list_point_transactions(
+        db, limit=limit, offset=offset, user_id=user_id, reason=reason
+    )
+    return {"items": items, "total": total, "points_by_reason": points_by_reason}
 
 
 @router.post("/notices", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
