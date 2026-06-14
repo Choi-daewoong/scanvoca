@@ -125,7 +125,10 @@
       "Bash(gcloud run services describe *)",
       "Bash(gcloud run revisions describe *)",
       "PowerShell(Get-Content *)",
-      "PowerShell(Stop-Process *)"
+      "PowerShell(Stop-Process *)",
+      "Bash(find web *)",
+      "Bash(cat web/.vercel/project.json)",
+      "Bash(gh repo *)"
     ],
     "deny": [],
     "ask": []

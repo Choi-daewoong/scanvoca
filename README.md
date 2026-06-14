@@ -92,3 +92,12 @@ Scan_Voca/
 ## 환경변수
 
 `server/.env.example` 와 `web/.env.example` 참고. `.env` / `.env.local` 파일은 절대 커밋하지 않습니다.
+
+---
+
+## 링크
+
+- **GitHub**: https://github.com/Choi-daewoong/scanvoca
+- **배포 가이드**: [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+
+> 참고: `master`는 현재 운영 중인 Next.js 웹앱 기준입니다. 과거 React Native 앱으로 개발하던 코드는 `legacy-app` 브랜치에 보관되어 있습니다.

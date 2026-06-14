@@ -161,6 +161,7 @@ NEXT_PUBLIC_API_URL=https://scanvoca-api-313755310624.asia-northeast3.run.app
 - **DB 직접 접근 금지**: 반드시 SQLAlchemy ORM / 서비스 레이어 사용
 - **단어 데이터**: `gemini_service.py`를 통해서만 생성 (로컬 JSON 제거됨)
 - **인증**: 모든 보호 엔드포인트는 `Bearer {access_token}` 헤더 필수
+- **AI 모델/서비스명 비노출**: 사용자에게 노출되는 텍스트(에러 메시지, UI 문구, README 등)에는 "Gemini", "GPT" 등 특정 AI 모델명을 쓰지 않고 "AI"로 표기
 
 ---
 
@@ -183,4 +184,11 @@ NEXT_PUBLIC_API_URL=https://scanvoca-api-313755310624.asia-northeast3.run.app
 
 ---
 
-*마지막 업데이트: 2026-06-05*
+## 🌿 브랜치 구조
+
+- **`master`**: 현재 운영 중인 웹앱(Next.js + FastAPI) 기준 브랜치. Vercel이 이 브랜치를 프로덕션으로 자동 배포
+- **`legacy-app`**: React Native(Expo) 앱으로 개발하던 시절의 코드 보관용 브랜치 (더 이상 개발하지 않음)
+
+---
+
+*마지막 업데이트: 2026-06-14*
