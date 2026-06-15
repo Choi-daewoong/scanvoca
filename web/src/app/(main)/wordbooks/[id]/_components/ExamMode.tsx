@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { WordbookWord } from '@/types';
 import { speakWord } from '@/utils/tts';
 import { formatPartOfSpeech } from '@/utils/partOfSpeech';
@@ -32,6 +32,11 @@ export default function ExamMode({
   const [answers, setAnswers] = useState<Record<number, ExamAnswer>>({});
   const [spellingInput, setSpellingInput] = useState('');
   const [meaningInput, setMeaningInput] = useState('');
+  const spellingInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (stage === 'question') spellingInputRef.current?.focus();
+  }, [stage, currentIdx]);
 
   const handleStart = () => {
     const pool = [...memorizedWords].sort(() => Math.random() - 0.5).slice(0, questionCount);
@@ -227,6 +232,7 @@ export default function ExamMode({
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-gray-500 dark:text-gray-400">스펠링 (영어)</label>
             <input
+              ref={spellingInputRef}
               type="text"
               value={spellingInput}
               onChange={e => setSpellingInput(e.target.value)}
