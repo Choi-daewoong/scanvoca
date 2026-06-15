@@ -97,7 +97,7 @@ export default function QnaDetailPage() {
         <div className="space-y-4">
           <div className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-start justify-between gap-2">
-              <h2 className="break-words text-lg font-bold text-gray-900 dark:text-gray-100">
+              <h2 className="min-w-0 break-words text-lg font-bold text-gray-900 dark:text-gray-100">
                 {post.is_private && '🔒 '}
                 {post.title}
               </h2>

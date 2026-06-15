@@ -97,7 +97,7 @@ export default function AdminQnaPage() {
             <div key={post.id} className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
               <button onClick={() => handleExpand(post)} className="block w-full text-left">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="break-words font-semibold text-gray-900 dark:text-gray-100">
+                  <p className="min-w-0 break-words font-semibold text-gray-900 dark:text-gray-100">
                     {post.is_private && '🔒 '}
                     {post.title}
                   </p>

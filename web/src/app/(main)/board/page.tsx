@@ -138,7 +138,7 @@ function BoardPageContent() {
               className="block rounded-2xl border border-gray-100 bg-white p-4 transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
             >
               <div className="flex items-start justify-between gap-2">
-                <p className="break-words font-semibold text-gray-900 dark:text-gray-100">
+                <p className="min-w-0 break-words font-semibold text-gray-900 dark:text-gray-100">
                   {post.board_type === 'qna' && post.is_private && '🔒 '}
                   {post.title}
                 </p>
