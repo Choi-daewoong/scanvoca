@@ -17,7 +17,7 @@ export default function SpellingComparison({ correct, userInput }: { correct: st
             return (
               <div
                 key={i}
-                className={`flex h-7 w-7 items-center justify-center rounded border text-xs font-bold uppercase ${
+                className={`flex h-7 w-7 items-center justify-center rounded border text-xs font-bold ${
                   match
                     ? 'border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400'
                     : wrong
@@ -45,7 +45,7 @@ export default function SpellingComparison({ correct, userInput }: { correct: st
               return (
                 <div
                   key={i}
-                  className={`flex h-7 w-7 items-center justify-center rounded border text-xs font-bold uppercase ${
+                  className={`flex h-7 w-7 items-center justify-center rounded border text-xs font-bold ${
                     match
                       ? 'border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-400'
                       : 'border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400'
