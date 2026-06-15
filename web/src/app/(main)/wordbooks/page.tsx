@@ -59,6 +59,17 @@ export default function WordbooksPage() {
     }
   };
 
+  const handleRename = async (id: number, currentName: string) => {
+    const name = window.prompt('단어장 이름 변경', currentName);
+    if (!name || !name.trim() || name.trim() === currentName) return;
+    try {
+      await wordbookService.update(id, { name: name.trim() });
+      setWordbooks((prev) => prev.map((wb) => (wb.id === id ? { ...wb, name: name.trim() } : wb)));
+    } catch {
+      alert('단어장 이름 변경에 실패했습니다.');
+    }
+  };
+
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`"${name}" 단어장을 삭제하시겠습니까?`)) return;
     try {
@@ -171,7 +182,7 @@ export default function WordbooksPage() {
           <p className="mb-3 text-xs text-gray-400 dark:text-gray-500">
             단어장을 길게 눌러 순서를 바꾸거나, 다른 단어장 위에 겹쳐서 폴더로 묶을 수 있어요.
           </p>
-          <WordbookBoard wordbooks={wordbooks} setWordbooks={setWordbooks} onDelete={handleDelete} />
+          <WordbookBoard wordbooks={wordbooks} setWordbooks={setWordbooks} onDelete={handleDelete} onRename={handleRename} />
         </>
       ) : (
         <div className="space-y-3">
@@ -202,6 +213,15 @@ export default function WordbooksPage() {
                     >
                       학습하기
                     </Link>
+                    <button
+                      onClick={() => handleRename(wb.id, wb.name)}
+                      className="rounded-xl p-2 text-gray-400 transition hover:bg-gray-100 hover:text-indigo-500 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-indigo-400"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
                     <button
                       onClick={() => handleDelete(wb.id, wb.name)}
                       className="rounded-xl p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-500 dark:text-gray-500 dark:hover:bg-red-950/30 dark:hover:text-red-400"

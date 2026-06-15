@@ -37,9 +37,10 @@ interface WordbookBoardProps {
   wordbooks: WordbookWithProgress[];
   setWordbooks: Dispatch<SetStateAction<WordbookWithProgress[]>>;
   onDelete: (id: number, name: string) => void;
+  onRename: (id: number, currentName: string) => void;
 }
 
-export default function WordbookBoard({ wordbooks, setWordbooks, onDelete }: WordbookBoardProps) {
+export default function WordbookBoard({ wordbooks, setWordbooks, onDelete, onRename }: WordbookBoardProps) {
   const wbById = useMemo(() => {
     const map = new Map<number, WordbookWithProgress>();
     wordbooks.forEach((wb) => map.set(wb.id, wb));
@@ -357,6 +358,7 @@ export default function WordbookBoard({ wordbooks, setWordbooks, onDelete }: Wor
                   onRename={() => handleRenameFolder(wb.id, wb.name)}
                   onDeleteFolder={() => handleDeleteFolder(wb.id, wb.name)}
                   onDeleteWordbook={onDelete}
+                  onRenameWordbook={onRename}
                   onRemoveFromFolder={(childId) => removeFromFolder(childId, wb.id)}
                   isCombineTarget={hoverTarget?.id === wb.id}
                   isArmed={armedTarget?.id === wb.id}
@@ -372,6 +374,7 @@ export default function WordbookBoard({ wordbooks, setWordbooks, onDelete }: Wor
                 key={wb.id}
                 wb={wb}
                 onDelete={onDelete}
+                onRename={onRename}
                 isCombineTarget={hoverTarget?.id === wb.id}
                 isArmed={armedTarget?.id === wb.id}
                 isDragging={activeId === wb.id}
@@ -448,6 +451,7 @@ function FolderCard({
   onRename,
   onDeleteFolder,
   onDeleteWordbook,
+  onRenameWordbook,
   onRemoveFromFolder,
   isCombineTarget,
   isArmed,
@@ -464,6 +468,7 @@ function FolderCard({
   onRename: () => void;
   onDeleteFolder: () => void;
   onDeleteWordbook: (id: number, name: string) => void;
+  onRenameWordbook: (id: number, currentName: string) => void;
   onRemoveFromFolder: (id: number) => void;
   isCombineTarget: boolean;
   isArmed: boolean;
@@ -551,6 +556,7 @@ function FolderCard({
                     key={wb.id}
                     wb={wb}
                     onDelete={onDeleteWordbook}
+                    onRename={onRenameWordbook}
                     isCombineTarget={hoverTarget?.id === wb.id}
                     isArmed={armedTarget?.id === wb.id}
                     isDragging={activeId === wb.id}
@@ -571,6 +577,7 @@ function FolderCard({
 function SortableWordbookCard({
   wb,
   onDelete,
+  onRename,
   isCombineTarget,
   isArmed,
   isDragging,
@@ -580,6 +587,7 @@ function SortableWordbookCard({
 }: {
   wb: WordbookWithProgress;
   onDelete: (id: number, name: string) => void;
+  onRename: (id: number, currentName: string) => void;
   isCombineTarget: boolean;
   isArmed: boolean;
   isDragging: boolean;
@@ -644,6 +652,15 @@ function SortableWordbookCard({
               </svg>
             </button>
           )}
+          <button
+            onClick={(e) => { e.stopPropagation(); onRename(wb.id, wb.name); }}
+            className="rounded-xl p-2 text-gray-400 transition hover:bg-gray-100 hover:text-indigo-500 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-indigo-400"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(wb.id, wb.name); }}
             className="rounded-xl p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-500 dark:text-gray-500 dark:hover:bg-red-950/30 dark:hover:text-red-400"
