@@ -13,12 +13,16 @@ from app.schemas.wordbook import (
     WordbookWordCreate,
     WordbookWordUpdate,
     WordbookWordResponse,
+    WordbookWordBatchCreate,
+    WordbookWordBatchResultItem,
+    WordbookWordBatchResponse,
     ShareCodeResponse,
     SharedWordbookPreview,
     FolderCreate,
     WordbookReorderRequest
 )
 from app.services.wordbook_service import WordbookService
+from app.services.word_service import WordService
 
 router = APIRouter()
 
@@ -315,6 +319,88 @@ async def add_word_to_wordbook(
     wordbook_word.word = WordbookService.build_word_dict(word, wordbook_word)
 
     return wordbook_word
+
+
+@router.post("/{wordbook_id}/words/batch", response_model=WordbookWordBatchResponse, status_code=status.HTTP_201_CREATED)
+async def add_words_to_wordbook_batch(
+    wordbook_id: int,
+    data: WordbookWordBatchCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Add multiple words to a wordbook by text
+
+    For each word: reuse it if it already exists in the words DB,
+    otherwise generate its definition via AI and save it, then add it to the wordbook.
+    """
+    from app.models.word import Word
+
+    # Verify ownership
+    wordbook = WordbookService.get_wordbook(db, wordbook_id, current_user.id)
+    if not wordbook:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Wordbook not found"
+        )
+
+    # Clean and dedupe input words
+    cleaned_words = []
+    seen = set()
+    for w in data.words:
+        w = w.strip()
+        if not w:
+            continue
+        key = w.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        cleaned_words.append(w)
+
+    if not cleaned_words:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No valid words provided")
+
+    word_service = WordService()
+    gen_result = await word_service.get_or_create_words(db, cleaned_words)
+
+    existing_word_ids = {
+        ww.word_id for ww in db.query(WordbookWord).filter(WordbookWord.wordbook_id == wordbook_id).all()
+    }
+
+    items = []
+    added_count = duplicate_count = error_count = 0
+
+    for result in gen_result["results"]:
+        word_text = result["word"]
+
+        if not result["data"]:
+            items.append(WordbookWordBatchResultItem(
+                word=word_text, status="error", error=result.get("error") or "단어를 생성하지 못했습니다"
+            ))
+            error_count += 1
+            continue
+
+        word_id = result["data"]["id"]
+
+        if word_id in existing_word_ids:
+            items.append(WordbookWordBatchResultItem(word=word_text, status="duplicate"))
+            duplicate_count += 1
+            continue
+
+        wordbook_word = WordbookService.add_word_to_wordbook(db, wordbook_id, WordbookWordCreate(word_id=word_id))
+        word = db.query(Word).filter(Word.id == word_id).first()
+        wordbook_word.word = WordbookService.build_word_dict(word, wordbook_word)
+
+        items.append(WordbookWordBatchResultItem(word=word_text, status="added", wordbook_word=wordbook_word))
+        existing_word_ids.add(word_id)
+        added_count += 1
+
+    return WordbookWordBatchResponse(
+        items=items,
+        added_count=added_count,
+        duplicate_count=duplicate_count,
+        error_count=error_count,
+    )
 
 
 @router.patch("/{wordbook_id}/words/{word_id}", response_model=WordbookWordResponse)

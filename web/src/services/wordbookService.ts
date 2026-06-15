@@ -1,5 +1,5 @@
 import { apiFetch } from './api';
-import { GPTMeaning, Wordbook, WordbookWord, SharedWordbookPreview, WordbookOrderItem } from '@/types';
+import { GPTMeaning, Wordbook, WordbookWord, WordbookWordBatchResponse, SharedWordbookPreview, WordbookOrderItem } from '@/types';
 
 export const wordbookService = {
   async list(): Promise<Wordbook[]> {
@@ -36,6 +36,13 @@ export const wordbookService = {
     return apiFetch<WordbookWord>(`/api/v1/wordbooks/${wordbookId}/words`, {
       method: 'POST',
       body: JSON.stringify({ word_id: wordId, custom_note: note }),
+    });
+  },
+
+  async addWordsBatch(wordbookId: number, words: string[]): Promise<WordbookWordBatchResponse> {
+    return apiFetch<WordbookWordBatchResponse>(`/api/v1/wordbooks/${wordbookId}/words/batch`, {
+      method: 'POST',
+      body: JSON.stringify({ words }),
     });
   },
 

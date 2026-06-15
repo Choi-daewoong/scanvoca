@@ -23,6 +23,10 @@ export default function WordbookDetailPage() {
   const [shareCode, setShareCode] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showAddWords, setShowAddWords] = useState(false);
+  const [addWordsInput, setAddWordsInput] = useState('');
+  const [addingWords, setAddingWords] = useState(false);
+  const [addWordsResult, setAddWordsResult] = useState<{ added: number; duplicate: number; error: number; errorWords: string[] } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -84,6 +88,39 @@ export default function WordbookDetailPage() {
     } catch { /* ignore */ }
   };
 
+  const handleAddWords = async () => {
+    const parsed = [...new Set(
+      addWordsInput
+        .split(/[,\n]/)
+        .map((w) => w.trim())
+        .filter((w) => w.length > 0)
+    )];
+    if (parsed.length === 0) return;
+
+    setAddingWords(true);
+    setAddWordsResult(null);
+    try {
+      const res = await wordbookService.addWordsBatch(id, parsed);
+      const newWords = res.items
+        .filter((item) => item.status === 'added' && item.wordbook_word)
+        .map((item) => item.wordbook_word as WordbookWord);
+      if (newWords.length > 0) {
+        setWords((prev) => [...prev, ...newWords]);
+      }
+      setAddWordsResult({
+        added: res.added_count,
+        duplicate: res.duplicate_count,
+        error: res.error_count,
+        errorWords: res.items.filter((item) => item.status === 'error').map((item) => item.word),
+      });
+      setAddWordsInput('');
+    } catch {
+      alert('단어 추가에 실패했습니다.');
+    } finally {
+      setAddingWords(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
@@ -127,6 +164,15 @@ export default function WordbookDetailPage() {
             ))}
           </div>
           <button
+            onClick={() => { setShowAddWords(true); setAddWordsResult(null); }}
+            className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+            title="단어 추가하기"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+          <button
             onClick={handleShare}
             disabled={sharing}
             className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-60 dark:text-gray-400 dark:hover:bg-gray-800"
@@ -139,6 +185,49 @@ export default function WordbookDetailPage() {
           </button>
         </div>
       </div>
+
+      {showAddWords && (
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 dark:bg-gray-900">
+            <h3 className="mb-1 text-base font-bold text-gray-900 dark:text-gray-100">단어 추가하기</h3>
+            <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
+              추가할 영단어를 쉼표(,) 또는 줄바꿈으로 구분해서 입력하세요. AI가 자동으로 뜻과 예문을 만들어줍니다.
+            </p>
+            <textarea
+              value={addWordsInput}
+              onChange={(e) => setAddWordsInput(e.target.value)}
+              rows={5}
+              placeholder={'예: apple, banana\norange'}
+              className="mb-3 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            />
+            {addWordsResult && (
+              <div className="mb-3 rounded-xl bg-gray-50 px-4 py-3 text-sm dark:bg-gray-800">
+                <p className="text-gray-700 dark:text-gray-300">
+                  추가 {addWordsResult.added}개 · 중복 {addWordsResult.duplicate}개 · 실패 {addWordsResult.error}개
+                </p>
+                {addWordsResult.errorWords.length > 0 && (
+                  <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+                    실패: {addWordsResult.errorWords.join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
+            <button
+              onClick={handleAddWords}
+              disabled={addingWords || !addWordsInput.trim()}
+              className="mb-2 w-full rounded-xl border border-indigo-100 bg-indigo-50 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
+            >
+              {addingWords ? '단어 만드는 중...' : '단어 만들기'}
+            </button>
+            <button
+              onClick={() => { setShowAddWords(false); setAddWordsInput(''); setAddWordsResult(null); }}
+              className="w-full rounded-xl border border-gray-200 py-2.5 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
 
       {shareCode && (
         <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 px-4">

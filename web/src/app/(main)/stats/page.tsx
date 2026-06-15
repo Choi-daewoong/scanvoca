@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { wordbookService } from '@/services/wordbookService';
 
-interface LevelStat { total: number; mastered: number; }
 interface DayStat { date: string; label: string; count: number; }
 
 interface Stats {
@@ -15,7 +14,6 @@ interface Stats {
   studiedThisWeek: number;
   accuracyRate: number;
   streak: number;
-  levelStats: Record<number, LevelStat>;
   weeklyData: DayStat[];
 }
 
@@ -68,7 +66,6 @@ export default function StatsPage() {
         let studiedThisWeek = 0;
         let totalCorrect = 0;
         let totalAnswered = 0;
-        const levelStats: Record<number, LevelStat> = { 1: { total: 0, mastered: 0 }, 2: { total: 0, mastered: 0 }, 3: { total: 0, mastered: 0 }, 4: { total: 0, mastered: 0 } };
         const allStudyDates: string[] = [];
 
         const today = new Date();
@@ -88,12 +85,6 @@ export default function StatsPage() {
             }
             totalCorrect += w.correct_count;
             totalAnswered += w.correct_count + w.incorrect_count;
-
-            const lv = w.word?.difficulty ?? 0;
-            if (lv >= 1 && lv <= 4) {
-              levelStats[lv].total++;
-              if (w.mastered) levelStats[lv].mastered++;
-            }
           }
         }
 
@@ -105,7 +96,6 @@ export default function StatsPage() {
           studiedThisWeek,
           accuracyRate: totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0,
           streak: calcStreak(allStudyDates),
-          levelStats,
           weeklyData: buildWeeklyData(allStudyDates),
         });
       } finally {
@@ -113,13 +103,6 @@ export default function StatsPage() {
       }
     })();
   }, []);
-
-  const LEVEL_META: Record<number, { label: string; color: string; bar: string }> = {
-    1: { label: 'Lv.1 쉬움', color: 'text-emerald-600 dark:text-emerald-400', bar: 'bg-emerald-400' },
-    2: { label: 'Lv.2 보통', color: 'text-blue-600 dark:text-blue-400', bar: 'bg-blue-400' },
-    3: { label: 'Lv.3 어려움', color: 'text-amber-600 dark:text-amber-400', bar: 'bg-amber-400' },
-    4: { label: 'Lv.4 매우 어려움', color: 'text-red-600 dark:text-red-400', bar: 'bg-red-400' },
-  };
 
   return (
     <div className="px-4 py-6">
@@ -214,33 +197,6 @@ export default function StatsPage() {
             })()}
           </div>
 
-          {/* 레벨별 통계 */}
-          <div className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <p className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">난이도별 암기 현황</p>
-            <div className="space-y-3">
-              {([1, 2, 3, 4] as const).map((lv) => {
-                const s = stats.levelStats[lv];
-                const meta = LEVEL_META[lv];
-                const pct = s.total > 0 ? Math.round((s.mastered / s.total) * 100) : 0;
-                return (
-                  <div key={lv}>
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className={`text-xs font-semibold ${meta.color}`}>{meta.label}</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {s.mastered}/{s.total}개 ({pct}%)
-                      </span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                      <div
-                        className={`h-full rounded-full transition-all ${meta.bar}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
       ) : null}
     </div>

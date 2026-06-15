@@ -108,3 +108,24 @@ class WordbookWordResponse(WordbookWordBase):
     word: Optional[dict] = None  # Full word object from words table
 
     model_config = {"from_attributes": True}
+
+
+class WordbookWordBatchCreate(BaseModel):
+    """Schema for adding multiple words to a wordbook by text"""
+    words: List[str] = Field(..., min_length=1, max_length=50)
+
+
+class WordbookWordBatchResultItem(BaseModel):
+    """Schema for a single word's result in a batch add"""
+    word: str
+    status: str  # "added" | "duplicate" | "error"
+    error: Optional[str] = None
+    wordbook_word: Optional[WordbookWordResponse] = None
+
+
+class WordbookWordBatchResponse(BaseModel):
+    """Schema for batch word-add response"""
+    items: List[WordbookWordBatchResultItem]
+    added_count: int
+    duplicate_count: int
+    error_count: int

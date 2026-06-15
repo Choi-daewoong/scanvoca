@@ -53,6 +53,20 @@ export interface WordbookOrderItem {
   sort_order: number;
 }
 
+export interface WordbookWordBatchResultItem {
+  word: string;
+  status: 'added' | 'duplicate' | 'error';
+  error?: string;
+  wordbook_word?: WordbookWord;
+}
+
+export interface WordbookWordBatchResponse {
+  items: WordbookWordBatchResultItem[];
+  added_count: number;
+  duplicate_count: number;
+  error_count: number;
+}
+
 export interface SharedWordbookPreview {
   name: string;
   description?: string;
