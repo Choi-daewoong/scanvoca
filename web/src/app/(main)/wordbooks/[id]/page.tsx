@@ -81,9 +81,8 @@ export default function WordbookDetailPage() {
 
   const handleCopyLink = async () => {
     if (!shareCode) return;
-    const link = `${window.location.origin}/wordbooks/import?code=${shareCode}`;
     try {
-      await navigator.clipboard.writeText(link);
+      await navigator.clipboard.writeText(shareCode);
       setCopied(true);
     } catch { /* ignore */ }
   };
@@ -234,7 +233,7 @@ export default function WordbookDetailPage() {
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 dark:bg-gray-900">
             <h3 className="mb-1 text-base font-bold text-gray-900 dark:text-gray-100">단어장 공유하기</h3>
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              친구가 아래 코드나 링크로 이 단어장을 자기 계정에 복사해갈 수 있어요.
+              친구에게 아래 코드를 알려주면, 단어장 가져오기 화면에서 이 코드를 입력해 단어장을 자기 계정에 복사해갈 수 있어요.
             </p>
             <div className="mb-3 rounded-xl bg-gray-50 px-4 py-3 text-center dark:bg-gray-800">
               <p className="text-2xl font-bold tracking-widest text-indigo-600 dark:text-indigo-400">{shareCode}</p>
@@ -243,7 +242,7 @@ export default function WordbookDetailPage() {
               onClick={handleCopyLink}
               className="mb-2 w-full rounded-xl border border-indigo-100 bg-indigo-50 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
             >
-              {copied ? '링크 복사됨!' : '공유 링크 복사하기'}
+              {copied ? '코드 복사됨!' : '코드 복사하기'}
             </button>
             <button
               onClick={() => setShareCode(null)}
