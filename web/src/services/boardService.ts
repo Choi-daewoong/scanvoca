@@ -1,5 +1,5 @@
 import { apiFetch } from './api';
-import { Post, PostListResponse, BoardType, ContentFormat } from '@/types';
+import { Post, PostListResponse, PostReply, PostReplyListResponse, BoardType, ContentFormat } from '@/types';
 
 export const boardService = {
   async list(
@@ -25,6 +25,7 @@ export const boardService = {
     board_type: BoardType;
     wordbook_id?: number;
     tags?: string[];
+    is_private?: boolean;
   }): Promise<Post> {
     return apiFetch<Post>('/api/v1/board/posts', {
       method: 'POST',
@@ -34,7 +35,7 @@ export const boardService = {
 
   async update(
     id: number,
-    data: { title?: string; content?: string; content_format?: ContentFormat; tags?: string[] }
+    data: { title?: string; content?: string; content_format?: ContentFormat; tags?: string[]; is_private?: boolean }
   ): Promise<Post> {
     return apiFetch<Post>(`/api/v1/board/posts/${id}`, {
       method: 'PUT',
@@ -82,5 +83,45 @@ export const boardService = {
 
   async deleteNotice(id: number): Promise<void> {
     await apiFetch(`/api/v1/admin/notices/${id}`, { method: 'DELETE' });
+  },
+
+  async listReplies(postId: number): Promise<PostReplyListResponse> {
+    return apiFetch<PostReplyListResponse>(`/api/v1/board/posts/${postId}/replies`);
+  },
+
+  async createReply(postId: number, content: string): Promise<PostReply> {
+    return apiFetch<PostReply>(`/api/v1/board/posts/${postId}/replies`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  },
+
+  async deleteReply(postId: number, replyId: number): Promise<void> {
+    await apiFetch(`/api/v1/board/posts/${postId}/replies/${replyId}`, { method: 'DELETE' });
+  },
+
+  async createFaq(data: {
+    title: string;
+    content?: string;
+    content_format?: ContentFormat;
+  }): Promise<Post> {
+    return apiFetch<Post>('/api/v1/admin/faqs', {
+      method: 'POST',
+      body: JSON.stringify({ ...data, board_type: 'faq' }),
+    });
+  },
+
+  async updateFaq(
+    id: number,
+    data: { title?: string; content?: string; content_format?: ContentFormat }
+  ): Promise<Post> {
+    return apiFetch<Post>(`/api/v1/admin/faqs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteFaq(id: number): Promise<void> {
+    await apiFetch(`/api/v1/admin/faqs/${id}`, { method: 'DELETE' });
   },
 };

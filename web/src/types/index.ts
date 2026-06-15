@@ -112,7 +112,7 @@ export interface ApiError {
   status?: number;
 }
 
-export type BoardType = 'notice' | 'share';
+export type BoardType = 'notice' | 'share' | 'qna' | 'faq';
 export type ContentFormat = 'plain' | 'markdown' | 'html';
 
 export interface Post {
@@ -126,8 +126,10 @@ export interface Post {
   wordbook_id?: number;
   share_code?: string;
   tags?: string[];
+  is_private: boolean;
   like_count: number;
   import_count: number;
+  reply_count: number;
   liked_by_me: boolean;
   created_at: string;
   updated_at: string;
@@ -136,6 +138,20 @@ export interface Post {
 export interface PostListResponse {
   items: Post[];
   total: number;
+}
+
+export interface PostReply {
+  id: number;
+  post_id: number;
+  user_id: number;
+  author_name: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PostReplyListResponse {
+  items: PostReply[];
 }
 
 export interface PointTransaction {

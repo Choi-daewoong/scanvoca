@@ -1,8 +1,8 @@
 """Post service for community board operations"""
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
-from sqlalchemy import select, and_, func as sa_func
-from app.models.post import Post, PostLike
+from sqlalchemy import select, and_, or_, func as sa_func
+from app.models.post import Post, PostLike, PostReply
 from app.models.user import User
 from app.models.wordbook import Wordbook
 from app.schemas.post import PostCreate, PostUpdate
@@ -34,6 +34,13 @@ class PostService:
         else:
             post.liked_by_me = False
 
+        if post.board_type == "qna":
+            post.reply_count = db.scalar(
+                select(sa_func.count()).select_from(PostReply).where(PostReply.post_id == post.id)
+            ) or 0
+        else:
+            post.reply_count = 0
+
         return post
 
     @staticmethod
@@ -45,9 +52,19 @@ class PostService:
         limit: int = 20,
         offset: int = 0,
         current_user_id: Optional[int] = None,
+        is_admin: bool = False,
     ) -> Tuple[List[Post], int]:
-        """List posts for a board, optionally filtered by tag and sorted"""
+        """List posts for a board, optionally filtered by tag and sorted.
+
+        For the Q&A board, private posts are only visible to their author and admins.
+        """
         stmt = select(Post).where(Post.board_type == board_type)
+        count_stmt = select(sa_func.count()).select_from(Post).where(Post.board_type == board_type)
+
+        if board_type == "qna" and not is_admin:
+            visibility = or_(Post.is_private == False, Post.user_id == current_user_id)  # noqa: E712
+            stmt = stmt.where(visibility)
+            count_stmt = count_stmt.where(visibility)
 
         if sort == "popular":
             stmt = stmt.order_by(Post.like_count.desc(), Post.created_at.desc())
@@ -61,9 +78,7 @@ class PostService:
             total = len(filtered)
             page = filtered[offset:offset + limit]
         else:
-            total = db.scalar(
-                select(sa_func.count()).select_from(Post).where(Post.board_type == board_type)
-            ) or 0
+            total = db.scalar(count_stmt) or 0
             page = list(db.scalars(stmt.limit(limit).offset(offset)).all())
 
         for post in page:
@@ -112,6 +127,7 @@ class PostService:
             wordbook_id=data.wordbook_id if data.board_type == "share" else None,
             share_code=share_code,
             tags=data.tags,
+            is_private=data.is_private if data.board_type == "qna" else False,
         )
         db.add(post)
         db.commit()
@@ -133,6 +149,8 @@ class PostService:
             post.content_format = data.content_format
         if data.tags is not None:
             post.tags = data.tags
+        if data.is_private is not None and post.board_type == "qna":
+            post.is_private = data.is_private
 
         db.commit()
         db.refresh(post)
@@ -205,3 +223,41 @@ class PostService:
             PointService.award_points(db, post.user_id, POINTS_WORDBOOK_IMPORT, "wordbook_import", post_id=post.id)
 
         return new_wordbook
+
+    @staticmethod
+    def _attach_reply_author(db: Session, reply: PostReply) -> PostReply:
+        author = db.query(User).filter(User.id == reply.user_id).first()
+        reply.author_name = (author.display_name or author.email.split('@')[0]) if author else "알 수 없음"
+        return reply
+
+    @staticmethod
+    def list_replies(db: Session, post_id: int) -> List[PostReply]:
+        """List replies (admin answers) for a Q&A post, oldest first"""
+        replies = list(
+            db.scalars(
+                select(PostReply).where(PostReply.post_id == post_id).order_by(PostReply.created_at.asc())
+            ).all()
+        )
+        for reply in replies:
+            PostService._attach_reply_author(db, reply)
+        return replies
+
+    @staticmethod
+    def get_reply(db: Session, reply_id: int) -> Optional[PostReply]:
+        """Get a single reply by ID"""
+        return db.query(PostReply).filter(PostReply.id == reply_id).first()
+
+    @staticmethod
+    def create_reply(db: Session, post_id: int, user_id: int, content: str) -> PostReply:
+        """Create a reply (admin answer) to a Q&A post"""
+        reply = PostReply(post_id=post_id, user_id=user_id, content=content)
+        db.add(reply)
+        db.commit()
+        db.refresh(reply)
+        return PostService._attach_reply_author(db, reply)
+
+    @staticmethod
+    def delete_reply(db: Session, reply: PostReply) -> None:
+        """Delete a reply"""
+        db.delete(reply)
+        db.commit()

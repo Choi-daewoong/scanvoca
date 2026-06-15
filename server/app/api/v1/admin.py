@@ -95,3 +95,46 @@ async def delete_notice(
     """Delete a notice (admin only)"""
     post = _get_notice_or_404(db, post_id)
     PostService.delete_post(db, post)
+
+
+@router.post("/faqs", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
+async def create_faq(
+    post_data: PostCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """Create a FAQ entry (admin only)"""
+    post_data = post_data.model_copy(update={"board_type": "faq", "wordbook_id": None, "is_private": False})
+    post = PostService.create_post(db, current_user.id, post_data)
+    return PostService.get_post(db, post.id, current_user.id)
+
+
+def _get_faq_or_404(db: Session, post_id: int) -> Post:
+    post = db.query(Post).filter(Post.id == post_id, Post.board_type == "faq").first()
+    if not post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="FAQ를 찾을 수 없습니다")
+    return post
+
+
+@router.put("/faqs/{post_id}", response_model=PostResponse)
+async def update_faq(
+    post_id: int,
+    post_data: PostUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """Update a FAQ entry (admin only)"""
+    post = _get_faq_or_404(db, post_id)
+    post = PostService.update_post(db, post, post_data)
+    return PostService.get_post(db, post.id, current_user.id)
+
+
+@router.delete("/faqs/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_faq(
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """Delete a FAQ entry (admin only)"""
+    post = _get_faq_or_404(db, post_id)
+    PostService.delete_post(db, post)

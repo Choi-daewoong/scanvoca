@@ -15,6 +15,7 @@ const MENU_ITEMS = [
   { href: '/admin/points', label: '포인트 모니터링' },
   { href: '/admin/words', label: '단어/단어장 통계' },
   { href: '/admin/qna', label: 'Q&A 관리' },
+  { href: '/admin/faqs', label: 'FAQ 관리' },
   { href: '/admin/reports', label: '신고/모더레이션' },
 ];
 

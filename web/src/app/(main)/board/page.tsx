@@ -37,9 +37,9 @@ export default function BoardPage() {
     <div className="px-4 py-6">
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">게시판</h1>
-        {boardType === 'share' && (
+        {(boardType === 'share' || boardType === 'qna') && (
           <Link
-            href="/board/share/new"
+            href={`/board/${boardType}/new`}
             className="flex items-center gap-1.5 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -56,6 +56,14 @@ export default function BoardPage() {
             관리자 페이지
           </Link>
         )}
+        {boardType === 'faq' && user?.is_admin && (
+          <Link
+            href="/admin/faqs"
+            className="flex items-center gap-1.5 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
+          >
+            관리자 페이지
+          </Link>
+        )}
       </div>
 
       {/* 게시판 탭 */}
@@ -63,6 +71,8 @@ export default function BoardPage() {
         {([
           { value: 'share', label: '단어장 공유' },
           { value: 'notice', label: '공지사항' },
+          { value: 'qna', label: 'Q&A' },
+          { value: 'faq', label: 'FAQ' },
         ] as { value: BoardType; label: string }[]).map((t) => (
           <button
             key={t.value}
@@ -114,7 +124,10 @@ export default function BoardPage() {
               href={`/board/${post.board_type}/${post.id}`}
               className="block rounded-2xl border border-gray-100 bg-white p-4 transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
             >
-              <p className="font-semibold text-gray-900 dark:text-gray-100">{post.title}</p>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">
+                {post.board_type === 'qna' && post.is_private && '🔒 '}
+                {post.title}
+              </p>
               <div className="mt-1 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
                 <span>{post.author_name}</span>
                 <span>·</span>
@@ -125,6 +138,12 @@ export default function BoardPage() {
                     <span>좋아요 {post.like_count}</span>
                     <span>·</span>
                     <span>가져가기 {post.import_count}</span>
+                  </>
+                )}
+                {post.board_type === 'qna' && (
+                  <>
+                    <span>·</span>
+                    <span>{post.reply_count > 0 ? `답변 ${post.reply_count}` : '답변 대기'}</span>
                   </>
                 )}
               </div>

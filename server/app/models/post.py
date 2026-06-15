@@ -1,7 +1,7 @@
 """Post model - community board (notices + wordbook-share posts)"""
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import String, Integer, Text, DateTime, JSON, ForeignKey, UniqueConstraint
+from sqlalchemy import String, Integer, Text, DateTime, JSON, Boolean, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import Base
 
@@ -29,6 +29,9 @@ class Post(Base):
     )
     share_code: Mapped[Optional[str]] = mapped_column(String(10), nullable=True, index=True)
     tags: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+
+    # Q&A visibility (board_type == "qna")
+    is_private: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Counters
     like_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -77,3 +80,34 @@ class PostLike(Base):
 
     def __repr__(self) -> str:
         return f"<PostLike(post_id={self.post_id}, user_id={self.user_id})>"
+
+
+class PostReply(Base):
+    """PostReply model - admin answers to Q&A board posts"""
+
+    __tablename__ = "post_replies"
+
+    # Primary key
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # Foreign keys
+    post_id: Mapped[int] = mapped_column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False
+    )
+
+    def __repr__(self) -> str:
+        return f"<PostReply(id={self.id}, post_id={self.post_id})>"

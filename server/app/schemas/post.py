@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 
-BoardType = Literal["notice", "share"]
+BoardType = Literal["notice", "share", "qna", "faq"]
 ContentFormat = Literal["plain", "markdown", "html"]
 
 
@@ -19,6 +19,7 @@ class PostCreate(PostBase):
     board_type: BoardType
     wordbook_id: Optional[int] = None
     tags: Optional[List[str]] = None
+    is_private: bool = False
 
 
 class PostUpdate(BaseModel):
@@ -27,6 +28,7 @@ class PostUpdate(BaseModel):
     content: Optional[str] = None
     content_format: Optional[ContentFormat] = None
     tags: Optional[List[str]] = None
+    is_private: Optional[bool] = None
 
 
 class PostResponse(PostBase):
@@ -38,13 +40,38 @@ class PostResponse(PostBase):
     wordbook_id: Optional[int] = None
     share_code: Optional[str] = None
     tags: Optional[List[str]] = None
+    is_private: bool = False
     like_count: int
     import_count: int
+    reply_count: int = 0
     liked_by_me: bool = False
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class PostReplyCreate(BaseModel):
+    """Schema for creating a reply (admin answer to a Q&A post)"""
+    content: str = Field(..., min_length=1)
+
+
+class PostReplyResponse(BaseModel):
+    """Schema for reply response"""
+    id: int
+    post_id: int
+    user_id: int
+    author_name: str
+    content: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class PostReplyListResponse(BaseModel):
+    """Schema for reply list response"""
+    items: List[PostReplyResponse]
 
 
 class PostListResponse(BaseModel):
