@@ -1,20 +1,33 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { boardService } from '@/services/boardService';
 import { Post, BoardType } from '@/types';
 
 type SortOption = 'latest' | 'popular';
 
-export default function BoardPage() {
+const VALID_BOARD_TYPES: BoardType[] = ['share', 'notice', 'qna', 'faq'];
+
+function BoardPageContent() {
   const { user } = useAuthStore();
-  const [boardType, setBoardType] = useState<BoardType>('share');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const initialBoardType: BoardType =
+    tabParam && VALID_BOARD_TYPES.includes(tabParam as BoardType) ? (tabParam as BoardType) : 'share';
+  const [boardType, setBoardType] = useState<BoardType>(initialBoardType);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<SortOption>('latest');
   const [tag, setTag] = useState('');
+
+  const handleTabChange = (value: BoardType) => {
+    setBoardType(value);
+    router.replace(value === 'share' ? '/board' : `/board?tab=${value}`, { scroll: false });
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -76,7 +89,7 @@ export default function BoardPage() {
         ] as { value: BoardType; label: string }[]).map((t) => (
           <button
             key={t.value}
-            onClick={() => setBoardType(t.value)}
+            onClick={() => handleTabChange(t.value)}
             className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
               boardType === t.value
                 ? 'border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400'
@@ -164,5 +177,13 @@ export default function BoardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function BoardPage() {
+  return (
+    <Suspense fallback={null}>
+      <BoardPageContent />
+    </Suspense>
   );
 }
