@@ -15,7 +15,7 @@ export default function ContentRenderer({ content, format, className }: ContentR
     const sanitized = typeof window !== 'undefined' ? DOMPurify.sanitize(content) : '';
     return (
       <div
-        className={`prose prose-sm dark:prose-invert max-w-none ${className ?? ''}`}
+        className={`prose prose-sm dark:prose-invert max-w-none break-words ${className ?? ''}`}
         dangerouslySetInnerHTML={{ __html: sanitized }}
       />
     );
@@ -23,11 +23,11 @@ export default function ContentRenderer({ content, format, className }: ContentR
 
   if (format === 'markdown') {
     return (
-      <div className={`prose prose-sm dark:prose-invert max-w-none ${className ?? ''}`}>
+      <div className={`prose prose-sm dark:prose-invert max-w-none break-words ${className ?? ''}`}>
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
       </div>
     );
   }
 
-  return <div className={`whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 ${className ?? ''}`}>{content}</div>;
+  return <div className={`whitespace-pre-wrap break-words text-sm text-gray-700 dark:text-gray-300 ${className ?? ''}`}>{content}</div>;
 }

@@ -139,7 +139,7 @@ export default function AdminFaqsPage() {
                   key={faq.id}
                   className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                 >
-                  <p className="font-semibold text-gray-900 dark:text-gray-100">Q. {faq.title}</p>
+                  <p className="break-words font-semibold text-gray-900 dark:text-gray-100">Q. {faq.title}</p>
                   {faq.content && (
                     <div className="mt-2">
                       <ContentRenderer content={faq.content} format={faq.content_format} />

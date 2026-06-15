@@ -96,17 +96,28 @@ export default function QnaDetailPage() {
       ) : (
         <div className="space-y-4">
           <div className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-              {post.is_private && '🔒 '}
-              {post.title}
-            </h2>
+            <div className="flex items-start justify-between gap-2">
+              <h2 className="break-words text-lg font-bold text-gray-900 dark:text-gray-100">
+                {post.is_private && '🔒 '}
+                {post.title}
+              </h2>
+              {replies.length > 0 ? (
+                <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
+                  ✅ 답변완료
+                </span>
+              ) : (
+                <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                  답변대기
+                </span>
+              )}
+            </div>
             <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
               {post.author_name} · {new Date(post.created_at).toLocaleDateString('ko-KR')}
               {post.is_private && ' · 비공개'}
             </p>
 
             {post.content && (
-              <div className="mt-4 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">
+              <div className="mt-4 whitespace-pre-wrap break-words text-sm text-gray-700 dark:text-gray-300">
                 {post.content}
               </div>
             )}
@@ -141,7 +152,7 @@ export default function QnaDetailPage() {
                     <p className="mb-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
                       {reply.author_name} (관리자)
                     </p>
-                    <p className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{reply.content}</p>
+                    <p className="whitespace-pre-wrap break-words text-sm text-gray-700 dark:text-gray-300">{reply.content}</p>
                     <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
                       {new Date(reply.created_at).toLocaleDateString('ko-KR')}
                     </p>

@@ -50,7 +50,7 @@ export default function FaqDetailPage() {
         </div>
       ) : (
         <div className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Q. {post.title}</h2>
+          <h2 className="break-words text-lg font-bold text-gray-900 dark:text-gray-100">Q. {post.title}</h2>
           {post.content && (
             <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-800">
               <ContentRenderer content={post.content} format={post.content_format} />

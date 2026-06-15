@@ -138,7 +138,7 @@ export default function AdminNoticesPage() {
                   key={notice.id}
                   className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
                 >
-                  <p className="font-semibold text-gray-900 dark:text-gray-100">{notice.title}</p>
+                  <p className="break-words font-semibold text-gray-900 dark:text-gray-100">{notice.title}</p>
                   <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                     {new Date(notice.created_at).toLocaleDateString('ko-KR')}
                   </p>

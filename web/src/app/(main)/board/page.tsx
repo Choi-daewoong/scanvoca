@@ -137,10 +137,17 @@ function BoardPageContent() {
               href={`/board/${post.board_type}/${post.id}`}
               className="block rounded-2xl border border-gray-100 bg-white p-4 transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
             >
-              <p className="font-semibold text-gray-900 dark:text-gray-100">
-                {post.board_type === 'qna' && post.is_private && '🔒 '}
-                {post.title}
-              </p>
+              <div className="flex items-start justify-between gap-2">
+                <p className="break-words font-semibold text-gray-900 dark:text-gray-100">
+                  {post.board_type === 'qna' && post.is_private && '🔒 '}
+                  {post.title}
+                </p>
+                {post.board_type === 'qna' && post.reply_count > 0 && (
+                  <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
+                    답변완료
+                  </span>
+                )}
+              </div>
               <div className="mt-1 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
                 <span>{post.author_name}</span>
                 <span>·</span>
@@ -153,10 +160,10 @@ function BoardPageContent() {
                     <span>가져가기 {post.import_count}</span>
                   </>
                 )}
-                {post.board_type === 'qna' && (
+                {post.board_type === 'qna' && post.reply_count === 0 && (
                   <>
                     <span>·</span>
-                    <span>{post.reply_count > 0 ? `답변 ${post.reply_count}` : '답변 대기'}</span>
+                    <span className="text-amber-500">답변 대기</span>
                   </>
                 )}
               </div>

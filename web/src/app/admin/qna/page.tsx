@@ -96,27 +96,35 @@ export default function AdminQnaPage() {
           {posts.map((post) => (
             <div key={post.id} className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
               <button onClick={() => handleExpand(post)} className="block w-full text-left">
-                <p className="font-semibold text-gray-900 dark:text-gray-100">
-                  {post.is_private && '🔒 '}
-                  {post.title}
-                </p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="break-words font-semibold text-gray-900 dark:text-gray-100">
+                    {post.is_private && '🔒 '}
+                    {post.title}
+                  </p>
+                  {post.reply_count > 0 ? (
+                    <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
+                      ✅ 답변완료 ({post.reply_count})
+                    </span>
+                  ) : (
+                    <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                      답변대기
+                    </span>
+                  )}
+                </div>
                 <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                  {post.author_name} · {new Date(post.created_at).toLocaleDateString('ko-KR')} ·{' '}
-                  <span className={post.reply_count > 0 ? 'text-emerald-500' : 'text-amber-500'}>
-                    {post.reply_count > 0 ? `답변 완료 (${post.reply_count})` : '답변 대기'}
-                  </span>
+                  {post.author_name} · {new Date(post.created_at).toLocaleDateString('ko-KR')}
                 </p>
               </button>
 
               {expandedId === post.id && (
                 <div className="mt-3 space-y-3 border-t border-gray-100 pt-3 dark:border-gray-800">
                   {post.content && (
-                    <p className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{post.content}</p>
+                    <p className="whitespace-pre-wrap break-words text-sm text-gray-700 dark:text-gray-300">{post.content}</p>
                   )}
 
                   {(replies[post.id] || []).map((reply) => (
                     <div key={reply.id} className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 dark:border-indigo-900 dark:bg-indigo-950/20">
-                      <p className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{reply.content}</p>
+                      <p className="whitespace-pre-wrap break-words text-sm text-gray-700 dark:text-gray-300">{reply.content}</p>
                       <div className="mt-1.5 flex items-center justify-between">
                         <p className="text-xs text-gray-400 dark:text-gray-500">
                           {new Date(reply.created_at).toLocaleDateString('ko-KR')}

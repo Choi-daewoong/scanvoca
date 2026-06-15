@@ -50,7 +50,7 @@ export default function NoticeDetailPage() {
         </div>
       ) : (
         <div className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{post.title}</h2>
+          <h2 className="break-words text-lg font-bold text-gray-900 dark:text-gray-100">{post.title}</h2>
           <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
             {new Date(post.created_at).toLocaleDateString('ko-KR')}
           </p>

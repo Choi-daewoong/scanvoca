@@ -100,7 +100,7 @@ export default function SharePostDetailPage() {
         </div>
       ) : (
         <div className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{post.title}</h2>
+          <h2 className="break-words text-lg font-bold text-gray-900 dark:text-gray-100">{post.title}</h2>
           <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
             {post.author_name} · {new Date(post.created_at).toLocaleDateString('ko-KR')}
           </p>
@@ -119,7 +119,7 @@ export default function SharePostDetailPage() {
           )}
 
           {post.content && (
-            <div className="mt-4 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">
+            <div className="mt-4 whitespace-pre-wrap break-words text-sm text-gray-700 dark:text-gray-300">
               {post.content}
             </div>
           )}
