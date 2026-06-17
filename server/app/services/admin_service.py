@@ -8,6 +8,7 @@ from app.models.word import Word
 from app.models.wordbook import Wordbook, WordbookWord
 from app.models.post import Post
 from app.models.point_transaction import PointTransaction
+from fastapi import HTTPException, status
 
 
 class AdminService:
@@ -164,3 +165,26 @@ class AdminService:
         }
 
         return items, total, points_by_reason
+
+    @staticmethod
+    def delete_user(db: Session, user_id: int, current_admin_id: int) -> User:
+        """Delete a user account and all cascaded data. Raises HTTPException on invalid cases."""
+        if user_id == current_admin_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="자기 자신의 계정은 삭제할 수 없습니다."
+            )
+        user = db.get(User, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="회원을 찾을 수 없습니다."
+            )
+        if user.is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="관리자 계정은 삭제할 수 없습니다."
+            )
+        db.delete(user)
+        db.commit()
+        return user

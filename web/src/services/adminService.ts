@@ -14,6 +14,10 @@ export const adminService = {
     return apiFetch<AdminUserListResponse>(`/api/v1/admin/users?${params.toString()}`);
   },
 
+  async deleteUser(userId: number): Promise<void> {
+    await apiFetch(`/api/v1/admin/users/${userId}`, { method: 'DELETE' });
+  },
+
   async listPointTransactions(options?: {
     limit?: number;
     offset?: number;

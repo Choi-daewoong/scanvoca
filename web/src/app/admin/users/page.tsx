@@ -13,6 +13,9 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [loading, setLoading] = useState(true);
+  const [confirmUser, setConfirmUser] = useState<AdminUser | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -34,6 +37,23 @@ export default function AdminUsersPage() {
     e.preventDefault();
     setOffset(0);
     setSearch(searchInput.trim());
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!confirmUser) return;
+    setDeletingId(confirmUser.id);
+    setDeleteError('');
+    try {
+      await adminService.deleteUser(confirmUser.id);
+      setUsers((prev) => prev.filter((u) => u.id !== confirmUser.id));
+      setTotal((prev) => prev - 1);
+      setConfirmUser(null);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '삭제에 실패했습니다.';
+      setDeleteError(msg);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const page = Math.floor(offset / PAGE_SIZE) + 1;
@@ -83,6 +103,7 @@ export default function AdminUsersPage() {
                   <th className="px-4 py-3 font-medium">게시글 수</th>
                   <th className="px-4 py-3 font-medium">권한</th>
                   <th className="px-4 py-3 font-medium">가입일</th>
+                  <th className="px-4 py-3 font-medium"></th>
                 </tr>
               </thead>
               <tbody>
@@ -102,6 +123,17 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-400 dark:text-gray-500">
                       {new Date(u.created_at).toLocaleDateString('ko-KR')}
+                    </td>
+                    <td className="px-4 py-3">
+                      {!u.is_admin && (
+                        <button
+                          onClick={() => { setDeleteError(''); setConfirmUser(u); }}
+                          disabled={deletingId === u.id}
+                          className="rounded-lg border border-red-100 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-500 transition hover:bg-red-100 disabled:opacity-40 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-950/40"
+                        >
+                          삭제
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -128,6 +160,43 @@ export default function AdminUsersPage() {
           >
             다음
           </button>
+        </div>
+      )}
+
+      {/* 삭제 확인 모달 */}
+      {confirmUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl border border-gray-100 bg-white p-6 shadow-xl dark:border-gray-800 dark:bg-gray-900">
+            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">회원 삭제</h3>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              <span className="font-semibold text-gray-800 dark:text-gray-200">{confirmUser.email}</span> 회원을 삭제하면
+              해당 회원의 단어장, 게시글 등 모든 데이터가 영구 삭제됩니다.
+            </p>
+            <p className="mt-1 text-sm font-semibold text-red-500 dark:text-red-400">이 작업은 되돌릴 수 없습니다.</p>
+
+            {deleteError && (
+              <p className="mt-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+                {deleteError}
+              </p>
+            )}
+
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => setConfirmUser(null)}
+                disabled={deletingId !== null}
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deletingId !== null}
+                className="flex-1 rounded-xl border border-red-100 bg-red-50 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950/70"
+              >
+                {deletingId !== null ? '삭제 중...' : '삭제'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

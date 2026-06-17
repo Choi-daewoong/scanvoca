@@ -25,7 +25,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await authService.login(email, password, persistent);
       const user = await authService.getMe();
-      set({ user, isLoading: false });
+      set({ user, isLoading: false, isInitialized: true });
     } catch (err) {
       set({ isLoading: false });
       throw err;
@@ -37,7 +37,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await authService.googleLogin(idToken, persistent);
       const user = await authService.getMe();
-      set({ user, isLoading: false });
+      set({ user, isLoading: false, isInitialized: true });
     } catch (err) {
       set({ isLoading: false });
       throw err;
@@ -50,7 +50,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   loadUser: async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    if (typeof window === 'undefined') {
+      set({ isInitialized: true });
+      return;
+    }
+    // sessionStorage(로그인 유지 OFF)와 localStorage(로그인 유지 ON) 모두 확인
+    const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
     if (!token) {
       set({ isInitialized: true });
       return;

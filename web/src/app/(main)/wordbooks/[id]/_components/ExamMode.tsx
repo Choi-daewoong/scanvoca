@@ -207,7 +207,7 @@ export default function ExamMode({
           <p className="mb-1 text-xs text-indigo-400 dark:text-indigo-400">발음을 듣고 단어와 뜻을 적어보세요</p>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => speakWord(w?.word ?? '')}
+              onClick={() => { speakWord(w?.word ?? ''); spellingInputRef.current?.focus(); }}
               className="flex h-14 w-14 items-center justify-center rounded-full border border-indigo-100 bg-white text-indigo-500 shadow-sm transition hover:bg-indigo-50 dark:border-indigo-900 dark:bg-gray-900 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -313,14 +313,14 @@ export default function ExamMode({
                 <SpellingComparison correct={a.english} userInput={a.spellingInput} />
 
                 <div className="mt-1.5 space-y-0.5">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    정답 뜻: <span className="font-medium text-indigo-600 dark:text-indigo-400">{a.correctMeaning}</span>
+                  </p>
                   {a.meaningInput && (
                     <p className="text-xs text-gray-600 dark:text-gray-400">
                       내 뜻: <span className="text-gray-700 dark:text-gray-300">{a.meaningInput}</span>
                     </p>
                   )}
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    정답 뜻: <span className="font-medium text-indigo-600 dark:text-indigo-400">{a.correctMeaning}</span>
-                  </p>
                 </div>
               </div>
             );

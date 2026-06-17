@@ -30,6 +30,16 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to initialize database: {e}", exc_info=True)
         raise
 
+    # Google auth 인증서 pre-warm: 콜드 스타트 시 첫 요청 실패 방지
+    if settings.GOOGLE_CLIENT_ID:
+        try:
+            logger.info("Pre-warming Google auth certs...")
+            from app.api.v1.auth import _google_auth_request
+            _google_auth_request("https://www.googleapis.com/oauth2/v1/certs", method="GET")
+            logger.info("Google auth certs pre-warmed successfully")
+        except Exception as e:
+            logger.warning(f"Google auth pre-warm failed (non-critical): {e}")
+
     yield
 
     # Shutdown: cleanup if needed

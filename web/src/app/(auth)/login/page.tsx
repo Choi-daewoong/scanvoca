@@ -82,9 +82,16 @@ export default function LoginPage() {
     try {
       await googleLogin(response.credential, stayLoggedInRef.current);
       router.replace('/home');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : '구글 로그인에 실패했습니다.';
-      setServerError(msg);
+    } catch {
+      // 콜드 스타트 등 일시적 오류 시 자동 1회 재시도
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await googleLogin(response.credential, stayLoggedInRef.current);
+        router.replace('/home');
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : '구글 로그인에 실패했습니다.';
+        setServerError(msg);
+      }
     }
   };
 

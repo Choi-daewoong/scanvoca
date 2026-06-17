@@ -24,6 +24,10 @@ from app.models.user import User
 
 router = APIRouter()
 
+# 모듈 수준에서 재사용 → Google 인증서를 세션에 캐시하여 콜드 스타트 두 번 문제 방지
+from google.auth.transport import requests as google_requests
+_google_auth_request = google_requests.Request()
+
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -140,17 +144,22 @@ async def google_login(
 
     try:
         from google.oauth2 import id_token as google_id_token
-        from google.auth.transport import requests as google_requests
 
         payload = google_id_token.verify_oauth2_token(
             google_data.id_token,
-            google_requests.Request(),
+            _google_auth_request,
             settings.GOOGLE_CLIENT_ID,
         )
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="유효하지 않은 구글 로그인 토큰입니다."
+        )
+    except Exception:
+        # 네트워크 오류 등 (TransportError 등) — 콜드 스타트 시 발생 가능
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="구글 로그인에 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
         )
 
     if not payload.get("email_verified", False):

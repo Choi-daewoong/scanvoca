@@ -38,6 +38,16 @@ async def list_users(
     return {"items": items, "total": total}
 
 
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """Delete a user and all their data (wordbooks, posts, points, etc.) — admin only"""
+    AdminService.delete_user(db, user_id, current_user.id)
+
+
 @router.get("/points", response_model=AdminPointListResponse)
 async def list_point_transactions(
     limit: int = 20,

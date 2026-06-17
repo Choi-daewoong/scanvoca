@@ -9,8 +9,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isInitialized, loadUser } = useAuthStore();
 
   useEffect(() => {
-    loadUser();
-  }, [loadUser]);
+    if (!isInitialized) {
+      loadUser();
+    }
+  }, [isInitialized, loadUser]);
 
   useEffect(() => {
     if (isInitialized && !user) {
