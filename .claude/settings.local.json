@@ -128,7 +128,16 @@
       "PowerShell(Stop-Process *)",
       "Bash(find web *)",
       "Bash(cat web/.vercel/project.json)",
-      "Bash(gh repo *)"
+      "Bash(gh repo *)",
+      "Bash(gh run *)",
+      "Bash(vercel ls *)",
+      "Bash(vercel --prod)",
+      "Bash(vercel inspect *)",
+      "Bash(vercel git *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell($env:VERCEL_TOKEN; [System.Environment]::GetEnvironmentVariable\\(\"VERCEL_TOKEN\", \"User\"\\); [System.Environment]::GetEnvironmentVariable\\(\"VERCEL_TOKEN\", \"Machine\"\\))",
+      "Bash(python3 -c \"import sys,json; [print\\(p['name'], p.get\\('link',{}\\)\\) for p in json.load\\(sys.stdin\\).get\\('projects',[]\\)]\")",
+      "Bash(vercel logs *)"
     ],
     "deny": [],
     "ask": []
