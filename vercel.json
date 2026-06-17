@@ -1,0 +1,16 @@
+{
+  "buildCommand": "cd web && npm run build",
+  "installCommand": "cd web && npm install",
+  "devCommand": "cd web && npm run dev",
+  "framework": "nextjs",
+  "outputDirectory": "web/.next",
+  "rootDirectory": "web",
+  "env": [
+    "NEXT_PUBLIC_API_URL"
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  }
+}
