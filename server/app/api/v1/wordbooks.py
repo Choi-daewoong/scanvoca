@@ -485,3 +485,47 @@ async def remove_word_from_wordbook(
         )
 
     return None
+
+
+# Stats endpoint for dashboard
+@router.get("/stats/dashboard", response_model=dict)
+async def get_dashboard_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get all stats needed for dashboard in a single request
+
+    Returns:
+    - total_words: 전체 단어 수
+    - learned_words: 외운 단어 수
+    - total_wordbooks: 단어장 수
+    - daily_progress: 오늘 학습한 단어 수
+    """
+    from datetime import datetime
+
+    today = datetime.now().date()
+
+    # Get all wordbooks with word counts
+    wordbooks = WordbookService.get_user_wordbooks(db, current_user.id)
+    total_wordbooks = len(wordbooks)
+
+    # Calculate stats in one query instead of N+1
+    all_wordbook_words = db.query(WordbookWord).filter(
+        WordbookWord.wordbook_id.in_([wb.id for wb in wordbooks])
+    ).all()
+
+    total_words = len(all_wordbook_words)
+    learned_words = sum(1 for w in all_wordbook_words if w.mastered)
+    daily_progress = sum(
+        1 for w in all_wordbook_words
+        if w.last_studied and w.last_studied.date() == today
+    )
+
+    return {
+        "total_words": total_words,
+        "learned_words": learned_words,
+        "total_wordbooks": total_wordbooks,
+        "daily_progress": daily_progress,
+        "daily_goal": 10,
+    }

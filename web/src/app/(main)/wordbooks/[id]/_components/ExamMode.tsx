@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { WordbookWord } from '@/types';
 import { speakWord } from '@/utils/tts';
 import { formatPartOfSpeech } from '@/utils/partOfSpeech';
+import { wordbookService } from '@/services/wordbookService';
 import SpellingComparison from './SpellingComparison';
 
 type ExamStage = 'setup' | 'question' | 'result';
@@ -18,9 +19,13 @@ interface ExamAnswer {
 export default function ExamMode({
   words,
   onMastered,
+  wordbookId,
+  wordbookName,
 }: {
   words: WordbookWord[];
   onMastered: (wordId: number, mastered: boolean) => void;
+  wordbookId: number;
+  wordbookName: string;
 }) {
   const memorizedWords = words.filter(w => w.mastered);
   const [stage, setStage] = useState<ExamStage>('setup');
@@ -32,6 +37,8 @@ export default function ExamMode({
   const [answers, setAnswers] = useState<Record<number, ExamAnswer>>({});
   const [spellingInput, setSpellingInput] = useState('');
   const [meaningInput, setMeaningInput] = useState('');
+  const [isCreatingReviewBook, setIsCreatingReviewBook] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const spellingInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -78,6 +85,80 @@ export default function ExamMode({
     setQuestionCount(memorizedWords.length);
     setSpellingInput('');
     setMeaningInput('');
+    setIsRetrying(false);
+  };
+
+  const getWrongAnswers = (): WordbookWord[] => {
+    return resultAnswers
+      .map((a, i) => ({ answer: a, index: i, question: questions[i] }))
+      .filter(({ answer }) => answer.english.toLowerCase() !== answer.spellingInput.trim().toLowerCase())
+      .map(({ question }) => question);
+  };
+
+  const handleRetryWrongAnswers = () => {
+    const wrongAnswers = getWrongAnswers();
+    if (wrongAnswers.length === 0) return;
+
+    setIsRetrying(true);
+    setQuestions(wrongAnswers);
+    setAnswers({});
+    setCurrentIdx(0);
+    setSpellingInput('');
+    setMeaningInput('');
+    setStage('question');
+  };
+
+  const handleCreateReviewBook = async () => {
+    const wrongAnswers = getWrongAnswers();
+    if (wrongAnswers.length === 0) return;
+
+    setIsCreatingReviewBook(true);
+    try {
+      // 복습 단어장 이름: "원본(복습1)", "원본(복습2)" 등
+      const existingReviewBooks = words
+        .map(w => w.word?.word)
+        .filter(Boolean);
+
+      let reviewNumber = 1;
+      let reviewName = `${wordbookName}(복습${reviewNumber})`;
+
+      // 기존 복습 단어장 수 확인 (간단한 방식)
+      // 실제로는 백엔드에서 확인하는 게 낫지만, 지금은 프론트에서 처리
+      for (let i = 1; i <= 10; i++) {
+        reviewName = `${wordbookName}(복습${i})`;
+        // 충돌 확인 로직 (간단히 처리)
+        if (!existingReviewBooks.includes(reviewName)) {
+          break;
+        }
+      }
+
+      // 새 단어장 생성
+      const newWordbook = await wordbookService.create(
+        reviewName,
+        `${wordbookName}의 복습 단어장 - ${new Date().toLocaleDateString('ko-KR')}`
+      );
+
+      // 틀린 단어들을 새 단어장에 추가
+      const wordTexts = wrongAnswers.map(w => w.word?.word).filter(Boolean) as string[];
+      if (wordTexts.length > 0) {
+        await wordbookService.addWordsBatch(newWordbook.id, wordTexts);
+      }
+
+      // 성공 메시지
+      alert(`복습 단어장이 생성되었습니다!\n"${reviewName}" (${wrongAnswers.length}개 단어)`);
+
+      // 원래대로 돌아가기
+      setStage('setup');
+      setCustomCount('');
+      setQuestionCount(memorizedWords.length);
+      setSpellingInput('');
+      setMeaningInput('');
+    } catch (error) {
+      console.error('복습 단어장 생성 실패:', error);
+      alert('복습 단어장 생성에 실패했습니다.');
+    } finally {
+      setIsCreatingReviewBook(false);
+    }
   };
 
   const resultAnswers = useMemo(() =>
@@ -327,11 +408,29 @@ export default function ExamMode({
           })}
         </div>
 
+        {getWrongAnswers().length > 0 && !isRetrying && (
+          <div className="mb-3 space-y-2">
+            <button
+              onClick={handleRetryWrongAnswers}
+              className="w-full rounded-2xl border border-orange-200 bg-orange-50 py-4 text-sm font-semibold text-orange-600 transition hover:bg-orange-100 dark:border-orange-900 dark:bg-orange-950/40 dark:text-orange-400 dark:hover:bg-orange-950/70"
+            >
+              🔄 틀린 문제 다시 풀기 ({getWrongAnswers().length}개)
+            </button>
+            <button
+              onClick={handleCreateReviewBook}
+              disabled={isCreatingReviewBook}
+              className="w-full rounded-2xl border border-emerald-200 bg-emerald-50 py-4 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-950/70"
+            >
+              {isCreatingReviewBook ? '복습 단어장 생성 중...' : `📚 복습 단어장 생성 (${wordbookName}(복습))`}
+            </button>
+          </div>
+        )}
+
         <button
           onClick={handleRetry}
           className="w-full rounded-2xl border border-indigo-100 bg-indigo-50 py-4 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
         >
-          다시 시험보기
+          {isRetrying ? '⬅️ 돌아가기' : '다시 시험보기'}
         </button>
       </div>
     );

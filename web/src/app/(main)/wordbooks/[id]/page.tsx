@@ -266,7 +266,7 @@ export default function WordbookDetailPage() {
       ) : mode === 'quiz' ? (
         <QuizMode words={words} onMastered={handleMastered} />
       ) : (
-        <ExamMode words={words} onMastered={handleMastered} />
+        <ExamMode words={words} onMastered={handleMastered} wordbookId={id} wordbookName={wordbook?.name || '단어장'} />
       )}
     </div>
   );

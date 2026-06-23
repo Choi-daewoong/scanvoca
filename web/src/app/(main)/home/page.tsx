@@ -19,28 +19,9 @@ export default function HomePage() {
 
   const loadStats = useCallback(async () => {
     try {
-      const wordbooks = await wordbookService.list();
-      let totalWords = 0;
-      let learnedWords = 0;
-      let dailyProgress = 0;
-      const today = new Date().toDateString();
-
-      for (const wb of wordbooks) {
-        const words = await wordbookService.getWords(wb.id);
-        totalWords += words.length;
-        for (const w of words) {
-          if (w.mastered) learnedWords++;
-          if (w.last_studied && new Date(w.last_studied).toDateString() === today) dailyProgress++;
-        }
-      }
-
-      setStats({
-        total_words: totalWords,
-        learned_words: learnedWords,
-        total_wordbooks: wordbooks.length,
-        daily_progress: dailyProgress,
-        daily_goal: 10,
-      });
+      // 단일 API 호출로 모든 통계 조회
+      const stats = await wordbookService.getDashboardStats();
+      setStats(stats);
     } catch {
       // 통계 로드 실패는 무시
     } finally {

@@ -92,4 +92,14 @@ export const wordbookService = {
       body: JSON.stringify({ items }),
     });
   },
+
+  async getDashboardStats(): Promise<{
+    total_words: number;
+    learned_words: number;
+    total_wordbooks: number;
+    daily_progress: number;
+    daily_goal: number;
+  }> {
+    return apiFetch('/api/v1/wordbooks/stats/dashboard');
+  },
 };
