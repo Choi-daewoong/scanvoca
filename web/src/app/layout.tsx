@@ -4,6 +4,23 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Scan Voca - 스마트 영단어 학습',
   description: '사진 찍으면 AI가 영단어를 자동 인식. 나만의 단어장을 만들어보세요.',
+  icons: {
+    icon: '/icons/favicon.ico',
+    shortcut: '/icons/favicon-16x16.png',
+    apple: '/icons/apple-touch-icon.png',
+    other: [
+      {
+        rel: 'icon',
+        sizes: '32x32',
+        url: '/icons/favicon-32x32.png',
+      },
+      {
+        rel: 'icon',
+        sizes: '96x96',
+        url: '/icons/favicon-96x96.png',
+      },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
