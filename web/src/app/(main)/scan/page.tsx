@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { ocrService } from '@/services/ocrService';
@@ -44,6 +45,7 @@ async function getCroppedFile(image: HTMLImageElement, crop: PixelCrop, fileName
 }
 
 export default function ScanPage() {
+  const router = useRouter();
   const [step, setStep] = useState<Step>('upload');
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<OCRScanResponse | null>(null);
@@ -149,7 +151,8 @@ export default function ScanPage() {
       }
 
       setSaveSuccess(true);
-      setStep('result');
+      // 저장 후 바로 단어장 상세 페이지로 이동
+      router.push(`/wordbooks/${wbId}`);
     } catch {
       setError('단어 저장에 실패했습니다.');
       setStep('result');
@@ -252,21 +255,23 @@ export default function ScanPage() {
           </p>
         </div>
 
-        <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 p-2 dark:border-gray-800 dark:bg-gray-900">
-          <ReactCrop
-            crop={crop}
-            onChange={(_, percentCrop) => setCrop(percentCrop)}
-            onComplete={(c) => setCompletedCrop(c)}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={imgRef}
-              src={rawImageSrc}
-              alt="원본 이미지"
-              onLoad={onCropImageLoad}
-              className="max-h-full max-w-full w-auto object-contain"
-            />
-          </ReactCrop>
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-2xl border border-gray-100 bg-gray-50 p-2 dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center justify-center md:max-h-[60vh]">
+            <ReactCrop
+              crop={crop}
+              onChange={(_, percentCrop) => setCrop(percentCrop)}
+              onComplete={(c) => setCompletedCrop(c)}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                ref={imgRef}
+                src={rawImageSrc}
+                alt="원본 이미지"
+                onLoad={onCropImageLoad}
+                className="max-h-full max-w-full w-auto object-contain"
+              />
+            </ReactCrop>
+          </div>
         </div>
 
         <div className="mt-2 shrink-0 space-y-1.5">
