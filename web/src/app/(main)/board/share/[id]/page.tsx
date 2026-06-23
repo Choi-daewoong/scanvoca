@@ -59,14 +59,30 @@ export default function SharePostDetailPage() {
   };
 
   const handlePreviewOpen = async () => {
-    if (!post || !post.wordbook_id) return;
+    if (!post) return;
     setLoadingPreview(true);
     try {
       const { wordbookService } = await import('@/services/wordbookService');
-      const words = await wordbookService.getWords(post.wordbook_id);
+      let words = [];
+
+      // wordbook_id가 있으면 직접 조회, 없으면 share_code로 조회
+      if (post.wordbook_id) {
+        words = await wordbookService.getWords(post.wordbook_id);
+      } else if (post.share_code) {
+        const preview = await wordbookService.getSharedPreview(post.share_code);
+        // share_code로는 미리보기만 가능 (word_count만 반환)
+        // 단어 목록은 import 시에만 로드
+        setPreviewWords([]);
+        alert('이 단어장은 미리보기 단어 정보가 없습니다. 가져오기를 선택하시면 전체 단어장이 추가됩니다.');
+        setShowPreviewModal(true);
+        setLoadingPreview(false);
+        return;
+      }
+
       setPreviewWords(words.slice(0, 10));
       setShowPreviewModal(true);
-    } catch {
+    } catch (error) {
+      console.error('단어 정보 로드 실패:', error);
       alert('단어 정보를 불러올 수 없습니다.');
     } finally {
       setLoadingPreview(false);
@@ -201,7 +217,7 @@ export default function SharePostDetailPage() {
 
             <button
               onClick={handlePreviewOpen}
-              disabled={loadingPreview || !post?.wordbook_id}
+              disabled={loadingPreview}
               className="flex-1 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
             >
               {loadingPreview ? '로딩 중...' : '단어장 미리보기'}
@@ -263,8 +279,15 @@ export default function SharePostDetailPage() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-                  단어가 없습니다.
+                <div className="text-center py-8">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    📖 단어 미리보기
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                    {post?.wordbook_id
+                      ? '단어를 로드할 수 없습니다.'
+                      : '이전에 올려진 단어장은\n상세 정보가 없습니다.\n\n"가져오기"를 누르면\n전체 단어장이 추가됩니다.'}
+                  </p>
                 </div>
               )}
             </div>
