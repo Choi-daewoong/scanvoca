@@ -244,11 +244,11 @@ export default function ScanPage() {
     );
   }
 
-  // 영역 선택(크롭) 화면 (하단 네비게이션을 가리는 전체 화면 오버레이)
+  // 영역 선택(크롭) 화면
   if (step === 'crop' && rawImageSrc) {
     return (
-      <div className="fixed inset-0 z-[60] flex h-[100dvh] flex-col overflow-hidden bg-white px-4 py-3 dark:bg-gray-950">
-        <div className="mb-2 shrink-0">
+      <div className="flex min-h-[calc(100vh-80px)] flex-col gap-4 px-4 py-4">
+        <div>
           <h1 className="text-base font-bold text-gray-900 dark:text-gray-100">분석할 영역 선택</h1>
           <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
             드래그해서 분석할 부분만 선택하세요.
@@ -256,7 +256,7 @@ export default function ScanPage() {
         </div>
 
         <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-2xl border border-gray-100 bg-gray-50 p-2 dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-center md:max-h-[60vh]">
+          <div className="flex items-center justify-center">
             <ReactCrop
               crop={crop}
               onChange={(_, percentCrop) => setCrop(percentCrop)}
@@ -274,7 +274,7 @@ export default function ScanPage() {
           </div>
         </div>
 
-        <div className="mt-2 shrink-0 space-y-1.5">
+        <div className="shrink-0 space-y-1.5">
           <button
             onClick={handleCropConfirm}
             className="w-full rounded-2xl border border-indigo-100 bg-indigo-50 py-3 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 active:scale-95 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
