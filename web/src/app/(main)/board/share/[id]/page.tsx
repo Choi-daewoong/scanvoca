@@ -22,6 +22,7 @@ export default function SharePostDetailPage() {
   const [updating, setUpdating] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewWords, setPreviewWords] = useState<any[]>([]);
+  const [totalWordCount, setTotalWordCount] = useState(0);
   const [loadingPreview, setLoadingPreview] = useState(false);
 
   useEffect(() => {
@@ -64,22 +65,26 @@ export default function SharePostDetailPage() {
     try {
       const { wordbookService } = await import('@/services/wordbookService');
       let words = [];
+      let wordCount = 0;
 
-      // wordbook_id가 있으면 직접 조회, 없으면 share_code로 조회
+      // wordbook_id가 있으면 직접 조회
       if (post.wordbook_id) {
         words = await wordbookService.getWords(post.wordbook_id);
-      } else if (post.share_code) {
-        const preview = await wordbookService.getSharedPreview(post.share_code);
-        // share_code로는 미리보기만 가능 (word_count만 반환)
-        // 단어 목록은 import 시에만 로드
-        setPreviewWords([]);
-        alert('이 단어장은 미리보기 단어 정보가 없습니다. 가져오기를 선택하시면 전체 단어장이 추가됩니다.');
-        setShowPreviewModal(true);
-        setLoadingPreview(false);
-        return;
+        wordCount = words.length;
+      }
+      // share_code로 조회 (이전 글들)
+      else if (post.share_code) {
+        try {
+          const preview = await wordbookService.getSharedPreview(post.share_code);
+          wordCount = preview.word_count;
+          words = []; // share_code로는 단어 목록을 얻을 수 없음
+        } catch {
+          wordCount = 0;
+        }
       }
 
-      setPreviewWords(words.slice(0, 10));
+      setTotalWordCount(wordCount);
+      setPreviewWords(words.slice(0, 5)); // 최대 5개만 표시
       setShowPreviewModal(true);
     } catch (error) {
       console.error('단어 정보 로드 실패:', error);
@@ -251,58 +256,63 @@ export default function SharePostDetailPage() {
 
       {showPreviewModal && (
         <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-5 dark:bg-gray-900 flex flex-col max-h-[80vh]">
-            <div className="mb-4">
-              <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">{post?.title}</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                총 {post?.wordbook_id ? '단어' : '0개'}
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 dark:bg-gray-900 flex flex-col max-h-[85vh]">
+            {/* 헤더 */}
+            <div className="mb-5 border-b border-gray-100 pb-4 dark:border-gray-800">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{post?.title}</h2>
+              <p className="mt-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+                총 {totalWordCount}개 단어
               </p>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-2 mb-4 pr-2">
+            {/* 단어 샘플 */}
+            <div className="flex-1 overflow-y-auto mb-5">
               {previewWords.length > 0 ? (
-                previewWords.map((word, idx) => (
-                  <div key={idx} className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-800">
-                    <div className="flex items-start justify-between gap-2">
+                <div className="space-y-2">
+                  {previewWords.map((word, idx) => (
+                    <div key={idx} className="flex items-start gap-3 text-sm">
+                      <span className="shrink-0 font-medium text-gray-400 dark:text-gray-500 w-6">
+                        {idx + 1}.
+                      </span>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                        <p className="font-medium text-gray-900 dark:text-gray-100">
                           {word.word?.word}
                         </p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                           {word.word?.meanings?.[0]?.korean}
                         </p>
                       </div>
-                      <span className="text-xs font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">
-                        {idx + 1}
-                      </span>
                     </div>
-                  </div>
-                ))
+                  ))}
+                  {totalWordCount > previewWords.length && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 text-center pt-2">
+                      외 {totalWordCount - previewWords.length}개 단어...
+                    </p>
+                  )}
+                </div>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                    📖 단어 미리보기
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                    {post?.wordbook_id
-                      ? '단어를 로드할 수 없습니다.'
-                      : '이전에 올려진 단어장은\n상세 정보가 없습니다.\n\n"가져오기"를 누르면\n전체 단어장이 추가됩니다.'}
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <p className="text-sm">
+                    {totalWordCount > 0
+                      ? '📖 전체 단어장을 가져오면 확인할 수 있습니다.'
+                      : '등록된 단어가 없습니다.'}
                   </p>
                 </div>
               )}
             </div>
 
+            {/* 버튼 */}
             <div className="flex gap-2 border-t border-gray-100 pt-4 dark:border-gray-800">
               <button
                 onClick={handleImportConfirm}
                 disabled={importing}
-                className="flex-1 rounded-xl border border-indigo-100 bg-indigo-50 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
+                className="flex-1 rounded-xl border border-indigo-100 bg-indigo-50 py-3 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
               >
-                {importing ? '가져오는 중...' : '가져오기'}
+                {importing ? '가져오는 중...' : '확인 후 가져오기'}
               </button>
               <button
                 onClick={() => setShowPreviewModal(false)}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
+                className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800"
               >
                 취소
               </button>
