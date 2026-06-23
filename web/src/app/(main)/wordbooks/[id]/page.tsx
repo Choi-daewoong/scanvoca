@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { wordbookService } from '@/services/wordbookService';
+import { useAuthStore } from '@/stores/authStore';
 import { GPTMeaning, Wordbook, WordbookWord } from '@/types';
 import StudyMode from './_components/StudyMode';
 import QuizMode from './_components/QuizMode';
@@ -15,6 +16,7 @@ export default function WordbookDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = Number(params.id);
+  const { user } = useAuthStore();
 
   const [wordbook, setWordbook] = useState<Wordbook | null>(null);
   const [words, setWords] = useState<WordbookWord[]>([]);
@@ -27,6 +29,10 @@ export default function WordbookDetailPage() {
   const [addWordsInput, setAddWordsInput] = useState('');
   const [addingWords, setAddingWords] = useState(false);
   const [addWordsResult, setAddWordsResult] = useState<{ added: number; duplicate: number; error: number; errorWords: string[] } | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [updating, setUpdating] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -36,6 +42,8 @@ export default function WordbookDetailPage() {
       ]);
       setWordbook(wb);
       setWords(wbWords);
+      setEditName(wb.name);
+      setEditDescription(wb.description || '');
     } catch {
       router.replace('/wordbooks');
     } finally {
@@ -44,6 +52,31 @@ export default function WordbookDetailPage() {
   }, [id, router]);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleEditOpen = () => {
+    if (wordbook) {
+      setEditName(wordbook.name);
+      setEditDescription(wordbook.description || '');
+      setShowEditModal(true);
+    }
+  };
+
+  const handleEditSave = async () => {
+    if (!wordbook || !editName.trim()) return;
+    setUpdating(true);
+    try {
+      const updated = await wordbookService.update(id, {
+        name: editName,
+        description: editDescription || undefined,
+      });
+      setWordbook(updated);
+      setShowEditModal(false);
+    } catch {
+      alert('단어장 수정에 실패했습니다.');
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const handleMastered = async (wordId: number, mastered: boolean) => {
     try {
@@ -172,6 +205,15 @@ export default function WordbookDetailPage() {
             </svg>
           </button>
           <button
+            onClick={handleEditOpen}
+            className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+            title="단어장 수정하기"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+          <button
             onClick={handleShare}
             disabled={sharing}
             className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-60 dark:text-gray-400 dark:hover:bg-gray-800"
@@ -224,6 +266,51 @@ export default function WordbookDetailPage() {
             >
               닫기
             </button>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 dark:bg-gray-900">
+            <h3 className="mb-4 text-base font-bold text-gray-900 dark:text-gray-100">단어장 수정</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">제목</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="단어장 제목"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">설명 (선택)</label>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="단어장 설명을 입력하세요"
+                  rows={3}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={handleEditSave}
+                disabled={updating || !editName.trim()}
+                className="flex-1 rounded-xl border border-indigo-100 bg-indigo-50 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
+              >
+                {updating ? '저장 중...' : '저장'}
+              </button>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
+              >
+                취소
+              </button>
+            </div>
           </div>
         </div>
       )}

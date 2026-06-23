@@ -15,6 +15,11 @@ export default function SharePostDetailPage() {
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
   const [liking, setLiking] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [editTags, setEditTags] = useState('');
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -61,6 +66,42 @@ export default function SharePostDetailPage() {
       alert(e instanceof Error ? e.message : '단어장 가져오기에 실패했습니다.');
     } finally {
       setImporting(false);
+    }
+  };
+
+  const handleEditOpen = () => {
+    if (post) {
+      setEditTitle(post.title);
+      setEditContent(post.content || '');
+      setEditTags(post.tags?.join(', ') || '');
+      setShowEditModal(true);
+    }
+  };
+
+  const handleEditSave = async () => {
+    if (!post || !editTitle.trim()) return;
+    setUpdating(true);
+    try {
+      const tagsArray = editTags
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+      await boardService.update(post.id, {
+        title: editTitle,
+        content: editContent,
+        tags: tagsArray,
+      });
+      setPost({
+        ...post,
+        title: editTitle,
+        content: editContent,
+        tags: tagsArray,
+      });
+      setShowEditModal(false);
+    } catch {
+      alert('게시글 수정에 실패했습니다.');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -155,6 +196,14 @@ export default function SharePostDetailPage() {
 
           {(isOwner || user?.is_admin) && (
             <div className="mt-4 flex justify-end gap-2 border-t border-gray-100 pt-4 dark:border-gray-800">
+              {isOwner && (
+                <button
+                  onClick={handleEditOpen}
+                  className="rounded-xl px-3 py-1.5 text-xs font-medium text-indigo-600 transition hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/30"
+                >
+                  수정
+                </button>
+              )}
               <button
                 onClick={handleDelete}
                 className="rounded-xl px-3 py-1.5 text-xs font-medium text-red-500 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
@@ -163,6 +212,61 @@ export default function SharePostDetailPage() {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 dark:bg-gray-900">
+            <h3 className="mb-4 text-base font-bold text-gray-900 dark:text-gray-100">게시글 수정</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">제목</label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="게시글 제목"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">내용</label>
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  placeholder="게시글 내용을 입력하세요 (선택)"
+                  rows={4}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">태그</label>
+                <input
+                  type="text"
+                  value={editTags}
+                  onChange={(e) => setEditTags(e.target.value)}
+                  placeholder="쉼표로 구분해서 입력 (예: TOEIC, 영단어)"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={handleEditSave}
+                disabled={updating || !editTitle.trim()}
+                className="flex-1 rounded-xl border border-indigo-100 bg-indigo-50 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
+              >
+                {updating ? '저장 중...' : '저장'}
+              </button>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
+              >
+                취소
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
