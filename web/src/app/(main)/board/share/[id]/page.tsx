@@ -64,7 +64,7 @@ export default function SharePostDetailPage() {
     setLoadingPreview(true);
     try {
       const { wordbookService } = await import('@/services/wordbookService');
-      let words = [];
+      let words: any[] = [];
       let wordCount = 0;
 
       // wordbook_id가 있으면 직접 조회
