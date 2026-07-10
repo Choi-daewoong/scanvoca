@@ -1,6 +1,10 @@
 import { apiFetch } from './api';
 import { AdminStats, AdminUserListResponse, AdminPointListResponse } from '@/types';
 
+export interface AdminNotifications {
+  qna_waiting: number;
+}
+
 export const adminService = {
   async getStats(): Promise<AdminStats> {
     return apiFetch<AdminStats>('/api/v1/admin/stats');
@@ -30,5 +34,9 @@ export const adminService = {
     if (options?.user_id !== undefined) params.set('user_id', String(options.user_id));
     if (options?.reason) params.set('reason', options.reason);
     return apiFetch<AdminPointListResponse>(`/api/v1/admin/points?${params.toString()}`);
+  },
+
+  async getNotifications(): Promise<AdminNotifications> {
+    return apiFetch<AdminNotifications>('/api/v1/admin/notifications');
   },
 };

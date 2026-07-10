@@ -148,3 +148,12 @@ async def delete_faq(
     """Delete a FAQ entry (admin only)"""
     post = _get_faq_or_404(db, post_id)
     PostService.delete_post(db, post)
+
+
+@router.get("/notifications")
+async def get_notifications(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """Get notification counts for admin menu badges (admin only)"""
+    return AdminService.get_notifications(db)

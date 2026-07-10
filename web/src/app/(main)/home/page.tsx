@@ -70,7 +70,7 @@ export default function HomePage() {
           { label: '단어장', value: stats.total_wordbooks },
           { label: '오늘 학습', value: stats.daily_progress },
         ].map((item) => (
-          <div key={item.label} className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+          <div key={item.label} className="rounded-2xl border border-gray-100 bg-white p-4 text-center dark:border-gray-800 dark:bg-gray-900">
             <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {loading ? '—' : item.value.toLocaleString()}
             </p>

@@ -167,6 +167,19 @@ class AdminService:
         return items, total, points_by_reason
 
     @staticmethod
+    def get_notifications(db: Session) -> dict:
+        """Get notification counts for admin menu badges"""
+        # Q&A posts waiting for replies (reply_count == 0)
+        qna_waiting = db.scalar(
+            select(sa_func.count()).select_from(Post)
+            .where(Post.board_type == "qna", Post.reply_count == 0)
+        ) or 0
+
+        return {
+            "qna_waiting": qna_waiting,
+        }
+
+    @staticmethod
     def delete_user(db: Session, user_id: int, current_admin_id: int) -> User:
         """Delete a user account and all cascaded data. Raises HTTPException on invalid cases."""
         if user_id == current_admin_id:

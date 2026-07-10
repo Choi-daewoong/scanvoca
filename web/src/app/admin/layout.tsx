@@ -6,6 +6,7 @@ import Link from 'next/link';
 import AuthGuard from '@/components/common/AuthGuard';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
+import { adminService, AdminNotifications } from '@/services/adminService';
 
 const MENU_ITEMS = [
   { href: '/admin', label: '대시보드' },
@@ -14,7 +15,7 @@ const MENU_ITEMS = [
   { href: '/admin/users', label: '회원 관리' },
   { href: '/admin/points', label: '포인트 모니터링' },
   { href: '/admin/words', label: '단어/단어장 통계' },
-  { href: '/admin/qna', label: 'Q&A 관리' },
+  { href: '/admin/qna', label: 'Q&A 관리', notificationKey: 'qna_waiting' },
   { href: '/admin/faqs', label: 'FAQ 관리' },
   { href: '/admin/reports', label: '신고/모더레이션' },
 ];
@@ -25,6 +26,7 @@ function AdminContent({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore();
   const initTheme = useThemeStore((s) => s.initTheme);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState<AdminNotifications>({ qna_waiting: 0 });
 
   useEffect(() => {
     initTheme();
@@ -36,10 +38,31 @@ function AdminContent({ children }: { children: React.ReactNode }) {
     }
   }, [user, router]);
 
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const data = await adminService.getNotifications();
+        setNotifications(data);
+      } catch {
+        // 실패 시 기본값 유지
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000); // 30초마다 갱신
+    return () => clearInterval(interval);
+  }, []);
+
   if (!user?.is_admin) return null;
 
   const isActive = (href: string) =>
     href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
+
+  const getNotificationCount = (item: (typeof MENU_ITEMS)[0]): number => {
+    if (!('notificationKey' in item) || !item.notificationKey) return 0;
+    const key = item.notificationKey as keyof AdminNotifications;
+    return notifications[key] || 0;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -47,19 +70,27 @@ function AdminContent({ children }: { children: React.ReactNode }) {
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-gray-200 bg-white px-4 py-6 md:flex dark:border-gray-800 dark:bg-gray-900">
         <p className="mb-6 px-2 text-lg font-bold text-gray-900 dark:text-gray-100">Scan_Voca 관리자</p>
         <nav className="flex flex-1 flex-col gap-1">
-          {MENU_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                isActive(item.href)
-                  ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {MENU_ITEMS.map((item) => {
+            const notificationCount = getNotificationCount(item);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                  isActive(item.href)
+                    ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400'
+                    : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                }`}
+              >
+                <span>{item.label}</span>
+                {notificationCount > 0 && (
+                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                    {notificationCount > 99 ? '99+' : notificationCount}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
         <Link
           href="/home"
@@ -84,20 +115,28 @@ function AdminContent({ children }: { children: React.ReactNode }) {
       </header>
       {menuOpen && (
         <nav className="border-b border-gray-200 bg-white px-4 py-2 md:hidden dark:border-gray-800 dark:bg-gray-900">
-          {MENU_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMenuOpen(false)}
-              className={`block rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                isActive(item.href)
-                  ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {MENU_ITEMS.map((item) => {
+            const notificationCount = getNotificationCount(item);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMenuOpen(false)}
+                className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                  isActive(item.href)
+                    ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400'
+                    : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                }`}
+              >
+                <span>{item.label}</span>
+                {notificationCount > 0 && (
+                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                    {notificationCount > 99 ? '99+' : notificationCount}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
           <Link
             href="/home"
             onClick={() => setMenuOpen(false)}

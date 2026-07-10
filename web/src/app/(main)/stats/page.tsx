@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { wordbookService } from '@/services/wordbookService';
 
 interface DayStat { date: string; label: string; count: number; }
@@ -53,6 +53,7 @@ function buildWeeklyData(allStudyDates: string[]): DayStat[] {
 }
 
 export default function StatsPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -107,11 +108,14 @@ export default function StatsPage() {
   return (
     <div className="px-4 py-6">
       <div className="mb-5 flex items-center gap-3">
-        <Link href="/home" className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
+        <button
+          onClick={() => router.back()}
+          className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+        >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-        </Link>
+        </button>
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">학습 통계</h1>
       </div>
 
