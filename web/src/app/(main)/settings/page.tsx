@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
+import TutorialModal from '@/components/common/TutorialModal';
 
 const DAILY_GOAL_KEY = 'scan_voca_daily_goal';
 
@@ -15,6 +16,7 @@ export default function SettingsPage() {
   const [dailyGoal, setDailyGoal] = useState(10);
   const [goalInput, setGoalInput] = useState('10');
   const [goalSaved, setGoalSaved] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(DAILY_GOAL_KEY);
@@ -159,6 +161,16 @@ export default function SettingsPage() {
 
       {/* 빠른 메뉴 */}
       <div className="mb-3 overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <button
+          onClick={() => setTutorialOpen(true)}
+          className="flex w-full items-center justify-between px-5 py-4 transition hover:bg-gray-50 dark:hover:bg-gray-800"
+        >
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">사용법 보기</span>
+          <svg className="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+        <div className="border-t border-gray-100 dark:border-gray-800" />
         <Link
           href="/stats"
           className="flex items-center justify-between px-5 py-4 transition hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -235,6 +247,8 @@ export default function SettingsPage() {
       >
         로그아웃
       </button>
+
+      <TutorialModal open={tutorialOpen} onClose={() => setTutorialOpen(false)} />
     </div>
   );
 }

@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { wordbookService } from '@/services/wordbookService';
 import { StudyStats } from '@/types';
+import TutorialModal from '@/components/common/TutorialModal';
+
+const TUTORIAL_SEEN_KEY = 'scanvoca_tutorial_seen';
 
 export default function HomePage() {
   const { user } = useAuthStore();
@@ -16,6 +19,24 @@ export default function HomePage() {
     daily_goal: 10,
   });
   const [loading, setLoading] = useState(true);
+  const [showTutorialBanner, setShowTutorialBanner] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem(TUTORIAL_SEEN_KEY)) {
+      setShowTutorialBanner(true);
+    }
+  }, []);
+
+  const dismissTutorialBanner = () => {
+    localStorage.setItem(TUTORIAL_SEEN_KEY, '1');
+    setShowTutorialBanner(false);
+  };
+
+  const openTutorial = () => {
+    dismissTutorialBanner();
+    setTutorialOpen(true);
+  };
 
   const loadStats = useCallback(async () => {
     try {
@@ -44,6 +65,33 @@ export default function HomePage() {
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">오늘도 영단어를 학습해볼까요?</p>
       </div>
+
+      {/* 튜토리얼 배너 (처음 방문 시에만 표시) */}
+      {showTutorialBanner && (
+        <div className="mb-6 flex items-center justify-between rounded-2xl border border-indigo-100 bg-indigo-50 p-4 dark:border-indigo-900 dark:bg-indigo-950/30">
+          <div>
+            <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">처음이신가요?</p>
+            <p className="mt-0.5 text-xs text-indigo-500 dark:text-indigo-400">사용법 영상으로 빠르게 알아보세요</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              onClick={openTutorial}
+              className="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700"
+            >
+              영상 보기
+            </button>
+            <button
+              onClick={dismissTutorialBanner}
+              aria-label="닫기"
+              className="rounded-xl p-2 text-indigo-400 hover:bg-indigo-100 dark:text-indigo-500 dark:hover:bg-indigo-900/40"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 일일 목표 */}
       <div className="mb-6 rounded-2xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
@@ -112,6 +160,8 @@ export default function HomePage() {
           학습 통계
         </Link>
       </div>
+
+      <TutorialModal open={tutorialOpen} onClose={() => setTutorialOpen(false)} />
     </div>
   );
 }
