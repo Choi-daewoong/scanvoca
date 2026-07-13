@@ -76,7 +76,7 @@ export default function HomePage() {
           <div className="flex shrink-0 items-center gap-2">
             <Link
               href="/intro"
-              className="rounded-xl border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-800 dark:bg-gray-900 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+              className="flex items-center rounded-xl border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-800 dark:bg-gray-900 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
             >
               서비스 소개
             </Link>
