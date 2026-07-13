@@ -1,21 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
-
-// 로그인 없이도 볼 수 있는 경로 (홈 체험 화면 + 체험용 단어장 상세)
-const GUEST_ALLOWED_PREFIXES = ['/home', '/wordbooks/demo'];
-
-function isGuestAllowed(pathname: string): boolean {
-  return GUEST_ALLOWED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-}
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
   const { user, isInitialized, loadUser } = useAuthStore();
-  const guestOk = isGuestAllowed(pathname);
 
   useEffect(() => {
     if (!isInitialized) {
@@ -24,10 +15,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [isInitialized, loadUser]);
 
   useEffect(() => {
-    if (isInitialized && !user && !guestOk) {
+    // loadUser()가 토큰이 없으면 게스트 세션을 자동 발급하므로, 여기서 !user가
+    // 남는 경우는 그 발급 자체가 실패한 경우(네트워크 오류 등) 뿐이다.
+    if (isInitialized && !user) {
       router.replace('/login');
     }
-  }, [isInitialized, user, guestOk, router]);
+  }, [isInitialized, user, router]);
 
   if (!isInitialized) {
     return (
@@ -37,7 +30,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user && !guestOk) return null;
+  if (!user) return null;
 
   return <>{children}</>;
 }

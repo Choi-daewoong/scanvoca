@@ -13,10 +13,12 @@ from app.core.security import (
     hash_password, verify_token
 )
 from app.core.dependencies import get_current_user
+from app.core.rate_limit import IPRateLimiter
 from app.schemas.user import (
     UserCreate, UserLogin, UserResponse, UserUpdate, TokenResponse,
     GoogleLoginRequest, TokenRefreshRequest,
-    PasswordResetRequest, PasswordResetConfirm, MessageResponse
+    PasswordResetRequest, PasswordResetConfirm, MessageResponse,
+    GuestUpgradeRequest,
 )
 from app.services.user_service import UserService
 from app.services.email_service import send_password_reset_email
@@ -52,6 +54,64 @@ async def register(
     # Create user
     user = UserService.create(db, user_data)
     return user
+
+
+@router.post(
+    "/guest",
+    response_model=TokenResponse,
+    dependencies=[Depends(IPRateLimiter(max_requests=10, window_seconds=3600, scope="guest_bootstrap"))],
+)
+async def guest_login(db: Session = Depends(get_db)):
+    """
+    Silently create a shadow guest account and log into it
+
+    No credentials required. Used to let logged-out visitors use the app
+    (scan, save, study modes) exactly like a real user, without a signup wall.
+    """
+    try:
+        UserService.cleanup_stale_guests(db)
+    except Exception:
+        pass  # best-effort - never block bootstrap on cleanup failure
+
+    user = UserService.create_guest(db)
+
+    access_token = create_access_token(str(user.id))
+    refresh_token = create_refresh_token(str(user.id))
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
+
+
+@router.post("/upgrade-guest", response_model=UserResponse)
+async def upgrade_guest(
+    upgrade_data: GuestUpgradeRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Attach a real email/password to the current guest account
+
+    Keeps the same account (and its wordbooks/scanned words) - this is not
+    a new registration, it upgrades the guest session in place.
+    """
+    if not current_user.is_guest:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="이미 가입된 계정입니다"
+        )
+
+    if UserService.email_exists(db, upgrade_data.email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="이미 사용 중인 이메일입니다"
+        )
+
+    return UserService.upgrade_guest(
+        db, current_user, upgrade_data.email, upgrade_data.password, upgrade_data.display_name
+    )
 
 
 @router.post("/login", response_model=TokenResponse)

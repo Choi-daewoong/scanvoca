@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
+import { useGuestUiStore } from '@/stores/guestUiStore';
 import TutorialModal from '@/components/common/TutorialModal';
 
 const DAILY_GOAL_KEY = 'scan_voca_daily_goal';
@@ -13,6 +14,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
+  const openUpgradeModal = useGuestUiStore((s) => s.openUpgradeModal);
   const [dailyGoal, setDailyGoal] = useState(10);
   const [goalInput, setGoalInput] = useState('10');
   const [goalSaved, setGoalSaved] = useState(false);
@@ -63,24 +65,60 @@ export default function SettingsPage() {
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">설정</h1>
       </div>
 
-      {/* 프로필 */}
-      <Link
-        href="/settings/profile"
-        className="mb-5 flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-5 transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
-      >
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 text-xl font-bold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
-            {(user?.display_name || user?.email || 'U')[0].toUpperCase()}
-          </div>
+      {/* 게스트 안내 */}
+      {user?.is_guest && (
+        <div className="mb-5 flex items-center justify-between rounded-2xl border border-indigo-100 bg-indigo-50 p-4 dark:border-indigo-900 dark:bg-indigo-950/30">
           <div>
-            <p className="font-semibold text-gray-900 dark:text-gray-100">{user?.display_name || '사용자'}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
+            <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">임시 계정입니다</p>
+            <p className="mt-0.5 text-xs text-indigo-500 dark:text-indigo-400">회원가입하고 안전하게 보관하세요</p>
           </div>
+          <button
+            onClick={openUpgradeModal}
+            className="shrink-0 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700"
+          >
+            회원가입
+          </button>
         </div>
-        <svg className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </Link>
+      )}
+
+      {/* 프로필 */}
+      {user?.is_guest ? (
+        <button
+          onClick={openUpgradeModal}
+          className="mb-5 flex w-full items-center justify-between rounded-2xl border border-gray-100 bg-white p-5 text-left transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 text-xl font-bold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
+              G
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">게스트</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">임시 계정 · 가입하려면 탭하세요</p>
+            </div>
+          </div>
+          <svg className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      ) : (
+        <Link
+          href="/settings/profile"
+          className="mb-5 flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-5 transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 text-xl font-bold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
+              {(user?.display_name || user?.email || 'U')[0].toUpperCase()}
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">{user?.display_name || '사용자'}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
+            </div>
+          </div>
+          <svg className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+      )}
 
       {/* 포인트 */}
       <Link

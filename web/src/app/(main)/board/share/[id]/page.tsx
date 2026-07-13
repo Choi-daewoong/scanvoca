@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
+import { useGuestUiStore } from '@/stores/guestUiStore';
 import { boardService } from '@/services/boardService';
 import { Post } from '@/types';
 
@@ -10,6 +11,7 @@ export default function SharePostDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuthStore();
+  const openUpgradeModal = useGuestUiStore((s) => s.openUpgradeModal);
   const id = Number(params.id);
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +42,10 @@ export default function SharePostDetailPage() {
 
   const handleToggleLike = async () => {
     if (!post || liking) return;
+    if (user?.is_guest) {
+      openUpgradeModal();
+      return;
+    }
     setLiking(true);
     const wasLiked = post.liked_by_me;
     setPost({

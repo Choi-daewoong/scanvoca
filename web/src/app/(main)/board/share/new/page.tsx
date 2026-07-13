@@ -4,10 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { wordbookService } from '@/services/wordbookService';
 import { boardService } from '@/services/boardService';
+import { useAuthStore } from '@/stores/authStore';
+import { useGuestUiStore } from '@/stores/guestUiStore';
 import { Wordbook } from '@/types';
 
 export default function NewSharePostPage() {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const openUpgradeModal = useGuestUiStore((s) => s.openUpgradeModal);
   const [wordbooks, setWordbooks] = useState<Wordbook[]>([]);
   const [wordbookId, setWordbookId] = useState<number | null>(null);
   const [title, setTitle] = useState('');
@@ -16,6 +20,13 @@ export default function NewSharePostPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (user?.is_guest) {
+      router.replace('/board');
+      openUpgradeModal();
+    }
+  }, [user, router, openUpgradeModal]);
 
   useEffect(() => {
     (async () => {

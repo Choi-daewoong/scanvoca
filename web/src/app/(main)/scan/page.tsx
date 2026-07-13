@@ -11,6 +11,8 @@ import { OCRScanResponse, WordDefinition, Wordbook } from '@/types';
 import Image from 'next/image';
 import { speakWord } from '@/utils/tts';
 import { formatPartOfSpeech } from '@/utils/partOfSpeech';
+import { useAuthStore } from '@/stores/authStore';
+import { useGuestUiStore } from '@/stores/guestUiStore';
 
 type Step = 'upload' | 'crop' | 'processing' | 'result' | 'saving';
 
@@ -46,6 +48,8 @@ async function getCroppedFile(image: HTMLImageElement, crop: PixelCrop, fileName
 
 export default function ScanPage() {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const showSaveBanner = useGuestUiStore((s) => s.showSaveBanner);
   const [step, setStep] = useState<Step>('upload');
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<OCRScanResponse | null>(null);
@@ -151,6 +155,7 @@ export default function ScanPage() {
       }
 
       setSaveSuccess(true);
+      if (user?.is_guest) showSaveBanner();
       // 저장 후 바로 단어장 상세 페이지로 이동
       router.push(`/wordbooks/${wbId}`);
     } catch {

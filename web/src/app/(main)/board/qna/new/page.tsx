@@ -1,11 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { boardService } from '@/services/boardService';
+import { useAuthStore } from '@/stores/authStore';
+import { useGuestUiStore } from '@/stores/guestUiStore';
 
 export default function NewQnaPostPage() {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const openUpgradeModal = useGuestUiStore((s) => s.openUpgradeModal);
+
+  useEffect(() => {
+    if (user?.is_guest) {
+      router.replace('/board');
+      openUpgradeModal();
+    }
+  }, [user, router, openUpgradeModal]);
+
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);

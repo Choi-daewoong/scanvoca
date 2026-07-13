@@ -57,7 +57,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     // sessionStorage(로그인 유지 OFF)와 localStorage(로그인 유지 ON) 모두 확인
     const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
     if (!token) {
-      set({ isInitialized: true });
+      // 토큰이 전혀 없는 첫 방문 - 조용히 게스트 세션을 발급받아 이어간다
+      try {
+        await authService.guestLogin();
+        const user = await authService.getMe();
+        set({ user, isInitialized: true });
+      } catch {
+        set({ user: null, isInitialized: true });
+      }
       return;
     }
     try {

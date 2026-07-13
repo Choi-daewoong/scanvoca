@@ -30,6 +30,24 @@ export const authService = {
     });
   },
 
+  async guestLogin(): Promise<TokenResponse> {
+    const data = await apiFetch<TokenResponse>('/api/v1/auth/guest', {
+      method: 'POST',
+      skipAuth: true,
+    });
+    // 게스트 세션도 브라우저 재시작 후 이어지도록 로그인 유지(localStorage)로 저장
+    setTokens(data.access_token, data.refresh_token, true);
+    return data;
+  },
+
+  // 새 계정을 만드는 게 아니라 지금 쓰던 게스트 계정에 이메일/비밀번호를 붙이는 업그레이드
+  async upgradeGuest(email: string, password: string, display_name?: string): Promise<User> {
+    return apiFetch<User>('/api/v1/auth/upgrade-guest', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, display_name }),
+    });
+  },
+
   async getMe(): Promise<User> {
     return apiFetch<User>('/api/v1/auth/me');
   },

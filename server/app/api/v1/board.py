@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, get_current_real_user
 from app.models.user import User
 from app.models.post import Post
 from app.schemas.post import (
@@ -38,7 +38,7 @@ async def list_posts(
 async def create_post(
     post_data: PostCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_real_user)
 ):
     """Create a new post (notice and FAQ posts require admin)"""
     if post_data.board_type == "notice" and not current_user.is_admin:
@@ -126,7 +126,7 @@ async def delete_post(
 async def like_post(
     post_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_real_user)
 ):
     """Like a post"""
     post = _get_post_or_404(db, post_id)
@@ -138,7 +138,7 @@ async def like_post(
 async def unlike_post(
     post_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_real_user)
 ):
     """Unlike a post"""
     post = _get_post_or_404(db, post_id)

@@ -46,6 +46,8 @@ def get_current_user(
             detail="User account is inactive"
         )
 
+    UserService.touch_last_active(db, user)
+
     return user
 
 
@@ -64,5 +66,17 @@ def get_current_admin_user(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="관리자 권한이 필요합니다"
+        )
+    return current_user
+
+
+def get_current_real_user(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """Require the current user to be a real (non-guest) account"""
+    if current_user.is_guest:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="회원가입 후 이용할 수 있습니다"
         )
     return current_user

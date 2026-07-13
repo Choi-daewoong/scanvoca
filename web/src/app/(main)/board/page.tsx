@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
+import { useGuestUiStore } from '@/stores/guestUiStore';
 import { boardService } from '@/services/boardService';
 import { Post, BoardType } from '@/types';
 
@@ -13,6 +14,7 @@ const VALID_BOARD_TYPES: BoardType[] = ['share', 'notice', 'qna', 'faq'];
 
 function BoardPageContent() {
   const { user } = useAuthStore();
+  const openUpgradeModal = useGuestUiStore((s) => s.openUpgradeModal);
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
@@ -51,15 +53,27 @@ function BoardPageContent() {
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">게시판</h1>
         {(boardType === 'share' || boardType === 'qna') && (
-          <Link
-            href={`/board/${boardType}/new`}
-            className="flex items-center gap-1.5 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            글쓰기
-          </Link>
+          user?.is_guest ? (
+            <button
+              onClick={openUpgradeModal}
+              className="flex items-center gap-1.5 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              글쓰기
+            </button>
+          ) : (
+            <Link
+              href={`/board/${boardType}/new`}
+              className="flex items-center gap-1.5 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              글쓰기
+            </Link>
+          )
         )}
         {boardType === 'notice' && user?.is_admin && (
           <Link

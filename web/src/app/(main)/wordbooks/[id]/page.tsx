@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { wordbookService } from '@/services/wordbookService';
 import { useAuthStore } from '@/stores/authStore';
+import { useGuestUiStore } from '@/stores/guestUiStore';
 import { GPTMeaning, Wordbook, WordbookWord } from '@/types';
 import StudyMode from './_components/StudyMode';
 import QuizMode from './_components/QuizMode';
@@ -17,6 +18,7 @@ export default function WordbookDetailPage() {
   const router = useRouter();
   const id = Number(params.id);
   const { user } = useAuthStore();
+  const showSaveBanner = useGuestUiStore((s) => s.showSaveBanner);
 
   const [wordbook, setWordbook] = useState<Wordbook | null>(null);
   const [words, setWords] = useState<WordbookWord[]>([]);
@@ -146,6 +148,7 @@ export default function WordbookDetailPage() {
         errorWords: res.items.filter((item) => item.status === 'error').map((item) => item.word),
       });
       setAddWordsInput('');
+      if (user?.is_guest && newWords.length > 0) showSaveBanner();
     } catch {
       alert('단어 추가에 실패했습니다.');
     } finally {
