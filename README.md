@@ -1,10 +1,28 @@
-# Scan_Voca — 스마트 영단어 학습 앱
+# 📚 Scan Voca
 
-카메라로 영어 텍스트를 스캔하고 AI로 단어를 분석하는 웹 기반 영단어 학습 서비스입니다.
+**사진 한 장으로 시작하는 스마트 영단어 학습**
+
+책, 노트, 교재의 영어 단어를 사진으로 찍기만 하면 AI가 자동으로 뜻과 예문을 만들어 단어장에 저장해줍니다. 타이핑 없이, 스캔하고 바로 외우세요.
+
+🔗 **[scanvoca.com](https://scanvoca.com)** · 📖 [API 문서](https://scanvoca-api-313755310624.asia-northeast3.run.app/docs)
 
 ---
 
-## 기술 스택
+## ✨ 주요 기능
+
+- 📷 **스마트 스캔** — 카메라/갤러리 이미지에서 영단어 자동 추출, 원하는 영역만 크롭해서 인식. 단어뿐 아니라 숙어·구동사도 인식
+- 🤖 **AI 기반 학습** — AI가 한국어 뜻, 영어 정의, 예문을 자동 생성
+- 📖 **스마트 단어장** — 폴더로 정리, 공유 코드로 친구와 공유, 뜻 직접 수정, 발음 듣기(TTS)
+- 🎯 **다양한 학습 모드** — 플래시카드(Study), 객관식 퀴즈(Quiz), 시험(Exam), 철자 연습(Spelling)
+- 📊 **학습 통계** — 일별 학습 현황, 습득 단어 추적
+- 💬 **커뮤니티** — 단어장 공유 게시판, Q&A
+- 🔐 **계정 동기화** — 이메일/Google 로그인, 어떤 기기에서든 이어서 학습
+
+**이런 분들께 추천합니다**: 수능·토익·토플 준비생, 영어 원서/자료를 읽는 직장인, 효율적인 영단어 학습법을 찾는 모든 분
+
+---
+
+## 🛠️ 기술 스택
 
 | 영역 | 기술 |
 |---|---|
@@ -12,14 +30,27 @@
 | Backend | FastAPI (Python), SQLAlchemy 2.0 |
 | Database | Supabase PostgreSQL |
 | AI | Google AI API |
-| 배포 | Google Cloud Run (`asia-northeast3`) |
+| 배포 | Vercel (웹) · Google Cloud Run (`asia-northeast3`, API) |
 | 인증 | JWT (access + refresh token) |
 
 ---
 
-## 빠른 시작
+## 📁 프로젝트 구조
 
-### 백엔드
+```
+Scan_Voca/
+├── web/          # Next.js 웹앱
+├── server/       # FastAPI 백엔드
+├── CLAUDE.md     # 개발 가이드 (Claude Code용)
+└── DEPLOYMENT_GUIDE.md
+```
+
+---
+
+## 개발자용 — 로컬 실행
+
+<details>
+<summary>백엔드 설정</summary>
 
 ```bash
 cd server
@@ -37,7 +68,10 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-### 프론트엔드
+</details>
+
+<details>
+<summary>프론트엔드 설정</summary>
 
 ```bash
 cd web
@@ -50,54 +84,25 @@ echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
 npm run dev
 ```
 
----
+</details>
 
-## 주요 기능
-
-- **OCR 스캔**: 카메라 이미지에서 영어 단어 추출
-- **AI 단어 정의**: AI API 기반 한국어 뜻, 품사, 예문 생성
-- **단어장 관리**: 단어장 생성/편집, 단어 추가/삭제
-- **학습 모드**: 플래시카드(Study), 퀴즈(Quiz), 시험(Exam), 철자 연습(Spelling)
-- **학습 통계**: 일별 학습 현황, 습득 단어 추적
-- **인증**: 이메일/비밀번호 로그인, 비밀번호 재설정(이메일 OTP)
-
----
-
-## 운영 환경
-
-- **API 서버**: `https://scanvoca-api-313755310624.asia-northeast3.run.app`
-- **API 문서**: `https://scanvoca-api-313755310624.asia-northeast3.run.app/docs`
-
-### Cloud Run 재배포
+<details>
+<summary>Cloud Run 재배포</summary>
 
 ```powershell
 cd server
 .\deploy-final.ps1
 ```
 
----
+</details>
 
-## 프로젝트 구조
-
-```
-Scan_Voca/
-├── web/          # Next.js 웹앱
-├── server/       # FastAPI 백엔드
-├── CLAUDE.md     # 개발 가이드 (Claude Code용)
-└── DEPLOYMENT_GUIDE.md
-```
-
----
-
-## 환경변수
-
-`server/.env.example` 와 `web/.env.example` 참고. `.env` / `.env.local` 파일은 절대 커밋하지 않습니다.
+환경변수는 `server/.env.example`, `web/.env.example` 참고. `.env` / `.env.local` 파일은 절대 커밋하지 않습니다.
 
 ---
 
 ## 링크
 
-- **GitHub**: https://github.com/Choi-daewoong/scanvoca
 - **배포 가이드**: [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+- **개인정보처리방침**: [PRIVACY_POLICY.md](./PRIVACY_POLICY.md)
 
 > 참고: `master`는 현재 운영 중인 Next.js 웹앱 기준입니다. 과거 React Native 앱으로 개발하던 코드는 `legacy-app` 브랜치에 보관되어 있습니다.
