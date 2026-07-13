@@ -431,7 +431,7 @@ function SaveToWordbookPanel({
   isSaving: boolean;
   onSave: (wbId: number) => void;
 }) {
-  const [showNew, setShowNew] = useState(false);
+  const [mode, setMode] = useState<'existing' | 'new'>(wordbooks.length > 0 ? 'existing' : 'new');
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
 
@@ -442,7 +442,6 @@ function SaveToWordbookPanel({
       const wb = await wordbookService.create(newName.trim());
       setWordbooks((prev) => [...prev, wb]);
       setSelectedWbId(wb.id);
-      setShowNew(false);
       setNewName('');
       onSave(wb.id);
     } catch {
@@ -456,75 +455,72 @@ function SaveToWordbookPanel({
     <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
       <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">단어장에 저장하기</p>
 
-      {/* 기존 단어장 선택 */}
-      {wordbooks.length > 0 && !showNew && (
-        <select
-          value={selectedWbId ?? ''}
-          onChange={(e) => setSelectedWbId(Number(e.target.value))}
-          className="mb-3 w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-        >
-          {wordbooks.map((wb) => (
-            <option key={wb.id} value={wb.id}>
-              {wb.name} ({wb.word_count}개)
-            </option>
-          ))}
-        </select>
+      {/* 저장 방식 선택 */}
+      {wordbooks.length > 0 && (
+        <div className="mb-3 flex rounded-xl border border-gray-200 bg-white p-0.5 dark:border-gray-700 dark:bg-gray-800">
+          <button
+            onClick={() => setMode('existing')}
+            className={`flex-1 rounded-lg py-2 text-xs font-semibold transition ${
+              mode === 'existing'
+                ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400'
+                : 'text-gray-500 dark:text-gray-400'
+            }`}
+          >
+            기존 단어장에 추가
+          </button>
+          <button
+            onClick={() => setMode('new')}
+            className={`flex-1 rounded-lg py-2 text-xs font-semibold transition ${
+              mode === 'new'
+                ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400'
+                : 'text-gray-500 dark:text-gray-400'
+            }`}
+          >
+            새 단어장으로 저장
+          </button>
+        </div>
       )}
 
-      {/* 새 단어장 만들기 폼 */}
-      {showNew ? (
-        <div className="mb-3">
+      {mode === 'existing' && wordbooks.length > 0 ? (
+        <>
+          <select
+            value={selectedWbId ?? ''}
+            onChange={(e) => setSelectedWbId(Number(e.target.value))}
+            className="mb-3 w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+          >
+            {wordbooks.map((wb) => (
+              <option key={wb.id} value={wb.id}>
+                {wb.name} ({wb.word_count}개)
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => selectedWbId && onSave(selectedWbId)}
+            disabled={isSaving || selectedCount === 0 || !selectedWbId}
+            className="w-full rounded-xl border border-indigo-100 bg-indigo-50 py-3 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
+          >
+            {isSaving ? '저장 중...' : `${selectedCount}개 단어 추가하기`}
+          </button>
+        </>
+      ) : (
+        <div>
           <input
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             placeholder="새 단어장 이름"
-            autoFocus
+            autoFocus={wordbooks.length > 0}
             className="mb-2 w-full rounded-xl border border-indigo-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-indigo-800 dark:bg-gray-800 dark:text-gray-100"
           />
-          <div className="flex gap-2">
-            <button
-              onClick={handleCreate}
-              disabled={creating || isSaving || !newName.trim() || selectedCount === 0}
-              className="flex-1 rounded-xl border border-indigo-100 bg-indigo-50 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
-            >
-              {creating || isSaving ? '저장 중...' : '만들고 저장하기'}
-            </button>
-            <button
-              onClick={() => { setShowNew(false); setNewName(''); }}
-              className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
-            >
-              취소
-            </button>
-          </div>
+          <button
+            onClick={handleCreate}
+            disabled={creating || isSaving || !newName.trim() || selectedCount === 0}
+            className="w-full rounded-xl border border-indigo-100 bg-indigo-50 py-3 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
+          >
+            {creating || isSaving ? '저장 중...' : `${selectedCount}개 단어 새 단어장으로 저장`}
+          </button>
         </div>
-      ) : (
-        <button
-          onClick={() => setShowNew(true)}
-          className="mb-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-indigo-300 py-2.5 text-sm font-medium text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          새 단어장 만들기
-        </button>
-      )}
-
-      {/* 저장 버튼 (기존 단어장 선택 시) */}
-      {!showNew && wordbooks.length > 0 && (
-        <button
-          onClick={() => selectedWbId && onSave(selectedWbId)}
-          disabled={isSaving || selectedCount === 0 || !selectedWbId}
-          className="w-full rounded-xl border border-indigo-100 bg-indigo-50 py-3 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-950/70"
-        >
-          {isSaving ? '저장 중...' : `${selectedCount}개 단어 저장`}
-        </button>
-      )}
-
-      {/* 단어장이 없고 새 단어장 폼도 안 열린 경우 */}
-      {wordbooks.length === 0 && !showNew && (
-        <p className="text-center text-sm text-gray-400 dark:text-gray-500">위에서 새 단어장을 만들어주세요</p>
       )}
     </div>
   );
