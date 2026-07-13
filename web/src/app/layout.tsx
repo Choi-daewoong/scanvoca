@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import VisitTracker from '@/components/common/VisitTracker';
 
 export const metadata: Metadata = {
   title: 'Scan Voca - 스마트 영단어 학습',
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="h-full bg-white text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100">
+        <VisitTracker />
         {children}
       </body>
     </html>

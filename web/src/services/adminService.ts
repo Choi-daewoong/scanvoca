@@ -1,5 +1,5 @@
 import { apiFetch } from './api';
-import { AdminStats, AdminUserListResponse, AdminPointListResponse } from '@/types';
+import { AdminStats, AdminUserListResponse, AdminPointListResponse, VisitStats } from '@/types';
 
 export interface AdminNotifications {
   qna_waiting: number;
@@ -38,5 +38,9 @@ export const adminService = {
 
   async getNotifications(): Promise<AdminNotifications> {
     return apiFetch<AdminNotifications>('/api/v1/admin/notifications');
+  },
+
+  async getVisitStats(): Promise<VisitStats> {
+    return apiFetch<VisitStats>('/api/v1/admin/visits');
   },
 };

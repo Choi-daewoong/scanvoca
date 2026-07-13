@@ -10,8 +10,10 @@ from app.schemas.post import PostCreate, PostUpdate, PostResponse
 from app.schemas.admin import (
     AdminStatsResponse, AdminUserListResponse, AdminPointListResponse,
 )
+from app.schemas.visit import VisitStatsResponse
 from app.services.post_service import PostService
 from app.services.admin_service import AdminService
+from app.services.visit_service import VisitService
 
 router = APIRouter()
 
@@ -148,6 +150,15 @@ async def delete_faq(
     """Delete a FAQ entry (admin only)"""
     post = _get_faq_or_404(db, post_id)
     PostService.delete_post(db, post)
+
+
+@router.get("/visits", response_model=VisitStatsResponse)
+async def get_visit_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """Today / weekly / monthly visitor counts, plus a 30-day daily trend (admin only)"""
+    return VisitService.get_stats(db)
 
 
 @router.get("/notifications")

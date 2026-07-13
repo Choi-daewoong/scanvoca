@@ -229,3 +229,15 @@ export interface AdminPointListResponse {
   total: number;
   points_by_reason: Record<string, number>;
 }
+
+export interface VisitDailyCount {
+  date: string;
+  count: number;
+}
+
+export interface VisitStats {
+  today: number;
+  week: number;
+  month: number;
+  daily: VisitDailyCount[];
+}
