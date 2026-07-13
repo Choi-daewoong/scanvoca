@@ -3,8 +3,13 @@ import './globals.css';
 import VisitTracker from '@/components/common/VisitTracker';
 
 export const metadata: Metadata = {
-  title: 'Scan Voca - 스마트 영단어 학습',
-  description: '사진 찍으면 AI가 영단어를 자동 인식. 나만의 단어장을 만들어보세요.',
+  metadataBase: new URL('https://scanvoca.com'),
+  title: {
+    default: 'Scan Voca - 스마트 영단어 학습',
+    template: '%s | Scan Voca',
+  },
+  description: '사진 찍으면 AI가 영단어를 자동 인식하는 영단어 앱. 수능·토익·토플 단어장을 무료로 만들어보세요.',
+  keywords: ['영단어 앱', '단어장 앱', 'AI 영단어', '영어 단어 암기', '수능 영단어'],
   icons: {
     icon: '/icons/favicon.ico',
     shortcut: '/icons/favicon-16x16.png',
