@@ -8,6 +8,24 @@ WORKLOG*.md
 서버시작
 제목 없음.jpg
 
+# 홍보 영상 대본/자막 초안 (개인 작업 파일, 코드 아님)
+test.md
+멘트.md
+시나리오.md
+자막.md
+
+# 배포 로그/미사용 에셋
+server/deploy_log.txt
+server/icon.png
+
+# 정리된 구식/1회성 스크립트, 문서 (git 추적만 제외, 로컬엔 유지)
+server/check_db.py
+server/deployment_url.txt
+server/CLOUD_RUN_DEPLOYMENT.md
+server/check_user_wordbooks.py
+server/set_admin.py
+idea.md
+
 # Node modules
 node_modules/
 

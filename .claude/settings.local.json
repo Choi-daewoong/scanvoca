@@ -137,7 +137,16 @@
       "PowerShell(Get-ChildItem *)",
       "PowerShell($env:VERCEL_TOKEN; [System.Environment]::GetEnvironmentVariable\\(\"VERCEL_TOKEN\", \"User\"\\); [System.Environment]::GetEnvironmentVariable\\(\"VERCEL_TOKEN\", \"Machine\"\\))",
       "Bash(python3 -c \"import sys,json; [print\\(p['name'], p.get\\('link',{}\\)\\) for p in json.load\\(sys.stdin\\).get\\('projects',[]\\)]\")",
-      "Bash(vercel logs *)"
+      "Bash(vercel logs *)",
+      "Skill(run)",
+      "PowerShell(Start-Sleep -Seconds 15; \\(Invoke-WebRequest -Uri http://localhost:3000 -UseBasicParsing\\).StatusCode)",
+      "PowerShell(Start-Sleep -Seconds 15; $response = Invoke-WebRequest -Uri http://localhost:3000 -UseBasicParsing -ErrorAction SilentlyContinue; if \\($response\\) { $response.StatusCode } else { \"Server not responding\" })",
+      "PowerShell(git reset *)",
+      "PowerShell(docker version *)",
+      "Bash(echo \"started with pid $!\")",
+      "Bash(break)",
+      "Bash(kill 893)",
+      "Bash(pkill -f \"next dev\")"
     ],
     "deny": [],
     "ask": []
