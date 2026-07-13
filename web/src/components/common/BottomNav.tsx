@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAppearanceStore } from '@/stores/appearanceStore';
+import { getSkinPreset } from '@/lib/skins';
 
 const tabs = [
   {
@@ -55,6 +57,9 @@ const tabs = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const skinId = useAppearanceStore((s) => s.skinId);
+  // 활성 탭 아이콘에 붙는 테마 모티프 (기본 스킨은 장식 없음)
+  const motifPath = getSkinPreset(skinId)?.motifPath;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
@@ -67,7 +72,19 @@ export default function BottomNav() {
               href={tab.href}
               className="flex flex-1 flex-col items-center gap-1 py-3 transition-colors"
             >
-              {tab.icon(isActive)}
+              <span className="relative">
+                {tab.icon(isActive)}
+                {isActive && motifPath && (
+                  <svg
+                    className="absolute -right-2 -top-1.5 h-3 w-3 text-indigo-400"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d={motifPath} />
+                  </svg>
+                )}
+              </span>
               <span className={`text-xs font-medium ${isActive ? 'text-indigo-500' : 'text-gray-400 dark:text-gray-500'}`}>
                 {tab.label}
               </span>
