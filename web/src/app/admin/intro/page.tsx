@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { boardService } from '@/services/boardService';
 import { Post, ContentFormat } from '@/types';
 import ContentEditor from '@/components/common/ContentEditor';
@@ -14,6 +14,7 @@ export default function AdminIntroPage() {
   const [content, setContent] = useState('');
   const [contentFormat, setContentFormat] = useState<ContentFormat>('markdown');
   const [submitting, setSubmitting] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -40,6 +41,9 @@ export default function AdminIntroPage() {
     setTitle(post.title);
     setContent(post.content || '');
     setContentFormat(post.content_format || 'markdown');
+    // 폼이 화면 위쪽에 있어서, 좁은 화면(모바일)에서는 목록의 "수정"을 눌러도
+    // 폼이 스크롤 밖이라 아무 변화가 없는 것처럼 보인다 - 눌렀을 때 폼으로 스크롤한다.
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   // /intro는 1시간 ISR 캐시라, 안 부르면 방금 쓴 글이 최대 1시간 동안 안 보일 수 있다.
@@ -102,7 +106,7 @@ export default function AdminIntroPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="space-y-3 rounded-2xl border border-indigo-100 bg-indigo-50 p-4 dark:border-indigo-900 dark:bg-indigo-950/30">
+        <div ref={formRef} className="space-y-3 rounded-2xl border border-indigo-100 bg-indigo-50 p-4 dark:border-indigo-900 dark:bg-indigo-950/30">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               {editingId ? '글 수정' : '새 글 작성'}
