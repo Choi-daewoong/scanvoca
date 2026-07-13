@@ -3,26 +3,225 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-:root {
-  --primary: #4F46E5;
-  --primary-dark: #4338CA;
-  --primary-light: #EEF2FF;
-}
-
 * {
   box-sizing: border-box;
 }
 
 body {
-  background: #ffffff;
-  color: #111827;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-white);
+  color: var(--color-gray-900);
+  font-family: var(--app-font, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
   -webkit-font-smoothing: antialiased;
 }
 
 .dark body {
-  background: #0b0f19;
-  color: #f3f4f6;
+  background: var(--color-gray-950);
+  color: var(--color-gray-100);
+}
+
+/* ============================================================
+   스킨(풀 테마) - html[data-skin]에서 Tailwind v4 색상 변수를 덮어써서
+   컴포넌트 코드 수정 없이 앱 전체를 리테마한다.
+   - indigo 램프 = 포인트 색 (버튼·하이라이트·탭바 등 238곳)
+   - gray 램프 + white = 배경·카드·텍스트 중립색.
+     스톡 gray와 lightness를 동일하게 유지하고 hue만 스킨 색조로
+     틴트(저채도)해서 텍스트 대비(가독성)가 변하지 않게 한다.
+   - 시맨틱 색(red=오류, emerald=성공, amber=경고)은 건드리지 않는다.
+   - dark: 유틸리티도 같은 변수의 900/950 단계를 쓰므로 다크모드에도
+     스킨 색조가 자동 반영된다.
+   포인트 램프 oklch 값 출처: node_modules/tailwindcss/theme.css
+   ============================================================ */
+
+/* 로즈 - rose 포인트 + 핑크 틴트 중립 */
+html[data-skin="rose"] {
+  --color-indigo-50: oklch(96.9% 0.015 12.422);
+  --color-indigo-100: oklch(94.1% 0.03 12.58);
+  --color-indigo-200: oklch(89.2% 0.058 10.001);
+  --color-indigo-300: oklch(81% 0.117 11.638);
+  --color-indigo-400: oklch(71.2% 0.194 13.428);
+  --color-indigo-500: oklch(64.5% 0.246 16.439);
+  --color-indigo-600: oklch(58.6% 0.253 17.585);
+  --color-indigo-700: oklch(51.4% 0.222 16.935);
+  --color-indigo-800: oklch(45.5% 0.188 13.697);
+  --color-indigo-900: oklch(41% 0.159 10.272);
+  --color-indigo-950: oklch(27.1% 0.105 12.094);
+  --color-white: oklch(99.3% 0.006 12);
+  --color-gray-50: oklch(98.5% 0.008 12);
+  --color-gray-100: oklch(96.7% 0.01 12);
+  --color-gray-200: oklch(92.8% 0.012 12);
+  --color-gray-300: oklch(87.2% 0.014 12);
+  --color-gray-400: oklch(70.7% 0.018 12);
+  --color-gray-500: oklch(55.1% 0.02 12);
+  --color-gray-600: oklch(44.6% 0.022 12);
+  --color-gray-700: oklch(37.3% 0.024 12);
+  --color-gray-800: oklch(27.8% 0.026 12);
+  --color-gray-900: oklch(21% 0.026 12);
+  --color-gray-950: oklch(13% 0.024 12);
+}
+
+/* 라벤더 - violet 포인트 + 보라 틴트 중립 */
+html[data-skin="lavender"] {
+  --color-indigo-50: oklch(96.9% 0.016 293.756);
+  --color-indigo-100: oklch(94.3% 0.029 294.588);
+  --color-indigo-200: oklch(89.4% 0.057 293.283);
+  --color-indigo-300: oklch(81.1% 0.111 293.571);
+  --color-indigo-400: oklch(70.2% 0.183 293.541);
+  --color-indigo-500: oklch(60.6% 0.25 292.717);
+  --color-indigo-600: oklch(54.1% 0.281 293.009);
+  --color-indigo-700: oklch(49.1% 0.27 292.581);
+  --color-indigo-800: oklch(43.2% 0.232 292.759);
+  --color-indigo-900: oklch(38% 0.189 293.745);
+  --color-indigo-950: oklch(28.3% 0.141 291.089);
+  --color-white: oklch(99.3% 0.006 294);
+  --color-gray-50: oklch(98.5% 0.008 294);
+  --color-gray-100: oklch(96.7% 0.01 294);
+  --color-gray-200: oklch(92.8% 0.012 294);
+  --color-gray-300: oklch(87.2% 0.014 294);
+  --color-gray-400: oklch(70.7% 0.018 294);
+  --color-gray-500: oklch(55.1% 0.02 294);
+  --color-gray-600: oklch(44.6% 0.022 294);
+  --color-gray-700: oklch(37.3% 0.024 294);
+  --color-gray-800: oklch(27.8% 0.026 294);
+  --color-gray-900: oklch(21% 0.026 294);
+  --color-gray-950: oklch(13% 0.024 294);
+}
+
+/* 민트 - teal 포인트 + 민트 틴트 중립 */
+html[data-skin="mint"] {
+  --color-indigo-50: oklch(98.4% 0.014 180.72);
+  --color-indigo-100: oklch(95.3% 0.051 180.801);
+  --color-indigo-200: oklch(91% 0.096 180.426);
+  --color-indigo-300: oklch(85.5% 0.138 181.071);
+  --color-indigo-400: oklch(77.7% 0.152 181.912);
+  --color-indigo-500: oklch(70.4% 0.14 182.503);
+  --color-indigo-600: oklch(60% 0.118 184.704);
+  --color-indigo-700: oklch(51.1% 0.096 186.391);
+  --color-indigo-800: oklch(43.7% 0.078 188.216);
+  --color-indigo-900: oklch(38.6% 0.063 188.416);
+  --color-indigo-950: oklch(27.7% 0.046 192.524);
+  --color-white: oklch(99.3% 0.005 183);
+  --color-gray-50: oklch(98.5% 0.007 183);
+  --color-gray-100: oklch(96.7% 0.009 183);
+  --color-gray-200: oklch(92.8% 0.011 183);
+  --color-gray-300: oklch(87.2% 0.013 183);
+  --color-gray-400: oklch(70.7% 0.016 183);
+  --color-gray-500: oklch(55.1% 0.018 183);
+  --color-gray-600: oklch(44.6% 0.02 183);
+  --color-gray-700: oklch(37.3% 0.022 183);
+  --color-gray-800: oklch(27.8% 0.024 183);
+  --color-gray-900: oklch(21% 0.024 183);
+  --color-gray-950: oklch(13% 0.022 183);
+}
+
+/* 오션 - sky 포인트 + slate 중립 (Tailwind slate 램프 그대로) */
+html[data-skin="ocean"] {
+  --color-indigo-50: oklch(97.7% 0.013 236.62);
+  --color-indigo-100: oklch(95.1% 0.026 236.824);
+  --color-indigo-200: oklch(90.1% 0.058 230.902);
+  --color-indigo-300: oklch(82.8% 0.111 230.318);
+  --color-indigo-400: oklch(74.6% 0.16 232.661);
+  --color-indigo-500: oklch(68.5% 0.169 237.323);
+  --color-indigo-600: oklch(58.8% 0.158 241.966);
+  --color-indigo-700: oklch(50% 0.134 242.749);
+  --color-indigo-800: oklch(44.3% 0.11 240.79);
+  --color-indigo-900: oklch(39.1% 0.09 240.876);
+  --color-indigo-950: oklch(29.3% 0.066 243.157);
+  --color-white: oklch(99.3% 0.004 247);
+  --color-gray-50: oklch(98.4% 0.003 247.858);
+  --color-gray-100: oklch(96.8% 0.007 247.896);
+  --color-gray-200: oklch(92.9% 0.013 255.508);
+  --color-gray-300: oklch(86.9% 0.022 252.894);
+  --color-gray-400: oklch(70.4% 0.04 256.788);
+  --color-gray-500: oklch(55.4% 0.046 257.417);
+  --color-gray-600: oklch(44.6% 0.043 257.281);
+  --color-gray-700: oklch(37.2% 0.044 257.287);
+  --color-gray-800: oklch(27.9% 0.041 260.031);
+  --color-gray-900: oklch(20.8% 0.042 265.755);
+  --color-gray-950: oklch(12.9% 0.042 264.695);
+}
+
+/* 크림 - orange 포인트 + 웜 크림 중립 */
+html[data-skin="cream"] {
+  --color-indigo-50: oklch(98% 0.016 73.684);
+  --color-indigo-100: oklch(95.4% 0.038 75.164);
+  --color-indigo-200: oklch(90.1% 0.076 70.697);
+  --color-indigo-300: oklch(83.7% 0.128 66.29);
+  --color-indigo-400: oklch(75% 0.183 55.934);
+  --color-indigo-500: oklch(70.5% 0.213 47.604);
+  --color-indigo-600: oklch(64.6% 0.222 41.116);
+  --color-indigo-700: oklch(55.3% 0.195 38.402);
+  --color-indigo-800: oklch(47% 0.157 37.304);
+  --color-indigo-900: oklch(40.8% 0.123 38.172);
+  --color-indigo-950: oklch(26.6% 0.079 36.259);
+  --color-white: oklch(99% 0.016 95);
+  --color-gray-50: oklch(98.5% 0.02 90);
+  --color-gray-100: oklch(96.7% 0.022 88);
+  --color-gray-200: oklch(92.8% 0.02 85);
+  --color-gray-300: oklch(87.2% 0.018 82);
+  --color-gray-400: oklch(70.7% 0.02 75);
+  --color-gray-500: oklch(55.1% 0.02 70);
+  --color-gray-600: oklch(44.6% 0.02 65);
+  --color-gray-700: oklch(37.3% 0.018 60);
+  --color-gray-800: oklch(27.8% 0.016 55);
+  --color-gray-900: oklch(21% 0.014 50);
+  --color-gray-950: oklch(13% 0.012 50);
+}
+
+/* ============================================================
+   스킨별 배경 무늬 - 앱 컬럼(.app-shell)에 은은한 반복 SVG 패턴을 깔아
+   색상과 무늬가 함께 어우러지게 한다. 카드가 불투명하므로 무늬는
+   카드 사이 여백에서 보인다. 불투명도 5~8%로 가독성 유지.
+   기본 스킨은 무늬 없음(깔끔한 순정 상태).
+   ============================================================ */
+
+/* 로즈 - 하트 */
+html[data-skin="rose"] .app-shell,
+html[data-skin="rose"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cpath d='M24 30l-1-.9c-3.6-3.2-6-5.4-6-8.1 0-2.2 1.7-3.9 3.9-3.9 1.2 0 2.4.6 3.1 1.5.7-.9 1.9-1.5 3.1-1.5 2.2 0 3.9 1.7 3.9 3.9 0 2.7-2.4 4.9-6 8.1l-1 .9z' fill='%23e11d48' fill-opacity='.07'/%3E%3Cpath d='M72 80l-.8-.7c-2.9-2.6-4.8-4.3-4.8-6.5 0-1.8 1.4-3.1 3.1-3.1 1 0 1.9.5 2.5 1.2.6-.7 1.5-1.2 2.5-1.2 1.8 0 3.1 1.4 3.1 3.1 0 2.2-1.9 3.9-4.8 6.5l-.8.7z' fill='%23e11d48' fill-opacity='.05'/%3E%3C/svg%3E");
+}
+html.dark[data-skin="rose"] .app-shell,
+html.dark[data-skin="rose"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cpath d='M24 30l-1-.9c-3.6-3.2-6-5.4-6-8.1 0-2.2 1.7-3.9 3.9-3.9 1.2 0 2.4.6 3.1 1.5.7-.9 1.9-1.5 3.1-1.5 2.2 0 3.9 1.7 3.9 3.9 0 2.7-2.4 4.9-6 8.1l-1 .9z' fill='%23fda4af' fill-opacity='.06'/%3E%3Cpath d='M72 80l-.8-.7c-2.9-2.6-4.8-4.3-4.8-6.5 0-1.8 1.4-3.1 3.1-3.1 1 0 1.9.5 2.5 1.2.6-.7 1.5-1.2 2.5-1.2 1.8 0 3.1 1.4 3.1 3.1 0 2.2-1.9 3.9-4.8 6.5l-.8.7z' fill='%23fda4af' fill-opacity='.04'/%3E%3C/svg%3E");
+}
+
+/* 라벤더 - 반짝이 */
+html[data-skin="lavender"] .app-shell,
+html[data-skin="lavender"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='104' height='104'%3E%3Cpath d='M26 14l2 9 9 2-9 2-2 9-2-9-9-2 9-2z' fill='%237c3aed' fill-opacity='.07'/%3E%3Cpath d='M76 66l1.4 6.3 6.3 1.4-6.3 1.4L76 81.4l-1.4-6.3-6.3-1.4 6.3-1.4z' fill='%237c3aed' fill-opacity='.05'/%3E%3C/svg%3E");
+}
+html.dark[data-skin="lavender"] .app-shell,
+html.dark[data-skin="lavender"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='104' height='104'%3E%3Cpath d='M26 14l2 9 9 2-9 2-2 9-2-9-9-2 9-2z' fill='%23c4b5fd' fill-opacity='.06'/%3E%3Cpath d='M76 66l1.4 6.3 6.3 1.4-6.3 1.4L76 81.4l-1.4-6.3-6.3-1.4 6.3-1.4z' fill='%23c4b5fd' fill-opacity='.04'/%3E%3C/svg%3E");
+}
+
+/* 민트 - 잎사귀 */
+html[data-skin="mint"] .app-shell,
+html[data-skin="mint"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cpath d='M26 12c5 5 5 12 0 18-5-6-5-13 0-18z' fill='%230d9488' fill-opacity='.07'/%3E%3Cpath d='M74 66c4 4 4 9.6 0 14.4-4-4.8-4-10.4 0-14.4z' fill='%230d9488' fill-opacity='.05' transform='rotate(40 74 73)'/%3E%3C/svg%3E");
+}
+html.dark[data-skin="mint"] .app-shell,
+html.dark[data-skin="mint"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cpath d='M26 12c5 5 5 12 0 18-5-6-5-13 0-18z' fill='%235eead4' fill-opacity='.06'/%3E%3Cpath d='M74 66c4 4 4 9.6 0 14.4-4-4.8-4-10.4 0-14.4z' fill='%235eead4' fill-opacity='.04' transform='rotate(40 74 73)'/%3E%3C/svg%3E");
+}
+
+/* 오션 - 물결 */
+html[data-skin="ocean"] .app-shell,
+html[data-skin="ocean"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='72'%3E%3Cpath d='M0 24q15-10 30 0t30 0 30 0 30 0' fill='none' stroke='%230284c7' stroke-opacity='.08' stroke-width='2'/%3E%3Cpath d='M0 54q15-10 30 0t30 0 30 0 30 0' fill='none' stroke='%230284c7' stroke-opacity='.05' stroke-width='2'/%3E%3C/svg%3E");
+}
+html.dark[data-skin="ocean"] .app-shell,
+html.dark[data-skin="ocean"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='72'%3E%3Cpath d='M0 24q15-10 30 0t30 0 30 0 30 0' fill='none' stroke='%237dd3fc' stroke-opacity='.07' stroke-width='2'/%3E%3Cpath d='M0 54q15-10 30 0t30 0 30 0 30 0' fill='none' stroke='%237dd3fc' stroke-opacity='.04' stroke-width='2'/%3E%3C/svg%3E");
+}
+
+/* 크림 - 도트 */
+html[data-skin="cream"] .app-shell,
+html[data-skin="cream"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ccircle cx='14' cy='14' r='1.4' fill='%23b45309' fill-opacity='.09'/%3E%3C/svg%3E");
+}
+html.dark[data-skin="cream"] .app-shell,
+html.dark[data-skin="cream"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ccircle cx='14' cy='14' r='1.4' fill='%23fcd34d' fill-opacity='.06'/%3E%3C/svg%3E");
 }
 
 /* 모바일 탭바 영역 확보 */

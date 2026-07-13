@@ -6,7 +6,11 @@ import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import { useGuestUiStore } from '@/stores/guestUiStore';
+import { useAppearanceStore } from '@/stores/appearanceStore';
+import { CUSTOM_FONT_ID, getFontPreset } from '@/lib/fonts';
 import TutorialModal from '@/components/common/TutorialModal';
+import FontPickerModal from '@/components/settings/FontPickerModal';
+import SkinPicker from '@/components/settings/SkinPicker';
 
 const DAILY_GOAL_KEY = 'scan_voca_daily_goal';
 
@@ -14,11 +18,18 @@ export default function SettingsPage() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
+  const { fontId, customFontName } = useAppearanceStore();
   const openUpgradeModal = useGuestUiStore((s) => s.openUpgradeModal);
   const [dailyGoal, setDailyGoal] = useState(10);
   const [goalInput, setGoalInput] = useState('10');
   const [goalSaved, setGoalSaved] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [fontPickerOpen, setFontPickerOpen] = useState(false);
+
+  const currentFontLabel =
+    fontId === CUSTOM_FONT_ID
+      ? customFontName || '내 글꼴'
+      : getFontPreset(fontId)?.label || '기본';
 
   useEffect(() => {
     const stored = localStorage.getItem(DAILY_GOAL_KEY);
@@ -159,6 +170,30 @@ export default function SettingsPage() {
             />
           </button>
         </div>
+        <div className="border-t border-gray-100 dark:border-gray-800" />
+        <button
+          onClick={() => setFontPickerOpen(true)}
+          className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-gray-50 dark:hover:bg-gray-800"
+        >
+          <div>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">글꼴</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">앱 전체에 적용할 글꼴을 선택합니다</p>
+          </div>
+          <span className="flex shrink-0 items-center gap-1 text-sm text-gray-400 dark:text-gray-500">
+            {currentFontLabel}
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        </button>
+        <div className="border-t border-gray-100 dark:border-gray-800" />
+        <div className="px-5 py-4">
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">테마</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">앱의 색상과 배경 무늬가 함께 바뀝니다</p>
+          <div className="mt-2.5">
+            <SkinPicker />
+          </div>
+        </div>
       </div>
 
       {/* 학습 설정 */}
@@ -287,6 +322,7 @@ export default function SettingsPage() {
       </button>
 
       <TutorialModal open={tutorialOpen} onClose={() => setTutorialOpen(false)} />
+      <FontPickerModal open={fontPickerOpen} onClose={() => setFontPickerOpen(false)} />
     </div>
   );
 }

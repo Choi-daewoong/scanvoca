@@ -6,6 +6,7 @@ import Link from 'next/link';
 import AuthGuard from '@/components/common/AuthGuard';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
+import { useAppearanceStore } from '@/stores/appearanceStore';
 import { adminService, AdminNotifications } from '@/services/adminService';
 
 const MENU_ITEMS = [
@@ -27,12 +28,14 @@ function AdminContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuthStore();
   const initTheme = useThemeStore((s) => s.initTheme);
+  const initAppearance = useAppearanceStore((s) => s.initAppearance);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState<AdminNotifications>({ qna_waiting: 0 });
 
   useEffect(() => {
     initTheme();
-  }, [initTheme]);
+    initAppearance();
+  }, [initTheme, initAppearance]);
 
   useEffect(() => {
     if (user && !user.is_admin) {
