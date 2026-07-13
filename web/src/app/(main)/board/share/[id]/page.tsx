@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { useGuestUiStore } from '@/stores/guestUiStore';
 import { boardService } from '@/services/boardService';
-import { Post } from '@/types';
+import { wordbookService } from '@/services/wordbookService';
+import { Post, WordbookWord } from '@/types';
 
 export default function SharePostDetailPage() {
   const params = useParams();
@@ -23,7 +24,7 @@ export default function SharePostDetailPage() {
   const [editTags, setEditTags] = useState('');
   const [updating, setUpdating] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [previewWords, setPreviewWords] = useState<any[]>([]);
+  const [previewWords, setPreviewWords] = useState<WordbookWord[]>([]);
   const [totalWordCount, setTotalWordCount] = useState(0);
   const [loadingPreview, setLoadingPreview] = useState(false);
 
@@ -69,28 +70,26 @@ export default function SharePostDetailPage() {
     if (!post) return;
     setLoadingPreview(true);
     try {
-      const { wordbookService } = await import('@/services/wordbookService');
-      let words: any[] = [];
+      let words: WordbookWord[] = [];
       let wordCount = 0;
 
-      // wordbook_id가 있으면 직접 조회
+      // 작성자가 아니어도 볼 수 있는 미리보기 전용 API (소유권 체크 없음)
       if (post.wordbook_id) {
-        words = await wordbookService.getWords(post.wordbook_id);
-        wordCount = words.length;
+        words = await boardService.previewWords(post.id, 5);
       }
-      // share_code로 조회 (이전 글들)
-      else if (post.share_code) {
+      if (post.share_code) {
         try {
           const preview = await wordbookService.getSharedPreview(post.share_code);
           wordCount = preview.word_count;
-          words = []; // share_code로는 단어 목록을 얻을 수 없음
         } catch {
-          wordCount = 0;
+          wordCount = words.length;
         }
+      } else {
+        wordCount = words.length;
       }
 
       setTotalWordCount(wordCount);
-      setPreviewWords(words.slice(0, 5)); // 최대 5개만 표시
+      setPreviewWords(words);
       setShowPreviewModal(true);
     } catch (error) {
       console.error('단어 정보 로드 실패:', error);

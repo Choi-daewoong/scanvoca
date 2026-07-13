@@ -1,5 +1,5 @@
 import { apiFetch } from './api';
-import { Post, PostListResponse, PostReply, PostReplyListResponse, BoardType, ContentFormat } from '@/types';
+import { Post, PostListResponse, PostReply, PostReplyListResponse, BoardType, ContentFormat, WordbookWord } from '@/types';
 
 export const boardService = {
   async list(
@@ -57,6 +57,10 @@ export const boardService = {
 
   async importWordbook(id: number): Promise<{ wordbook_id: number; message: string }> {
     return apiFetch(`/api/v1/board/posts/${id}/import`, { method: 'POST' });
+  },
+
+  async previewWords(id: number, limit = 5): Promise<WordbookWord[]> {
+    return apiFetch<WordbookWord[]>(`/api/v1/board/posts/${id}/preview-words?limit=${limit}`);
   },
 
   async createNotice(data: {

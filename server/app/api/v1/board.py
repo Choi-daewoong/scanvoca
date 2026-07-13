@@ -1,5 +1,5 @@
 """Community board API endpoints"""
-from typing import Optional
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -11,7 +11,9 @@ from app.schemas.post import (
     LikeResponse, ImportResponse,
     PostReplyCreate, PostReplyResponse, PostReplyListResponse,
 )
+from app.schemas.wordbook import WordbookWordResponse
 from app.services.post_service import PostService
+from app.services.wordbook_service import WordbookService
 
 router = APIRouter()
 
@@ -161,6 +163,27 @@ async def import_wordbook_from_post(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     return {"wordbook_id": wordbook.id, "message": "단어장을 가져왔습니다"}
+
+
+@router.get("/posts/{post_id}/preview-words", response_model=List[WordbookWordResponse])
+async def preview_post_words(
+    post_id: int,
+    limit: int = 5,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Preview a few words from a share-board post's wordbook
+
+    Unlike GET /wordbooks/{id}/words, this doesn't require the viewer to own
+    the wordbook - a share-board post is meant to be browsable by anyone.
+    """
+    post = _get_post_or_404(db, post_id)
+    if post.board_type != "share" or not post.wordbook_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="공유 단어장 게시글이 아닙니다")
+
+    words = WordbookService.get_wordbook_words(db, post.wordbook_id)
+    return words[:limit]
 
 
 @router.get("/posts/{post_id}/replies", response_model=PostReplyListResponse)
