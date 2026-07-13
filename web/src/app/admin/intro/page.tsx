@@ -42,6 +42,15 @@ export default function AdminIntroPage() {
     setContentFormat(post.content_format || 'markdown');
   };
 
+  // /intro는 1시간 ISR 캐시라, 안 부르면 방금 쓴 글이 최대 1시간 동안 안 보일 수 있다.
+  const revalidateIntro = async () => {
+    try {
+      await fetch('/api/revalidate-intro', { method: 'POST' });
+    } catch {
+      // 캐시 갱신 실패는 조용히 무시 - 최악의 경우 다음 자동 갱신(1시간) 때 반영됨
+    }
+  };
+
   const handleSubmit = async () => {
     if (!title.trim()) return;
     setSubmitting(true);
@@ -63,6 +72,7 @@ export default function AdminIntroPage() {
         setPosts((prev) => [created, ...prev]);
       }
       resetForm();
+      await revalidateIntro();
     } catch {
       alert('저장에 실패했습니다.');
     } finally {
@@ -76,6 +86,7 @@ export default function AdminIntroPage() {
       await boardService.delete(id);
       setPosts((prev) => prev.filter((p) => p.id !== id));
       if (editingId === id) resetForm();
+      await revalidateIntro();
     } catch {
       alert('삭제에 실패했습니다.');
     }

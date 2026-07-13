@@ -6,7 +6,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 async function getIntroPosts(): Promise<Post[]> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/board/public/intro?limit=100`, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 300 },
     });
     if (!res.ok) return [];
     const data: PostListResponse = await res.json();
