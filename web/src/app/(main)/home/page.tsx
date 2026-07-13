@@ -4,10 +4,79 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
 import { wordbookService } from '@/services/wordbookService';
-import { StudyStats } from '@/types';
+import { demoWordbookService } from '@/services/demoWordbookService';
+import { StudyStats, Wordbook } from '@/types';
 import TutorialModal from '@/components/common/TutorialModal';
 
 const TUTORIAL_SEEN_KEY = 'scanvoca_tutorial_seen';
+
+function GuestHome() {
+  const [demoWordbooks, setDemoWordbooks] = useState<Wordbook[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setDemoWordbooks(await demoWordbookService.list());
+      } catch {
+        setDemoWordbooks([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  return (
+    <div className="px-4 py-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          영단어, 사진 한 장으로 스캔하고 AI로 학습하세요
+        </h1>
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          로그인 없이 체험용 단어장으로 학습·퀴즈·시험 모드를 바로 써볼 수 있어요.
+        </p>
+      </div>
+
+      <div className="mb-6 flex gap-2.5">
+        <Link
+          href="/register"
+          className="flex-1 rounded-2xl bg-indigo-600 py-3.5 text-center text-sm font-semibold text-white transition hover:bg-indigo-700 active:scale-[0.99]"
+        >
+          회원가입하고 시작하기
+        </Link>
+        <Link
+          href="/login"
+          className="flex-1 rounded-2xl border border-gray-200 bg-white py-3.5 text-center text-sm font-semibold text-gray-700 transition hover:bg-gray-50 active:scale-[0.99] dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+        >
+          로그인
+        </Link>
+      </div>
+
+      <p className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">체험용 단어장</p>
+
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-400 border-t-transparent" />
+        </div>
+      ) : demoWordbooks.length === 0 ? (
+        <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">체험용 단어장을 불러오지 못했습니다.</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {demoWordbooks.map((wb) => (
+            <Link
+              key={wb.id}
+              href={`/wordbooks/demo/${wb.id}`}
+              className="rounded-2xl border border-gray-100 bg-white p-4 transition hover:border-indigo-200 hover:bg-indigo-50/40 active:scale-[0.99] dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/20"
+            >
+              <p className="font-semibold text-gray-900 dark:text-gray-100">{wb.name}</p>
+              <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{wb.word_count}개 단어</p>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function HomePage() {
   const { user } = useAuthStore();
@@ -39,6 +108,10 @@ export default function HomePage() {
   };
 
   const loadStats = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     try {
       // 단일 API 호출로 모든 통계 조회
       const stats = await wordbookService.getDashboardStats();
@@ -48,13 +121,15 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     loadStats();
   }, [loadStats]);
 
   const progressPercent = Math.min((stats.daily_progress / stats.daily_goal) * 100, 100);
+
+  if (!user) return <GuestHome />;
 
   return (
     <div className="px-4 py-6">

@@ -25,6 +25,9 @@ class Wordbook(Base):
     # Sharing - unique code that lets other users import a copy of this wordbook
     share_code: Mapped[Optional[str]] = mapped_column(String(10), unique=True, nullable=True, index=True)
 
+    # Pre-made trial wordbook, visible only to logged-out guests (read-only for them)
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
     # Folder organization
     parent_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("wordbooks.id", ondelete="SET NULL"), nullable=True, index=True

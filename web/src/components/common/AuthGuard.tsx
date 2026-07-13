@@ -1,12 +1,21 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
+
+// 로그인 없이도 볼 수 있는 경로 (홈 체험 화면 + 체험용 단어장 상세)
+const GUEST_ALLOWED_PREFIXES = ['/home', '/wordbooks/demo'];
+
+function isGuestAllowed(pathname: string): boolean {
+  return GUEST_ALLOWED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isInitialized, loadUser } = useAuthStore();
+  const guestOk = isGuestAllowed(pathname);
 
   useEffect(() => {
     if (!isInitialized) {
@@ -15,10 +24,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [isInitialized, loadUser]);
 
   useEffect(() => {
-    if (isInitialized && !user) {
+    if (isInitialized && !user && !guestOk) {
       router.replace('/login');
     }
-  }, [isInitialized, user, router]);
+  }, [isInitialized, user, guestOk, router]);
 
   if (!isInitialized) {
     return (
@@ -28,7 +37,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) return null;
+  if (!user && !guestOk) return null;
 
   return <>{children}</>;
 }

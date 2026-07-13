@@ -62,6 +62,43 @@ async def get_wordbooks(
     return wordbooks
 
 
+# Demo (public, no auth) endpoints - trial wordbooks shown to logged-out guests.
+# NOTE: must stay registered before the dynamic "/{wordbook_id}" routes below,
+# since FastAPI/Starlette matches path params without type-checking at match
+# time - "/demo" would otherwise be captured as wordbook_id by the routes
+# declared earlier in this file, hitting their auth dependency instead.
+
+@router.get("/demo", response_model=List[WordbookResponse])
+async def list_demo_wordbooks(db: Session = Depends(get_db)):
+    """
+    List the pre-made trial wordbooks shown to logged-out guests
+
+    Public endpoint - no authentication required. Read-only.
+    """
+    return WordbookService.list_demo_wordbooks(db)
+
+
+@router.get("/demo/{wordbook_id}/words", response_model=List[WordbookWordResponse])
+async def get_demo_wordbook_words(
+    wordbook_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Get all words in a demo trial wordbook
+
+    Public endpoint - no authentication required. Read-only;
+    404s for anything that isn't flagged as a demo wordbook.
+    """
+    wordbook = WordbookService.get_demo_wordbook(db, wordbook_id)
+    if not wordbook:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Demo wordbook not found"
+        )
+
+    return WordbookService.get_wordbook_words(db, wordbook_id)
+
+
 @router.post("/folder", response_model=WordbookResponse, status_code=status.HTTP_201_CREATED)
 async def create_folder(
     folder_data: FolderCreate,

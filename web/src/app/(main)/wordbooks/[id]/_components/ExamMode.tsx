@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { WordbookWord } from '@/types';
 import { speakWord } from '@/utils/tts';
 import { formatPartOfSpeech } from '@/utils/partOfSpeech';
@@ -21,11 +22,13 @@ export default function ExamMode({
   onMastered,
   wordbookId,
   wordbookName,
+  readOnly = false,
 }: {
   words: WordbookWord[];
   onMastered: (wordId: number, mastered: boolean) => void;
   wordbookId: number;
   wordbookName: string;
+  readOnly?: boolean;
 }) {
   const memorizedWords = words.filter(w => w.mastered);
   const [stage, setStage] = useState<ExamStage>('setup');
@@ -416,13 +419,22 @@ export default function ExamMode({
             >
               🔄 틀린 문제 다시 풀기 ({getWrongAnswers().length}개)
             </button>
-            <button
-              onClick={handleCreateReviewBook}
-              disabled={isCreatingReviewBook}
-              className="w-full rounded-2xl border border-emerald-200 bg-emerald-50 py-4 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-950/70"
-            >
-              {isCreatingReviewBook ? '복습 단어장 생성 중...' : `📚 복습 단어장 생성 (${wordbookName}(복습))`}
-            </button>
+            {readOnly ? (
+              <Link
+                href="/register"
+                className="block w-full rounded-2xl border border-emerald-200 bg-emerald-50 py-4 text-center text-sm font-semibold text-emerald-600 transition hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-950/70"
+              >
+                📚 회원가입하고 복습 단어장 만들기
+              </Link>
+            ) : (
+              <button
+                onClick={handleCreateReviewBook}
+                disabled={isCreatingReviewBook}
+                className="w-full rounded-2xl border border-emerald-200 bg-emerald-50 py-4 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-950/70"
+              >
+                {isCreatingReviewBook ? '복습 단어장 생성 중...' : `📚 복습 단어장 생성 (${wordbookName}(복습))`}
+              </button>
+            )}
           </div>
         )}
 

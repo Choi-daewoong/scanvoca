@@ -53,6 +53,27 @@ class WordbookService:
         return db.scalar(stmt)
 
     @staticmethod
+    def list_demo_wordbooks(db: Session) -> List[Wordbook]:
+        """List the public trial wordbooks shown to logged-out guests"""
+        stmt = select(Wordbook).where(Wordbook.is_demo == True).order_by(Wordbook.sort_order.asc())  # noqa: E712
+        wordbooks = list(db.scalars(stmt).all())
+
+        for wordbook in wordbooks:
+            wordbook.word_count = db.query(WordbookWord).filter(
+                WordbookWord.wordbook_id == wordbook.id
+            ).count()
+
+        return wordbooks
+
+    @staticmethod
+    def get_demo_wordbook(db: Session, wordbook_id: int) -> Optional[Wordbook]:
+        """Get a demo wordbook by id (no ownership check - public read-only)"""
+        stmt = select(Wordbook).where(
+            and_(Wordbook.id == wordbook_id, Wordbook.is_demo == True)  # noqa: E712
+        )
+        return db.scalar(stmt)
+
+    @staticmethod
     def _next_sort_order(db: Session, user_id: int, parent_id: Optional[int] = None) -> int:
         """Get the next sort_order value among siblings (same user + parent)"""
         max_order = db.scalar(

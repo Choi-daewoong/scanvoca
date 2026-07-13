@@ -16,12 +16,14 @@ export default function StudyMode({
   onMastered,
   onRemove,
   onMeaningsUpdated,
+  readOnly = false,
 }: {
   words: WordbookWord[];
   wordbookId: number;
   onMastered: (wordId: number, mastered: boolean) => void;
   onRemove: (wordId: number) => void;
   onMeaningsUpdated: (wordId: number, meanings: GPTMeaning[]) => void;
+  readOnly?: boolean;
 }) {
   const [displayFilter, setDisplayFilter] = useState<DisplayFilter>('all');
   const [showOnlyUnlearned, setShowOnlyUnlearned] = useState(false);
@@ -91,16 +93,18 @@ export default function StudyMode({
         >
           섞기
         </button>
-        <button
-          onClick={() => setIsDeletionMode(v => !v)}
-          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-            isDeletionMode
-              ? 'border-red-100 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400'
-              : 'border-red-100 bg-red-50 text-red-500 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400'
-          }`}
-        >
-          {isDeletionMode ? '완료' : '삭제'}
-        </button>
+        {!readOnly && (
+          <button
+            onClick={() => setIsDeletionMode(v => !v)}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+              isDeletionMode
+                ? 'border-red-100 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400'
+                : 'border-red-100 bg-red-50 text-red-500 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400'
+            }`}
+          >
+            {isDeletionMode ? '완료' : '삭제'}
+          </button>
+        )}
       </div>
 
       {isFlipMode && (
@@ -150,13 +154,17 @@ export default function StudyMode({
                       <p className={`text-lg font-semibold ${
                         displayFilter === 'meaning' && isFlipped ? 'mt-1 border-t border-dashed border-gray-200 pt-1 dark:border-gray-700' : ''
                       }`}>
-                        <Link
-                          href={`/wordbooks/${wordbookId}/${ww.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-indigo-600 hover:underline dark:text-indigo-400"
-                        >
-                          {w?.word}
-                        </Link>
+                        {readOnly ? (
+                          <span className="text-indigo-600 dark:text-indigo-400">{w?.word}</span>
+                        ) : (
+                          <Link
+                            href={`/wordbooks/${wordbookId}/${ww.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-indigo-600 hover:underline dark:text-indigo-400"
+                          >
+                            {w?.word}
+                          </Link>
+                        )}
                         {w?.pronunciation && (
                           <span className="ml-2 text-sm font-normal text-gray-400 dark:text-gray-500">{w.pronunciation}</span>
                         )}
@@ -186,7 +194,7 @@ export default function StudyMode({
                   </div>
 
                   <div className="flex shrink-0 flex-col items-end gap-1.5">
-                    {isDeletionMode ? (
+                    {isDeletionMode && !readOnly ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -209,12 +217,14 @@ export default function StudyMode({
                               d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H4v4h4l4 4V6zM18.364 5.636a9 9 0 010 12.728" />
                           </svg>
                         </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setEditingEntry(ww); }}
-                          className="text-[10px] text-gray-400 hover:text-indigo-500 dark:text-gray-500 dark:hover:text-indigo-400"
-                        >
-                          수정
-                        </button>
+                        {!readOnly && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setEditingEntry(ww); }}
+                            className="text-[10px] text-gray-400 hover:text-indigo-500 dark:text-gray-500 dark:hover:text-indigo-400"
+                          >
+                            수정
+                          </button>
+                        )}
                       </>
                     )}
                   </div>

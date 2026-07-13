@@ -149,7 +149,9 @@
       "Bash(pkill -f \"next dev\")",
       "Skill(dataviz)",
       "Bash(docker --version)",
-      "Bash(gcloud --version)"
+      "Bash(gcloud --version)",
+      "Bash(docker build *)",
+      "Bash(docker push *)"
     ],
     "deny": [],
     "ask": []
