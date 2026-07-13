@@ -204,6 +204,8 @@ export interface AdminUser {
   points: number;
   is_admin: boolean;
   is_verified: boolean;
+  is_guest: boolean;
+  is_system: boolean;
   created_at: string;
   wordbook_count: number;
   post_count: number;

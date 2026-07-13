@@ -32,11 +32,17 @@ async def list_users(
     limit: int = 20,
     offset: int = 0,
     search: Optional[str] = None,
+    include_hidden: bool = False,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin_user)
 ):
-    """List users with wordbook/post counts (admin only)"""
-    items, total = AdminService.list_users(db, limit=limit, offset=offset, search=search)
+    """List users with wordbook/post counts (admin only)
+
+    게스트/시스템 계정은 기본적으로 제외됨 - include_hidden=true로 보이게 할 수 있음
+    """
+    items, total = AdminService.list_users(
+        db, limit=limit, offset=offset, search=search, include_hidden=include_hidden
+    )
     return {"items": items, "total": total}
 
 

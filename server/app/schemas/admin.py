@@ -27,6 +27,8 @@ class AdminUserResponse(BaseModel):
     points: int
     is_admin: bool
     is_verified: bool
+    is_guest: bool = False
+    is_system: bool = False
     created_at: datetime
     wordbook_count: int
     post_count: int

@@ -30,6 +30,9 @@ class User(Base):
     is_guest: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     last_active_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
+    # Reserved non-human account (seed scripts, content-owner accounts, etc.) - not a real member
+    is_system: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
     # Points (community board rewards)
     points: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 

@@ -10,11 +10,17 @@ export const adminService = {
     return apiFetch<AdminStats>('/api/v1/admin/stats');
   },
 
-  async listUsers(options?: { limit?: number; offset?: number; search?: string }): Promise<AdminUserListResponse> {
+  async listUsers(options?: {
+    limit?: number;
+    offset?: number;
+    search?: string;
+    includeHidden?: boolean;
+  }): Promise<AdminUserListResponse> {
     const params = new URLSearchParams();
     if (options?.limit !== undefined) params.set('limit', String(options.limit));
     if (options?.offset !== undefined) params.set('offset', String(options.offset));
     if (options?.search) params.set('search', options.search);
+    if (options?.includeHidden) params.set('include_hidden', 'true');
     return apiFetch<AdminUserListResponse>(`/api/v1/admin/users?${params.toString()}`);
   },
 

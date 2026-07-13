@@ -12,6 +12,7 @@ export default function AdminUsersPage() {
   const [offset, setOffset] = useState(0);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [includeHidden, setIncludeHidden] = useState(false);
   const [loading, setLoading] = useState(true);
   const [confirmUser, setConfirmUser] = useState<AdminUser | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -21,7 +22,12 @@ export default function AdminUsersPage() {
     setLoading(true);
     (async () => {
       try {
-        const res = await adminService.listUsers({ limit: PAGE_SIZE, offset, search: search || undefined });
+        const res = await adminService.listUsers({
+          limit: PAGE_SIZE,
+          offset,
+          search: search || undefined,
+          includeHidden,
+        });
         setUsers(res.items);
         setTotal(res.total);
       } catch {
@@ -31,7 +37,7 @@ export default function AdminUsersPage() {
         setLoading(false);
       }
     })();
-  }, [offset, search]);
+  }, [offset, search, includeHidden]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +88,16 @@ export default function AdminUsersPage() {
         </button>
       </form>
 
+      <label className="flex w-fit cursor-pointer items-center gap-2 select-none text-sm text-gray-600 dark:text-gray-400">
+        <input
+          type="checkbox"
+          checked={includeHidden}
+          onChange={(e) => { setOffset(0); setIncludeHidden(e.target.checked); }}
+          className="h-4 w-4 rounded border-gray-300 accent-indigo-600 dark:border-gray-600"
+        />
+        게스트·시스템 계정 표시
+      </label>
+
       <div className="rounded-2xl border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900">
         {loading ? (
           <div className="flex justify-center py-12">
@@ -115,11 +131,23 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{u.wordbook_count}</td>
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{u.post_count}</td>
                     <td className="px-4 py-3">
-                      {u.is_admin && (
-                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-500 dark:bg-indigo-950/40 dark:text-indigo-400">
-                          관리자
-                        </span>
-                      )}
+                      <div className="flex flex-wrap gap-1">
+                        {u.is_admin && (
+                          <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-500 dark:bg-indigo-950/40 dark:text-indigo-400">
+                            관리자
+                          </span>
+                        )}
+                        {u.is_guest && (
+                          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                            게스트
+                          </span>
+                        )}
+                        {u.is_system && (
+                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                            시스템
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-gray-400 dark:text-gray-500">
                       {new Date(u.created_at).toLocaleDateString('ko-KR')}

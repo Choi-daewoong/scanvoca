@@ -1,7 +1,7 @@
 """Admin service - dashboard stats, user list, point transaction ledger"""
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
-from sqlalchemy import select, func as sa_func
+from sqlalchemy import select, and_, func as sa_func
 from sqlalchemy.orm import Session
 from app.models.user import User
 from app.models.word import Word
@@ -10,23 +10,26 @@ from app.models.post import Post
 from app.models.point_transaction import PointTransaction
 from fastapi import HTTPException, status
 
+# 게스트/시스템 계정은 "회원"이 아니므로 대시보드·회원 목록 기본값에서 제외한다
+_REAL_USER_FILTER = and_(User.is_guest == False, User.is_system == False)  # noqa: E712
+
 
 class AdminService:
     """Service for admin dashboard queries"""
 
     @staticmethod
     def get_stats(db: Session) -> dict:
-        """Aggregate counts/sums for the admin dashboard overview"""
+        """Aggregate counts/sums for the admin dashboard overview (게스트/시스템 계정 제외)"""
         now = datetime.now(timezone.utc)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         week_start = today_start - timedelta(days=7)
 
-        total_users = db.scalar(select(sa_func.count()).select_from(User)) or 0
+        total_users = db.scalar(select(sa_func.count()).select_from(User).where(_REAL_USER_FILTER)) or 0
         new_users_today = db.scalar(
-            select(sa_func.count()).select_from(User).where(User.created_at >= today_start)
+            select(sa_func.count()).select_from(User).where(_REAL_USER_FILTER, User.created_at >= today_start)
         ) or 0
         new_users_week = db.scalar(
-            select(sa_func.count()).select_from(User).where(User.created_at >= week_start)
+            select(sa_func.count()).select_from(User).where(_REAL_USER_FILTER, User.created_at >= week_start)
         ) or 0
 
         total_wordbooks = db.scalar(select(sa_func.count()).select_from(Wordbook)) or 0
@@ -75,10 +78,19 @@ class AdminService:
 
     @staticmethod
     def list_users(
-        db: Session, limit: int = 20, offset: int = 0, search: Optional[str] = None
+        db: Session,
+        limit: int = 20,
+        offset: int = 0,
+        search: Optional[str] = None,
+        include_hidden: bool = False,
     ) -> Tuple[List[dict], int]:
-        """List users with wordbook/post counts, most recently joined first"""
+        """List users with wordbook/post counts, most recently joined first
+
+        게스트/시스템 계정은 기본적으로 제외한다 (include_hidden=True로 보이게 할 수 있음)
+        """
         stmt = select(User)
+        if not include_hidden:
+            stmt = stmt.where(_REAL_USER_FILTER)
         if search:
             pattern = f"%{search}%"
             stmt = stmt.where(
@@ -111,6 +123,8 @@ class AdminService:
                 "points": user.points,
                 "is_admin": user.is_admin,
                 "is_verified": user.is_verified,
+                "is_guest": user.is_guest,
+                "is_system": user.is_system,
                 "created_at": user.created_at,
                 "wordbook_count": wordbook_counts.get(user.id, 0),
                 "post_count": post_counts.get(user.id, 0),
