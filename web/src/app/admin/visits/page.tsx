@@ -66,6 +66,38 @@ function DailyVisitChart({ daily }: { daily: VisitDailyCount[] }) {
   );
 }
 
+const REFERRER_LABELS: Record<string, string> = {
+  direct: '직접 방문 / 북마크',
+};
+
+function ReferrerList({ referrers }: { referrers: Record<string, number> }) {
+  const entries = Object.entries(referrers).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(...entries.map(([, v]) => v), 1);
+
+  if (entries.length === 0) {
+    return <p className="py-6 text-center text-sm text-gray-400 dark:text-gray-500">데이터가 없습니다.</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {entries.map(([host, count]) => (
+        <div key={host}>
+          <div className="mb-1 flex items-center justify-between text-sm">
+            <span className="font-medium text-gray-700 dark:text-gray-300">{REFERRER_LABELS[host] || host}</span>
+            <span className="text-gray-400 dark:text-gray-500">{count.toLocaleString()}명</span>
+          </div>
+          <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-gray-800">
+            <div
+              className="h-2 rounded-full bg-indigo-400"
+              style={{ width: `${(count / max) * 100}%` }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminVisitsPage() {
   const [stats, setStats] = useState<VisitStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,6 +139,11 @@ export default function AdminVisitsPage() {
       <div className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
         <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">일별 방문자 추이 (최근 30일)</h2>
         <DailyVisitChart daily={stats.daily} />
+      </div>
+
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">유입 경로 (최근 30일)</h2>
+        <ReferrerList referrers={stats.referrers} />
       </div>
     </div>
   );

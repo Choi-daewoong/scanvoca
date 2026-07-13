@@ -14,4 +14,4 @@ async def track_visit(
     db: Session = Depends(get_db),
 ):
     """Record a visit for today, deduped by client-provided visitor_id"""
-    VisitService.record_visit(db, data.visitor_id)
+    VisitService.record_visit(db, data.visitor_id, data.referrer)

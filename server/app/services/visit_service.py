@@ -1,19 +1,22 @@
 """Visit service - records anonymous daily visits, aggregates for admin analytics"""
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 from sqlalchemy import select, func as sa_func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from app.models.visit import Visit
+
+DIRECT_REFERRER = "direct"
 
 
 class VisitService:
     """Service for recording and aggregating site visits"""
 
     @staticmethod
-    def record_visit(db: Session, visitor_id: str) -> None:
+    def record_visit(db: Session, visitor_id: str, referrer: Optional[str] = None) -> None:
         """Record a visit for today. Idempotent per (visitor_id, day) via unique constraint."""
         today = datetime.now(timezone.utc).date()
-        db.add(Visit(visitor_id=visitor_id, visit_date=today))
+        db.add(Visit(visitor_id=visitor_id, visit_date=today, referrer=referrer or DIRECT_REFERRER))
         try:
             db.commit()
         except IntegrityError:
@@ -46,9 +49,17 @@ class VisitService:
         ).all()
         daily = [{"date": d.isoformat(), "count": c} for d, c in daily_rows]
 
+        referrer_rows = db.execute(
+            select(Visit.referrer, sa_func.count())
+            .where(Visit.visit_date >= month_start)
+            .group_by(Visit.referrer)
+        ).all()
+        referrers = {(r or DIRECT_REFERRER): c for r, c in referrer_rows}
+
         return {
             "today": today_count,
             "week": week_count,
             "month": month_count,
             "daily": daily,
+            "referrers": referrers,
         }

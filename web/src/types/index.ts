@@ -240,4 +240,5 @@ export interface VisitStats {
   week: number;
   month: number;
   daily: VisitDailyCount[];
+  referrers: Record<string, number>;
 }
