@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 
-BoardType = Literal["notice", "share", "qna", "faq"]
+BoardType = Literal["notice", "share", "qna", "faq", "intro"]
 ContentFormat = Literal["plain", "markdown", "html"]
 
 

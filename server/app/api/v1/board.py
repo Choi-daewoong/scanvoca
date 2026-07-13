@@ -42,7 +42,7 @@ async def create_post(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_real_user)
 ):
-    """Create a new post (notice and FAQ posts require admin)"""
+    """Create a new post (notice, FAQ, and intro posts require admin)"""
     if post_data.board_type == "notice" and not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -53,6 +53,11 @@ async def create_post(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="FAQ는 관리자만 작성할 수 있습니다"
         )
+    if post_data.board_type == "intro" and not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="소개 게시글은 관리자만 작성할 수 있습니다"
+        )
 
     try:
         post = PostService.create_post(db, current_user.id, post_data)
@@ -60,6 +65,34 @@ async def create_post(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     return PostService.get_post(db, post.id, current_user.id)
+
+
+@router.get("/public/intro", response_model=PostListResponse)
+async def list_public_intro_posts(
+    limit: int = 20,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+):
+    """
+    List "소개" (intro) posts - public, no authentication required
+
+    Intro posts are official, admin-authored content meant to be
+    crawlable by search engines, so this intentionally skips auth.
+    """
+    items, total = PostService.list_posts(db, "intro", limit=limit, offset=offset)
+    return {"items": items, "total": total}
+
+
+@router.get("/public/intro/{post_id}", response_model=PostResponse)
+async def get_public_intro_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+):
+    """Get a single "소개" (intro) post - public, no authentication required"""
+    post = PostService.get_post(db, post_id)
+    if not post or post.board_type != "intro":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="게시글을 찾을 수 없습니다")
+    return post
 
 
 @router.get("/posts/{post_id}", response_model=PostResponse)

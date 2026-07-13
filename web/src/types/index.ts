@@ -127,7 +127,7 @@ export interface ApiError {
   status?: number;
 }
 
-export type BoardType = 'notice' | 'share' | 'qna' | 'faq';
+export type BoardType = 'notice' | 'share' | 'qna' | 'faq' | 'intro';
 export type ContentFormat = 'plain' | 'markdown' | 'html';
 
 export interface Post {

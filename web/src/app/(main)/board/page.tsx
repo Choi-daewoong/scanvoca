@@ -138,6 +138,12 @@ function BoardPageContent() {
             {t.label}
           </button>
         ))}
+        <Link
+          href="/intro"
+          className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800"
+        >
+          소개
+        </Link>
       </div>
 
       {boardType === 'share' && (
