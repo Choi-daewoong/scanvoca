@@ -11,6 +11,7 @@ import { Post, BoardType } from '@/types';
 type SortOption = 'latest' | 'popular';
 
 const VALID_BOARD_TYPES: BoardType[] = ['share', 'notice', 'qna', 'faq'];
+const PAGE_SIZE = 20;
 
 function BoardPageContent() {
   const { user } = useAuthStore();
@@ -22,7 +23,9 @@ function BoardPageContent() {
     tabParam && VALID_BOARD_TYPES.includes(tabParam as BoardType) ? (tabParam as BoardType) : 'share';
   const [boardType, setBoardType] = useState<BoardType>(initialBoardType);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [sort, setSort] = useState<SortOption>('latest');
   const [tag, setTag] = useState('');
 
@@ -38,15 +41,37 @@ function BoardPageContent() {
         const res = await boardService.list(boardType, {
           sort: boardType === 'share' ? sort : undefined,
           tag: boardType === 'share' && tag.trim() ? tag.trim() : undefined,
+          limit: PAGE_SIZE,
+          offset: 0,
         });
         setPosts(res.items);
+        setTotal(res.total);
       } catch {
         setPosts([]);
+        setTotal(0);
       } finally {
         setLoading(false);
       }
     })();
   }, [boardType, sort, tag]);
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    try {
+      const res = await boardService.list(boardType, {
+        sort: boardType === 'share' ? sort : undefined,
+        tag: boardType === 'share' && tag.trim() ? tag.trim() : undefined,
+        limit: PAGE_SIZE,
+        offset: posts.length,
+      });
+      setPosts((prev) => [...prev, ...res.items]);
+      setTotal(res.total);
+    } catch {
+      // 더보기 실패는 조용히 무시 - 기존 목록은 그대로 유지
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   return (
     <div className="px-4 py-6">
@@ -195,6 +220,16 @@ function BoardPageContent() {
               )}
             </Link>
           ))}
+
+          {posts.length < total && (
+            <button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="w-full rounded-2xl border border-gray-200 py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-50 disabled:opacity-60 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              {loadingMore ? '불러오는 중...' : '더보기'}
+            </button>
+          )}
         </div>
       )}
     </div>
