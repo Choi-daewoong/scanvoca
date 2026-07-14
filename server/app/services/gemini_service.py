@@ -264,6 +264,72 @@ Important:
                 print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
             return None
 
+    async def generate_naver_version(
+        self, title: str, body: str, source_url: str
+    ) -> Optional[Dict[str, str]]:
+        """
+        Rewrite a published post as a Naver-blog-ready version.
+        Full rewrite (never a copy) so Naver's duplicate-document filter doesn't bury it.
+        Returns {title, content} or None on error.
+        """
+        if self.model is None:
+            print("Gemini API key not configured")
+            return None
+
+        prompt = f"""당신은 영어 학습 서비스 "Scan Voca"의 콘텐츠 마케터입니다. 아래 원문 블로그 글을 바탕으로 네이버 블로그에 올릴 홍보 글을 작성하세요.
+
+원문 제목: "{title}"
+원문 링크: {source_url}
+원문 본문:
+\"\"\"{body}\"\"\"
+
+네이버 블로그는 유사문서 필터가 있어 원문을 그대로 복사하면 검색에서 누락됩니다. 반드시 지키세요:
+1. 원문 문장을 그대로 옮기지 말고 **완전히 새로 쓰세요** (같은 정보라도 다른 문장 구조·어휘로)
+2. 제목도 원문과 다르게, 단 핵심 검색 키워드는 유지
+3. 어조: 친근한 네이버 블로그 말투(~해요체), 이모지 2~4개 자연스럽게
+4. 형식: **마크다운 문법 금지** (##, ** 등 사용 금지). 순수 텍스트로, 문단 사이 빈 줄
+5. 분량: 800~1,500자 — 원문 전체가 아니라 핵심만 재구성한 요약+맛보기
+6. 글 후반에 자연스럽게: 더 자세한 내용은 원문 링크({source_url})에서, 그리고 영단어 암기가 필요하면 사진 한 장으로 단어장을 만들어 주는 Scan Voca(https://scanvoca.com) 소개
+7. 마지막 줄: 관련 해시태그 5~8개 (#영어공부 #영단어 형식, 글 주제 반영)
+8. 특정 AI 모델명(Gemini, GPT 등) 절대 언급 금지
+
+반드시 아래 구조의 JSON 객체만 반환하세요:
+{{
+  "title": "네이버용 제목",
+  "content": "본문 전체 (플레인 텍스트, 문단 구분 빈 줄, 마지막 줄 해시태그)"
+}}"""
+
+        try:
+            response = self.model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0.8,
+                    "max_output_tokens": 4096,
+                    "response_mime_type": "application/json",
+                },
+            )
+            content = (response.text or "").strip()
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            result = json.loads(content.strip())
+            naver_title = str(result.get("title", "")).strip()
+            naver_content = str(result.get("content", "")).strip()
+            if not naver_title or not naver_content:
+                print("Naver version returned incomplete fields")
+                return None
+            return {"title": naver_title, "content": naver_content}
+        except Exception as e:
+            error_msg = f"Naver version generation error: {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
     async def plan_blog_images(self, markdown: str) -> Optional[List[Dict[str, Any]]]:
         """
         Analyze a blog draft and propose a context-appropriate set of illustrations.

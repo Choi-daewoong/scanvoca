@@ -8,6 +8,7 @@ import {
   BlogPostRef,
   BlogPostContent,
   BlogPublishImage,
+  BlogNaverVersion,
 } from '@/types';
 
 // 계약서 3절 — 관리자 블로그 API (모두 admin 권한 필요)
@@ -61,6 +62,14 @@ export const blogService = {
   /** 게재된 글 원문 불러오기 (2단계) */
   async getPost(slug: string): Promise<BlogPostContent> {
     return apiFetch<BlogPostContent>(`/api/v1/admin/blog/posts/${slug}`);
+  },
+
+  /** 네이버 블로그용 재작성 (3단계) — 게재된 글을 붙여넣기용으로 변환 */
+  async naverVersion(slug: string): Promise<BlogNaverVersion> {
+    return apiFetch<BlogNaverVersion>('/api/v1/admin/blog/naver-version', {
+      method: 'POST',
+      body: JSON.stringify({ slug }),
+    });
   },
 
   /** 게재 — GitHub 커밋 후 blog_url 반환. images 있으면 md+이미지 단일 커밋 */

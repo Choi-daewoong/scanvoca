@@ -535,3 +535,95 @@ class TestImagePlanValidationUnit:
         md = "# 제목\n## 첫째\n본문\n### 소소제목\n## 둘째\n"
         headings = BlogService.extract_h2_headings(md)
         assert headings == ["## 첫째", "## 둘째"]
+
+
+class TestNaverVersion:
+    """POST /admin/blog/naver-version"""
+
+    SAMPLE_MD = (
+        '---\n'
+        'title: "원문 제목"\n'
+        'description: "d"\n'
+        'category: "일상영어"\n'
+        'tags: ["a"]\n'
+        'date: "2026-07-14"\n'
+        'published: true\n'
+        '---\n\n'
+        '## 소제목\n\n'
+        '원문 본문입니다.'
+    )
+
+    def test_naver_version_success(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_get_post(slug):
+            return {"slug": slug, "markdown": TestNaverVersion.SAMPLE_MD}
+
+        async def fake_naver(self, title, body, source_url):
+            assert title == "원문 제목"
+            assert "원문 본문" in body
+            assert source_url.endswith("/blog/my-post")
+            return {"title": "네이버용 제목", "content": "네이버용 본문\n\n#영어공부"}
+
+        monkeypatch.setattr(BlogService, "get_post", staticmethod(fake_get_post))
+        monkeypatch.setattr(GeminiService, "generate_naver_version", fake_naver)
+
+        resp = client.post(
+            "/api/v1/admin/blog/naver-version",
+            json={"slug": "my-post"},
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["title"] == "네이버용 제목"
+        assert "#영어공부" in data["content"]
+        assert data["source_url"] == "https://scanvoca.com/blog/my-post"
+
+    def test_naver_version_post_not_found_404(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_get_post(slug):
+            return None
+
+        monkeypatch.setattr(BlogService, "get_post", staticmethod(fake_get_post))
+        resp = client.post(
+            "/api/v1/admin/blog/naver-version",
+            json={"slug": "missing"},
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == 404
+
+    def test_naver_version_ai_failure_502(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_get_post(slug):
+            return {"slug": slug, "markdown": TestNaverVersion.SAMPLE_MD}
+
+        async def fake_naver(self, title, body, source_url):
+            return None
+
+        monkeypatch.setattr(BlogService, "get_post", staticmethod(fake_get_post))
+        monkeypatch.setattr(GeminiService, "generate_naver_version", fake_naver)
+        resp = client.post(
+            "/api/v1/admin/blog/naver-version",
+            json={"slug": "my-post"},
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == 502
+
+    def test_naver_version_not_configured_503(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "")
+        resp = client.post(
+            "/api/v1/admin/blog/naver-version",
+            json={"slug": "my-post"},
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == 503
+
+    def test_naver_version_requires_admin(self, client, auth_headers):
+        resp = client.post(
+            "/api/v1/admin/blog/naver-version",
+            json={"slug": "my-post"},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 403

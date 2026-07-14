@@ -399,3 +399,15 @@ class BlogService:
             except Exception as e:
                 raise GitHubPublishError(f"GitHub 콘텐츠 디코딩 실패: {e}") from e
             return {"slug": slug, "markdown": markdown}
+
+    @staticmethod
+    def split_frontmatter(markdown: str) -> tuple[str, str]:
+        """Split a post into (title, body). Title comes from the frontmatter; body excludes it."""
+        m = re.match(r"^---\s*\n(.*?)\n---\s*\n?", markdown, flags=re.DOTALL)
+        if not m:
+            return "", markdown.strip()
+        fm = m.group(1)
+        body = markdown[m.end():].strip()
+        tm = re.search(r'^title:\s*"?(.+?)"?\s*$', fm, flags=re.MULTILINE)
+        title = tm.group(1).strip() if tm else ""
+        return title, body

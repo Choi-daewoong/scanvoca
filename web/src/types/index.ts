@@ -334,3 +334,10 @@ export interface BlogPublishImage {
   path: string; // web/public/blog-images/{slug}/{n}.png
   base64: string;
 }
+
+// POST /naver-version 응답 — 네이버 블로그 붙여넣기용 재작성본
+export interface BlogNaverVersion {
+  title: string;
+  content: string;
+  source_url: string;
+}

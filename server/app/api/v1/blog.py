@@ -22,6 +22,8 @@ from app.schemas.blog import (
     BlogPostDetail,
     BlogPublishRequest,
     BlogPublishResult,
+    BlogNaverVersionRequest,
+    BlogNaverVersionResponse,
 )
 from app.services.blog_service import BlogService, GitHubPublishError, BLOG_CONTENT_DIR
 from app.services.gemini_service import GeminiService
@@ -198,6 +200,53 @@ async def get_post(
             detail="게시글을 찾을 수 없습니다.",
         )
     return BlogPostDetail(**post)
+
+
+@router.post("/naver-version", response_model=BlogNaverVersionResponse)
+async def naver_version(
+    payload: BlogNaverVersionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user),
+):
+    """Rewrite a published post for Naver blog (admin only).
+
+    Full AI rewrite (never a copy) so Naver's duplicate-document filter doesn't bury it.
+    The admin pastes the result manually — Naver has no posting API.
+    """
+    if not BlogService.is_publishing_configured():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="블로그 발행이 설정되지 않았습니다.",
+        )
+    try:
+        post = await BlogService.get_post(payload.slug)
+    except GitHubPublishError as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="게시글을 불러오지 못했습니다.",
+        ) from e
+    if post is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="게시글을 찾을 수 없습니다.",
+        )
+
+    title, body = BlogService.split_frontmatter(post["markdown"])
+    source_url = f"https://scanvoca.com/blog/{payload.slug}"
+
+    gemini = GeminiService()
+    result = await gemini.generate_naver_version(title=title, body=body, source_url=source_url)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="네이버용 변환에 실패했습니다. 다시 시도해 주세요.",
+        )
+
+    return BlogNaverVersionResponse(
+        title=result["title"],
+        content=result["content"],
+        source_url=source_url,
+    )
 
 
 @router.post("/publish", response_model=BlogPublishResult)

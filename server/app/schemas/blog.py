@@ -119,3 +119,15 @@ class BlogPublishResult(BaseModel):
     """Publish response — links to the commit and the (soon-to-be-live) blog page."""
     commit_url: str
     blog_url: str
+
+
+class BlogNaverVersionRequest(BaseModel):
+    """Request a Naver-blog rewrite of a published post."""
+    slug: str = Field(..., min_length=1, max_length=200)
+
+
+class BlogNaverVersionResponse(BaseModel):
+    """Naver-paste-ready rewrite: plain-text body + hashtags, links back to the canonical post."""
+    title: str
+    content: str
+    source_url: str
