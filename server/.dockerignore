@@ -51,6 +51,7 @@ scanvoca.db
 # Documentation
 README.md
 *.md
+!drawing_agent.md
 docs/
 
 # CI/CD

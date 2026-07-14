@@ -62,6 +62,14 @@ Write-Host "✅ JWT_SECRET_KEY: $($JWT_SECRET_KEY.Substring(0,[Math]::Min(15,$JW
 
 # 4. Docker 이미지 빌드
 Write-Host "[4/7] Docker 이미지 빌드 중... (5-7분 소요)" -ForegroundColor Green
+
+# drawing_agent.md는 저장소 루트에 있지만 Docker 빌드 컨텍스트는 server/ 뿐이므로,
+# 빌드 전 임시로 복사해 이미지에 포함시킨다 (server/drawing_agent.md는 .gitignore 처리됨).
+$DrawingAgentSrc = Join-Path $PSScriptRoot "..\drawing_agent.md"
+$DrawingAgentDst = Join-Path $PSScriptRoot "drawing_agent.md"
+Copy-Item -Path $DrawingAgentSrc -Destination $DrawingAgentDst -Force
+Write-Host "✅ drawing_agent.md 빌드 컨텍스트에 포함`n" -ForegroundColor Green
+
 docker build -t $IMAGE_NAME .
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ Docker 빌드 실패" -ForegroundColor Red

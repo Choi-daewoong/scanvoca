@@ -63,3 +63,6 @@ htmlcov/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Copied in from repo root by deploy-final.ps1 for the Docker build context
+drawing_agent.md
