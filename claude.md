@@ -201,6 +201,7 @@ NEXT_PUBLIC_API_URL=https://scanvoca-api-313755310624.asia-northeast3.run.app
 | 날짜 | 변경 내용 | 대상 | 사유 |
 |------|----------|------|------|
 | 2026-07-14 | 초기 구성 (에이전트 3: fe-dev/be-dev/qa, 스킬 5: frontend/backend/qa/deploy/feature) | 전체 | - |
+| 2026-07-14 | 운영 DB 쓰기 전면 금지 규칙 추가 | agents/be-dev.md | 블로그 작업 중 create_all로 운영 테이블 선생성 → 마이그레이션 충돌 |
 
 ---
 
