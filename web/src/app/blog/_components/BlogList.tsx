@@ -49,20 +49,31 @@ export default function BlogList({ posts }: { posts: BlogPostMeta[] }) {
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="group flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-indigo-200 hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-900"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:border-indigo-200 hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-900"
             >
-              <div className="mb-2 flex items-center gap-2">
-                {post.category && (
-                  <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
-                    {post.category}
-                  </span>
-                )}
-                <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(post.date)}</span>
+              {post.thumbnail && (
+                // 정적 자산(public) — next/image 없이 <img> 사용 (빌드 타임 로컬 경로)
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={post.thumbnail}
+                  alt={post.title}
+                  className="aspect-video w-full object-cover"
+                />
+              )}
+              <div className="flex flex-1 flex-col p-5">
+                <div className="mb-2 flex items-center gap-2">
+                  {post.category && (
+                    <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
+                      {post.category}
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(post.date)}</span>
+                </div>
+                <h2 className="mb-1.5 text-base font-bold text-gray-900 group-hover:text-indigo-600 dark:text-gray-100 dark:group-hover:text-indigo-400">
+                  {post.title}
+                </h2>
+                <p className="line-clamp-2 text-sm text-gray-500 dark:text-gray-400">{post.description}</p>
               </div>
-              <h2 className="mb-1.5 text-base font-bold text-gray-900 group-hover:text-indigo-600 dark:text-gray-100 dark:group-hover:text-indigo-400">
-                {post.title}
-              </h2>
-              <p className="line-clamp-2 text-sm text-gray-500 dark:text-gray-400">{post.description}</p>
             </Link>
           ))}
         </div>

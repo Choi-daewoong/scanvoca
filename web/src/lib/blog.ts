@@ -25,6 +25,10 @@ function parseFile(filename: string): BlogPost | null {
       date: typeof data.date === 'string' ? data.date : '',
       published: data.published === true,
       content,
+      // 2단계: 선택 필드 — 대표 이미지 (없으면 undefined)
+      ...(typeof data.thumbnail === 'string' && data.thumbnail
+        ? { thumbnail: data.thumbnail }
+        : {}),
     };
   } catch {
     return null;

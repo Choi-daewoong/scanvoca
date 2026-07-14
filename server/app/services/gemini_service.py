@@ -4,10 +4,25 @@ import base64
 from typing import Optional, Dict, Any, List
 import google.generativeai as genai
 from app.core.config import settings
+from app.services.image_style import IMAGE_STYLE_GUIDE
+
+# Image generation runs on the newer google-genai SDK (the legacy google-generativeai
+# package cannot request IMAGE output). Imported lazily inside generate_blog_image so
+# module import stays cheap and unaffected by the new SDK.
+BLOG_IMAGE_MODEL = "gemini-2.5-flash-image"
+
+
+def _has_api_key() -> bool:
+    return bool(settings.GEMINI_API_KEY and settings.GEMINI_API_KEY != "your-gemini-api-key-here")
 
 
 class GeminiService:
     """Service for Google Gemini API calls"""
+
+    @staticmethod
+    def is_image_generation_configured() -> bool:
+        """True when an API key is present so the image model can be reached."""
+        return _has_api_key()
 
     def __init__(self):
         self.model = None
@@ -247,6 +262,130 @@ Important:
                 print(error_msg)
             except UnicodeEncodeError:
                 print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
+    async def plan_blog_images(self, markdown: str) -> Optional[List[Dict[str, Any]]]:
+        """
+        Analyze a blog draft and propose a context-appropriate set of illustrations.
+        Returns a list of plan dicts (raw — the caller validates anchors), or None on error.
+        Each item: {anchor_type, anchor_text, scene, alt, role}.
+        """
+        if self.model is None:
+            print("Gemini API key not configured")
+            return None
+
+        # Extract the actual level-2 headings so the AI can only reference real ones.
+        headings: List[str] = []
+        for line in markdown.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("## ") and not stripped.startswith("###"):
+                headings.append(stripped)
+        headings_block = "\n".join(headings) if headings else "(본문에 ## 소제목이 없습니다)"
+
+        prompt = f"""당신은 영어 학습 블로그의 아트 디렉터입니다. 아래 블로그 본문(마크다운)을 읽고, 글에 어울리는 삽화 계획을 세우세요.
+
+[본문]
+\"\"\"
+{markdown}
+\"\"\"
+
+[본문에 실제로 존재하는 ## 소제목 목록]
+{headings_block}
+
+규칙:
+1. 이미지 개수는 본문 길이와 내용에 맞게 **문맥에 따라 0~5개**로 정하세요. 억지로 채우지 말 것 (짧거나 이미지가 불필요하면 0개도 가능).
+2. 대표 이미지(role: "hero")는 **최대 1개**만. 나머지는 role: "body".
+3. 각 이미지의 위치(anchor):
+   - 글 최상단 대표 이미지는 anchor_type: "top", anchor_text: null
+   - 특정 소제목 아래에 넣을 이미지는 anchor_type: "after_heading", anchor_text 에는 위 [소제목 목록]에 있는 문자열을 **글자 그대로 정확히** 복사 (예: "## 시작하며"). 목록에 없는 소제목을 지어내지 마세요.
+4. scene: 이미지 생성 모델에 넘길 **영문** 장면 묘사. 구체적인 사물·인물·행동을 묘사하되, 이미지 안에 텍스트/글자는 절대 넣지 않도록 묘사하세요. (스타일·색감은 시스템이 별도로 붙이므로 여기서는 장면만)
+5. alt: 한국어 대체 텍스트(접근성용, 한 문장).
+
+반드시 아래 JSON 객체만 반환하세요. 다른 텍스트 금지:
+{{
+  "plans": [
+    {{ "anchor_type": "top", "anchor_text": null, "scene": "...", "alt": "...", "role": "hero" }},
+    {{ "anchor_type": "after_heading", "anchor_text": "## 소제목", "scene": "...", "alt": "...", "role": "body" }}
+  ]
+}}
+이미지가 필요 없으면 {{"plans": []}} 를 반환하세요."""
+
+        try:
+            response = self.model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0.5,
+                    "max_output_tokens": 4096,
+                    "response_mime_type": "application/json",
+                },
+            )
+            content = response.text
+            if not content:
+                return []
+            content = content.strip()
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            content = content.strip()
+
+            result = json.loads(content)
+            plans = result.get("plans") if isinstance(result, dict) else result
+            if not isinstance(plans, list):
+                return []
+            return plans
+
+        except json.JSONDecodeError as e:
+            msg = f"Blog image-plan JSON parse error: {e}"
+            try:
+                print(msg)
+            except UnicodeEncodeError:
+                print(msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+        except Exception as e:
+            msg = f"Blog image-plan error: {e}"
+            try:
+                print(msg)
+            except UnicodeEncodeError:
+                print(msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
+    async def generate_blog_image(self, scene: str) -> Optional[bytes]:
+        """
+        Generate a single blog illustration (IMAGE_STYLE_GUIDE + scene) and return PNG bytes.
+        Uses the google-genai SDK. Returns None if the key is missing or generation fails.
+        """
+        if not _has_api_key():
+            print("Gemini API key not configured")
+            return None
+
+        prompt = f"{IMAGE_STYLE_GUIDE}\n\nScene to illustrate: {scene}"
+        try:
+            from google import genai as genai_new
+            from google.genai import types as genai_types
+
+            client = genai_new.Client(api_key=settings.GEMINI_API_KEY)
+            response = client.models.generate_content(
+                model=BLOG_IMAGE_MODEL,
+                contents=prompt,
+                config=genai_types.GenerateContentConfig(response_modalities=["IMAGE"]),
+            )
+            for cand in getattr(response, "candidates", None) or []:
+                parts = getattr(cand.content, "parts", None) or []
+                for part in parts:
+                    inline = getattr(part, "inline_data", None)
+                    if inline and getattr(inline, "data", None):
+                        return inline.data
+            print("Blog image generation returned no image")
+            return None
+        except Exception as e:
+            msg = f"Blog image generation error: {e}"
+            try:
+                print(msg)
+            except UnicodeEncodeError:
+                print(msg.encode("ascii", errors="ignore").decode("ascii"))
             return None
 
     async def extract_words_from_image(self, image_bytes: bytes, mime_type: str = "image/jpeg") -> Optional[Dict[str, Any]]:

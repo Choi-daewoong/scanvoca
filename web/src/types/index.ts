@@ -262,6 +262,8 @@ export interface BlogPost {
   date: string;
   published: boolean;
   content: string;
+  // 2단계: 선택 필드 — 대표 이미지 경로 (목록 카드 썸네일)
+  thumbnail?: string;
 }
 
 // 목록/메타 용 (본문 제외)
@@ -291,4 +293,44 @@ export interface BlogDraft {
 export interface BlogPublishResult {
   commit_url: string;
   blog_url: string;
+}
+
+// ===== 블로그 2단계 — 이미지 워크플로우 =====
+
+// 관리자 — 이미지 계획 항목 (BE 응답, snake_case — 계약서 3절 /image-plan)
+export interface BlogImagePlan {
+  anchor_type: 'top' | 'after_heading';
+  anchor_text: string | null; // '## 소제목 원문' (top이면 null)
+  scene: string; // 이미지 생성용 영문 장면 묘사
+  alt: string; // 한국어 대체텍스트
+  role: 'hero' | 'body';
+}
+
+// POST /image-plan 응답
+export interface BlogImagePlanResponse {
+  plans: BlogImagePlan[];
+}
+
+// POST /generate-image 응답 (BE, snake_case)
+export interface BlogGeneratedImage {
+  image_base64: string;
+  mime_type: string;
+}
+
+// GET /posts 항목 (게재된 글 목록)
+export interface BlogPostRef {
+  slug: string;
+  path: string;
+}
+
+// GET /posts/{slug} 응답 (게재된 글 원문)
+export interface BlogPostContent {
+  slug: string;
+  markdown: string;
+}
+
+// publish 요청의 이미지 항목 (경로 + base64)
+export interface BlogPublishImage {
+  path: string; // web/public/blog-images/{slug}/{n}.png
+  base64: string;
 }

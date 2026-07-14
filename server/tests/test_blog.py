@@ -228,3 +228,310 @@ class TestPublish:
             headers=auth_headers,
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+class TestCreateTopic:
+    """주제 직접 추가 테스트 (POST /admin/blog/topics)"""
+
+    def test_create_topic_success(self, client, admin_auth_headers, db_session):
+        response = client.post(
+            "/api/v1/admin/blog/topics",
+            json={"category": "토익·비즈니스", "title": "새 토익 주제", "angle": "직접 지정한 방향"},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        data = response.json()
+        assert data["category"] == "토익·비즈니스"
+        assert data["title"] == "새 토익 주제"
+        assert data["angle"] == "직접 지정한 방향"
+        assert data["status"] == "unused"
+        assert db_session.get(BlogTopic, data["id"]) is not None
+
+    def test_create_topic_default_angle_when_omitted(self, client, admin_auth_headers):
+        """angle 생략 시 카테고리 기본 홍보 훅으로 채워진다."""
+        from app.services.blog_service import CATEGORY_DEFAULT_HOOKS
+
+        response = client.post(
+            "/api/v1/admin/blog/topics",
+            json={"category": "수능·내신", "title": "angle 없는 주제"},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json()["angle"] == CATEGORY_DEFAULT_HOOKS["수능·내신"]
+
+    def test_create_topic_invalid_category_422(self, client, admin_auth_headers):
+        response = client.post(
+            "/api/v1/admin/blog/topics",
+            json={"category": "없는카테고리", "title": "x", "angle": "y"},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_create_topic_non_admin_403(self, client, auth_headers):
+        response = client.post(
+            "/api/v1/admin/blog/topics",
+            json={"category": "토익·비즈니스", "title": "x"},
+            headers=auth_headers,
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+class TestImagePlan:
+    """이미지 계획 테스트 (POST /admin/blog/image-plan)"""
+
+    def test_image_plan_drops_bad_anchor_and_caps_hero(
+        self, client, admin_auth_headers, monkeypatch
+    ):
+        markdown = (
+            "---\ntitle: x\n---\n\n"
+            "## 시작하며\n\n내용\n\n"
+            "## 핵심 정리\n\n내용2\n"
+        )
+
+        async def fake_plan(self, md):
+            return [
+                {"anchor_type": "top", "anchor_text": None, "scene": "hero scene", "alt": "대표", "role": "hero"},
+                {"anchor_type": "after_heading", "anchor_text": "## 시작하며", "scene": "s1", "alt": "a1", "role": "body"},
+                # 존재하지 않는 헤딩 -> 제거되어야 함
+                {"anchor_type": "after_heading", "anchor_text": "## 없는소제목", "scene": "s2", "alt": "a2", "role": "body"},
+                # 두 번째 hero -> body로 강등
+                {"anchor_type": "after_heading", "anchor_text": "## 핵심 정리", "scene": "s3", "alt": "a3", "role": "hero"},
+            ]
+
+        monkeypatch.setattr(GeminiService, "plan_blog_images", fake_plan)
+
+        response = client.post(
+            "/api/v1/admin/blog/image-plan",
+            json={"slug": "x", "markdown": markdown},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        plans = response.json()["plans"]
+        # 4개 중 잘못된 헤딩 1개 제거 -> 3개
+        assert len(plans) == 3
+        anchors = [p["anchor_text"] for p in plans]
+        assert "## 없는소제목" not in anchors
+        # hero는 최대 1개
+        assert sum(1 for p in plans if p["role"] == "hero") == 1
+
+    def test_image_plan_empty_when_ai_none(self, client, admin_auth_headers, monkeypatch):
+        async def fake_plan(self, md):
+            return None
+
+        monkeypatch.setattr(GeminiService, "plan_blog_images", fake_plan)
+        response = client.post(
+            "/api/v1/admin/blog/image-plan",
+            json={"slug": "x", "markdown": "## 소제목\n본문"},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["plans"] == []
+
+    def test_image_plan_non_admin_403(self, client, auth_headers):
+        response = client.post(
+            "/api/v1/admin/blog/image-plan",
+            json={"slug": "x", "markdown": "y"},
+            headers=auth_headers,
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+class TestGenerateImage:
+    """이미지 생성 테스트 (POST /admin/blog/generate-image)"""
+
+    def test_generate_image_success(self, client, admin_auth_headers, monkeypatch):
+        import base64 as _b64
+
+        async def fake_gen(self, scene):
+            return b"\x89PNG\r\n\x1a\nfake-image-bytes"
+
+        monkeypatch.setattr(GeminiService, "generate_blog_image", fake_gen)
+        response = client.post(
+            "/api/v1/admin/blog/generate-image",
+            json={"scene": "a friendly student studying"},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["mime_type"] == "image/png"
+        assert _b64.b64decode(data["image_base64"]) == b"\x89PNG\r\n\x1a\nfake-image-bytes"
+
+    def test_generate_image_not_configured_503(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(
+            GeminiService, "is_image_generation_configured", staticmethod(lambda: False)
+        )
+        response = client.post(
+            "/api/v1/admin/blog/generate-image",
+            json={"scene": "x"},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+    def test_generate_image_none_result_503(self, client, admin_auth_headers, monkeypatch):
+        """키는 있으나 생성 실패(None) 시 503."""
+        async def fake_gen(self, scene):
+            return None
+
+        monkeypatch.setattr(GeminiService, "generate_blog_image", fake_gen)
+        response = client.post(
+            "/api/v1/admin/blog/generate-image",
+            json={"scene": "x"},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+    def test_generate_image_non_admin_403(self, client, auth_headers):
+        response = client.post(
+            "/api/v1/admin/blog/generate-image",
+            json={"scene": "x"},
+            headers=auth_headers,
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+class TestListAndGetPosts:
+    """게재된 글 목록/단건 테스트 (httpx는 서비스 레이어에서 mock)"""
+
+    def test_list_posts_success(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_list():
+            return [
+                {"slug": "toeic-vocab-30days", "path": "web/content/blog/toeic-vocab-30days.md"},
+                {"slug": "hello-world", "path": "web/content/blog/hello-world.md"},
+            ]
+
+        monkeypatch.setattr(BlogService, "list_posts", staticmethod(fake_list))
+        response = client.get("/api/v1/admin/blog/posts", headers=admin_auth_headers)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert len(data) == 2
+        assert data[0]["slug"] == "toeic-vocab-30days"
+
+    def test_list_posts_not_configured_503(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "")
+        response = client.get("/api/v1/admin/blog/posts", headers=admin_auth_headers)
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+    def test_get_post_success(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_get(slug):
+            return {"slug": slug, "markdown": "---\ntitle: x\n---\n본문"}
+
+        monkeypatch.setattr(BlogService, "get_post", staticmethod(fake_get))
+        response = client.get("/api/v1/admin/blog/posts/some-slug", headers=admin_auth_headers)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["slug"] == "some-slug"
+        assert "본문" in response.json()["markdown"]
+
+    def test_get_post_404(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_get(slug):
+            return None
+
+        monkeypatch.setattr(BlogService, "get_post", staticmethod(fake_get))
+        response = client.get("/api/v1/admin/blog/posts/missing", headers=admin_auth_headers)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_list_posts_non_admin_403(self, client, auth_headers):
+        response = client.get("/api/v1/admin/blog/posts", headers=auth_headers)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+class TestPublishWithImages:
+    """이미지 포함 게재 테스트 (Git Data API 단일 커밋 mock)"""
+
+    def test_publish_with_images_single_commit(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+        captured = {}
+
+        async def fake_commit_files(files, message):
+            captured["files"] = files
+            captured["message"] = message
+            return "https://github.com/Choi-daewoong/scanvoca/commit/img123"
+
+        monkeypatch.setattr(BlogService, "commit_files", staticmethod(fake_commit_files))
+
+        import base64 as _b64
+        png_b64 = _b64.b64encode(b"\x89PNGdata").decode()
+
+        response = client.post(
+            "/api/v1/admin/blog/publish",
+            json={
+                "slug": "toeic-vocab-30days",
+                "markdown": "---\ntitle: x\n---\n본문",
+                "images": [
+                    {"path": "web/public/blog-images/toeic-vocab-30days/1.png", "base64": png_b64},
+                ],
+            },
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["commit_url"].endswith("img123")
+        # 단일 커밋에 md + 이미지 1개 = 2개 파일
+        assert len(captured["files"]) == 2
+        paths = [f[0] for f in captured["files"]]
+        assert "web/content/blog/toeic-vocab-30days.md" in paths
+        assert "web/public/blog-images/toeic-vocab-30days/1.png" in paths
+
+    def test_publish_rejects_bad_image_path(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_commit_files(files, message):
+            raise AssertionError("commit_files should not be called for a bad path")
+
+        monkeypatch.setattr(BlogService, "commit_files", staticmethod(fake_commit_files))
+
+        import base64 as _b64
+        png_b64 = _b64.b64encode(b"data").decode()
+
+        # 경로 조작 시도: 다른 slug 디렉토리 참조
+        response = client.post(
+            "/api/v1/admin/blog/publish",
+            json={
+                "slug": "my-post",
+                "markdown": "---\n---\n본문",
+                "images": [
+                    {"path": "web/public/blog-images/other-slug/../../secret.png", "base64": png_b64},
+                ],
+            },
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_publish_rejects_non_png_path(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+        import base64 as _b64
+        response = client.post(
+            "/api/v1/admin/blog/publish",
+            json={
+                "slug": "my-post",
+                "markdown": "---\n---\n본문",
+                "images": [
+                    {"path": "web/public/blog-images/my-post/evil.svg", "base64": _b64.b64encode(b"x").decode()},
+                ],
+            },
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+class TestImagePlanValidationUnit:
+    """validate_image_plans / is_valid_image_path 단위 테스트"""
+
+    def test_is_valid_image_path(self):
+        slug = "my-post"
+        assert BlogService.is_valid_image_path("web/public/blog-images/my-post/1.png", slug)
+        assert not BlogService.is_valid_image_path("web/public/blog-images/other/1.png", slug)
+        assert not BlogService.is_valid_image_path("web/public/blog-images/my-post/1.jpg", slug)
+        assert not BlogService.is_valid_image_path("web/public/blog-images/my-post/../x.png", slug)
+        assert not BlogService.is_valid_image_path("web/public/blog-images/my-post/sub/1.png", slug)
+
+    def test_extract_h2_headings(self):
+        md = "# 제목\n## 첫째\n본문\n### 소소제목\n## 둘째\n"
+        headings = BlogService.extract_h2_headings(md)
+        assert headings == ["## 첫째", "## 둘째"]

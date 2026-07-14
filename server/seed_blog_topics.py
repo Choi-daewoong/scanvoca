@@ -9,13 +9,9 @@
 """
 from app.core.database import SessionLocal
 from app.models.blog_topic import BlogTopic
-
-# 카테고리별 홍보 연결 고리 — 각 주제의 angle에 포함되어 AI 글 생성 시 마무리 홍보 문단의 방향이 된다
-HOOK_A = "홍보 연결: 토익 기출문제집 오답 노트 만들 때, 모르는 단어 일일이 사전 찾지 말고 스캔보카로 한 번에 스캔해서 나만의 토익 단어장을 만들어 보세요!"
-HOOK_B = "홍보 연결: EBS 연계교재나 모의고사 시험지 틀린 문제 단어 정리하느라 밤새지 마세요. 틀린 지문 사진 찍으면 스캔보카가 3초 만에 단어장을 만들어 줍니다."
-HOOK_C = "홍보 연결: 망각곡선을 극복하는 가장 좋은 방법은 수시로 퀴즈를 푸는 것입니다. 스캔보카의 4가지 학습 모드(학습, 퀴즈, 시험, 스펠링)로 영단어를 장기 기억으로 전환해 보세요."
-HOOK_D = "홍보 연결: 넷플릭스 자막이나 유튜브 쇼츠에서 본 생소한 단어들, 바로바로 메모해두지 않으면 잊어버립니다. 나만의 트렌디 단어장을 스캔보카로 관리해 보세요."
-HOOK_E = "홍보 연결: 교재 두께에 압도당하지 마세요. 고난도 동의어가 쏟아지는 시험일수록 나만의 오답 단어들을 스캔보카로 스마트하게 분류해 반복 학습하는 것이 합격의 지름길입니다."
+# 카테고리별 홍보 연결 고리 — 단일 소스는 blog_service.CATEGORY_DEFAULT_HOOKS.
+# 주제 직접 추가(POST /admin/blog/topics)의 기본 angle과 동일한 문구를 공유한다.
+from app.services.blog_service import HOOK_A, HOOK_B, HOOK_C, HOOK_D, HOOK_E
 
 # (category, title, angle) — angle: 타깃 독자 / 홍보 연결 고리
 TOPICS: list[tuple[str, str, str]] = [
