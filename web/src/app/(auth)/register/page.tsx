@@ -14,6 +14,8 @@ const schema = z.object({
   email: z.string().email('올바른 이메일을 입력하세요'),
   password: z.string().min(8, '비밀번호는 최소 8자 이상이어야 합니다'),
   confirm: z.string(),
+  agree_age: z.boolean().refine((v) => v, '만 14세 이상만 가입할 수 있습니다'),
+  agree_privacy: z.boolean().refine((v) => v, '개인정보 수집·이용에 동의해야 가입할 수 있습니다'),
 }).refine((d) => d.password === d.confirm, {
   message: '비밀번호가 일치하지 않습니다',
   path: ['confirm'],
@@ -29,7 +31,10 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: { agree_age: false, agree_privacy: false },
+  });
 
   const onSubmit = async (data: FormData) => {
     setServerError('');
@@ -93,6 +98,36 @@ export default function RegisterPage() {
             className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-indigo-950"
           />
           {errors.confirm && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.confirm.message}</p>}
+        </div>
+
+        <div className="space-y-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/60">
+          <label className="flex items-start gap-2.5">
+            <input
+              {...register('agree_age')}
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 shrink-0 accent-indigo-500"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="font-semibold text-indigo-500 dark:text-indigo-400">(필수)</span> 만 14세 이상입니다
+            </span>
+          </label>
+          {errors.agree_age && <p className="text-xs text-red-500 dark:text-red-400">{errors.agree_age.message}</p>}
+
+          <label className="flex items-start gap-2.5">
+            <input
+              {...register('agree_privacy')}
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 shrink-0 accent-indigo-500"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="font-semibold text-indigo-500 dark:text-indigo-400">(필수)</span>{' '}
+              <Link href="/privacy" target="_blank" className="font-medium underline underline-offset-2 hover:text-indigo-500 dark:hover:text-indigo-400">
+                개인정보 처리방침
+              </Link>
+              을 확인하였으며, 개인정보 수집·이용에 동의합니다
+            </span>
+          </label>
+          {errors.agree_privacy && <p className="text-xs text-red-500 dark:text-red-400">{errors.agree_privacy.message}</p>}
         </div>
 
         {serverError && (

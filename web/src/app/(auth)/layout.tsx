@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-950">
@@ -16,6 +18,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">스마트 영단어 학습</p>
         </div>
         {children}
+        {/* 개인정보 처리방침은 로그인 여부와 무관하게 첫 화면에서 접근 가능해야 함 */}
+        <div className="mt-6 text-center">
+          <Link
+            href="/privacy"
+            className="text-xs font-medium text-gray-400 hover:text-indigo-500 hover:underline dark:text-gray-500 dark:hover:text-indigo-400"
+          >
+            개인정보 처리방침
+          </Link>
+        </div>
       </div>
     </div>
   );
