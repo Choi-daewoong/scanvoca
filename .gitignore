@@ -77,3 +77,10 @@ app/.expo/
 *.tmp
 *.temp
 .cache/
+
+# Harness workspace (intermediate artifacts)
+_workspace/
+_workspace_prev/
+
+# Claude Code local settings (personal permissions/paths)
+.claude/settings.local.json
