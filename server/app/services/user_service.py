@@ -124,6 +124,12 @@ class UserService:
         db.commit()
         return count
 
+    @staticmethod
+    def delete_account(db: Session, user: User) -> None:
+        """Delete the user row; DB FK cascades remove wordbooks, posts, likes, and point transactions"""
+        db.delete(user)
+        db.commit()
+
     MAX_RESET_OTP_ATTEMPTS = 5
 
     @staticmethod

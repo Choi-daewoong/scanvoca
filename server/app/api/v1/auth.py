@@ -183,6 +183,21 @@ async def update_current_user_info(
     return UserService.update(db, current_user, update_data)
 
 
+@router.delete("/me", response_model=MessageResponse)
+async def delete_current_user_account(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Delete current user's account (회원 탈퇴)
+
+    계정과 연관 데이터(단어장·학습 기록·게시글·포인트 내역)가 즉시 삭제되며 복구할 수 없다.
+    Requires authentication (Bearer token)
+    """
+    UserService.delete_account(db, current_user)
+    return {"message": "회원 탈퇴가 완료되었습니다"}
+
+
 @router.post("/google-login", response_model=TokenResponse)
 async def google_login(
     google_data: GoogleLoginRequest,

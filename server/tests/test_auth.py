@@ -164,6 +164,48 @@ class TestGetMe:
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+class TestDeleteMe:
+    """회원 탈퇴 테스트"""
+
+    def test_delete_me_success(self, client, auth_headers, test_user_data, db_session):
+        """정상 탈퇴 - 계정이 삭제되고 토큰이 무효화된다"""
+        response = client.delete("/api/v1/auth/me", headers=auth_headers)
+
+        assert response.status_code == status.HTTP_200_OK
+
+        # DB에서 사용자가 삭제되었는지 확인
+        from app.models.user import User
+        user = db_session.query(User).filter(User.email == test_user_data["email"]).first()
+        assert user is None
+
+        # 삭제된 계정의 토큰으로는 더 이상 접근 불가
+        me = client.get("/api/v1/auth/me", headers=auth_headers)
+        assert me.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_delete_me_cascades_wordbooks(self, client, auth_headers, db_session):
+        """탈퇴 시 단어장도 함께 삭제된다"""
+        from app.models.user import User
+        from app.models.wordbook import Wordbook
+
+        user = db_session.query(User).filter(User.email == "test@example.com").first()
+        wordbook = Wordbook(name="탈퇴 테스트 단어장", user_id=user.id)
+        db_session.add(wordbook)
+        db_session.commit()
+        wordbook_id = wordbook.id
+
+        response = client.delete("/api/v1/auth/me", headers=auth_headers)
+        assert response.status_code == status.HTTP_200_OK
+
+        db_session.expire_all()
+        assert db_session.query(Wordbook).filter(Wordbook.id == wordbook_id).first() is None
+
+    def test_delete_me_no_token(self, client):
+        """토큰 없이 탈퇴 시도"""
+        response = client.delete("/api/v1/auth/me")
+
+        assert response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+
+
 class TestPasswordSecurity:
     """비밀번호 보안 테스트"""
 

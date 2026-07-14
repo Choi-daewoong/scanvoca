@@ -16,7 +16,7 @@ const DAILY_GOAL_KEY = 'scan_voca_daily_goal';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout, deleteAccount } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { fontId, customFontName } = useAppearanceStore();
   const openUpgradeModal = useGuestUiStore((s) => s.openUpgradeModal);
@@ -63,6 +63,18 @@ export default function SettingsPage() {
     if (!confirm('로그아웃하시겠습니까?')) return;
     logout();
     router.replace('/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm('정말 탈퇴하시겠습니까?\n계정과 모든 단어장·학습 기록·포인트가 즉시 삭제되며 되돌릴 수 없습니다.')) return;
+    if (!confirm('마지막 확인입니다. 회원 탈퇴를 진행할까요?')) return;
+    try {
+      await deleteAccount();
+      alert('회원 탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.');
+      router.replace('/login');
+    } catch {
+      alert('탈퇴 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    }
   };
 
   return (
@@ -293,6 +305,23 @@ export default function SettingsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
+        {!user?.is_guest && (
+          <>
+            <div className="border-t border-gray-100 dark:border-gray-800" />
+            <button
+              onClick={handleDeleteAccount}
+              className="flex w-full items-center justify-between px-5 py-4 transition hover:bg-red-50 dark:hover:bg-red-950/30"
+            >
+              <div className="text-left">
+                <p className="text-sm font-medium text-red-500 dark:text-red-400">회원 탈퇴</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">계정과 모든 데이터가 즉시 삭제됩니다</p>
+              </div>
+              <svg className="h-4 w-4 text-red-400 dark:text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </>
+        )}
       </div>
 
       {/* 앱 정보 */}

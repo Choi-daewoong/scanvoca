@@ -75,6 +75,12 @@ export const authService = {
     });
   },
 
+  // 회원 탈퇴 - 서버에서 계정과 연관 데이터를 삭제한 뒤 로컬 토큰도 제거
+  async deleteAccount(): Promise<void> {
+    await apiFetch('/api/v1/auth/me', { method: 'DELETE' });
+    clearTokens();
+  },
+
   logout() {
     clearTokens();
   },
