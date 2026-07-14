@@ -13,11 +13,12 @@ Scan Voca 블로그에 들어가는 모든 AI 일러스트가 **하나의 시리
 3. **고정 인물 디자인 시스템** — 등장인물은 항상 같은 톤의 단순화된 얼굴(점 눈 + 짧은 선 입, 과한 디테일 없음), 둥근 실루엣의 캐주얼한 옷차림. 매번 새로운 화풍의 인물이 나오지 않도록 "심플하고 둥근 캐릭터"라는 규칙을 고정합니다.
 4. **고정 구도 규칙** — 배경은 항상 깨끗한 흰색/아주 옅은 톤, 요소는 중앙 또는 여백을 넉넉히 둔 배치, 16:9. 배경이 매번 복잡해지거나 꽉 채워지면 톤이 흔들립니다.
 
-## 절대 금지 사항
+## 텍스트 규칙 — 영어는 되고, 한글은 안 됩니다
 
-- **이미지 안의 글자·숫자·문자** — 책, 화면, 간판, 라벨 어디에도 금지. AI가 글자를 그리면 대부분 깨져서 나옵니다. 책은 빈 페이지로, 화면은 추상 아이콘으로 대체.
-- **워터마크·로고·브랜드명·타사 캐릭터**
-- **사실적(포토리얼) 렌더링, 3D, 손그림 질감** — 위 2번 규칙과 충돌하는 화풍 전부 금지
+- **한글(한국어 문자)은 이미지 안에 절대 금지** — 책, 화면, 간판, 라벨 어디에도 안 됩니다. AI가 한글을 그리면 거의 항상 깨진 글자로 나옵니다.
+- **영어 단어·짧은 문구는 허용, 오히려 권장** — Scan Voca는 영단어 앱이니 책 표지의 단어, 화면 속 단어 카드, 칠판의 짧은 영어 단어 등은 자연스럽게 들어가도 좋습니다. AI는 영문 렌더링을 한글보다 훨씬 안정적으로 해냅니다. 다만 문장이 길어지면 여전히 깨질 수 있으니 **한두 단어, 짧은 구 정도**로 제한합니다.
+- **워터마크·로고·브랜드명·타사 캐릭터는 금지**
+- **사실적(포토리얼) 렌더링, 3D, 손그림 질감** — 아래 렌더링 스타일 규칙과 충돌하는 화풍 전부 금지
 
 ## 실제 프롬프트 (이 블록을 수정하면 다음 배포부터 바로 적용됩니다)
 
@@ -32,7 +33,7 @@ FIXED CHARACTER DESIGN (do not deviate): when people appear, draw them as simpli
 
 FIXED COMPOSITION (do not deviate): clean plain white or very light background, no busy scenery, generous negative space, main subject centered or gently off-center. Wide 16:9 aspect ratio suitable for a blog header or inline figure.
 
-ABSOLUTELY NO TEXT: the image must contain no letters, no words, no numbers, no captions, no signage, no readable characters of any kind — not on books, screens, signs, labels, or anywhere in the scene. Represent books as blank pages, screens as simple abstract icons or glowing shapes, and signage as plain colored blocks — never attempt to render actual writing.
+TEXT RULE: English text is welcome and encouraged where it fits naturally — this is an English-vocabulary app, so short English words or two-to-three-word phrases may appear on book covers, flashcards, notebook pages, phone/screen UI, or a chalkboard (e.g. a single vocabulary word, "HELLO", "STUDY TIME"). Keep any English text short (one to a few words) and legible. NEVER render Korean text (Hangul) anywhere in the image — no Korean letters, no Korean captions, no Korean signage. If a scene would naturally have Korean writing (a Korean street sign, a Korean textbook title, etc.), replace it with blank space, an abstract icon, or English text instead — never attempt to render Korean characters.
 
 No watermark, no logo, no brand name, no third-party characters.
 ````
@@ -44,7 +45,7 @@ No watermark, no logo, no brand name, no third-party characters.
 3. 백엔드 재배포: `cd server && .\deploy-final.ps1`
 4. 재배포 후 admin 페이지에서 이미지 1장을 새로 생성해 반영 확인
 
-> ⚠️ 모델이 "글자 금지" 규칙을 가끔 어깁니다(책 표지에 깨진 글자 등). 미리보기에서 발견되면 항목별 [다시 생성]을 누르세요. 최종 게재 전 검토 단계에서 반드시 확인하세요.
+> ⚠️ 모델이 가끔 한글을 그리려다 깨진 글자로 그리거나, 영어 텍스트를 너무 길게/부자연스럽게 넣기도 합니다. 미리보기에서 발견되면 항목별 [다시 생성]을 누르세요. 최종 게재 전 검토 단계에서 반드시 확인하세요.
 
 ## 동작 방식 (참고)
 

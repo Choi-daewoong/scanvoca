@@ -71,7 +71,13 @@ Copy-Item -Path $DrawingAgentSrc -Destination $DrawingAgentDst -Force
 Write-Host "✅ drawing_agent.md 빌드 컨텍스트에 포함`n" -ForegroundColor Green
 
 docker build -t $IMAGE_NAME .
-if ($LASTEXITCODE -ne 0) {
+$DockerBuildExitCode = $LASTEXITCODE
+
+# 로컬 개발 시 이 임시 복사본이 저장소 루트의 진짜 문서보다 먼저 읽히는 것을 방지하기 위해
+# 빌드 직후 즉시 삭제한다 (image_style.py는 로컬에서 이 파일이 없어야 루트 원본을 읽는다).
+Remove-Item -Path $DrawingAgentDst -Force -ErrorAction SilentlyContinue
+
+if ($DockerBuildExitCode -ne 0) {
     Write-Host "❌ Docker 빌드 실패" -ForegroundColor Red
     exit 1
 }

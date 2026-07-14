@@ -3,12 +3,14 @@
 Edit the fenced ```text prompt block in drawing_agent.md (repo root) and redeploy the backend
 to change the look of every AI-generated blog illustration. No other file needs to change.
 
-Path resolution handles two layouts:
+Path resolution handles two layouts, checked in this order so local dev always prefers the
+real repo-root source over any leftover build artifact:
 - Local dev: this file lives at <repo>/server/app/services/image_style.py, so the doc is
-  three parents up, at <repo>/drawing_agent.md.
+  three parents up, at <repo>/drawing_agent.md. Checked FIRST.
 - Cloud Run image: deploy-final.ps1 copies <repo>/drawing_agent.md into server/ before
-  `docker build` (whose context is server/), so it lands at /app/drawing_agent.md — two
-  parents up from /app/app/services/image_style.py inside the container.
+  `docker build` (whose context is server/) and removes the copy afterward, so at runtime
+  it lands at /app/drawing_agent.md — two parents up from /app/app/services/image_style.py
+  inside the container. Checked second (this path doesn't exist in local dev).
 """
 import re
 from pathlib import Path
@@ -34,8 +36,8 @@ _PROMPT_BLOCK_RE = re.compile(r"```text prompt\s*\n(.*?)\n```", re.DOTALL)
 def _load_style_guide() -> str:
     here = Path(__file__).resolve()
     candidates = [
-        here.parents[2] / "drawing_agent.md",  # Cloud Run image: /app/drawing_agent.md
         here.parents[3] / "drawing_agent.md",  # local dev: <repo>/drawing_agent.md
+        here.parents[2] / "drawing_agent.md",  # Cloud Run image: /app/drawing_agent.md
     ]
     for path in candidates:
         if path.is_file():
