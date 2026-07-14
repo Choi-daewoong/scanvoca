@@ -34,9 +34,9 @@ def admin_auth_headers(client, db_session, test_user_data):
 
 def _seed_topics(db_session):
     topics = [
-        BlogTopic(category="토익", title="토익 단어 30일 완성", angle="토익 입문자 타깃", status="unused"),
-        BlogTopic(category="중등", title="중2 내신 필수 단어", angle="중등 내신 대비", status="unused"),
-        BlogTopic(category="학습법", title="단어 암기 복습 주기", angle="망각곡선 활용", status="used", post_slug="review-cycle"),
+        BlogTopic(category="토익·비즈니스", title="토익 단어 30일 완성", angle="토익 입문자 타깃", status="unused"),
+        BlogTopic(category="수능·내신", title="중2 내신 필수 단어", angle="중등 내신 대비", status="unused"),
+        BlogTopic(category="암기법·학습팁", title="단어 암기 복습 주기", angle="망각곡선 활용", status="used", post_slug="review-cycle"),
     ]
     db_session.add_all(topics)
     db_session.commit()

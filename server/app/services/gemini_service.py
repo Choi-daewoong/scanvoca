@@ -142,7 +142,7 @@ Important:
             print("Gemini API key not configured")
             return None
 
-        categories = ["중등", "고등", "토익", "일상회화", "비즈니스회화", "학습법"]
+        categories = ["토익·비즈니스", "수능·내신", "암기법·학습팁", "일상영어", "자격시험"]
         categories_str = ", ".join(categories)
 
         if custom_prompt and custom_prompt.strip():
@@ -223,7 +223,7 @@ Important:
                 return None
 
             if category not in categories:
-                category = "학습법"
+                category = "암기법·학습팁"
 
             return {
                 "slug": slug,

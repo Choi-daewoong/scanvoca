@@ -59,7 +59,7 @@ class BlogService:
     ) -> str:
         """Build a complete markdown file (frontmatter + body) in the contract §1 format."""
         if category not in BLOG_CATEGORIES:
-            category = "학습법"
+            category = "암기법·학습팁"
         # Escape double quotes inside string frontmatter values
         safe_title = title.replace('"', "'")
         safe_desc = description.replace('"', "'")

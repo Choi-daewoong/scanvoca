@@ -5,7 +5,7 @@ import BlogList from './_components/BlogList';
 
 export const metadata: Metadata = {
   title: '블로그',
-  description: '영어 단어 암기와 학습법, 시험 대비 노하우를 담은 Scan Voca 블로그. 중등·고등·토익·회화·학습법 콘텐츠를 무료로 만나보세요.',
+  description: '영어 단어 암기와 학습법, 시험 대비 노하우를 담은 Scan Voca 블로그. 토익·비즈니스, 수능·내신, 암기법, 일상영어, 자격시험 콘텐츠를 무료로 만나보세요.',
   alternates: { canonical: 'https://scanvoca.com/blog' },
   openGraph: {
     title: '블로그 | Scan Voca',

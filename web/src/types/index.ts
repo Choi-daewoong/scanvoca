@@ -249,7 +249,7 @@ export interface VisitStats {
 // ===== 블로그 =====
 
 // 카테고리 고정 목록 (FE·BE 공통 상수 — 계약서 1절)
-export const BLOG_CATEGORIES = ['중등', '고등', '토익', '일상회화', '비즈니스회화', '학습법'] as const;
+export const BLOG_CATEGORIES = ['토익·비즈니스', '수능·내신', '암기법·학습팁', '일상영어', '자격시험'] as const;
 export type BlogCategory = (typeof BLOG_CATEGORIES)[number];
 
 // content/blog/*.md 의 frontmatter + 본문 (빌드 타임 로더 출력)

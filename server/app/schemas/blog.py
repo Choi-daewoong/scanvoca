@@ -3,8 +3,8 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field, model_validator
 
 # Fixed category list — must stay in sync with the frontend constant (contract §1)
-BLOG_CATEGORIES = ["중등", "고등", "토익", "일상회화", "비즈니스회화", "학습법"]
-BlogCategory = Literal["중등", "고등", "토익", "일상회화", "비즈니스회화", "학습법"]
+BLOG_CATEGORIES = ["토익·비즈니스", "수능·내신", "암기법·학습팁", "일상영어", "자격시험"]
+BlogCategory = Literal["토익·비즈니스", "수능·내신", "암기법·학습팁", "일상영어", "자격시험"]
 
 
 class BlogTopicResponse(BaseModel):
