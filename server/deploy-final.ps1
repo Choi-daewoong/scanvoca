@@ -28,6 +28,9 @@ $GEMINI_API_KEY = $EnvVars['GEMINI_API_KEY']
 $JWT_SECRET_KEY = $EnvVars['JWT_SECRET_KEY']
 $DATABASE_URL   = $EnvVars['DATABASE_URL']
 $GOOGLE_CLIENT_ID = $EnvVars['GOOGLE_CLIENT_ID']
+$GITHUB_TOKEN   = $EnvVars['GITHUB_TOKEN']
+$GITHUB_REPO    = $EnvVars['GITHUB_REPO']
+$GITHUB_BRANCH  = $EnvVars['GITHUB_BRANCH']
 
 if (-not $GEMINI_API_KEY -or -not $JWT_SECRET_KEY -or -not $DATABASE_URL) {
     Write-Host "❌ .env 파일에 필수 변수가 없습니다." -ForegroundColor Red
@@ -92,6 +95,9 @@ gcloud run deploy $SERVICE_NAME `
     --set-env-vars "REFRESH_TOKEN_EXPIRE_DAYS=7" `
     --set-env-vars "GEMINI_API_KEY=$GEMINI_API_KEY" `
     --set-env-vars "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" `
+    --set-env-vars "GITHUB_TOKEN=$GITHUB_TOKEN" `
+    --set-env-vars "GITHUB_REPO=$GITHUB_REPO" `
+    --set-env-vars "GITHUB_BRANCH=$GITHUB_BRANCH" `
     --set-env-vars "CORS_ORIGINS=*" `
     --memory 512Mi `
     --cpu 1 `

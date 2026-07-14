@@ -127,6 +127,128 @@ Important:
 
         return None
 
+    async def generate_blog_post(
+        self,
+        title: Optional[str] = None,
+        angle: Optional[str] = None,
+        custom_prompt: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Generate a Korean English-learning blog post.
+        Returns a dict: {slug, title, description, category, tags, body} or None on error.
+        Either (title[, angle]) or custom_prompt must be provided.
+        """
+        if self.model is None:
+            print("Gemini API key not configured")
+            return None
+
+        categories = ["중등", "고등", "토익", "일상회화", "비즈니스회화", "학습법"]
+        categories_str = ", ".join(categories)
+
+        if custom_prompt and custom_prompt.strip():
+            topic_block = f'사용자가 직접 입력한 주제/지시:\n"""{custom_prompt.strip()}"""'
+        else:
+            topic_block = f'주제(제목 후보): "{title}"'
+            if angle:
+                topic_block += f'\n글 방향/타깃/키워드 메모: "{angle}"'
+
+        prompt = f"""당신은 영어 학습 서비스 "Scan Voca"의 콘텐츠 마케터입니다. 중·고등학생과 영어 학습자를 대상으로 하는 한국어 블로그 글을 작성하세요.
+
+{topic_block}
+
+작성 요구사항:
+1. 언어: 한국어
+2. 본문 분량: 1,500~2,500자 (공백 포함)
+3. `##` 마크다운 소제목을 3~5개 사용해 구조화
+4. 실용적이고 구체적인 내용 (막연한 조언 금지, 실제로 따라 할 수 있는 방법·예시 포함)
+5. **마지막 섹션은 반드시** "결국 단어는 외워야 한다"는 필요성으로 자연스럽게 연결한 뒤, Scan Voca(https://scanvoca.com)를 홍보하는 내용으로 마무리하세요. 마크다운 링크 [Scan Voca 시작하기](https://scanvoca.com) 를 포함하세요.
+6. 특정 AI 모델명(예: Gemini, GPT, ChatGPT 등)을 본문·제목·어디에도 절대 쓰지 마세요.
+7. 카테고리는 다음 고정 목록 중 가장 적합한 하나를 고르세요: {categories_str}
+8. slug는 영문 소문자·숫자·하이픈만 사용한 ASCII kebab-case로 만드세요 (예: toeic-vocab-30days).
+
+반드시 아래 구조의 JSON 객체만 반환하세요. 다른 텍스트는 포함하지 마세요:
+{{
+  "slug": "ascii-kebab-case-slug",
+  "title": "글 제목 (한국어)",
+  "description": "SEO용 요약 1~2문장 (검색 결과 노출용)",
+  "category": "위 목록 중 하나",
+  "tags": ["태그1", "태그2", "태그3"],
+  "body": "본문 마크다운 전체 (frontmatter 제외, ## 소제목 포함, 마지막 섹션은 Scan Voca 홍보)"
+}}
+
+주의:
+- body에는 frontmatter(---)를 넣지 마세요. 순수 본문 마크다운만 넣으세요.
+- JSON 문자열 안의 줄바꿈은 \\n 으로 이스케이프하세요.
+- 반드시 완성된 유효한 JSON만 반환하세요."""
+
+        try:
+            response = self.model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0.7,
+                    "max_output_tokens": 8192,
+                    "response_mime_type": "application/json",
+                },
+            )
+
+            content = response.text
+            if not content:
+                return None
+
+            # Strip markdown code fences if present (mirrors get_word_definition)
+            content = content.strip()
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            content = content.strip()
+
+            result = json.loads(content)
+
+            # Normalize / validate
+            slug = str(result.get("slug", "")).strip().lower()
+            title_out = str(result.get("title", "")).strip()
+            description = str(result.get("description", "")).strip()
+            category = str(result.get("category", "")).strip()
+            tags = result.get("tags") or []
+            if not isinstance(tags, list):
+                tags = []
+            tags = [str(t).strip() for t in tags if str(t).strip()]
+            body = str(result.get("body", "")).strip()
+
+            if not slug or not title_out or not body:
+                print("Blog generation returned incomplete fields")
+                return None
+
+            if category not in categories:
+                category = "학습법"
+
+            return {
+                "slug": slug,
+                "title": title_out,
+                "description": description,
+                "category": category,
+                "tags": tags,
+                "body": body,
+            }
+
+        except json.JSONDecodeError as e:
+            error_msg = f"Blog generation JSON parse error: {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+        except Exception as e:
+            error_msg = f"Blog generation error: {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
     async def extract_words_from_image(self, image_bytes: bytes, mime_type: str = "image/jpeg") -> Optional[Dict[str, Any]]:
         """
         Gemini Vision으로 이미지에서 영어 단어 추출

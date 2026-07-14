@@ -245,3 +245,50 @@ export interface VisitStats {
   daily: VisitDailyCount[];
   referrers: Record<string, number>;
 }
+
+// ===== 블로그 =====
+
+// 카테고리 고정 목록 (FE·BE 공통 상수 — 계약서 1절)
+export const BLOG_CATEGORIES = ['중등', '고등', '토익', '일상회화', '비즈니스회화', '학습법'] as const;
+export type BlogCategory = (typeof BLOG_CATEGORIES)[number];
+
+// content/blog/*.md 의 frontmatter + 본문 (빌드 타임 로더 출력)
+export interface BlogPost {
+  slug: string;
+  title: string;
+  description: string;
+  category: string;
+  tags: string[];
+  date: string;
+  published: boolean;
+  content: string;
+}
+
+// 목록/메타 용 (본문 제외)
+export type BlogPostMeta = Omit<BlogPost, 'content'>;
+
+// 관리자 — 주제 테이블 (BE 응답, snake_case 그대로)
+export interface BlogTopic {
+  id: number;
+  category: string;
+  title: string;
+  angle: string;
+  status: 'unused' | 'used';
+  post_slug: string | null;
+}
+
+// 관리자 — AI 생성 결과 (BE 응답)
+export interface BlogDraft {
+  slug: string;
+  title: string;
+  description: string;
+  category: string;
+  tags: string[];
+  markdown: string;
+}
+
+// 관리자 — 게재 결과 (BE 응답)
+export interface BlogPublishResult {
+  commit_url: string;
+  blog_url: string;
+}

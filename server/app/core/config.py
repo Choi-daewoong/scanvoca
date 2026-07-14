@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     # Google OAuth (구글 로그인 ID 토큰 검증용)
     GOOGLE_CLIENT_ID: Optional[str] = None
 
+    # GitHub (블로그 마크다운 발행 — Contents API 커밋)
+    GITHUB_TOKEN: str = ""
+    GITHUB_REPO: str = "Choi-daewoong/scanvoca"
+    GITHUB_BRANCH: str = "master"
+
     # SMTP (Gmail 비밀번호 재설정 이메일)
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
