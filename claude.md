@@ -203,6 +203,7 @@ NEXT_PUBLIC_API_URL=https://scanvoca-api-313755310624.asia-northeast3.run.app
 | 2026-07-14 | 초기 구성 (에이전트 3: fe-dev/be-dev/qa, 스킬 5: frontend/backend/qa/deploy/feature) | 전체 | - |
 | 2026-07-14 | 운영 DB 쓰기 전면 금지 규칙 추가 | agents/be-dev.md | 블로그 작업 중 create_all로 운영 테이블 선생성 → 마이그레이션 충돌 |
 | 2026-07-15 | 새 테이블 생성 시 RLS 필수 규칙 추가 | skills/scanvoca-backend | Supabase가 blog_topics 등 RLS 미적용 테이블을 취약점으로 재탐지 |
+| 2026-07-15 | 배포 스크립트의 .env 누락 시 빈 값 덮어쓰기 위험 경고 추가 | skills/scanvoca-deploy | GITHUB_REPO/BRANCH가 .env에 없어 운영에서 빈 값으로 배포되어 블로그 게재 502 장애 |
 
 ---
 

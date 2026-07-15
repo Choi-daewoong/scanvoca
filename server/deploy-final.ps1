@@ -38,6 +38,15 @@ if (-not $GEMINI_API_KEY -or -not $JWT_SECRET_KEY -or -not $DATABASE_URL) {
     exit 1
 }
 
+# GITHUB_TOKEN은 설정했는데 REPO/BRANCH가 .env에 없으면, 아래 --set-env-vars가 그 값을
+# 빈 문자열로 덮어써서 블로그 게재가 조용히 깨진다 (2026-07-15 실제 발생한 장애).
+if ($GITHUB_TOKEN -and (-not $GITHUB_REPO -or -not $GITHUB_BRANCH)) {
+    Write-Host "⚠️  GITHUB_TOKEN은 있는데 GITHUB_REPO 또는 GITHUB_BRANCH가 .env에 없습니다." -ForegroundColor Yellow
+    Write-Host "   이대로 배포하면 두 값이 빈 문자열로 설정되어 블로그 게재(발행)가 실패합니다." -ForegroundColor Yellow
+    Write-Host "   .env에 GITHUB_REPO=Choi-daewoong/scanvoca 와 GITHUB_BRANCH=master 를 추가하세요." -ForegroundColor Yellow
+    exit 1
+}
+
 Write-Host "=== Scanvoca API Cloud Run 배포 ===" -ForegroundColor Green
 Write-Host ""
 Write-Host "프로젝트: $PROJECT_ID" -ForegroundColor Yellow
