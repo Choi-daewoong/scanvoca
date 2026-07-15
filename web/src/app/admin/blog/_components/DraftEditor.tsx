@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { stripFrontmatter } from './blogWorkflow';
+import { stripFrontmatter, resolvePreviewMarkdown, ReflectImage } from './blogWorkflow';
 
 type ViewMode = 'split' | 'edit' | 'preview';
 
@@ -11,16 +11,21 @@ interface Props {
   slug: string;
   markdown: string;
   onChange: (value: string) => void;
+  previewImages: ReflectImage[]; // 아직 GitHub에 없는 반영된 이미지 (base64 미리보기 치환용)
 }
 
 /** 초안 편집기 — frontmatter 포함 마크다운 전체를 monospace textarea에서 편집 + 미리보기 */
-export default function DraftEditor({ slug, markdown, onChange }: Props) {
+export default function DraftEditor({ slug, markdown, onChange, previewImages }: Props) {
   const [view, setView] = useState<ViewMode>('split');
+
+  // 본문에 반영된 이미지는 게재 전까지 실제 도메인에 존재하지 않으므로,
+  // FinalPreview와 동일하게 base64로 치환해서 보여준다 (안 하면 404로 깨져 보인다).
+  const resolvedPreview = resolvePreviewMarkdown(stripFrontmatter(markdown), previewImages);
 
   const rendered = (
     <div className="max-h-[36rem] overflow-y-auto rounded-xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
       <div className="prose prose-sm dark:prose-invert max-w-none break-words">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{stripFrontmatter(markdown)}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{resolvedPreview}</ReactMarkdown>
       </div>
     </div>
   );

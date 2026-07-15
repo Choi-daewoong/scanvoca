@@ -156,7 +156,12 @@ export default function AdminBlogPage() {
 
       {hasDraft && !generating && (
         <>
-          <DraftEditor slug={draftSlug} markdown={markdown} onChange={setMarkdown} />
+          <DraftEditor
+            slug={draftSlug}
+            markdown={markdown}
+            onChange={setMarkdown}
+            previewImages={previewImages}
+          />
           <ImagePlanPanel
             slug={draftSlug}
             markdown={markdown}
