@@ -147,6 +147,7 @@ Important:
         title: Optional[str] = None,
         angle: Optional[str] = None,
         custom_prompt: Optional[str] = None,
+        recent_posts: Optional[List[Dict[str, str]]] = None,
         retry_count: int = 0,
         max_retries: int = 2,
     ) -> Optional[Dict[str, Any]]:
@@ -154,6 +155,9 @@ Important:
         Generate a Korean English-learning blog post.
         Returns a dict: {slug, title, description, category, tags, body} or None on error.
         Either (title[, angle]) or custom_prompt must be provided.
+        recent_posts (optional): previously published posts [{slug, title, description,
+        category}] so the model avoids repeating content and may naturally cross-link one
+        when genuinely relevant (never forced).
         Retries on malformed JSON (mirrors get_word_definition) - the model occasionally
         breaks JSON validity in a ~1,500-2,500 char Korean body, and a retry usually fixes it.
         """
@@ -171,10 +175,18 @@ Important:
             if angle:
                 topic_block += f'\n글 방향/타깃/키워드 메모: "{angle}"'
 
+        recent_posts_block = ""
+        if recent_posts:
+            lines = "\n".join(
+                f'- "{p["title"]}" (slug: {p["slug"]}, 카테고리: {p["category"]}) — {p["description"]}'
+                for p in recent_posts
+            )
+            recent_posts_block = f"\n\n[이미 발행된 최근 글 목록]\n{lines}\n"
+
         prompt = f"""당신은 영어 학습 서비스 "Scan Voca"의 콘텐츠 마케터입니다. 중·고등학생과 영어 학습자를 대상으로 하는 한국어 블로그 글을 작성하세요.
 
 {topic_block}
-
+{recent_posts_block}
 작성 요구사항:
 1. 언어: 한국어
 2. 본문 분량: 1,500~2,500자 (공백 포함)
@@ -184,6 +196,8 @@ Important:
 6. 특정 AI 모델명(예: Gemini, GPT, ChatGPT 등)을 본문·제목·어디에도 절대 쓰지 마세요.
 7. 카테고리는 다음 고정 목록 중 가장 적합한 하나를 고르세요: {categories_str}
 8. slug는 영문 소문자·숫자·하이픈만 사용한 ASCII kebab-case로 만드세요 (예: toeic-vocab-30days).
+9. [이미 발행된 최근 글 목록]이 있다면, 그 글들에서 이미 다룬 것과 똑같은 팁·각도·구성을 반복하지 마세요. 가능하면 다른 관점·예시·정보를 다루세요.
+10. 목록에 있는 글 중 마지막 홍보 섹션 이전 본문에서 정말 자연스럽게 이어지는 경우에만, **최대 1개**를 실제 slug로 마크다운 링크(예: https://scanvoca.com/blog/{{slug}})를 걸어 언급하세요. 관련 있는 글이 없으면 절대 언급하지 마세요. 목록에 없는 slug를 지어내지 마세요. 마지막 홍보 섹션의 Scan Voca 링크와는 별개입니다.
 
 반드시 아래 구조의 JSON 객체만 반환하세요. 다른 텍스트는 포함하지 마세요:
 {{
@@ -266,6 +280,7 @@ Important:
                     title=title,
                     angle=angle,
                     custom_prompt=custom_prompt,
+                    recent_posts=recent_posts,
                     retry_count=retry_count + 1,
                     max_retries=max_retries,
                 )

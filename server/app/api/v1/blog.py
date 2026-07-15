@@ -92,6 +92,7 @@ async def generate_post(
     """
     title = None
     angle = None
+    category_hint = None
     if payload.topic_id is not None:
         topic = BlogService.get_topic(db, payload.topic_id)
         if topic is None:
@@ -101,12 +102,18 @@ async def generate_post(
             )
         title = topic.title
         angle = topic.angle
+        category_hint = topic.category
+
+    # Give the model awareness of prior posts so it avoids repeating content and can
+    # naturally cross-link a genuinely related one (always on, no admin toggle).
+    recent_posts = BlogService.get_recent_posts_for_prompt(db, category=category_hint, limit=12)
 
     gemini = GeminiService()
     result = await gemini.generate_blog_post(
         title=title,
         angle=angle,
         custom_prompt=payload.custom_prompt,
+        recent_posts=recent_posts,
     )
     if result is None:
         raise HTTPException(
@@ -320,6 +327,22 @@ async def publish_post(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="블로그 발행에 실패했습니다. 잠시 후 다시 시도해 주세요.",
         ) from e
+
+    # Unconditionally (regardless of topic_id) index this publish for future-generation
+    # context. The GitHub commit already succeeded, so a bug here must never fail the
+    # publish response back to the admin.
+    try:
+        fields = BlogService.parse_frontmatter_fields(payload.markdown)
+        BlogService.upsert_published_post(
+            db,
+            slug=payload.slug,
+            title=fields["title"] or payload.slug,
+            description=fields["description"],
+            category=fields["category"] or "암기법·학습팁",
+            tags=fields["tags"],
+        )
+    except Exception as e:
+        print(f"blog_published_posts upsert failed for {payload.slug}: {e}")
 
     # Only after a successful commit: mark the topic used
     if payload.topic_id is not None:

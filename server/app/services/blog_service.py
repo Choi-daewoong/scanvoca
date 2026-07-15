@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.blog_topic import BlogTopic
+from app.models.blog_published_post import BlogPublishedPost
 from app.schemas.blog import BLOG_CATEGORIES
 
 # Path template inside the content repo
@@ -409,13 +410,115 @@ class BlogService:
             return {"slug": slug, "markdown": markdown}
 
     @staticmethod
+    def parse_frontmatter_fields(markdown: str) -> Dict[str, object]:
+        """Extract title/description/category/tags from a post's frontmatter.
+
+        Field-by-field regex extraction (not a full YAML parse) is deliberate: publish-time
+        markdown is admin-edited free text (see DraftEditor.tsx), not guaranteed to match
+        build_markdown()'s exact output. A single malformed line here only drops that one
+        field to a safe default instead of failing the whole parse - a full YAML parser
+        would fail atomically on any stray quote/colon a hand-edit introduces.
+
+        Returns {"title": str, "description": str, "category": str, "tags": List[str]},
+        every field independently defaulted ("" or []) if its line is missing/malformed.
+        """
+        m = re.match(r"^---\s*\n(.*?)\n---\s*\n?", markdown, flags=re.DOTALL)
+        fm = m.group(1) if m else ""
+
+        def _field(name: str) -> str:
+            fm_match = re.search(rf'^{name}:\s*"?(.+?)"?\s*$', fm, flags=re.MULTILINE)
+            return fm_match.group(1).strip() if fm_match else ""
+
+        tags: List[str] = []
+        tags_match = re.search(r'^tags:\s*\[(.*?)\]\s*$', fm, flags=re.MULTILINE)
+        if tags_match:
+            tags = [t.strip().strip('"').strip("'") for t in tags_match.group(1).split(",") if t.strip()]
+
+        return {
+            "title": _field("title"),
+            "description": _field("description"),
+            "category": _field("category"),
+            "tags": tags,
+        }
+
+    @staticmethod
     def split_frontmatter(markdown: str) -> tuple[str, str]:
         """Split a post into (title, body). Title comes from the frontmatter; body excludes it."""
         m = re.match(r"^---\s*\n(.*?)\n---\s*\n?", markdown, flags=re.DOTALL)
         if not m:
             return "", markdown.strip()
-        fm = m.group(1)
         body = markdown[m.end():].strip()
-        tm = re.search(r'^title:\s*"?(.+?)"?\s*$', fm, flags=re.MULTILINE)
-        title = tm.group(1).strip() if tm else ""
+        title = BlogService.parse_frontmatter_fields(markdown)["title"]
         return title, body
+
+    @staticmethod
+    def upsert_published_post(
+        db: Session, *, slug: str, title: str, description: str, category: str, tags: List[str]
+    ) -> BlogPublishedPost:
+        """Insert or update the published-posts index row for a slug.
+
+        published_at is set once at first insert and never touched again (so a later
+        typo-fix republish doesn't make an old post look freshly published); updated_at
+        bumps via its onupdate on every call. Called unconditionally on every successful
+        publish, regardless of topic_id, so custom_prompt-only posts are tracked too.
+        """
+        existing = db.scalar(select(BlogPublishedPost).where(BlogPublishedPost.slug == slug))
+        if existing is not None:
+            existing.title = title
+            existing.description = description
+            existing.category = category
+            existing.tags = tags
+            db.commit()
+            db.refresh(existing)
+            return existing
+
+        post = BlogPublishedPost(
+            slug=slug, title=title, description=description, category=category, tags=tags
+        )
+        db.add(post)
+        db.commit()
+        db.refresh(post)
+        return post
+
+    @staticmethod
+    def get_recent_posts_for_prompt(
+        db: Session, category: Optional[str] = None, limit: int = 12
+    ) -> List[Dict[str, str]]:
+        """Recent published posts for generation context (title/description/category/slug).
+
+        Scaling strategy: same-category posts first (most relevant for overlap-avoidance),
+        then fill remaining slots with the most-recent posts overall. A flat "last N by
+        date" would eventually starve out older same-category posts once volume is high,
+        defeating the point of this feature as the blog grows into the hundreds.
+        """
+        results: List[BlogPublishedPost] = []
+        seen_ids: set = set()
+
+        if category:
+            same_category = db.scalars(
+                select(BlogPublishedPost)
+                .where(BlogPublishedPost.category == category)
+                .order_by(BlogPublishedPost.published_at.desc())
+                .limit(limit)
+            ).all()
+            results.extend(same_category)
+            seen_ids.update(p.id for p in same_category)
+
+        if len(results) < limit:
+            remaining = limit - len(results)
+            stmt = (
+                select(BlogPublishedPost)
+                .order_by(BlogPublishedPost.published_at.desc())
+                .limit(remaining + len(seen_ids))
+            )
+            for p in db.scalars(stmt).all():
+                if p.id in seen_ids:
+                    continue
+                results.append(p)
+                if len(results) >= limit:
+                    break
+
+        return [
+            {"slug": p.slug, "title": p.title, "description": p.description, "category": p.category}
+            for p in results
+        ]

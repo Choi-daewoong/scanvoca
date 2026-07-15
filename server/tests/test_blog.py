@@ -4,9 +4,11 @@
 """
 import pytest
 from fastapi import status
+from sqlalchemy import select
 
 from app.models.user import User
 from app.models.blog_topic import BlogTopic
+from app.models.blog_published_post import BlogPublishedPost
 from app.services.blog_service import BlogService, GitHubPublishError
 from app.services.gemini_service import GeminiService
 from app.core.config import settings
@@ -41,6 +43,25 @@ def _seed_topics(db_session):
     db_session.add_all(topics)
     db_session.commit()
     return topics
+
+
+def _seed_published_posts(db_session, rows):
+    """rows: list of (slug, title, description, category) tuples, listed OLDEST-first.
+    Assigns explicit, strictly increasing published_at timestamps (1 minute apart) so
+    recency ordering in tests is deterministic instead of relying on same-instant defaults."""
+    from datetime import datetime, timedelta, timezone
+
+    now = datetime.now(timezone.utc)
+    posts = [
+        BlogPublishedPost(
+            slug=slug, title=title, description=description, category=category, tags=[],
+            published_at=now - timedelta(minutes=(len(rows) - i)),
+        )
+        for i, (slug, title, description, category) in enumerate(rows)
+    ]
+    db_session.add_all(posts)
+    db_session.commit()
+    return posts
 
 
 class TestListTopics:
@@ -102,7 +123,7 @@ class TestGenerate:
 
     def test_generate_success_mocked(self, client, admin_auth_headers, monkeypatch):
         """AI 응답을 모킹한 정상 생성"""
-        async def fake_generate(self, title=None, angle=None, custom_prompt=None):
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None, recent_posts=None):
             return {
                 "slug": "toeic-vocab-30days",
                 "title": "토익 단어, 30일 완성",
@@ -131,7 +152,7 @@ class TestGenerate:
 
     def test_generate_ai_failure_502(self, client, admin_auth_headers, monkeypatch):
         """AI가 None 반환 시 502"""
-        async def fake_generate(self, title=None, angle=None, custom_prompt=None):
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None, recent_posts=None):
             return None
 
         monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
@@ -680,3 +701,222 @@ class TestNaverVersion:
             headers=auth_headers,
         )
         assert resp.status_code == 403
+
+
+class TestPublishedPostsIndex:
+    """발행된 글 인덱스(blog_published_posts) — 이전 글 참조 기능의 기반 테이블"""
+
+    def test_publish_custom_prompt_no_topic_creates_index_row(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """topic_id 없이(custom_prompt 경로) 발행해도 인덱스에 행이 생겨야 한다 (구조적 허점 회귀 테스트)."""
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_commit(slug, markdown):
+            return "https://github.com/Choi-daewoong/scanvoca/commit/abc123"
+
+        monkeypatch.setattr(BlogService, "commit_markdown", staticmethod(fake_commit))
+
+        markdown = (
+            '---\ntitle: "직접 프롬프트 글"\ndescription: "설명입니다"\n'
+            'category: "일상영어"\ntags: ["a", "b"]\n---\n\n본문'
+        )
+        response = client.post(
+            "/api/v1/admin/blog/publish",
+            json={"slug": "custom-prompt-post", "markdown": markdown},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        row = db_session.scalar(
+            select(BlogPublishedPost).where(BlogPublishedPost.slug == "custom-prompt-post")
+        )
+        assert row is not None
+        assert row.title == "직접 프롬프트 글"
+        assert row.description == "설명입니다"
+        assert row.category == "일상영어"
+
+    def test_publish_twice_same_slug_updates_not_duplicates(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """같은 slug를 두 번 발행하면 행이 갱신되지, 중복 생성되지 않는다."""
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_commit(slug, markdown):
+            return "https://github.com/Choi-daewoong/scanvoca/commit/abc123"
+
+        monkeypatch.setattr(BlogService, "commit_markdown", staticmethod(fake_commit))
+
+        md1 = '---\ntitle: "제목1"\ndescription: "첫 설명"\ncategory: "일상영어"\ntags: []\n---\n\n본문1'
+        client.post(
+            "/api/v1/admin/blog/publish",
+            json={"slug": "republish-test", "markdown": md1},
+            headers=admin_auth_headers,
+        )
+        db_session.expire_all()
+        first = db_session.scalar(
+            select(BlogPublishedPost).where(BlogPublishedPost.slug == "republish-test")
+        )
+        first_published_at = first.published_at
+
+        md2 = '---\ntitle: "제목1"\ndescription: "수정된 설명"\ncategory: "일상영어"\ntags: []\n---\n\n본문1 수정'
+        client.post(
+            "/api/v1/admin/blog/publish",
+            json={"slug": "republish-test", "markdown": md2},
+            headers=admin_auth_headers,
+        )
+        db_session.expire_all()
+
+        rows = db_session.scalars(
+            select(BlogPublishedPost).where(BlogPublishedPost.slug == "republish-test")
+        ).all()
+        assert len(rows) == 1
+        assert rows[0].description == "수정된 설명"
+        assert rows[0].published_at == first_published_at
+
+    def test_generate_passes_recent_posts_when_index_has_rows(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """인덱스에 같은 카테고리 행이 있으면 /generate 가 recent_posts를 채워서 넘겨야 한다."""
+        _seed_published_posts(
+            db_session,
+            [
+                ("old-post", "예전 글", "예전 설명", "일상영어"),
+                ("new-post", "최신 글", "최신 설명", "일상영어"),
+            ],
+        )
+
+        captured = {}
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None, recent_posts=None):
+            captured["recent_posts"] = recent_posts
+            return {
+                "slug": "x", "title": "t", "description": "d", "category": "일상영어",
+                "tags": [], "body": "본문",
+            }
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+
+        response = client.post(
+            "/api/v1/admin/blog/generate",
+            json={"custom_prompt": "새 글 아무거나"},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert captured["recent_posts"] is not None
+        slugs = [p["slug"] for p in captured["recent_posts"]]
+        assert "new-post" in slugs and "old-post" in slugs
+        # 최신순: new-post가 old-post보다 앞에 와야 함
+        assert slugs.index("new-post") < slugs.index("old-post")
+
+    def test_generate_recent_posts_empty_when_index_empty(
+        self, client, admin_auth_headers, monkeypatch
+    ):
+        """인덱스가 비어 있으면 recent_posts는 빈 리스트여야 한다."""
+        captured = {}
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None, recent_posts=None):
+            captured["recent_posts"] = recent_posts
+            return {
+                "slug": "x", "title": "t", "description": "d", "category": "일상영어",
+                "tags": [], "body": "본문",
+            }
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+
+        response = client.post(
+            "/api/v1/admin/blog/generate",
+            json={"custom_prompt": "새 글 아무거나"},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert captured["recent_posts"] == []
+
+
+class TestParseFrontmatterFields:
+    """BlogService.parse_frontmatter_fields 단위 테스트"""
+
+    def test_matches_build_markdown_output(self):
+        markdown = BlogService.build_markdown(
+            slug="test-slug",
+            title="테스트 제목",
+            description="테스트 설명입니다",
+            category="일상영어",
+            tags=["태그1", "태그2"],
+            body="본문 내용",
+        )
+        fields = BlogService.parse_frontmatter_fields(markdown)
+        assert fields["title"] == "테스트 제목"
+        assert fields["description"] == "테스트 설명입니다"
+        assert fields["category"] == "일상영어"
+        assert fields["tags"] == ["태그1", "태그2"]
+
+    def test_tolerates_hand_edited_variant(self):
+        """필드 순서가 바뀌고 따옴표 스타일이 달라도 각 필드가 독립적으로 추출되어야 한다."""
+        markdown = (
+            "---\n"
+            "category: 암기법·학습팁\n"
+            'title: "손으로 고친 제목"\n'
+            "tags: [\"x\", 'y']\n"
+            'description: "손으로 고친 설명"\n'
+            "published: true\n"
+            "---\n\n본문"
+        )
+        fields = BlogService.parse_frontmatter_fields(markdown)
+        assert fields["title"] == "손으로 고친 제목"
+        assert fields["description"] == "손으로 고친 설명"
+        assert fields["category"] == "암기법·학습팁"
+        assert fields["tags"] == ["x", "y"]
+
+    def test_missing_fields_default_safely(self):
+        """설명/태그가 없어도 예외 없이 안전한 기본값을 반환해야 한다."""
+        markdown = '---\ntitle: "제목만 있음"\n---\n\n본문'
+        fields = BlogService.parse_frontmatter_fields(markdown)
+        assert fields["title"] == "제목만 있음"
+        assert fields["description"] == ""
+        assert fields["category"] == ""
+        assert fields["tags"] == []
+
+
+class TestGetRecentPostsForPrompt:
+    """BlogService.get_recent_posts_for_prompt 서비스 레벨 테스트"""
+
+    def test_prioritizes_same_category_then_fills_with_recent(self, db_session):
+        _seed_published_posts(
+            db_session,
+            [
+                ("other-old", "다른 카테고리 예전 글", "d", "토익·비즈니스"),
+                ("same-old", "같은 카테고리 예전 글", "d", "일상영어"),
+                ("other-new", "다른 카테고리 최신 글", "d", "토익·비즈니스"),
+                ("same-new", "같은 카테고리 최신 글", "d", "일상영어"),
+            ],
+        )
+
+        result = BlogService.get_recent_posts_for_prompt(db_session, category="일상영어", limit=3)
+        slugs = [p["slug"] for p in result]
+
+        # 같은 카테고리(same-new, same-old)가 먼저, 그다음 부족분을 전체 최신순으로 채움
+        assert slugs[0] == "same-new"
+        assert slugs[1] == "same-old"
+        assert len(result) == 3
+        assert slugs[2] == "other-new"  # 전체 최신순 중 same-* 제외하고 채워짐
+
+    def test_caps_at_limit(self, db_session):
+        _seed_published_posts(
+            db_session,
+            [(f"post-{i}", f"글 {i}", "d", "일상영어") for i in range(5)],
+        )
+        result = BlogService.get_recent_posts_for_prompt(db_session, category="일상영어", limit=2)
+        assert len(result) == 2
+
+    def test_no_category_returns_overall_recent(self, db_session):
+        _seed_published_posts(
+            db_session,
+            [
+                ("a", "글 A", "d", "토익·비즈니스"),
+                ("b", "글 B", "d", "일상영어"),
+            ],
+        )
+        result = BlogService.get_recent_posts_for_prompt(db_session, category=None, limit=12)
+        slugs = [p["slug"] for p in result]
+        assert slugs == ["b", "a"]  # 최신순
