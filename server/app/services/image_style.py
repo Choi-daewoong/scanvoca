@@ -18,12 +18,16 @@ from pathlib import Path
 # Last-resort default if drawing_agent.md is missing or its prompt block can't be parsed
 # (should not happen in normal operation — see path resolution above).
 _FALLBACK_STYLE_GUIDE = (
-    "Create a bright, friendly, flat vector illustration for an English-learning blog. "
-    "Style requirements: clean modern flat vector art with soft rounded shapes and gentle "
-    "shading; a light, airy mood. "
-    "Color: use indigo (#4F46E5) and violet (#7C3AED) as the primary accent colors, with "
-    "soft supporting pastels. "
-    "Background: a clean, plain white (or very light) background — no busy scenery. "
+    "Create a hand-drawn ink-pen doodle illustration for an English-learning blog, in the "
+    "style of a sketchnote/whiteboard-explainer video. "
+    "Rendering: hand-drawn black ink pen line art, deliberately imperfect and slightly wobbly "
+    "lines, not machine-perfect vector geometry. No 3D, no photorealism, no painterly shading. "
+    "People: simple minimal stick figures — a circle head, two dot eyes, one curved smiling "
+    "mouth line, thin single-stroke limbs. No clothing detail, no hair, no realistic faces. "
+    "Color: mostly black ink line art on a clean background; use indigo (#4F46E5) and violet "
+    "(#7C3AED) only as sparing accent fills on one highlighted shape, arrow, or badge — never "
+    "color the whole scene. "
+    "Background: a clean, plain white (or very light cream) background — no busy scenery. "
     "Aspect ratio: prefer a wide 16:9 composition suitable for a blog header or inline figure. "
     "ABSOLUTELY NO TEXT: the image must contain no letters, no words, no numbers, no captions, "
     "no signage, no readable characters of any kind. "

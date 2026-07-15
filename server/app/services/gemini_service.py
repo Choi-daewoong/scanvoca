@@ -442,7 +442,13 @@ Important:
             print("Gemini API key not configured")
             return None
 
-        prompt = f"{IMAGE_STYLE_GUIDE}\n\nScene to illustrate: {scene}"
+        prompt = (
+            f"{IMAGE_STYLE_GUIDE}\n\n"
+            "SCENE TO DEPICT (this is an instruction describing what to draw, addressed to "
+            "you the illustrator — it is NOT text to write, quote, or render inside the "
+            "artwork itself; never reproduce this sentence, or any fragment of it, as "
+            f"visible text/caption in the image): {scene}"
+        )
         try:
             from google import genai as genai_new
             from google.genai import types as genai_types

@@ -4,36 +4,38 @@ Scan Voca 블로그에 들어가는 모든 AI 일러스트가 **하나의 시리
 
 이 문서의 "실제 프롬프트" 블록이 **곧 모델에 전달되는 원문**입니다. 이 파일을 수정하고 백엔드를 재배포하면, 다음에 생성되는 모든 이미지에 즉시 반영됩니다. 다른 파일을 고칠 필요가 없습니다.
 
+## 목표 스타일 — 손그림 느낌의 잉크펜 스케치 (졸라맨 스타일)
+
+유튜브 설명 영상이나 스케치노트에서 흔히 보는, **손으로 그린 듯한 흑백 잉크펜 낙서 스타일**이 기준입니다. 선이 기계처럼 완벽하지 않고 살짝 삐뚤빼뚤한 손맛이 있어야 합니다.
+
 ## 통일성을 만드는 4가지 축
 
-여러 글에 걸쳐 그림체가 들쭉날쭉하면 블로그가 아니라 "짜깁기한 이미지 모음"처럼 보입니다. 아래 네 가지를 모든 이미지에 고정해서 일관성을 만듭니다.
-
-1. **고정 팔레트** — indigo(#4F46E5) · violet(#7C3AED) 두 가지만 주색으로 쓰고, 나머지는 그 톤에서 벗어나지 않는 파스텔로만 보조. 색이 매번 달라지면 가장 먼저 "다른 시리즈"처럼 보입니다.
-2. **고정 렌더링 스타일** — 플랫 벡터, 균일한 선 굵기(굵고 부드러운 outline), 그림자는 아주 옅은 단색 블록으로만(사실적 음영 금지). 손그림/수채화/3D 렌더링 등 다른 화풍이 섞이지 않도록 매번 같은 키워드로 못박습니다.
-3. **고정 인물 디자인 시스템** — 등장인물은 항상 같은 톤의 단순화된 얼굴(점 눈 + 짧은 선 입, 과한 디테일 없음), 둥근 실루엣의 캐주얼한 옷차림. 매번 새로운 화풍의 인물이 나오지 않도록 "심플하고 둥근 캐릭터"라는 규칙을 고정합니다.
-4. **고정 구도 규칙** — 배경은 항상 깨끗한 흰색/아주 옅은 톤, 요소는 중앙 또는 여백을 넉넉히 둔 배치, 16:9. 배경이 매번 복잡해지거나 꽉 채워지면 톤이 흔들립니다.
+1. **고정 렌더링 기법** — 손으로 그린 잉크펜 스케치. 선은 일부러 완벽하지 않게, 살짝 흔들리고 손맛이 느껴지도록. 매끈한 벡터 그래픽이나 3D, 사실적 렌더링은 절대 아님.
+2. **고정 인물 디자인 — 졸라맨** — 사람은 항상 단순한 스틱맨으로: 원 하나로 된 머리, 점 두 개의 눈, 곡선 하나로 된 웃는 입, 몸통·팔다리는 가는 선 하나씩. 옷·머리카락·얼굴 디테일은 그리지 않습니다. 매번 같은 단순함을 유지해야 시리즈처럼 보입니다.
+3. **고정 색상 처리** — 기본은 흑백 잉크선 + 깨끗한 배경. 포인트를 주고 싶은 부분(강조 화살표, 배지, 사물의 채색 등)에만 **Scan Voca 브랜드 컬러인 indigo(#4F46E5)·violet(#7C3AED)** 를 옅게 채워 넣습니다. 전체를 컬러로 채우지 않고 "포인트 컬러"로만 절제해서 씁니다.
+4. **고정 배경/구도** — 깨끗한 흰색 또는 아주 옅은 크림톤 배경, 복잡한 배경 묘사 없음, 여백을 넉넉히 둔 구도. 16:9 와이드 비율.
 
 ## 텍스트 규칙 — 영어는 되고, 한글은 안 됩니다
 
-- **한글(한국어 문자)은 이미지 안에 절대 금지** — 책, 화면, 간판, 라벨 어디에도 안 됩니다. AI가 한글을 그리면 거의 항상 깨진 글자로 나옵니다.
-- **영어 단어·짧은 문구는 허용, 오히려 권장** — Scan Voca는 영단어 앱이니 책 표지의 단어, 화면 속 단어 카드, 칠판의 짧은 영어 단어 등은 자연스럽게 들어가도 좋습니다. AI는 영문 렌더링을 한글보다 훨씬 안정적으로 해냅니다. 다만 문장이 길어지면 여전히 깨질 수 있으니 **한두 단어, 짧은 구 정도**로 제한합니다.
+- **한글(한국어 문자)은 이미지 안에 절대 금지** — AI가 한글을 그리면 거의 항상 깨진 글자로 나옵니다.
+- **영어 단어·짧은 문구는 허용, 오히려 권장** — Scan Voca는 영단어 앱이니, 한두 단어 정도의 짧은 영어 라벨(손글씨체로 쓴 듯한 느낌)은 자연스럽게 들어가도 좋습니다. 다만 길어지면 깨지기 쉬우니 **한두 단어, 짧은 구 정도**로 제한합니다.
+- **장면 묘사 문장 자체를 그림 속 글자로 그리는 것은 절대 금지** — 각 이미지에는 "장면 묘사(scene)"라는 영문 지시문이 함께 전달되는데, 이건 AI가 "무엇을 그릴지" 참고하는 지시문이지 그림 안에 써넣을 캡션이 아닙니다. 지시문 문장이나 그 일부를 그대로 베껴서 그림 속 텍스트로 렌더링하면 안 됩니다.
 - **워터마크·로고·브랜드명·타사 캐릭터는 금지**
-- **사실적(포토리얼) 렌더링, 3D, 손그림 질감** — 아래 렌더링 스타일 규칙과 충돌하는 화풍 전부 금지
 
 ## 실제 프롬프트 (이 블록을 수정하면 다음 배포부터 바로 적용됩니다)
 
 ````text prompt
-Create a flat vector illustration for an English-learning blog, as part of a consistent visual series — every image must look like it belongs to the same set.
+Create a hand-drawn ink-pen doodle illustration for an English-learning blog, as part of a consistent visual series — every image must look like it belongs to the same set, like panels from the same sketchnote/whiteboard-explainer video.
 
-FIXED PALETTE (do not deviate): primary accent colors are indigo (#4F46E5) and violet (#7C3AED) only. Supporting colors must be soft pastels within that same cool-toned family (light lavender, pale blue, soft gray). No warm colors, no colors outside this palette.
+FIXED RENDERING TECHNIQUE (do not deviate): hand-drawn black ink pen line art, deliberately imperfect and slightly wobbly lines (not machine-perfect vector geometry), uniform thin-to-medium ink line weight. No 3D, no photorealism, no painterly shading, no smooth flat-vector polish — the linework should look genuinely hand-sketched.
 
-FIXED RENDERING STYLE (do not deviate): clean flat vector art, uniform medium-thick outlines on every shape, very soft flat single-tone shadows only (no realistic gradients, no 3D shading, no painterly texture, no hand-drawn/sketchy linework, no photorealism).
+FIXED CHARACTER DESIGN — STICK FIGURES (do not deviate): whenever a person appears, draw them as a simple minimal stick figure ("stick man"): a single circle for the head, two small dot eyes, one simple curved line for a smiling mouth, and single thin lines for the body, arms, and legs. Do NOT draw clothing details, hair, or realistic facial features — keep every figure this same minimal stick-figure design so the whole series feels consistent.
 
-FIXED CHARACTER DESIGN (do not deviate): when people appear, draw them as simplified friendly characters — small dot or simple curved-line eyes, a short simple line for the mouth, rounded soft silhouettes, casual modern clothing. Depict natural, warm Korean people (students in Korean school uniforms when appropriate for the scene, office workers in simple casual-business wear otherwise). Never stereotyped, never hyper-detailed or realistic faces.
+FIXED COLOR TREATMENT (do not deviate): the base rendering is black ink line art on a clean background. Use indigo (#4F46E5) and violet (#7C3AED) ONLY as sparing accent colors — a soft flat color fill on one highlighted object, an arrow, a badge, or a small shape to draw attention. Never color the whole scene; most of the image stays black-ink-on-background, with color used only as a light accent.
 
-FIXED COMPOSITION (do not deviate): clean plain white or very light background, no busy scenery, generous negative space, main subject centered or gently off-center. Wide 16:9 aspect ratio suitable for a blog header or inline figure.
+FIXED COMPOSITION (do not deviate): clean plain white or very light cream background, no busy scenery, generous negative space, simple hand-drawn objects/icons only where needed. Wide 16:9 aspect ratio suitable for a blog header or inline figure.
 
-TEXT RULE: English text is welcome and encouraged where it fits naturally — this is an English-vocabulary app, so short English words or two-to-three-word phrases may appear on book covers, flashcards, notebook pages, phone/screen UI, or a chalkboard (e.g. a single vocabulary word, "HELLO", "STUDY TIME"). Keep any English text short (one to a few words) and legible. NEVER render Korean text (Hangul) anywhere in the image — no Korean letters, no Korean captions, no Korean signage. If a scene would naturally have Korean writing (a Korean street sign, a Korean textbook title, etc.), replace it with blank space, an abstract icon, or English text instead — never attempt to render Korean characters.
+TEXT RULE: English text is welcome in small doses where it fits naturally — this is an English-vocabulary app, so a short hand-lettered English word or two-to-three-word phrase may appear (e.g. a single vocabulary word, "HELLO", "STUDY TIME"). Keep any English text short (one to a few words) and legible, drawn in the same rough hand-lettered ink style as the rest of the image. CRITICAL: any on-image text must be an isolated, generic, self-contained word or short phrase — never a full sentence, never a caption, and never a copy or paraphrase of the scene instructions you were given below. Do not write out what the scene describes; only draw it. NEVER render Korean text (Hangul) anywhere in the image — no Korean letters, no Korean captions, no Korean signage. If a scene would naturally have Korean writing (a Korean street sign, a Korean textbook title, etc.), replace it with blank space, an abstract icon, or English text instead — never attempt to render Korean characters.
 
 No watermark, no logo, no brand name, no third-party characters.
 ````
@@ -45,7 +47,7 @@ No watermark, no logo, no brand name, no third-party characters.
 3. 백엔드 재배포: `cd server && .\deploy-final.ps1`
 4. 재배포 후 admin 페이지에서 이미지 1장을 새로 생성해 반영 확인
 
-> ⚠️ 모델이 가끔 한글을 그리려다 깨진 글자로 그리거나, 영어 텍스트를 너무 길게/부자연스럽게 넣기도 합니다. 미리보기에서 발견되면 항목별 [다시 생성]을 누르세요. 최종 게재 전 검토 단계에서 반드시 확인하세요.
+> ⚠️ 모델이 가끔 한글을 그리려다 깨진 글자로 그리거나, 색을 과하게 채우거나, 스틱맨이 아닌 좀 더 사실적인 인물을 그리기도 합니다. 미리보기에서 발견되면 항목별 [다시 생성]을 누르세요. 최종 게재 전 검토 단계에서 반드시 확인하세요.
 
 ## 동작 방식 (참고)
 
