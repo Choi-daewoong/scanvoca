@@ -147,11 +147,15 @@ Important:
         title: Optional[str] = None,
         angle: Optional[str] = None,
         custom_prompt: Optional[str] = None,
+        retry_count: int = 0,
+        max_retries: int = 2,
     ) -> Optional[Dict[str, Any]]:
         """
         Generate a Korean English-learning blog post.
         Returns a dict: {slug, title, description, category, tags, body} or None on error.
         Either (title[, angle]) or custom_prompt must be provided.
+        Retries on malformed JSON (mirrors get_word_definition) - the model occasionally
+        breaks JSON validity in a ~1,500-2,500 char Korean body, and a retry usually fixes it.
         """
         if self.model is None:
             print("Gemini API key not configured")
@@ -193,8 +197,8 @@ Important:
 
 주의:
 - body에는 frontmatter(---)를 넣지 마세요. 순수 본문 마크다운만 넣으세요.
-- JSON 문자열 안의 줄바꿈은 \\n 으로 이스케이프하세요.
-- 반드시 완성된 유효한 JSON만 반환하세요."""
+- JSON 문자열 값 안의 줄바꿈은 \\n 으로, 큰따옴표(")는 \\" 로 반드시 이스케이프하세요.
+- 반드시 완성된 유효한 JSON만 반환하세요. 문자열이 중간에 끊기지 않도록 끝까지 작성하세요."""
 
         try:
             response = self.model.generate_content(
@@ -250,11 +254,22 @@ Important:
             }
 
         except json.JSONDecodeError as e:
-            error_msg = f"Blog generation JSON parse error: {e}"
+            error_msg = f"Blog generation JSON parse error (attempt {retry_count + 1}/{max_retries + 1}): {e}"
             try:
                 print(error_msg)
             except UnicodeEncodeError:
                 print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+
+            if retry_count < max_retries:
+                print(f"Retrying blog generation ({retry_count + 1}/{max_retries})...")
+                return await self.generate_blog_post(
+                    title=title,
+                    angle=angle,
+                    custom_prompt=custom_prompt,
+                    retry_count=retry_count + 1,
+                    max_retries=max_retries,
+                )
+            print(f"Blog generation failed after {max_retries + 1} attempts")
             return None
         except Exception as e:
             error_msg = f"Blog generation error: {e}"

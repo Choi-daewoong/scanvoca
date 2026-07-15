@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.models.word import Word
 from app.models.wordbook import Wordbook, WordbookWord
-from app.models.post import Post
+from app.models.post import Post, PostReply
 from app.models.point_transaction import PointTransaction
 from fastapi import HTTPException, status
 
@@ -183,10 +183,11 @@ class AdminService:
     @staticmethod
     def get_notifications(db: Session) -> dict:
         """Get notification counts for admin menu badges"""
-        # Q&A posts waiting for replies (reply_count == 0)
+        # Q&A posts waiting for replies (no row in post_replies yet)
+        has_reply = select(PostReply.post_id).where(PostReply.post_id == Post.id)
         qna_waiting = db.scalar(
             select(sa_func.count()).select_from(Post)
-            .where(Post.board_type == "qna", Post.reply_count == 0)
+            .where(Post.board_type == "qna", ~has_reply.exists())
         ) or 0
 
         return {
