@@ -11,6 +11,7 @@ from app.models.user import User
 from app.schemas.blog import (
     BlogTopicResponse,
     BlogTopicCreateRequest,
+    BlogTopicUpdateRequest,
     BlogGenerateRequest,
     BlogDraft,
     BlogImagePlanRequest,
@@ -56,6 +57,27 @@ async def create_topic(
         db, category=payload.category, title=payload.title, angle=payload.angle
     )
     return topic
+
+
+@router.patch("/topics/{topic_id}", response_model=BlogTopicResponse)
+async def update_topic(
+    topic_id: int,
+    payload: BlogTopicUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user),
+):
+    """Edit a topic's AI-direction note (angle) — admin only.
+
+    Lets the operator override the category's default promo hook per topic instead of
+    every topic in a category sharing identical generation guidance.
+    """
+    topic = BlogService.get_topic(db, topic_id)
+    if topic is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="주제를 찾을 수 없습니다",
+        )
+    return BlogService.update_topic_angle(db, topic, payload.angle)
 
 
 @router.post("/generate", response_model=BlogDraft)

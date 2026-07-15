@@ -54,6 +54,11 @@ class BlogTopicCreateRequest(BaseModel):
     angle: Optional[str] = Field(None, max_length=500)
 
 
+class BlogTopicUpdateRequest(BaseModel):
+    """Request to edit a topic's AI-direction note (PATCH /admin/blog/topics/{id})."""
+    angle: str = Field(..., min_length=1, max_length=500)
+
+
 class BlogImagePlanRequest(BaseModel):
     """Request to plan images for a draft (POST /admin/blog/image-plan)."""
     slug: str = Field(..., min_length=1, max_length=200)

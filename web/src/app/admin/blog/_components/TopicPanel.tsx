@@ -38,6 +38,39 @@ export default function TopicPanel({
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
+  // 방향(angle) 인라인 수정
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingAngle, setEditingAngle] = useState('');
+  const [savingAngle, setSavingAngle] = useState(false);
+  const [angleError, setAngleError] = useState<string | null>(null);
+
+  const startEditAngle = (topic: BlogTopic) => {
+    setEditingId(topic.id);
+    setEditingAngle(topic.angle);
+    setAngleError(null);
+  };
+
+  const cancelEditAngle = () => {
+    setEditingId(null);
+    setEditingAngle('');
+    setAngleError(null);
+  };
+
+  const saveEditAngle = async (topicId: number) => {
+    if (!editingAngle.trim()) return;
+    setSavingAngle(true);
+    setAngleError(null);
+    try {
+      await blogService.updateTopicAngle(topicId, editingAngle.trim());
+      setEditingId(null);
+      onTopicsChanged();
+    } catch (e) {
+      setAngleError(e instanceof Error ? e.message : '방향 수정에 실패했습니다.');
+    } finally {
+      setSavingAngle(false);
+    }
+  };
+
   // 직접 프롬프트
   const [customPrompt, setCustomPrompt] = useState('');
 
@@ -171,7 +204,44 @@ export default function TopicPanel({
                       {topic.title}
                     </td>
                     <td className="max-w-xs px-2 py-2.5 text-xs text-gray-500 dark:text-gray-400">
-                      {topic.angle}
+                      {editingId === topic.id ? (
+                        <div className="space-y-1.5">
+                          <textarea
+                            value={editingAngle}
+                            onChange={(e) => setEditingAngle(e.target.value)}
+                            rows={3}
+                            autoFocus
+                            className="w-full min-w-[16rem] rounded-lg border border-indigo-300 px-2 py-1.5 text-xs outline-none focus:border-indigo-500 dark:border-indigo-800 dark:bg-gray-800 dark:text-gray-100"
+                          />
+                          {angleError && (
+                            <p className="text-xs text-red-500 dark:text-red-400">{angleError}</p>
+                          )}
+                          <div className="flex gap-1.5">
+                            <button
+                              onClick={() => saveEditAngle(topic.id)}
+                              disabled={savingAngle || !editingAngle.trim()}
+                              className="rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                              {savingAngle ? '저장 중...' : '저장'}
+                            </button>
+                            <button
+                              onClick={cancelEditAngle}
+                              disabled={savingAngle}
+                              className="rounded-md border border-gray-200 px-2.5 py-1 text-xs text-gray-500 transition hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+                            >
+                              취소
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => startEditAngle(topic)}
+                          className="block w-full text-left hover:text-indigo-600 dark:hover:text-indigo-400"
+                          title="클릭하여 수정"
+                        >
+                          {topic.angle}
+                        </button>
+                      )}
                     </td>
                     <td className="px-2 py-2.5 whitespace-nowrap">
                       {topic.status === 'used' ? (

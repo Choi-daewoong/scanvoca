@@ -30,6 +30,14 @@ export const blogService = {
     });
   },
 
+  /** 주제의 방향(angle)을 직접 수정 — 카테고리 기본 홍보 훅을 주제별로 덮어쓸 때 사용 */
+  async updateTopicAngle(topicId: number, angle: string): Promise<BlogTopic> {
+    return apiFetch<BlogTopic>(`/api/v1/admin/blog/topics/${topicId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ angle }),
+    });
+  },
+
   /** AI 글 생성 — topic_id 또는 custom_prompt 중 하나 필수 */
   async generate(payload: { topic_id: number } | { custom_prompt: string }): Promise<BlogDraft> {
     return apiFetch<BlogDraft>('/api/v1/admin/blog/generate', {

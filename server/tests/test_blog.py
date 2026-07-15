@@ -276,6 +276,59 @@ class TestCreateTopic:
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
+class TestUpdateTopic:
+    """주제 방향(angle) 수정 테스트 (PATCH /admin/blog/topics/{id})"""
+
+    def test_update_topic_angle_success(self, client, admin_auth_headers, db_session):
+        topic = BlogTopic(category="토익·비즈니스", title="주제", angle="원래 방향", status="unused")
+        db_session.add(topic)
+        db_session.commit()
+
+        response = client.patch(
+            f"/api/v1/admin/blog/topics/{topic.id}",
+            json={"angle": "수정된 방향"},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["angle"] == "수정된 방향"
+
+        db_session.refresh(topic)
+        assert topic.angle == "수정된 방향"
+
+    def test_update_topic_not_found_404(self, client, admin_auth_headers):
+        response = client.patch(
+            "/api/v1/admin/blog/topics/99999",
+            json={"angle": "x"},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_update_topic_empty_angle_422(self, client, admin_auth_headers, db_session):
+        topic = BlogTopic(category="일상영어", title="주제", angle="원래 방향", status="unused")
+        db_session.add(topic)
+        db_session.commit()
+
+        response = client.patch(
+            f"/api/v1/admin/blog/topics/{topic.id}",
+            json={"angle": ""},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_update_topic_non_admin_403(self, client, auth_headers, db_session):
+        topic = BlogTopic(category="일상영어", title="주제", angle="원래 방향", status="unused")
+        db_session.add(topic)
+        db_session.commit()
+
+        response = client.patch(
+            f"/api/v1/admin/blog/topics/{topic.id}",
+            json={"angle": "y"},
+            headers=auth_headers,
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
 class TestImagePlan:
     """이미지 계획 테스트 (POST /admin/blog/image-plan)"""
 

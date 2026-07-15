@@ -91,6 +91,14 @@ class BlogService:
         db.refresh(topic)
         return topic
 
+    @staticmethod
+    def update_topic_angle(db: Session, topic: BlogTopic, angle: str) -> BlogTopic:
+        """Overwrite a topic's AI-direction note (angle) with an admin-edited value."""
+        topic.angle = angle.strip()
+        db.commit()
+        db.refresh(topic)
+        return topic
+
     # ----- Image plan validation -----
 
     @staticmethod
