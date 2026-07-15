@@ -34,6 +34,7 @@ server/app/
   alembic revision --autogenerate -m "설명"
   alembic upgrade head   # 운영 DB에 적용되므로 파괴적 변경은 사전 보고
   ```
+- **새 테이블에는 같은 마이그레이션에서 RLS를 반드시 켠다**: 운영 DB가 Supabase Postgres라 RLS를 안 켜면 프로젝트 URL만으로 누구나 PostgREST를 통해 테이블을 읽고 쓸 수 있다(백엔드 인증을 완전히 우회). `op.execute("ALTER TABLE {table} ENABLE ROW LEVEL SECURITY;")`를 테이블 생성과 같은 마이그레이션에 넣는다. 백엔드는 `postgres`(테이블 소유자) 역할로 접속하므로 RLS를 켜도 정책이 하나도 없어도 백엔드 자체는 전혀 영향받지 않는다 — 정책 없이 켜는 것만으로 이미 "소유자 제외 전원 접근 거부"가 된다. 공개 조회가 필요한 테이블만 `FOR SELECT USING (true)` 정책을 추가한다. 기존 패턴은 `alembic/versions/a8b9c0d1e2f4_*.py`, `0a4429712614_*.py` 참고.
 
 ## 테스트 (완료 전 필수)
 ```bash
