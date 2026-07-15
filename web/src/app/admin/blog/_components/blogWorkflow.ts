@@ -74,11 +74,18 @@ export interface ReflectResult {
   images: ReflectImage[];
 }
 
-/** 마크다운을 frontmatter / body 로 분리 */
+/**
+ * 마크다운을 frontmatter / body 로 분리.
+ * 브라우저 textarea에 Windows(CRLF) 텍스트가 붙여넣기 되면 줄바꿈이 \r\n으로 섞여
+ * 들어올 수 있어, 정규식이 기대하는 \n과 어긋나 frontmatter 인식 자체가 실패한다
+ * (그러면 대표 이미지가 frontmatter 위에 잘못 삽입되는 등 반영이 깨진다).
+ * 처리 전 \r\n → \n으로 정규화해 항상 같은 결과가 나오게 한다.
+ */
 function splitFrontmatter(markdown: string): { frontmatter: string; body: string } {
-  const m = markdown.match(/^(---\n[\s\S]*?\n---\n?)([\s\S]*)$/);
+  const normalized = markdown.replace(/\r\n/g, '\n');
+  const m = normalized.match(/^(---\n[\s\S]*?\n---\n?)([\s\S]*)$/);
   if (m) return { frontmatter: m[1], body: m[2] };
-  return { frontmatter: '', body: markdown };
+  return { frontmatter: '', body: normalized };
 }
 
 const normHeading = (s: string) => s.trim().replace(/\s+/g, ' ');
@@ -145,9 +152,9 @@ export function reflectImages(markdown: string, slug: string, items: PlanItem[])
   return { markdown: finalMarkdown, images };
 }
 
-/** frontmatter 제거 (미리보기 렌더용) */
+/** frontmatter 제거 (미리보기 렌더용). splitFrontmatter와 동일하게 CRLF를 먼저 정규화한다. */
 export function stripFrontmatter(markdown: string): string {
-  return markdown.replace(/^---[\s\S]*?---\n?/, '');
+  return markdown.replace(/\r\n/g, '\n').replace(/^---[\s\S]*?---\n?/, '');
 }
 
 /**
