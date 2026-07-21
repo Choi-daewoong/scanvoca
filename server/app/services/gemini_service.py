@@ -235,7 +235,7 @@ Important:
                 f'지문(passage):\n"""{source_passage.get("passage_text", "")}"""\n'
                 f'문제(question): {source_passage.get("question_text", "")}\n'
                 f'선택지:\n{choices_str}\n'
-                f'정답: {source_passage.get("answer", "(미상)")}\n'
+                f'정답: {source_passage.get("answer") or "정답 미상 — 임의로 답을 지어내지 말고, 지문 내용에 근거해 해설할 것"}\n'
             )
             source_instruction = (
                 "\n11. 위 [활용할 실제 기출 지문]을 소재로 한 해설형 글을 작성하세요. 지문을 임의로 "

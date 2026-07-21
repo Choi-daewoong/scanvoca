@@ -5,6 +5,9 @@
 - require_cron_or_admin (cron-secret / admin JWT 인증)
 - /admin/blog/topics/suggest, /admin/blog/auto-publish/run, /topics?pipeline=
 """
+import asyncio
+import json
+
 import pytest
 from fastapi import status
 
@@ -1087,3 +1090,49 @@ class TestColumnAwareReconstruction:
         text = "18. Some question\nA passage that happens to end in the number 8 like this.\n"
         out = strip_page_furniture(text)
         assert "A passage that happens to end in the number 8 like this." in out
+
+
+class TestSourcePassagePromptSafety:
+    """Real dry-run bug: exam_passages.answer is NULL when there's no answer-key PDF,
+    and `dict.get("answer", "(미상)")` only falls back on a *missing* key, not a None
+    *value* - so the prompt literally said "정답: None" and the model echoed it back into
+    a live (auto-)published post. pytest-asyncio isn't installed, so drive the coroutine
+    with asyncio.run() from a plain sync test rather than `async def`.
+    """
+
+    @staticmethod
+    def _run_generate(source_passage):
+        captured = {}
+
+        class FakeResponse:
+            text = json.dumps({
+                "slug": "x", "title": "t", "description": "d", "category": "수능·내신",
+                "tags": [], "body": "## 첫째\n\n내용\n\n## 결국 홍보\n\n[Scan Voca](https://scanvoca.com)",
+            })
+
+        class FakeModel:
+            def generate_content(self, prompt, generation_config=None):
+                captured["prompt"] = prompt
+                return FakeResponse()
+
+        service = GeminiService.__new__(GeminiService)
+        service.model = FakeModel()
+        asyncio.run(service.generate_blog_post(
+            title="t", angle="a", source_passage=source_passage,
+        ))
+        return captured["prompt"]
+
+    def test_missing_answer_does_not_leak_python_none(self):
+        prompt = self._run_generate({
+            "passage_text": "Some passage.", "question_text": "Q?",
+            "choices": ["a", "b"], "answer": None, "source_label": "라벨",
+        })
+        assert "정답: None" not in prompt
+        assert "임의로 답을 지어내지" in prompt
+
+    def test_present_answer_is_used_verbatim(self):
+        prompt = self._run_generate({
+            "passage_text": "Some passage.", "question_text": "Q?",
+            "choices": ["a", "b"], "answer": "3", "source_label": "라벨",
+        })
+        assert "정답: 3" in prompt
