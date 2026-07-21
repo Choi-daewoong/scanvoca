@@ -167,10 +167,15 @@ async def run_auto_publish(
                 published=False, reason="generation_failed", dry_run=dry_run, topic_id=topic.id
             )
         # Inject the rendered practice-questions section before the promo section.
+        # strip_practice_section first: the model is told not to write its own "실전
+        # 연습문제" section, but that's not guaranteed (see its docstring) — without this,
+        # an instruction-following slip ships a duplicated section to a live post nobody
+        # reviews before publish.
         questions_md = BlogService.render_practice_questions_markdown(
             result.get("practice_questions") or []
         )
-        body = BlogService.assemble_body_with_questions(result["body"], questions_md)
+        clean_body = BlogService.strip_practice_section(result["body"])
+        body = BlogService.assemble_body_with_questions(clean_body, questions_md)
 
     elif pipeline == "suneung":
         topic = BlogService.get_unused_topic_for_pipeline(db, "suneung")

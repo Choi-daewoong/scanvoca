@@ -91,6 +91,68 @@ class TestRenderPracticeQuestions:
         assert out.index("## 실전 연습문제") < out.index("## 결국 홍보")
         assert out.index("## 첫째") < out.index("## 실전 연습문제")
 
+    def test_strip_practice_section_removes_model_written_section(self):
+        # The model was told not to write this, but sometimes does anyway (observed live).
+        body = (
+            "## 첫째\n\n내용\n\n"
+            "## 실전 연습문제\n\nQuestion 1: ... Choices: ... Answer Index: 1 Explanation: ...\n\n"
+            "## 결국 홍보\n\n[Scan Voca](https://scanvoca.com)"
+        )
+        out = BlogService.strip_practice_section(body)
+        assert "실전 연습문제" not in out
+        assert "Question 1:" not in out
+        assert "## 첫째" in out
+        assert "## 결국 홍보" in out
+
+    def test_strip_practice_section_noop_when_absent(self):
+        body = "## 첫째\n\n내용\n\n## 결국 홍보\n\n[Scan Voca](https://scanvoca.com)"
+        assert BlogService.strip_practice_section(body).strip() == body.strip()
+
+    def test_strip_practice_section_at_end_of_body(self):
+        body = "## 첫째\n\n내용\n\n## 실전 연습문제\n\nQuestion 1: ...\n"
+        out = BlogService.strip_practice_section(body)
+        assert "실전 연습문제" not in out
+        assert "## 첫째" in out
+
+    def test_no_duplicate_practice_section_end_to_end(self, client, admin_auth_headers, db_session, monkeypatch):
+        """Reproduces the live bug: model ignores the 'don't write it in body' instruction."""
+        topic = BlogTopic(category="토익·비즈니스", title="토익 주제5", angle="a",
+                          status="unused", pipeline="toeic")
+        db_session.add(topic)
+        db_session.commit()
+
+        model_written_duplicate = (
+            "## 실전 연습문제\n\n이제 배운 내용을 점검해봅시다.\n\n"
+            "Question 1: Q text Choices: (A) a (B) b (C) c (D) d Answer Index: 1 Explanation: e\n\n"
+        )
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                source_passage=None, source_dialogue=None):
+            return {
+                "slug": "toeic-dup-check", "title": "토익 자동 글5", "description": "설명",
+                "category": "토익·비즈니스", "tags": ["토익"],
+                "body": LONG_BODY.replace("## 결국, 단어는 외워야 합니다", model_written_duplicate + "## 결국, 단어는 외워야 합니다"),
+                "practice_questions": [
+                    {"type": "Part 5", "question": "Real Q", "choices": ["a", "b", "c", "d"],
+                     "answer_index": 1, "explanation": "e"},
+                ],
+            }
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        markdown = resp.json()["markdown"]
+        # Exactly one "실전 연습문제" heading, and none of the model's crude duplicate text.
+        assert markdown.count("## 실전 연습문제") == 1
+        assert "Question 1: Q text" not in markdown
+        assert "Real Q" in markdown
+
 
 class TestValidateAutoDraft:
     """BlogService.validate_auto_draft 가드레일 단위 테스트"""

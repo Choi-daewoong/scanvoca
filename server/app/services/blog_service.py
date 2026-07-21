@@ -546,6 +546,40 @@ class BlogService:
         after = "\n".join(lines[last_h2_idx:]).strip()
         return f"{before}\n\n{questions_markdown}\n\n{after}\n"
 
+    @staticmethod
+    def strip_practice_section(body: str) -> str:
+        """Remove any `## 실전 연습문제` section the model wrote directly in body.
+
+        generate_blog_post(include_practice_questions=True) explicitly tells the model to
+        put questions only in the practice_questions field, never in body — but that's a
+        prompt-following bet, not a guarantee, and this pipeline auto-publishes with no
+        human review. Observed in practice: the model sometimes writes its own crude
+        version of the section anyway, which then duplicates the properly rendered one
+        assemble_body_with_questions() inserts from the structured JSON. Defensively strip
+        any heading matching "실전 연습문제" (and everything up to the next `##`/end) before
+        assembly, so a real section always appears exactly once regardless of what the
+        model did. A body without such a heading is returned unchanged.
+        """
+        lines = body.splitlines()
+        start_idx: Optional[int] = None
+        end_idx = len(lines)
+        for i, line in enumerate(lines):
+            m = _H2_RE.match(line.strip())
+            if not m:
+                continue
+            if start_idx is None:
+                if m.group(1).strip() == "실전 연습문제":
+                    start_idx = i
+            else:
+                end_idx = i
+                break
+
+        if start_idx is None:
+            return body
+
+        remaining = lines[:start_idx] + lines[end_idx:]
+        return "\n".join(remaining).strip() + "\n"
+
     # ----- Auto-blog: hero image reflection (port of blogWorkflow.reflectImages 'top') -----
 
     @staticmethod
