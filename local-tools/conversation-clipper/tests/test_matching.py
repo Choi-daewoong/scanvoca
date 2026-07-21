@@ -97,10 +97,38 @@ class TestCollectDialogue:
         assert text == "Let's grab a coffee break"
 
 
+class TestEscapeSubtitlesFilterPath:
+    """Real bug found running against an actual NAS mapped drive: an absolute Windows
+    path broke ffmpeg's subtitles filter because the drive-letter colon was parsed as
+    a filter option separator. Reproduced live - worked with a relative forward-slash
+    path, failed with "Z:\\source\\...".
+    """
+
+    def test_escapes_windows_drive_colon(self):
+        from clipper.matching import escape_subtitles_filter_path
+
+        out = escape_subtitles_filter_path(r"Z:\source\Emily in Paris S05E01\movie.srt")
+        assert out == "Z\\:/source/Emily in Paris S05E01/movie.srt"
+        assert ":" not in out.replace("\\:", "")  # the only colon left is the escaped one
+
+    def test_unix_style_path_unchanged(self):
+        from clipper.matching import escape_subtitles_filter_path
+
+        assert escape_subtitles_filter_path("/nas/Friends/movie.srt") == "/nas/Friends/movie.srt"
+
+
 class TestFfmpegCommand:
     def test_format_seconds(self):
         assert format_seconds(4.7) == "4.700"
         assert format_seconds(-1.0) == "0.000"
+
+    def test_windows_absolute_path_escaped_in_filter(self):
+        cmd = build_ffmpeg_command(
+            r"Z:\source\Emily\movie.mkv", r"Z:\source\Emily\movie.srt",
+            0.0, 5.0, r"Z:\output\out.mp4",
+        )
+        vf = cmd[cmd.index("-vf") + 1]
+        assert vf == "subtitles='Z\\:/source/Emily/movie.srt'"
 
     def test_command_structure(self):
         cmd = build_ffmpeg_command(

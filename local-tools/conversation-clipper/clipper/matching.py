@@ -83,6 +83,19 @@ def format_seconds(seconds: float) -> str:
     return f"{max(0.0, float(seconds)):.3f}"
 
 
+def escape_subtitles_filter_path(path: str) -> str:
+    """Escape a path for use inside ffmpeg's `subtitles=` filter argument.
+
+    The subtitles filter has its own mini key=value syntax where ':' separates
+    options and '\\' is an escape character - a raw Windows absolute path like
+    "Z:\\source\\movie.srt" breaks because the drive-letter colon gets parsed as an
+    option separator (reproduced live: worked with a relative forward-slash path,
+    failed with an absolute "Z:\\..." path). Convert backslashes to forward slashes
+    (ffmpeg accepts those on Windows) and escape any remaining colons.
+    """
+    return path.replace("\\", "/").replace(":", "\\:")
+
+
 def build_ffmpeg_command(
     input_path: str,
     srt_path: str,
@@ -109,7 +122,8 @@ def build_ffmpeg_command(
         format_seconds(duration),
     ]
     if burn_subtitles:
-        # subtitles filter needs the path single-quoted inside the filter graph.
-        cmd += ["-vf", f"subtitles='{srt_path}'"]
+        # subtitles filter needs the path single-quoted inside the filter graph,
+        # and its own escaping applied first (see escape_subtitles_filter_path).
+        cmd += ["-vf", f"subtitles='{escape_subtitles_filter_path(srt_path)}'"]
     cmd += ["-c:v", "libx264", "-c:a", "aac", output_path]
     return cmd
