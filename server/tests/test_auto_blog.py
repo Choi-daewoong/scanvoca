@@ -952,3 +952,127 @@ class TestIngestParsing:
         assert answers[18] == "3"
         assert answers[19] == "1"
         assert answers[20] == "5"
+
+    def test_validate_parsed_item_accepts_normal_shape(self):
+        from ingest_exam_pdfs import validate_parsed_item
+        item = {
+            "question_text": "다음 글의 목적으로 가장 적절한 것은?",
+            "passage_text": "Dear Mr. Johnson, I am writing to inform you about the schedule change.",
+            "choices": ["일정 변경 안내", "환불 요청", "예약 확인", "불만 접수", "감사 인사"],
+        }
+        assert validate_parsed_item(item) is None
+
+    def test_validate_parsed_item_rejects_wrong_choice_count(self):
+        # 무관 문장 찾기류: ①~⑤가 지문 안에 박혀 있어 choices가 5개로 안 떨어짐
+        from ingest_exam_pdfs import validate_parsed_item
+        item = {
+            "question_text": "다음 글에서 전체 흐름과 관계 없는 문장은?",
+            "passage_text": "Since their introduction, information systems have changed business.",
+            "choices": ["a", "b", "c"],
+        }
+        assert validate_parsed_item(item) is not None
+
+    def test_validate_parsed_item_rejects_swallowed_passage_as_choice(self):
+        from ingest_exam_pdfs import validate_parsed_item
+        item = {
+            "question_text": "Q",
+            "passage_text": "Some passage text here that is long enough.",
+            "choices": ["short", "short", "short", "short", "x" * 300],
+        }
+        assert validate_parsed_item(item) is not None
+
+    def test_validate_parsed_item_rejects_long_question(self):
+        from ingest_exam_pdfs import validate_parsed_item
+        item = {
+            "question_text": "Q " * 150,
+            "passage_text": "Some passage text here that is long enough.",
+            "choices": None,
+        }
+        assert validate_parsed_item(item) is not None
+
+    def test_parse_exam_text_drops_implausible_shape(self):
+        # 35번처럼 ①~⑤가 지문 안에 있어 choices 개수가 5가 아니면 통째로 스킵된다.
+        from ingest_exam_pdfs import parse_exam_text
+        text = (
+            "35. 다음 글의 흐름과 관계 없는 문장은?\n"
+            "Since their introduction, information systems have changed business.\n"
+            "① This is particularly true. ② The networks cover units.\n"
+        )
+        assert parse_exam_text(text) == []
+
+
+class TestColumnAwareReconstruction:
+    """ingest_exam_pdfs.py 2단 레이아웃 재조합 순수 함수 (실제 PDF 없이 좌표로)."""
+
+    @staticmethod
+    def _word(text, x0, x1, top):
+        return {"text": text, "x0": x0, "x1": x1, "top": top, "bottom": top + 10}
+
+    def test_find_gutter_x_detects_clear_gap(self):
+        from ingest_exam_pdfs import find_gutter_x
+        # Both columns' centers must fall in the middle 30~70% band (240~560 of an
+        # 800-wide page) for find_gutter_x to consider them — mirrors a real 2-column
+        # layout where neither column hugs the page edge.
+        words = [
+            self._word("left", 260, 300, 10),
+            self._word("col", 260, 300, 20),
+            self._word("right", 500, 540, 10),
+            self._word("col", 500, 540, 20),
+        ]
+        gutter = find_gutter_x(words, page_width=800)
+        assert gutter is not None
+        assert 300 < gutter < 500
+
+    def test_find_gutter_x_none_for_single_column(self):
+        from ingest_exam_pdfs import find_gutter_x
+        # Words spread evenly across the middle band with no real gap.
+        words = [self._word(f"w{i}", 300 + i * 12, 300 + i * 12 + 10, 10) for i in range(10)]
+        assert find_gutter_x(words, page_width=800) is None
+
+    def test_reconstruct_page_text_orders_left_column_before_right(self):
+        from ingest_exam_pdfs import reconstruct_page_text
+        # Column centers within the 30~70% band (see test_find_gutter_x_detects_clear_gap).
+        words = [
+            self._word("RightTop", 500, 540, 10),
+            self._word("LeftTop", 260, 300, 10),
+            self._word("LeftBottom", 260, 300, 50),
+            self._word("RightBottom", 500, 540, 50),
+        ]
+        out = reconstruct_page_text(words, page_width=800)
+        # Entire left column (top-to-bottom) must precede the entire right column.
+        assert out.index("LeftBottom") < out.index("RightTop")
+        assert out.index("LeftTop") < out.index("LeftBottom")
+        assert out.index("RightTop") < out.index("RightBottom")
+
+    def test_reconstruct_page_text_single_column_reading_order(self):
+        from ingest_exam_pdfs import reconstruct_page_text
+        words = [
+            self._word("Second", 305, 340, 20),
+            self._word("First", 300, 340, 10),
+        ]
+        out = reconstruct_page_text(words, page_width=800)
+        assert out.index("First") < out.index("Second")
+
+    def test_strip_page_furniture_removes_footer_lines(self):
+        from ingest_exam_pdfs import strip_page_furniture
+        text = (
+            "20. 다음 글에서 필자가 주장하는 바로 가장 적절한 것은?\n"
+            "Values alone do not create and build culture.\n"
+            "⑤ 조직의 문화 형성에는 명시적 지침이 필요하다.\n"
+            "8\n"
+            "이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n"
+            "홀수형\n"
+            "21. 다음 빈칸에 들어갈 말로 가장 적절한 것은?\n"
+        )
+        out = strip_page_furniture(text)
+        assert "저작권" not in out
+        assert "홀수형" not in out
+        assert "\n8\n" not in out
+        assert "Values alone" in out
+        assert "21. 다음 빈칸" in out
+
+    def test_strip_page_furniture_keeps_real_content(self):
+        from ingest_exam_pdfs import strip_page_furniture
+        text = "18. Some question\nA passage that happens to end in the number 8 like this.\n"
+        out = strip_page_furniture(text)
+        assert "A passage that happens to end in the number 8 like this." in out
