@@ -981,6 +981,17 @@ class TestIngestParsing:
         }
         assert validate_parsed_item(item) is not None
 
+    def test_validate_parsed_item_rejects_listening_fragment(self):
+        # Real bug found ingesting actual 수능 PDFs: a listening question's leftover
+        # instruction tail + speaker cue clears the raw-length bar but has ~0 English.
+        from ingest_exam_pdfs import validate_parsed_item
+        item = {
+            "question_text": "대화를 듣고, 여자의 마지막 말에 대한 남자의 응답으로 가장",
+            "passage_text": "적절한 것을 고르시오. [3점]\nMan:",
+            "choices": ["Fantastic.", "I think so.", "Great.", "Don't forget.", "No worries."],
+        }
+        assert validate_parsed_item(item) is not None
+
     def test_validate_parsed_item_rejects_long_question(self):
         from ingest_exam_pdfs import validate_parsed_item
         item = {

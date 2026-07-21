@@ -36,6 +36,7 @@ _PROBLEM_RE = re.compile(r"(?m)^\s*(\d{1,2})\.\s")
 # Answer-sheet entry: "18 ③" / "18. 3" / "18) ④" etc.
 _ANSWER_RE = re.compile(r"(\d{1,2})\s*[.)]?\s*([①②③④⑤1-5])")
 _CIRCLED_TO_NUM = {c: str(i + 1) for i, c in enumerate(CIRCLED)}
+_ALPHA_RE = re.compile(r"[A-Za-z]")
 
 
 # ---------- Pure parsing helpers (unit-testable, no IO) ----------
@@ -90,8 +91,19 @@ def validate_parsed_item(item: Dict) -> Optional[str]:
             return "a choice is implausibly long (likely swallowed passage text)"
     if len(item.get("question_text", "")) > 200:
         return "question_text implausibly long (likely cross-contaminated block)"
-    if len(item.get("passage_text", "")) < 20:
+    passage = item.get("passage_text", "")
+    if len(passage) < 20:
         return "passage_text implausibly short"
+    # Listening-question fragments (e.g. a lone "Man:"/"Jason:" speaker cue plus a stray
+    # tail of the previous question's Korean instruction, like "적절한 것을 고르시오.
+    # [3점]\nMan:") clear the raw-length bar above but aren't a real reading passage — the
+    # audio script isn't printed in the 문제지, so 수능's listening items (usually 1~17)
+    # have nothing worth quoting anyway. A genuine printed passage is mostly English; these
+    # fragments are almost entirely Korean instruction text. Empirically (5 real exam
+    # years): garbage tops out at 6 Latin letters, real passages start at 89+ — 40 is a
+    # safe cut with margin on both sides.
+    if len(_ALPHA_RE.findall(passage)) < 40:
+        return "passage_text has too little English content (likely a listening-question fragment)"
     return None
 
 
