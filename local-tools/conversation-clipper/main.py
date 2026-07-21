@@ -183,6 +183,13 @@ def process(cfg: Config) -> List[Dict]:
 
 
 def _load_config_from_args() -> Config:
+    try:
+        from dotenv import load_dotenv  # lazy: keeps this module importable without it
+
+        load_dotenv()  # loads .env from CWD before os.getenv() defaults below read it
+    except ImportError:
+        pass
+
     parser = argparse.ArgumentParser(description="conversation-clipper (local NAS tool)")
     parser.add_argument("--source-dir", default=os.getenv("NAS_SOURCE_DIR"))
     parser.add_argument("--output-dir", default=os.getenv("NAS_OUTPUT_DIR"))
