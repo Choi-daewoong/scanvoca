@@ -126,14 +126,32 @@ def probe_subtitle_streams(video_path: str) -> List[Dict]:
         return []
 
 
-def pick_text_subtitle_stream(streams: List[Dict]) -> Optional[int]:
-    """Pure: index of the first text-based subtitle stream among `streams`, or None."""
-    for s in streams:
-        if s.get("codec_name") in _TEXT_SUBTITLE_CODECS:
-            index = s.get("index")
-            if isinstance(index, int):
-                return index
-    return None
+def pick_text_subtitle_stream(streams: List[Dict], preferred_language: str = "eng") -> Optional[int]:
+    """Pure: pick the best extractable subtitle stream, preferring `preferred_language`.
+
+    This pipeline is for learning English, so language matters, not just "any text
+    track" - a real file was observed with 45 subtitle tracks (one per language) where
+    picking the first one would have been a coin flip. Among tracks matching the
+    preferred language, "forced" tracks (only on-screen foreign-text translations, not
+    full dialogue - e.g. a sign in another language) are skipped when a full non-forced
+    track is also available. Falls back to any language's first text-based track only if
+    none match the preferred language at all.
+    """
+    candidates = [s for s in streams if s.get("codec_name") in _TEXT_SUBTITLE_CODECS]
+    if not candidates:
+        return None
+
+    def is_forced(s: Dict) -> bool:
+        if s.get("disposition", {}).get("forced") == 1:
+            return True
+        return "forced" in str(s.get("tags", {}).get("title", "")).lower()
+
+    lang_matches = [s for s in candidates if s.get("tags", {}).get("language") == preferred_language]
+    non_forced = [s for s in lang_matches if not is_forced(s)]
+    pool = non_forced or lang_matches or candidates
+
+    index = pool[0].get("index")
+    return index if isinstance(index, int) else None
 
 
 def extract_embedded_subtitle(video_path: str, stream_index: int, out_srt_path: str) -> bool:

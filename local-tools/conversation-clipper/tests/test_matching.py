@@ -129,27 +129,85 @@ class TestFfmpegCommand:
 
 
 class TestPickTextSubtitleStream:
-    """Pure: choose the first extractable (text-based) embedded subtitle stream."""
+    """Pure: choose the best extractable (text-based, language-matched) subtitle stream."""
 
     def test_picks_subrip_stream(self):
         from main import pick_text_subtitle_stream
 
         streams = [
-            {"index": 2, "codec_name": "subrip"},
-            {"index": 3, "codec_name": "ass"},
+            {"index": 2, "codec_name": "subrip", "tags": {"language": "eng"}},
+            {"index": 3, "codec_name": "ass", "tags": {"language": "eng"}},
         ]
         assert pick_text_subtitle_stream(streams) == 2
 
     def test_skips_image_based_pgs(self):
         from main import pick_text_subtitle_stream
 
-        streams = [{"index": 2, "codec_name": "hdmv_pgs_subtitle"}]
+        streams = [{"index": 2, "codec_name": "hdmv_pgs_subtitle", "tags": {"language": "eng"}}]
         assert pick_text_subtitle_stream(streams) is None
 
     def test_no_streams(self):
         from main import pick_text_subtitle_stream
 
         assert pick_text_subtitle_stream([]) is None
+
+    def test_real_world_45_language_file_picks_english_not_first_stream(self):
+        # Reproduces an actual file: English happened to be first here, but the
+        # function must not rely on that - assert it's chosen *because* of language.
+        from main import pick_text_subtitle_stream
+
+        streams = [
+            {"index": 2, "codec_name": "subrip", "tags": {"language": "eng", "title": "English"}},
+            {"index": 3, "codec_name": "subrip", "tags": {"language": "eng", "title": "English (forced)"}},
+            {"index": 4, "codec_name": "subrip", "tags": {"language": "eng", "title": "English (SDH)"}},
+            {"index": 5, "codec_name": "subrip", "tags": {"language": "ara", "title": "Arabic"}},
+            {"index": 24, "codec_name": "subrip", "tags": {"language": "kor", "title": "Korean"}},
+        ]
+        assert pick_text_subtitle_stream(streams) == 2
+
+    def test_korean_first_still_picks_english(self):
+        # Order must not matter - only language.
+        from main import pick_text_subtitle_stream
+
+        streams = [
+            {"index": 2, "codec_name": "subrip", "tags": {"language": "kor"}},
+            {"index": 3, "codec_name": "subrip", "tags": {"language": "eng"}},
+        ]
+        assert pick_text_subtitle_stream(streams) == 3
+
+    def test_skips_forced_when_full_track_available(self):
+        from main import pick_text_subtitle_stream
+
+        streams = [
+            {"index": 3, "codec_name": "subrip", "tags": {"language": "eng", "title": "English (forced)"},
+             "disposition": {"forced": 1}},
+            {"index": 2, "codec_name": "subrip", "tags": {"language": "eng", "title": "English"}},
+        ]
+        assert pick_text_subtitle_stream(streams) == 2
+
+    def test_falls_back_to_forced_when_only_option(self):
+        from main import pick_text_subtitle_stream
+
+        streams = [
+            {"index": 3, "codec_name": "subrip", "tags": {"language": "eng", "title": "English (forced)"},
+             "disposition": {"forced": 1}},
+        ]
+        assert pick_text_subtitle_stream(streams) == 3
+
+    def test_falls_back_to_other_language_when_preferred_absent(self):
+        from main import pick_text_subtitle_stream
+
+        streams = [{"index": 24, "codec_name": "subrip", "tags": {"language": "kor"}}]
+        assert pick_text_subtitle_stream(streams) == 24
+
+    def test_custom_preferred_language(self):
+        from main import pick_text_subtitle_stream
+
+        streams = [
+            {"index": 2, "codec_name": "subrip", "tags": {"language": "eng"}},
+            {"index": 24, "codec_name": "subrip", "tags": {"language": "kor"}},
+        ]
+        assert pick_text_subtitle_stream(streams, preferred_language="kor") == 24
 
 
 class TestFindSourceMedia:
