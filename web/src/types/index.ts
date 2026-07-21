@@ -277,6 +277,9 @@ export interface BlogTopic {
   angle: string;
   status: 'unused' | 'used';
   post_slug: string | null;
+  // 자동 블로그 파이프라인 1단계 — 기존 /admin/blog 사용처 회귀 방지를 위해 옵셔널.
+  // BE는 기본값 'manual'을 항상 채워 응답한다(계약서 1절).
+  pipeline?: string;
 }
 
 // 관리자 — AI 생성 결과 (BE 응답)
@@ -340,4 +343,64 @@ export interface BlogNaverVersion {
   title: string;
   content: string;
   source_url: string;
+}
+
+// ===== 자동 블로그 파이프라인 (계약서 4절) =====
+
+// 파이프라인 종류 — 이번 범위는 'toeic'만 UI 구현. 나머지는 이후 확장.
+export type BlogPipeline = 'manual' | 'toeic' | 'suneung' | 'conversation';
+
+// AI 주제 제안 후보 1건 (POST /admin/blog/topics/suggest 응답 항목)
+export interface BlogTopicSuggestion {
+  title: string;
+  angle: string;
+}
+
+// POST /admin/blog/topics/suggest 응답
+export interface BlogTopicSuggestResponse {
+  suggestions: BlogTopicSuggestion[];
+}
+
+// 수능 기출 지문 (GET /admin/blog/exam-passages 응답, 계약서 2단계 1-1절 컬럼과 매칭)
+export interface ExamPassage {
+  id: number;
+  year: number;
+  exam_type: string; // '수능' | '모의고사'
+  month: number | null; // 모의고사 시행 월, 수능은 null
+  problem_number: number;
+  passage_text: string;
+  question_text: string;
+  choices: string[] | null; // 5지선다, 없으면 null
+  answer: string | null;
+  tags: string[] | null;
+  source_label: string; // 예: '2025학년도 수능 영어'
+  status: 'unused' | 'used';
+  created_at: string;
+}
+
+// 일상회화 클립 (GET /admin/blog/conversation-clips 응답, 계약서 2단계 2-1절 컬럼과 매칭)
+export interface ConversationClip {
+  id: number;
+  topic_id: number;
+  video_title: string;
+  dialogue_en: string;
+  dialogue_ko: string | null;
+  start_seconds: number;
+  end_seconds: number;
+  clip_url: string;
+  status: 'pending' | 'ready' | 'published';
+  created_at: string;
+}
+
+// POST /admin/blog/auto-publish/run 응답 (dry-run 포함)
+export interface BlogAutoPublishResult {
+  published: boolean;
+  reason?: string | null; // 'no_unused_topic' | 'generation_failed' | 'guardrail_failed' | 'github_failed' | 'pipeline_not_implemented' 등
+  dry_run: boolean;
+  topic_id?: number | null;
+  slug?: string | null;
+  title?: string | null;
+  markdown?: string | null; // dry_run=true 또는 검증 참고용일 때만 채워짐
+  commit_url?: string | null;
+  blog_url?: string | null;
 }

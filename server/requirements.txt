@@ -29,3 +29,6 @@ packaging==25.0
 
 # HTTP client (GitHub Contents API — 블로그 발행)
 httpx==0.28.1
+
+# 수능/모의고사 기출 PDF 텍스트 추출 (ingest_exam_pdfs.py 1회성 스크립트 전용)
+pdfplumber==0.11.4

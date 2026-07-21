@@ -148,6 +148,9 @@ Important:
         angle: Optional[str] = None,
         custom_prompt: Optional[str] = None,
         recent_posts: Optional[List[Dict[str, str]]] = None,
+        include_practice_questions: bool = False,
+        source_passage: Optional[Dict[str, Any]] = None,
+        source_dialogue: Optional[Dict[str, Any]] = None,
         retry_count: int = 0,
         max_retries: int = 2,
     ) -> Optional[Dict[str, Any]]:
@@ -158,6 +161,17 @@ Important:
         recent_posts (optional): previously published posts [{slug, title, description,
         category}] so the model avoids repeating content and may naturally cross-link one
         when genuinely relevant (never forced).
+        include_practice_questions (optional): when True, the model additionally returns a
+        `practice_questions` array (TOEIC Part 5/7 style) which the caller renders into a
+        `## 실전 연습문제` section placed before the promo section. Default False keeps the
+        existing manual-workflow output shape unchanged.
+        source_passage (optional, suneung pipeline): a real exam passage
+        {passage_text, question_text, choices, answer, source_label}. When given, the model
+        writes an explainer that quotes the passage verbatim (never invents one) and appends
+        the original passage/question/answer/explanation + a KICE source line at the bottom.
+        source_dialogue (optional, conversation pipeline): a real dialogue clip
+        {dialogue_en, dialogue_ko, video_title, clip_url}. When given, the model quotes the
+        dialogue and explains its expressions/vocabulary.
         Retries on malformed JSON (mirrors get_word_definition) - the model occasionally
         breaks JSON validity in a ~1,500-2,500 char Korean body, and a retry usually fixes it.
         """
@@ -183,10 +197,74 @@ Important:
             )
             recent_posts_block = f"\n\n[이미 발행된 최근 글 목록]\n{lines}\n"
 
+        # Optional TOEIC practice-question block. When enabled we ask the model both to leave
+        # room for a `## 실전 연습문제` section before the promo AND to return the questions as
+        # structured JSON (the caller renders the markdown from that structure).
+        if include_practice_questions:
+            practice_instruction = (
+                "\n11. 본문 마지막 홍보 섹션 **앞에** `## 실전 연습문제` 섹션이 들어갈 것입니다. "
+                "아래 JSON의 practice_questions 필드에 TOEIC Part 5(문법/어휘 빈칸) 문제 2~3개와 "
+                "Part 7(짧은 지문 독해) 문제 1~2개를 채우세요. 각 문제는 보기 4개(choices)와 "
+                "정답 인덱스(answer_index, 0부터 시작), 한국어 해설(explanation)을 포함해야 합니다. "
+                "Part 7 문제는 passage(짧은 영문 지문)를 포함하세요. Part 5 문제는 passage를 비워도 됩니다. "
+                "body 안에는 연습문제 내용을 직접 쓰지 말고, practice_questions 필드에만 넣으세요."
+            )
+            practice_schema = (
+                ',\n  "practice_questions": [\n'
+                '    {"type": "Part 5", "passage": "", "question": "The report must be ____ by Friday.", '
+                '"choices": ["submit", "submits", "submitted", "submitting"], "answer_index": 2, '
+                '"explanation": "수동태 표현이므로 submitted."}\n'
+                "  ]"
+            )
+        else:
+            practice_instruction = ""
+            practice_schema = ""
+
+        # Suneung pipeline: inject a real exam passage the model must quote verbatim.
+        source_block = ""
+        source_instruction = ""
+        if source_passage:
+            choices = source_passage.get("choices") or []
+            choices_str = (
+                "\n".join(str(c) for c in choices) if choices else "(선택지 없음)"
+            )
+            source_label = source_passage.get("source_label", "기출문제")
+            source_block = (
+                "\n\n[활용할 실제 기출 지문 — 창작 금지, 아래 원문을 그대로 인용할 것]\n"
+                f'출처: {source_label}\n'
+                f'지문(passage):\n"""{source_passage.get("passage_text", "")}"""\n'
+                f'문제(question): {source_passage.get("question_text", "")}\n'
+                f'선택지:\n{choices_str}\n'
+                f'정답: {source_passage.get("answer", "(미상)")}\n'
+            )
+            source_instruction = (
+                "\n11. 위 [활용할 실제 기출 지문]을 소재로 한 해설형 글을 작성하세요. 지문을 임의로 "
+                "창작하거나 변형하지 말고 주어진 원문 그대로 인용해야 합니다. 본문 하단에 원문 지문 전체 + "
+                "문제 + 정답 + 상세 해설을 포함하세요."
+                f'\n12. 본문에 반드시 "본 지문은 한국교육과정평가원이 출제한 기출문제입니다({source_label})" '
+                "라는 출처 문구를 포함하세요."
+            )
+
+        # Conversation pipeline: inject a real dialogue clip to quote and explain.
+        dialogue_block = ""
+        dialogue_instruction = ""
+        if source_dialogue:
+            dialogue_block = (
+                "\n\n[활용할 실제 대사 클립 — 아래 대사를 인용해 표현을 설명할 것]\n"
+                f'영상: {source_dialogue.get("video_title", "")}\n'
+                f'영어 대사(dialogue_en):\n"""{source_dialogue.get("dialogue_en", "")}"""\n'
+                f'한국어 번역(dialogue_ko):\n"""{source_dialogue.get("dialogue_ko", "") or "(없음)"}"""\n'
+            )
+            dialogue_instruction = (
+                "\n11. 위 [활용할 실제 대사 클립]의 영어 대사를 인용하며, 그 안에 등장하는 유용한 "
+                "표현·어휘·뉘앙스를 실제 회화에서 어떻게 쓰는지 구체적으로 설명하는 글을 작성하세요. "
+                "대사를 임의로 창작하지 말고 주어진 원문을 그대로 인용하세요."
+            )
+
         prompt = f"""당신은 영어 학습 서비스 "Scan Voca"의 콘텐츠 마케터입니다. 중·고등학생과 영어 학습자를 대상으로 하는 한국어 블로그 글을 작성하세요.
 
 {topic_block}
-{recent_posts_block}
+{recent_posts_block}{source_block}{dialogue_block}
 작성 요구사항:
 1. 언어: 한국어
 2. 본문 분량: 1,500~2,500자 (공백 포함)
@@ -197,7 +275,7 @@ Important:
 7. 카테고리는 다음 고정 목록 중 가장 적합한 하나를 고르세요: {categories_str}
 8. slug는 영문 소문자·숫자·하이픈만 사용한 ASCII kebab-case로 만드세요 (예: toeic-vocab-30days).
 9. [이미 발행된 최근 글 목록]이 있다면, 그 글들에서 이미 다룬 것과 똑같은 팁·각도·구성을 반복하지 마세요. 가능하면 다른 관점·예시·정보를 다루세요.
-10. 목록에 있는 글 중 마지막 홍보 섹션 이전 본문에서 정말 자연스럽게 이어지는 경우에만, **최대 1개**를 실제 slug로 마크다운 링크(예: https://scanvoca.com/blog/{{slug}})를 걸어 언급하세요. 관련 있는 글이 없으면 절대 언급하지 마세요. 목록에 없는 slug를 지어내지 마세요. 마지막 홍보 섹션의 Scan Voca 링크와는 별개입니다.
+10. 목록에 있는 글 중 마지막 홍보 섹션 이전 본문에서 정말 자연스럽게 이어지는 경우에만, **최대 1개**를 실제 slug로 마크다운 링크(예: https://scanvoca.com/blog/{{slug}})를 걸어 언급하세요. 관련 있는 글이 없으면 절대 언급하지 마세요. 목록에 없는 slug를 지어내지 마세요. 마지막 홍보 섹션의 Scan Voca 링크와는 별개입니다.{practice_instruction}{source_instruction}{dialogue_instruction}
 
 반드시 아래 구조의 JSON 객체만 반환하세요. 다른 텍스트는 포함하지 마세요:
 {{
@@ -206,7 +284,7 @@ Important:
   "description": "SEO용 요약 1~2문장 (검색 결과 노출용)",
   "category": "위 목록 중 하나",
   "tags": ["태그1", "태그2", "태그3"],
-  "body": "본문 마크다운 전체 (frontmatter 제외, ## 소제목 포함, 마지막 섹션은 Scan Voca 홍보)"
+  "body": "본문 마크다운 전체 (frontmatter 제외, ## 소제목 포함, 마지막 섹션은 Scan Voca 홍보)"{practice_schema}
 }}
 
 주의:
@@ -258,7 +336,7 @@ Important:
             if category not in categories:
                 category = "암기법·학습팁"
 
-            return {
+            out: Dict[str, Any] = {
                 "slug": slug,
                 "title": title_out,
                 "description": description,
@@ -266,6 +344,12 @@ Important:
                 "tags": tags,
                 "body": body,
             }
+
+            if include_practice_questions:
+                raw_questions = result.get("practice_questions")
+                out["practice_questions"] = raw_questions if isinstance(raw_questions, list) else []
+
+            return out
 
         except json.JSONDecodeError as e:
             error_msg = f"Blog generation JSON parse error (attempt {retry_count + 1}/{max_retries + 1}): {e}"
@@ -281,6 +365,9 @@ Important:
                     angle=angle,
                     custom_prompt=custom_prompt,
                     recent_posts=recent_posts,
+                    include_practice_questions=include_practice_questions,
+                    source_passage=source_passage,
+                    source_dialogue=source_dialogue,
                     retry_count=retry_count + 1,
                     max_retries=max_retries,
                 )
@@ -288,6 +375,164 @@ Important:
             return None
         except Exception as e:
             error_msg = f"Blog generation error: {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
+    async def suggest_blog_topics(
+        self,
+        pipeline: str,
+        category: str,
+        count: int = 5,
+        recent_posts: Optional[List[Dict[str, str]]] = None,
+        existing_titles: Optional[List[str]] = None,
+    ) -> Optional[List[Dict[str, str]]]:
+        """
+        Suggest blog topic candidates for a pipeline/category.
+        Returns a list of {title, angle} dicts, or None on error. Nothing is persisted —
+        the caller (admin UI) edits and confirms candidates separately.
+        recent_posts / existing_titles are supplied so the model avoids proposing topics
+        that duplicate already-published posts or already-listed topics.
+        """
+        if self.model is None:
+            print("Gemini API key not configured")
+            return None
+
+        count = max(1, min(int(count or 5), 10))
+
+        pipeline_hints = {
+            "toeic": "TOEIC(토익) 시험 대비 학습자를 대상으로, 실전 연습문제를 곁들일 수 있는 실용적인 주제.",
+            "suneung": "수능·내신 영어를 준비하는 고등학생을 대상으로 하는 주제.",
+            "conversation": "일상 영어회화 표현·상황을 다루는 주제.",
+            "manual": "영어 학습 일반 주제.",
+        }
+        pipeline_hint = pipeline_hints.get(pipeline, pipeline_hints["manual"])
+
+        recent_block = ""
+        if recent_posts:
+            lines = "\n".join(f'- "{p["title"]}"' for p in recent_posts)
+            recent_block = f"\n\n[이미 발행된 최근 글 (중복 금지)]\n{lines}\n"
+
+        existing_block = ""
+        if existing_titles:
+            lines = "\n".join(f'- "{t}"' for t in existing_titles)
+            existing_block = f"\n\n[이미 등록된 주제 (중복 금지)]\n{lines}\n"
+
+        prompt = f"""당신은 영어 학습 서비스 "Scan Voca"의 콘텐츠 전략가입니다. 아래 조건에 맞는 블로그 글 주제 후보 {count}개를 제안하세요.
+
+카테고리: "{category}"
+파이프라인 방향: {pipeline_hint}
+{recent_block}{existing_block}
+요구사항:
+1. 언어: 한국어
+2. 각 주제는 서로 겹치지 않고, 위 목록에 이미 있는 주제/글과도 겹치지 않게 하세요.
+3. 실제 검색 수요가 있을 법한 구체적이고 실용적인 주제로 만드세요.
+4. title은 블로그 글 제목 후보(한국어), angle은 글의 방향·타깃·핵심 키워드 메모(한국어 1~2문장).
+5. 특정 AI 모델명(Gemini, GPT 등)은 절대 언급하지 마세요.
+
+반드시 아래 구조의 JSON 객체만 반환하세요. 다른 텍스트 금지:
+{{
+  "suggestions": [
+    {{ "title": "주제 제목 후보", "angle": "글 방향/타깃/키워드 메모" }}
+  ]
+}}"""
+
+        try:
+            response = self.model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0.9,
+                    "max_output_tokens": 4096,
+                    "response_mime_type": "application/json",
+                },
+            )
+            content = (response.text or "").strip()
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            result = json.loads(content.strip())
+            raw = result.get("suggestions") if isinstance(result, dict) else result
+            if not isinstance(raw, list):
+                return []
+            suggestions: List[Dict[str, str]] = []
+            for item in raw:
+                if not isinstance(item, dict):
+                    continue
+                s_title = str(item.get("title", "")).strip()
+                s_angle = str(item.get("angle", "")).strip()
+                if not s_title:
+                    continue
+                suggestions.append({"title": s_title, "angle": s_angle})
+                if len(suggestions) >= count:
+                    break
+            return suggestions
+        except Exception as e:
+            error_msg = f"Blog topic suggestion error: {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
+    async def tag_exam_passage(
+        self, passage_text: str, question_text: str
+    ) -> Optional[List[str]]:
+        """
+        Tag a 수능/모의고사 exam passage with 3~5 keywords (grammar point + topic keywords).
+        Returns a list of individual keyword strings, or None on error / [] if nothing usable.
+        Used by the one-off ingest script to backfill exam_passages.tags. Keywords are kept
+        as individual tokens (e.g. "역접", "빈칸추론") so the simple keyword-overlap matcher in
+        BlogService.find_matching_passage can score them against a topic's angle.
+        """
+        if self.model is None:
+            print("Gemini API key not configured")
+            return None
+
+        prompt = f"""당신은 수능 영어 지문 분석 전문가입니다. 아래 기출 지문과 문제를 읽고, 이 문제의 특성을 나타내는 키워드 3~5개를 뽑으세요.
+
+[지문]
+\"\"\"{passage_text}\"\"\"
+
+[문제]
+{question_text}
+
+규칙:
+1. 문법/유형 포인트(예: 빈칸추론, 역접, 인과, 어법, 주제찾기)와 소재 키워드(예: 환경, 심리, 과학)를 섞어 3~5개.
+2. 각 키워드는 짧은 단일 단어/구(띄어쓰기 없이)로 만드세요. 문장 금지.
+3. 한국어로.
+4. 특정 AI 모델명은 언급하지 마세요.
+
+반드시 아래 JSON 객체만 반환하세요:
+{{ "tags": ["키워드1", "키워드2", "키워드3"] }}"""
+
+        try:
+            response = self.model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0.3,
+                    "max_output_tokens": 512,
+                    "response_mime_type": "application/json",
+                },
+            )
+            content = (response.text or "").strip()
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            result = json.loads(content.strip())
+            raw = result.get("tags") if isinstance(result, dict) else result
+            if not isinstance(raw, list):
+                return []
+            return [str(t).strip() for t in raw if str(t).strip()][:5]
+        except Exception as e:
+            error_msg = f"Exam passage tagging error: {e}"
             try:
                 print(error_msg)
             except UnicodeEncodeError:

@@ -23,6 +23,13 @@ class BlogTopic(Base):
     status: Mapped[str] = mapped_column(String(10), default="unused", nullable=False, index=True)  # 'unused' | 'used'
     post_slug: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)  # slug of published post
 
+    # Content pipeline classifier (auto-blog layer). 'manual' = existing hand-run workflow;
+    # 'toeic' | 'suneung' | 'conversation' = automated pipelines. Defaults to 'manual' so
+    # topics created by the legacy /admin/blog flow keep their existing behavior.
+    pipeline: Mapped[str] = mapped_column(
+        String(20), default="manual", server_default="manual", nullable=False, index=True
+    )
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime,

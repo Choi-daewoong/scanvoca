@@ -2,6 +2,20 @@
 Pytest 설정 및 공통 Fixtures
 """
 import os
+
+# 테스트용 환경변수 설정 — app.* 모듈을 import하기 전에 반드시 먼저 실행해야 한다.
+# app.core.config.settings와 app.core.database.engine은 모듈이 처음 import될 때 생성되는
+# 싱글턴이다. 이 os.environ 설정이 app.main/app.core.database의 import보다 뒤에 있으면,
+# 그 싱글턴들은 이미 실제 server/.env(운영 Supabase DATABASE_URL 등)로 만들어진 뒤라 테스트가
+# 운영 DB에 그대로 연결된다 — 실제로 FastAPI lifespan의 init_db()가 운영 DB에 대고
+# Base.metadata.create_all()을 실행해 마이그레이션/RLS 없이 새 테이블이 생성되는 사고로
+# 이어졌다(2026-07-21). 반드시 아래 os.environ 설정이 이 파일의 모든 app.* import보다 먼저 와야 한다.
+os.environ["ENV_NAME"] = "test"
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+os.environ["JWT_SECRET_KEY"] = "test-secret-key-for-testing-only"
+os.environ["REDIS_URL"] = "redis://localhost:6379/1"
+os.environ["GEMINI_API_KEY"] = "test-gemini-key"
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
@@ -12,13 +26,6 @@ from app.main import app
 from app.core.database import get_db
 from app.models.base import Base
 from app.core.config import settings
-
-# 테스트용 환경변수 설정
-os.environ["ENV_NAME"] = "test"
-os.environ["DATABASE_URL"] = "sqlite:///:memory:"
-os.environ["JWT_SECRET_KEY"] = "test-secret-key-for-testing-only"
-os.environ["REDIS_URL"] = "redis://localhost:6379/1"
-os.environ["GEMINI_API_KEY"] = "test-gemini-key"
 
 # 테스트용 In-Memory SQLite 데이터베이스
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///:memory:"

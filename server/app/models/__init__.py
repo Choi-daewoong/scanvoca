@@ -8,5 +8,7 @@ from app.models.point_transaction import PointTransaction
 from app.models.visit import Visit
 from app.models.blog_topic import BlogTopic
 from app.models.blog_published_post import BlogPublishedPost
+from app.models.exam_passage import ExamPassage
+from app.models.conversation_clip import ConversationClip
 
-__all__ = ["Base", "User", "Word", "Wordbook", "WordbookWord", "Post", "PostLike", "PointTransaction", "Visit", "BlogTopic", "BlogPublishedPost"]
+__all__ = ["Base", "User", "Word", "Wordbook", "WordbookWord", "Post", "PostLike", "PointTransaction", "Visit", "BlogTopic", "BlogPublishedPost", "ExamPassage", "ConversationClip"]

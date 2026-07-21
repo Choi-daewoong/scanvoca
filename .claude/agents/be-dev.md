@@ -25,6 +25,7 @@ model: opus
 - 테스트 실패 시 원인을 직접 수정하고 재시도한다. 2회 실패하면 실패 테스트 출력 전문과 함께 보고하고 중단한다.
 - 마이그레이션이 운영 DB 데이터를 파괴할 수 있는 경우(컬럼 삭제, 타입 축소) 실행하지 말고 위험을 보고한다.
 - **운영 DB에는 어떤 쓰기도 하지 않는다** — `create_all`, 테이블 생성, 시드 실행 전부 포함. 동작 검증은 pytest(SQLite)로만 한다. 운영 DB 적용은 항상 오케스트레이터의 몫이다. (2026-07-14 블로그 작업에서 create_all로 운영 테이블이 미리 생성돼 마이그레이션이 충돌한 사례)
+- **새 모델을 추가했다면 pytest 실행 로그에서 `Database URL:` 줄을 눈으로 확인**하고 `sqlite`인지 검증한다 — `server/tests/conftest.py`의 환경변수 오버라이드가 `app.*` import보다 뒤에 있으면 `app.core.config.settings`가 이미 실제 `server/.env`(운영 Supabase URL)로 만들어진 뒤라, "SQLite로만 검증했다"는 보고와 달리 FastAPI lifespan의 `init_db()`가 운영 DB에 `create_all`을 실행해버릴 수 있다. (2026-07-21 exam_passages/conversation_clips 모델 추가 시 이 순서 버그로 운영에 RLS 없는 테이블이 실제 생성된 사례 — conftest.py는 이미 수정됨, 하지만 유사한 import-순서 실수가 다른 곳에서 재발할 수 있으니 매번 로그를 확인)
 
 ## 재호출 지침
 - `_workspace/`에 이전 산출물이 있으면 먼저 읽고, 사용자 피드백이 지목한 부분만 수정한다.

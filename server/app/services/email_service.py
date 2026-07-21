@@ -33,6 +33,55 @@ def _send_email_sync(to_email: str, subject: str, html_body: str) -> None:
     logger.info(f"Email sent to {to_email}")
 
 
+def _send_plain_email_sync(to_email: str, subject: str, text_body: str) -> None:
+    """Synchronous plain-text email send (no HTML template) - runs in executor."""
+    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+        raise RuntimeError("SMTP credentials not configured. Set SMTP_USER and SMTP_PASSWORD in .env")
+
+    msg = MIMEText(text_body, "plain", "utf-8")
+    msg["Subject"] = Header(subject, "utf-8")
+    msg["From"] = f"{settings.SMTP_FROM_NAME} <{settings.SMTP_USER}>"
+    msg["To"] = to_email
+
+    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+        server.ehlo()
+        server.starttls()
+        server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+        server.sendmail(settings.SMTP_USER, to_email, msg.as_string())
+
+    logger.info(f"Email sent to {to_email}")
+
+
+async def send_auto_publish_failure_email(reason: str, detail: str = "") -> bool:
+    """Notify the admin that an automated blog publish run failed (best-effort).
+
+    Sends a simple plain-text mail (deliberately NOT the OTP HTML template) to
+    settings.ADMIN_NOTIFY_EMAIL. Never raises — a notification failure must not break the
+    auto-publish response. Returns True if a mail was sent, False if skipped/failed.
+
+    reason is a machine code (e.g. "generation_failed"); detail is optional free text.
+    """
+    to_email = (settings.ADMIN_NOTIFY_EMAIL or "").strip()
+    if not to_email:
+        logger.warning("Auto-publish failure not emailed: ADMIN_NOTIFY_EMAIL is not set")
+        return False
+
+    subject = f"[Scan Voca] 자동 블로그 발행 실패: {reason}"
+    body = (
+        "자동 블로그 발행 파이프라인에서 문제가 발생했습니다.\n\n"
+        f"사유(reason): {reason}\n"
+        f"상세: {detail or '-'}\n\n"
+        "관리자 페이지에서 확인해 주세요."
+    )
+    try:
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, _send_plain_email_sync, to_email, subject, body)
+        return True
+    except Exception as e:  # noqa: BLE001 - notification must never break the caller
+        logger.error(f"Failed to send auto-publish failure email: {e}")
+        return False
+
+
 async def send_password_reset_email(to_email: str, otp: str) -> None:
     """Send password reset OTP email (async, non-blocking)"""
     subject = "[Scan Voca] 비밀번호 재설정 인증 코드"

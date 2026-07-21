@@ -1,17 +1,30 @@
 """Admin blog API — topics, AI draft/image generation, GitHub publishing"""
 import base64
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_admin_user
+from app.core.dependencies import (
+    get_current_admin_user,
+    require_cron_or_admin,
+    require_nas_tool_key,
+)
 from app.models.user import User
 from app.schemas.blog import (
     BlogTopicResponse,
     BlogTopicCreateRequest,
     BlogTopicUpdateRequest,
+    BlogTopicSuggestRequest,
+    BlogTopicSuggestion,
+    BlogTopicSuggestResponse,
+    BlogAutoPublishResult,
+    BlogPipeline,
+    ExamPassageResponse,
+    ConversationPendingTopic,
+    ConversationClipCreateRequest,
+    ConversationClipResponse,
     BlogGenerateRequest,
     BlogDraft,
     BlogImagePlanRequest,
@@ -27,6 +40,7 @@ from app.schemas.blog import (
     BlogNaverVersionResponse,
 )
 from app.services.blog_service import BlogService, GitHubPublishError, BLOG_CONTENT_DIR
+from app.services.email_service import send_auto_publish_failure_email
 from app.services.gemini_service import GeminiService
 
 router = APIRouter()
@@ -35,11 +49,16 @@ router = APIRouter()
 @router.get("/topics", response_model=List[BlogTopicResponse])
 async def list_topics(
     status: Literal["unused", "used", "all"] = "unused",
+    pipeline: Optional[BlogPipeline] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin_user),
 ):
-    """List blog topics filtered by status (admin only). Default: unused."""
-    return BlogService.list_topics(db, status_filter=status)
+    """List blog topics filtered by status (admin only). Default: unused.
+
+    Optional `pipeline` filter narrows to one content pipeline; omitting it returns every
+    pipeline, so existing callers (no pipeline param) behave exactly as before.
+    """
+    return BlogService.list_topics(db, status_filter=status, pipeline=pipeline)
 
 
 @router.post("/topics", response_model=BlogTopicResponse, status_code=status.HTTP_201_CREATED)
@@ -51,12 +70,359 @@ async def create_topic(
     """Add a blog topic directly (admin only).
 
     An out-of-list category is rejected with 422 by the schema. When angle is omitted,
-    it is filled with the category's default promo hook.
+    it is filled with the category's default promo hook. `pipeline` defaults to 'manual'
+    so the legacy /admin/blog page (which never sends it) is unaffected.
     """
-    topic = BlogService.create_topic(
-        db, category=payload.category, title=payload.title, angle=payload.angle
+    topic = BlogService.create_topic_with_pipeline(
+        db,
+        category=payload.category,
+        title=payload.title,
+        angle=payload.angle,
+        pipeline=payload.pipeline,
     )
     return topic
+
+
+@router.post("/topics/suggest", response_model=BlogTopicSuggestResponse)
+async def suggest_topics(
+    payload: BlogTopicSuggestRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user),
+):
+    """Suggest AI topic candidates for a pipeline/category (admin only).
+
+    Nothing is persisted — the admin edits the candidates and confirms them via the
+    existing POST /topics (with pipeline). Model failure -> 502.
+    """
+    recent_posts = BlogService.get_recent_posts_for_prompt(db, category=payload.category, limit=12)
+    existing_titles = BlogService.list_titles_for_category(db, payload.category)
+
+    gemini = GeminiService()
+    suggestions = await gemini.suggest_blog_topics(
+        pipeline=payload.pipeline,
+        category=payload.category,
+        count=payload.count,
+        recent_posts=recent_posts,
+        existing_titles=existing_titles,
+    )
+    if suggestions is None:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="주제 제안에 실패했습니다. 다시 시도해 주세요.",
+        )
+
+    return BlogTopicSuggestResponse(
+        suggestions=[BlogTopicSuggestion(**s) for s in suggestions]
+    )
+
+
+@router.post("/auto-publish/run", response_model=BlogAutoPublishResult)
+async def run_auto_publish(
+    pipeline: BlogPipeline,
+    dry_run: bool = False,
+    db: Session = Depends(get_db),
+    _auth: None = Depends(require_cron_or_admin),
+):
+    """Run one automated publish for a pipeline (cron secret OR admin JWT).
+
+    Returns HTTP 200 for every routine outcome (nothing to publish, generation/guardrail
+    failure) with published=false + reason, so Cloud Scheduler never retry-storms on a
+    no-op. Only genuine infra faults surface as 5xx. On dry_run the topic status is never
+    changed (the run must stay repeatable).
+    """
+    # 1) 'manual' is never a valid auto pipeline. Any future pipeline value not handled
+    #    below falls through to pipeline_not_implemented (keeps the endpoint extensible).
+    if pipeline == "manual":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="자동발행에 사용할 수 없는 파이프라인입니다.",
+        )
+    if pipeline not in ("toeic", "suneung", "conversation"):
+        return BlogAutoPublishResult(
+            published=False, reason="pipeline_not_implemented", dry_run=dry_run
+        )
+
+    gemini = GeminiService()
+    # Pipeline-specific source objects to flip to used/published only on a real publish.
+    passage = None  # ExamPassage (suneung)
+    clip = None     # ConversationClip (conversation)
+
+    # 2) Pipeline-specific source resolution + draft generation → (topic, result, body).
+    if pipeline == "toeic":
+        topic = BlogService.get_unused_topic_for_pipeline(db, "toeic")
+        if topic is None:
+            return BlogAutoPublishResult(published=False, reason="no_unused_topic", dry_run=dry_run)
+        recent_posts = BlogService.get_recent_posts_for_prompt(db, category=topic.category, limit=12)
+        result = await gemini.generate_blog_post(
+            title=topic.title,
+            angle=topic.angle,
+            recent_posts=recent_posts,
+            include_practice_questions=True,
+        )
+        if result is None:
+            await send_auto_publish_failure_email(
+                "generation_failed", detail=f"pipeline=toeic, topic_id={topic.id}, title={topic.title}"
+            )
+            return BlogAutoPublishResult(
+                published=False, reason="generation_failed", dry_run=dry_run, topic_id=topic.id
+            )
+        # Inject the rendered practice-questions section before the promo section.
+        questions_md = BlogService.render_practice_questions_markdown(
+            result.get("practice_questions") or []
+        )
+        body = BlogService.assemble_body_with_questions(result["body"], questions_md)
+
+    elif pipeline == "suneung":
+        topic = BlogService.get_unused_topic_for_pipeline(db, "suneung")
+        if topic is None:
+            return BlogAutoPublishResult(published=False, reason="no_unused_topic", dry_run=dry_run)
+        passage = BlogService.find_matching_passage(db, topic.angle)
+        if passage is None:
+            # Do NOT force an arbitrary passage — no-op until a matching one is ingested.
+            return BlogAutoPublishResult(
+                published=False, reason="no_matching_passage", dry_run=dry_run, topic_id=topic.id
+            )
+        recent_posts = BlogService.get_recent_posts_for_prompt(db, category=topic.category, limit=12)
+        result = await gemini.generate_blog_post(
+            title=topic.title,
+            angle=topic.angle,
+            recent_posts=recent_posts,
+            source_passage={
+                "passage_text": passage.passage_text,
+                "question_text": passage.question_text,
+                "choices": passage.choices,
+                "answer": passage.answer,
+                "source_label": passage.source_label,
+            },
+        )
+        if result is None:
+            await send_auto_publish_failure_email(
+                "generation_failed",
+                detail=f"pipeline=suneung, topic_id={topic.id}, passage_id={passage.id}",
+            )
+            return BlogAutoPublishResult(
+                published=False, reason="generation_failed", dry_run=dry_run, topic_id=topic.id
+            )
+        body = result["body"]
+
+    else:  # conversation
+        pair = BlogService.get_unused_conversation_topic_with_ready_clip(db)
+        if pair is None:
+            # Either no unused conversation topic, or none with a 'ready' clip yet.
+            return BlogAutoPublishResult(published=False, reason="no_ready_clip", dry_run=dry_run)
+        topic, clip = pair
+        recent_posts = BlogService.get_recent_posts_for_prompt(db, category=topic.category, limit=12)
+        result = await gemini.generate_blog_post(
+            title=topic.title,
+            angle=topic.angle,
+            recent_posts=recent_posts,
+            source_dialogue={
+                "dialogue_en": clip.dialogue_en,
+                "dialogue_ko": clip.dialogue_ko,
+                "video_title": clip.video_title,
+                "clip_url": clip.clip_url,
+            },
+        )
+        if result is None:
+            await send_auto_publish_failure_email(
+                "generation_failed",
+                detail=f"pipeline=conversation, topic_id={topic.id}, clip_id={clip.id}",
+            )
+            return BlogAutoPublishResult(
+                published=False, reason="generation_failed", dry_run=dry_run, topic_id=topic.id
+            )
+        # Embed the clip <video> at the top of the body (public blog renders raw HTML).
+        body = BlogService.insert_video_embed(result["body"], clip.clip_url)
+
+    slug = result["slug"]
+    markdown = BlogService.build_markdown(
+        slug=slug,
+        title=result["title"],
+        description=result["description"],
+        category=result["category"],
+        tags=result["tags"],
+        body=body,
+    )
+
+    # 5) Guardrail validation.
+    failure = BlogService.validate_auto_draft(db, markdown, slug)
+    if failure is not None:
+        await send_auto_publish_failure_email(
+            "guardrail_failed", detail=f"topic_id={topic.id}, slug={slug}, check={failure}"
+        )
+        return BlogAutoPublishResult(
+            published=False,
+            reason="guardrail_failed",
+            dry_run=dry_run,
+            topic_id=topic.id,
+            slug=slug,
+            title=result["title"],
+            markdown=markdown,
+        )
+
+    # 6) Hero image — best-effort. Failure never blocks publishing.
+    hero_image = None
+    if GeminiService.is_image_generation_configured():
+        try:
+            image_bytes = await gemini.generate_blog_image(
+                f"A clean, friendly illustration for a Korean English-learning blog post titled: {result['title']}"
+            )
+            if image_bytes:
+                markdown, hero_image = BlogService.reflect_hero_image(markdown, slug, image_bytes)
+        except Exception as e:  # noqa: BLE001 - image is optional, keep publishing
+            print(f"Auto-publish hero image generation failed (continuing without it): {e}")
+
+    # 7) dry_run stops here WITHOUT changing topic status (must stay repeatable).
+    if dry_run:
+        return BlogAutoPublishResult(
+            published=False,
+            dry_run=True,
+            topic_id=topic.id,
+            slug=slug,
+            title=result["title"],
+            markdown=markdown,
+        )
+
+    # 8) Real publish via GitHub. Publishing must be configured (infra precondition).
+    if not BlogService.is_publishing_configured():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="블로그 발행이 설정되지 않았습니다.",
+        )
+
+    try:
+        if hero_image is not None:
+            files = [
+                (f"{BLOG_CONTENT_DIR}/{slug}.md", markdown.encode("utf-8")),
+                (hero_image.path, hero_image.data),
+            ]
+            commit_url = await BlogService.commit_files(
+                files, message=f"blog: auto-publish {slug} (+1 image)"
+            )
+        else:
+            commit_url = await BlogService.commit_markdown(slug, markdown)
+    except GitHubPublishError as e:
+        await send_auto_publish_failure_email(
+            "github_failed", detail=f"topic_id={topic.id}, slug={slug}, error={e}"
+        )
+        return BlogAutoPublishResult(
+            published=False,
+            reason="github_failed",
+            dry_run=False,
+            topic_id=topic.id,
+            slug=slug,
+            title=result["title"],
+        )
+
+    # Index the publish (best-effort — commit already succeeded, must not fail the response).
+    try:
+        fields = BlogService.parse_frontmatter_fields(markdown)
+        BlogService.upsert_published_post(
+            db,
+            slug=slug,
+            title=fields["title"] or slug,
+            description=fields["description"],
+            category=fields["category"] or topic.category,
+            tags=fields["tags"],
+        )
+    except Exception as e:  # noqa: BLE001
+        print(f"blog_published_posts upsert failed for {slug}: {e}")
+
+    # Mark the topic used only after a successful commit; plus pipeline-specific source state.
+    BlogService.mark_used(db, topic, slug)
+    if passage is not None:
+        BlogService.mark_passage_used(db, passage)
+    if clip is not None:
+        BlogService.mark_clip_published(db, clip)
+
+    return BlogAutoPublishResult(
+        published=True,
+        dry_run=False,
+        topic_id=topic.id,
+        slug=slug,
+        title=result["title"],
+        commit_url=commit_url,
+        blog_url=f"https://scanvoca.com/blog/{slug}",
+    )
+
+
+@router.get("/exam-passages", response_model=List[ExamPassageResponse])
+async def list_exam_passages(
+    status: Literal["unused", "used", "all"] = "unused",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user),
+):
+    """List ingested exam passages by status (admin only). Default: unused.
+
+    Read-only view for the suneung tab — PDF ingest is done by the local script, this only
+    surfaces the results. The pool is small, so no pagination.
+    """
+    return BlogService.list_exam_passages(db, status_filter=status)
+
+
+@router.get("/conversation-clips/pending-topics", response_model=List[ConversationPendingTopic])
+async def list_pending_conversation_topics(
+    db: Session = Depends(get_db),
+    _auth: None = Depends(require_nas_tool_key),
+):
+    """Conversation topics awaiting a clip (local clipper tool only — NAS API key).
+
+    Returns unused conversation topics that don't yet have a conversation_clips row. NO
+    admin-JWT path: this is a machine endpoint for the clipper tool, not a human API.
+    """
+    topics = BlogService.get_pending_conversation_topics(db)
+    return [
+        ConversationPendingTopic(id=t.id, title=t.title, angle=t.angle) for t in topics
+    ]
+
+
+@router.post(
+    "/conversation-clips",
+    response_model=ConversationClipResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_conversation_clip(
+    payload: ConversationClipCreateRequest,
+    db: Session = Depends(get_db),
+    _auth: None = Depends(require_nas_tool_key),
+):
+    """Register a finished clip (local clipper tool only — NAS API key).
+
+    409 if the topic already has a clip (1:1). 404 if the topic doesn't exist or isn't a
+    conversation topic. NO admin-JWT path (machine endpoint).
+    """
+    topic = BlogService.get_topic(db, payload.topic_id)
+    if topic is None or topic.pipeline != "conversation":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="대상 토픽을 찾을 수 없습니다.",
+        )
+    if BlogService.get_clip_for_topic(db, payload.topic_id) is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="이미 클립이 등록된 토픽입니다.",
+        )
+    clip = BlogService.create_conversation_clip(
+        db,
+        topic_id=payload.topic_id,
+        video_title=payload.video_title,
+        dialogue_en=payload.dialogue_en,
+        dialogue_ko=payload.dialogue_ko,
+        start_seconds=payload.start_seconds,
+        end_seconds=payload.end_seconds,
+        clip_url=payload.clip_url,
+    )
+    return clip
+
+
+@router.get("/conversation-clips", response_model=List[ConversationClipResponse])
+async def list_conversation_clips(
+    status: Literal["pending", "ready", "published", "all"] = "all",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user),
+):
+    """List conversation clips by status (admin only) — for the conversation tab view."""
+    return BlogService.list_conversation_clips(db, status_filter=status)
 
 
 @router.patch("/topics/{topic_id}", response_model=BlogTopicResponse)

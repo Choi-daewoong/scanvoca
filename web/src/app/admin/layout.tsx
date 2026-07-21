@@ -15,6 +15,7 @@ const MENU_ITEMS = [
   { href: '/admin/notices', label: '공지사항' },
   { href: '/admin/intro', label: '서비스 소개 (SEO)' },
   { href: '/admin/blog', label: '블로그' },
+  { href: '/admin/auto-blog', label: '자동 블로그' },
   { href: '/admin/board', label: '공유 게시판' },
   { href: '/admin/users', label: '회원 관리' },
   { href: '/admin/points', label: '포인트 모니터링' },

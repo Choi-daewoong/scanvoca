@@ -204,7 +204,8 @@ NEXT_PUBLIC_API_URL=https://scanvoca-api-313755310624.asia-northeast3.run.app
 | 2026-07-14 | 운영 DB 쓰기 전면 금지 규칙 추가 | agents/be-dev.md | 블로그 작업 중 create_all로 운영 테이블 선생성 → 마이그레이션 충돌 |
 | 2026-07-15 | 새 테이블 생성 시 RLS 필수 규칙 추가 | skills/scanvoca-backend | Supabase가 blog_topics 등 RLS 미적용 테이블을 취약점으로 재탐지 |
 | 2026-07-15 | 배포 스크립트의 .env 누락 시 빈 값 덮어쓰기 위험 경고 추가 | skills/scanvoca-deploy | GITHUB_REPO/BRANCH가 .env에 없어 운영에서 빈 값으로 배포되어 블로그 게재 502 장애 |
+| 2026-07-21 | `server/tests/conftest.py` 환경변수 오버라이드를 `app.*` import보다 앞으로 이동 + be-dev.md에 pytest 로그의 `Database URL:` 확인 규칙 추가 | server/tests/conftest.py, agents/be-dev.md | conftest.py의 `os.environ["DATABASE_URL"]` 설정이 `from app.main import app`보다 뒤에 있어, `app.core.config.settings`가 이미 운영 Supabase URL로 생성된 뒤였음 → pytest 실행마다 FastAPI lifespan의 `init_db()`가 운영 DB에 `create_all` 실행 → exam_passages/conversation_clips 신규 모델 추가 시 RLS 없는 테이블이 운영에 실제 생성됨(둘 다 0행 확인 후 즉시 DROP으로 원복, alembic_version 불변 확인) |
 
 ---
 
-*마지막 업데이트: 2026-07-14*
+*마지막 업데이트: 2026-07-21*

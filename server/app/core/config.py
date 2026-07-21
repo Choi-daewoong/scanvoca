@@ -35,6 +35,18 @@ class Settings(BaseSettings):
     GITHUB_REPO: str = "Choi-daewoong/scanvoca"
     GITHUB_BRANCH: str = "master"
 
+    # 자동 블로그 파이프라인 (Cloud Scheduler → /admin/blog/auto-publish/run)
+    # CRON_SECRET: X-Cron-Secret 헤더 검증용. 비어 있으면(미설정) cron 인증 경로는
+    #              항상 실패한다 — 빈 문자열끼리 비교로 뚫리지 않도록 dependencies에서 보장.
+    # ADMIN_NOTIFY_EMAIL: 자동발행 실패 알림 수신 주소. 비어 있으면 알림을 건너뛴다.
+    CRON_SECRET: str = ""
+    ADMIN_NOTIFY_EMAIL: str = ""
+
+    # 로컬 영상 클리퍼 도구 인증 (local-tools/conversation-clipper → 백엔드 클립 등록 API)
+    # NAS_TOOL_API_KEY: X-Api-Key 헤더 검증용. 비어 있으면(미설정) 이 인증 경로는 항상
+    #                   실패한다 — CRON_SECRET과 동일하게 빈 문자열 우회 불가.
+    NAS_TOOL_API_KEY: str = ""
+
     # SMTP (Gmail 비밀번호 재설정 이메일)
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587

@@ -1,6 +1,7 @@
 """Blog service — topic queries + GitHub publishing (Contents API & Git Data API)"""
 import base64
 import re
+from dataclasses import dataclass
 from datetime import date
 from typing import Dict, List, Optional, Tuple
 
@@ -11,7 +12,24 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.blog_topic import BlogTopic
 from app.models.blog_published_post import BlogPublishedPost
+from app.models.exam_passage import ExamPassage
+from app.models.conversation_clip import ConversationClip
 from app.schemas.blog import BLOG_CATEGORIES
+
+# Keyword tokenizer for the simple passage/angle overlap matcher (no embeddings — see
+# find_matching_passage). Keeps alnum + Hangul runs of length >= 2.
+_KEYWORD_RE = re.compile(r"[0-9A-Za-z가-힣]+")
+
+
+@dataclass
+class ReflectImage:
+    """One image file to commit alongside a post's markdown.
+
+    `path` is the repo path (web/public/blog-images/{slug}/{n}.png); `data` is the raw
+    PNG bytes. Shaped to drop straight into BlogService.commit_files as (path, data).
+    """
+    path: str
+    data: bytes
 
 # Path template inside the content repo
 BLOG_CONTENT_DIR = "web/content/blog"
@@ -51,13 +69,226 @@ class BlogService:
     # ----- Topic queries (DB via ORM) -----
 
     @staticmethod
-    def list_topics(db: Session, status_filter: str = "unused") -> List[BlogTopic]:
-        """List topics. status_filter: 'unused' | 'used' | 'all' (default 'unused')."""
+    def list_topics(
+        db: Session, status_filter: str = "unused", pipeline: Optional[str] = None
+    ) -> List[BlogTopic]:
+        """List topics. status_filter: 'unused' | 'used' | 'all' (default 'unused').
+
+        pipeline (optional): when given, only topics of that pipeline are returned; None
+        (default) returns every pipeline, so existing callers are unaffected.
+        """
         stmt = select(BlogTopic)
         if status_filter in ("unused", "used"):
             stmt = stmt.where(BlogTopic.status == status_filter)
+        if pipeline is not None:
+            stmt = stmt.where(BlogTopic.pipeline == pipeline)
         stmt = stmt.order_by(BlogTopic.category, BlogTopic.id)
         return list(db.scalars(stmt).all())
+
+    @staticmethod
+    def create_topic_with_pipeline(
+        db: Session,
+        category: str,
+        title: str,
+        angle: Optional[str] = None,
+        pipeline: str = "manual",
+    ) -> BlogTopic:
+        """Insert a new unused topic tagged with a pipeline. Empty angle -> category hook."""
+        resolved_angle = (
+            angle.strip() if angle and angle.strip() else BlogService.default_angle(category)
+        )
+        topic = BlogTopic(
+            category=category,
+            title=title.strip(),
+            angle=resolved_angle,
+            status="unused",
+            pipeline=pipeline,
+        )
+        db.add(topic)
+        db.commit()
+        db.refresh(topic)
+        return topic
+
+    @staticmethod
+    def list_titles_for_category(db: Session, category: str) -> List[str]:
+        """All topic titles in a category (any status) — used to avoid duplicate suggestions."""
+        stmt = select(BlogTopic.title).where(BlogTopic.category == category)
+        return [t for t in db.scalars(stmt).all()]
+
+    @staticmethod
+    def get_unused_topic_for_pipeline(db: Session, pipeline: str) -> Optional[BlogTopic]:
+        """Oldest unused topic of a pipeline (FIFO by id), or None if the pool is empty."""
+        stmt = (
+            select(BlogTopic)
+            .where(BlogTopic.pipeline == pipeline, BlogTopic.status == "unused")
+            .order_by(BlogTopic.id)
+            .limit(1)
+        )
+        return db.scalar(stmt)
+
+    # ----- Phase 2: exam passage matching (suneung pipeline) -----
+
+    @staticmethod
+    def _keyword_tokens(text: str) -> set:
+        """Lowercased alnum/Hangul tokens (len >= 2) — the unit of the overlap matcher."""
+        return {t.lower() for t in _KEYWORD_RE.findall(text or "") if len(t) >= 2}
+
+    @staticmethod
+    def score_passage_match(angle: str, tags: Optional[list]) -> int:
+        """Overlap score between a topic angle and a passage's tags.
+
+        Deliberately simple (no embeddings / external search — contract forbids over-design):
+        each tag that shares at least one keyword token with the angle scores +1. Because
+        ingest tags are individual keywords (see GeminiService.tag_exam_passage), token
+        overlap is a reasonable, deterministic, testable proxy for relevance.
+        """
+        if not tags:
+            return 0
+        angle_tokens = BlogService._keyword_tokens(angle)
+        if not angle_tokens:
+            return 0
+        score = 0
+        for tag in tags:
+            if BlogService._keyword_tokens(str(tag)) & angle_tokens:
+                score += 1
+        return score
+
+    @staticmethod
+    def find_matching_passage(db: Session, angle: str) -> Optional[ExamPassage]:
+        """Best unused exam passage for a topic angle by tag overlap, or None.
+
+        Iterates unused passages oldest-first and keeps the highest score with a strict '>',
+        so a tie naturally resolves to the oldest. Returns None when no passage shares any
+        keyword (score 0) — never forces an arbitrary passage (contract §1-3).
+        """
+        passages = list(
+            db.scalars(
+                select(ExamPassage)
+                .where(ExamPassage.status == "unused")
+                .order_by(ExamPassage.id)
+            ).all()
+        )
+        best: Optional[ExamPassage] = None
+        best_score = 0
+        for p in passages:
+            s = BlogService.score_passage_match(angle, p.tags)
+            if s > best_score:
+                best_score = s
+                best = p
+        return best if best_score > 0 else None
+
+    @staticmethod
+    def list_exam_passages(db: Session, status_filter: str = "unused") -> List[ExamPassage]:
+        """Exam passages filtered by status. 'unused' | 'used' | 'all' (default 'unused')."""
+        stmt = select(ExamPassage)
+        if status_filter in ("unused", "used"):
+            stmt = stmt.where(ExamPassage.status == status_filter)
+        stmt = stmt.order_by(ExamPassage.id)
+        return list(db.scalars(stmt).all())
+
+    @staticmethod
+    def mark_passage_used(db: Session, passage: ExamPassage) -> None:
+        """Flag an exam passage used once a post has cited it (successful publish only)."""
+        passage.status = "used"
+        db.commit()
+
+    # ----- Phase 2: conversation clips (conversation pipeline) -----
+
+    @staticmethod
+    def get_pending_conversation_topics(db: Session) -> List[BlogTopic]:
+        """Conversation topics (unused) that don't yet have a clip row — the clipper's queue."""
+        clipped_ids = select(ConversationClip.topic_id)
+        stmt = (
+            select(BlogTopic)
+            .where(
+                BlogTopic.pipeline == "conversation",
+                BlogTopic.status == "unused",
+                BlogTopic.id.not_in(clipped_ids),
+            )
+            .order_by(BlogTopic.id)
+        )
+        return list(db.scalars(stmt).all())
+
+    @staticmethod
+    def get_clip_for_topic(db: Session, topic_id: int) -> Optional[ConversationClip]:
+        return db.scalar(select(ConversationClip).where(ConversationClip.topic_id == topic_id))
+
+    @staticmethod
+    def create_conversation_clip(
+        db: Session,
+        *,
+        topic_id: int,
+        video_title: str,
+        dialogue_en: str,
+        dialogue_ko: Optional[str],
+        start_seconds: float,
+        end_seconds: float,
+        clip_url: str,
+    ) -> ConversationClip:
+        """Insert a finished clip (status='ready'). Caller checks for an existing clip first
+        (returns 409) — the unique topic_id constraint is the DB-level backstop."""
+        clip = ConversationClip(
+            topic_id=topic_id,
+            video_title=video_title.strip(),
+            dialogue_en=dialogue_en,
+            dialogue_ko=dialogue_ko,
+            start_seconds=start_seconds,
+            end_seconds=end_seconds,
+            clip_url=clip_url.strip(),
+            status="ready",
+        )
+        db.add(clip)
+        db.commit()
+        db.refresh(clip)
+        return clip
+
+    @staticmethod
+    def list_conversation_clips(
+        db: Session, status_filter: str = "all"
+    ) -> List[ConversationClip]:
+        """Conversation clips filtered by status. 'pending'|'ready'|'published'|'all'."""
+        stmt = select(ConversationClip)
+        if status_filter in ("pending", "ready", "published"):
+            stmt = stmt.where(ConversationClip.status == status_filter)
+        stmt = stmt.order_by(ConversationClip.id)
+        return list(db.scalars(stmt).all())
+
+    @staticmethod
+    def get_unused_conversation_topic_with_ready_clip(
+        db: Session,
+    ) -> Optional[Tuple[BlogTopic, ConversationClip]]:
+        """Oldest unused conversation topic that already has a 'ready' clip, or None.
+
+        This is the auto-publish selector for the conversation pipeline: only topics whose
+        clip has been cut & uploaded (status='ready') are publishable.
+        """
+        stmt = (
+            select(BlogTopic, ConversationClip)
+            .join(ConversationClip, ConversationClip.topic_id == BlogTopic.id)
+            .where(
+                BlogTopic.pipeline == "conversation",
+                BlogTopic.status == "unused",
+                ConversationClip.status == "ready",
+            )
+            .order_by(BlogTopic.id)
+            .limit(1)
+        )
+        row = db.execute(stmt).first()
+        if row is None:
+            return None
+        return row[0], row[1]
+
+    @staticmethod
+    def mark_clip_published(db: Session, clip: ConversationClip) -> None:
+        """Flag a clip published once its post is live (successful publish only)."""
+        clip.status = "published"
+        db.commit()
+
+    @staticmethod
+    def insert_video_embed(body: str, clip_url: str) -> str:
+        """Prepend a raw <video> embed to the body (rendered by the public blog via rehype-raw)."""
+        tag = f'<video src="{clip_url}" controls></video>'
+        return f"{tag}\n\n{body.lstrip()}"
 
     @staticmethod
     def get_topic(db: Session, topic_id: int) -> Optional[BlogTopic]:
@@ -214,6 +445,174 @@ class BlogService:
             "---\n"
         )
         return f"{frontmatter}\n{body.strip()}\n"
+
+    # ----- Auto-blog: practice questions rendering -----
+
+    _CHOICE_LABELS = ["A", "B", "C", "D"]
+
+    @staticmethod
+    def render_practice_questions_markdown(questions: List[dict]) -> str:
+        """Render structured practice questions into a `## 실전 연습문제` markdown section.
+
+        Each question dict: {type, passage?, question, choices[4], answer_index, explanation}.
+        Malformed items (missing question/choices, out-of-range answer_index) are skipped
+        defensively so one bad item never corrupts the whole section. Returns "" when there
+        is nothing renderable. The answer/explanation is wrapped in a <details> block so the
+        published page shows the question first and the answer on demand.
+        """
+        if not questions:
+            return ""
+
+        blocks: List[str] = []
+        number = 0
+        for q in questions:
+            if not isinstance(q, dict):
+                continue
+            question_text = str(q.get("question", "")).strip()
+            choices = q.get("choices")
+            if not question_text or not isinstance(choices, list) or len(choices) < 2:
+                continue
+            choices = [str(c).strip() for c in choices]
+
+            answer_index = q.get("answer_index")
+            if not isinstance(answer_index, int) or not (0 <= answer_index < len(choices)):
+                answer_index = 0
+            explanation = str(q.get("explanation", "")).strip()
+            q_type = str(q.get("type", "")).strip()
+            passage = str(q.get("passage", "")).strip()
+
+            number += 1
+            label = f"**{number}."
+            if q_type:
+                label += f" ({q_type})"
+            label += "**"
+
+            lines: List[str] = []
+            if passage:
+                # Render the reading passage as a blockquote above the question.
+                for pline in passage.splitlines():
+                    lines.append(f"> {pline}" if pline.strip() else ">")
+                lines.append("")
+            lines.append(f"{label} {question_text}")
+            lines.append("")
+            for i, choice in enumerate(choices):
+                marker = BlogService._CHOICE_LABELS[i] if i < len(BlogService._CHOICE_LABELS) else str(i + 1)
+                lines.append(f"- ({marker}) {choice}")
+            lines.append("")
+
+            answer_marker = (
+                BlogService._CHOICE_LABELS[answer_index]
+                if answer_index < len(BlogService._CHOICE_LABELS)
+                else str(answer_index + 1)
+            )
+            lines.append("<details>")
+            lines.append("<summary>정답 및 해설</summary>")
+            lines.append("")
+            lines.append(f"정답: ({answer_marker})")
+            if explanation:
+                lines.append("")
+                lines.append(explanation)
+            lines.append("")
+            lines.append("</details>")
+
+            blocks.append("\n".join(lines))
+
+        if not blocks:
+            return ""
+
+        return "## 실전 연습문제\n\n" + "\n\n".join(blocks)
+
+    @staticmethod
+    def assemble_body_with_questions(body: str, questions_markdown: str) -> str:
+        """Insert a rendered `## 실전 연습문제` block before the post's final `##` section.
+
+        The generator is instructed to make the last `##` section the Scan Voca promo
+        (contract §3), so the practice questions go just before it. If no `##` heading is
+        found, the block is appended at the end. Empty questions_markdown -> body unchanged.
+        """
+        if not questions_markdown.strip():
+            return body
+
+        lines = body.splitlines()
+        last_h2_idx: Optional[int] = None
+        for i, line in enumerate(lines):
+            if _H2_RE.match(line.strip()):
+                last_h2_idx = i
+
+        if last_h2_idx is None:
+            return f"{body.rstrip()}\n\n{questions_markdown}\n"
+
+        before = "\n".join(lines[:last_h2_idx]).rstrip()
+        after = "\n".join(lines[last_h2_idx:]).strip()
+        return f"{before}\n\n{questions_markdown}\n\n{after}\n"
+
+    # ----- Auto-blog: hero image reflection (port of blogWorkflow.reflectImages 'top') -----
+
+    @staticmethod
+    def reflect_hero_image(
+        markdown: str, slug: str, image_bytes: bytes
+    ) -> Tuple[str, ReflectImage]:
+        """Insert a single hero image at the top of the body + add a `thumbnail` frontmatter
+        field (port of blogWorkflow.ts reflectImages, anchor_type="top" case, n=1).
+
+        Returns (new_markdown, ReflectImage) where ReflectImage.path is the repo path to
+        commit the PNG at. CRLF is normalized first (mirrors the frontend fix) so frontmatter
+        detection never breaks on Windows-edited text.
+        """
+        n = 1
+        repo_path = f"{BLOG_IMAGE_DIR}/{slug}/{n}.png"
+        public_ref = f"/blog-images/{slug}/{n}.png"
+        alt = BlogService.parse_frontmatter_fields(markdown).get("title") or "대표 이미지"
+
+        normalized = markdown.replace("\r\n", "\n")
+        m = re.match(r"^(---\n[\s\S]*?\n---\n?)([\s\S]*)$", normalized)
+        if m:
+            frontmatter, body = m.group(1), m.group(2)
+        else:
+            frontmatter, body = "", normalized
+
+        # Add thumbnail line to frontmatter if not already present.
+        if frontmatter and not re.search(r"^thumbnail:", frontmatter, flags=re.MULTILINE):
+            thumbnail_line = f'thumbnail: "{public_ref}"'
+            frontmatter = re.sub(
+                r"\n---(\n?)$", f"\n{thumbnail_line}\n---\\1", frontmatter, count=1
+            )
+
+        image_md = f"![{alt}]({public_ref})"
+        body = f"{image_md}\n\n{body.lstrip(chr(10))}"
+        new_markdown = f"{frontmatter}{body}" if frontmatter else body
+
+        return new_markdown, ReflectImage(path=repo_path, data=image_bytes)
+
+    # ----- Auto-blog: guardrail validation -----
+
+    @staticmethod
+    def validate_auto_draft(db: Session, markdown: str, slug: str) -> Optional[str]:
+        """Guardrail check for an auto-generated draft before publishing.
+
+        Returns a failure-reason string, or None if the draft passes every check:
+          - frontmatter parses (a `---...---` block is present)
+          - category is one of the fixed 5
+          - body (frontmatter stripped) is at least 500 characters
+          - slug is not already published (no accidental overwrite of a live post)
+        """
+        m = re.match(r"^---\s*\n(.*?)\n---\s*\n?", markdown.replace("\r\n", "\n"), flags=re.DOTALL)
+        if not m:
+            return "frontmatter_missing"
+
+        fields = BlogService.parse_frontmatter_fields(markdown)
+        if fields.get("category") not in BLOG_CATEGORIES:
+            return "invalid_category"
+
+        body = markdown.replace("\r\n", "\n")[m.end():].strip()
+        if len(body) < 500:
+            return "body_too_short"
+
+        existing = db.scalar(select(BlogPublishedPost).where(BlogPublishedPost.slug == slug))
+        if existing is not None:
+            return "slug_already_published"
+
+        return None
 
     # ----- GitHub publishing (httpx) -----
 
