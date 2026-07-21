@@ -98,9 +98,64 @@ def post_clip(cfg: Config, payload: Dict) -> Dict:
 # of these work as a source video - only the on-disk filename needs to match one of them.
 _VIDEO_EXTENSIONS = (".mp4", ".mkv", ".mov", ".avi", ".webm")
 
+# Text-based subtitle codecs ffmpeg can losslessly convert to .srt. Image-based tracks
+# (PGS "hdmv_pgs_subtitle", VobSub "dvd_subtitle") carry no text - there's nothing to
+# extract, same as subtitles burned into the video image itself.
+_TEXT_SUBTITLE_CODECS = {"subrip", "ass", "ssa", "mov_text", "webvtt"}
+
+
+def probe_subtitle_streams(video_path: str) -> List[Dict]:
+    """List a video's embedded subtitle streams via ffprobe (thin IO wrapper)."""
+    import json
+
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe", "-v", "quiet", "-print_format", "json", "-show_streams",
+                "-select_streams", "s", video_path,
+            ],
+            capture_output=True, text=True,
+        )
+    except FileNotFoundError:
+        return []
+    if result.returncode != 0:
+        return []
+    try:
+        return json.loads(result.stdout).get("streams", [])
+    except json.JSONDecodeError:
+        return []
+
+
+def pick_text_subtitle_stream(streams: List[Dict]) -> Optional[int]:
+    """Pure: index of the first text-based subtitle stream among `streams`, or None."""
+    for s in streams:
+        if s.get("codec_name") in _TEXT_SUBTITLE_CODECS:
+            index = s.get("index")
+            if isinstance(index, int):
+                return index
+    return None
+
+
+def extract_embedded_subtitle(video_path: str, stream_index: int, out_srt_path: str) -> bool:
+    """Extract one subtitle stream to a standalone .srt via ffmpeg (thin IO wrapper)."""
+    try:
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-i", video_path, "-map", f"0:{stream_index}", out_srt_path],
+            capture_output=True, text=True,
+        )
+    except FileNotFoundError:
+        return False
+    return result.returncode == 0 and os.path.isfile(out_srt_path)
+
 
 def find_source_media(source_dir: str) -> List[Dict]:
-    """Scan NAS source for {title}/movie.{mp4,mkv,...} + movie.srt folders (thin os wrapper)."""
+    """Scan NAS source for {title}/movie.{mp4,mkv,...} + movie.srt folders (thin os wrapper).
+
+    When movie.srt is missing but the video has an embedded text-based subtitle track
+    (common for mkv rips), auto-extract it to movie.srt via ffmpeg instead of skipping
+    the folder. Videos with only image-based (PGS/VobSub) or burned-in subtitles have no
+    text to extract and are skipped - those need a manually supplied movie.srt.
+    """
     media: List[Dict] = []
     if not os.path.isdir(source_dir):
         return media
@@ -108,14 +163,27 @@ def find_source_media(source_dir: str) -> List[Dict]:
         folder = os.path.join(source_dir, name)
         if not os.path.isdir(folder):
             continue
+        video = None
+        for ext in _VIDEO_EXTENSIONS:
+            candidate = os.path.join(folder, f"movie{ext}")
+            if os.path.isfile(candidate):
+                video = candidate
+                break
+        if video is None:
+            continue
+
         srt = os.path.join(folder, "movie.srt")
         if not os.path.isfile(srt):
-            continue
-        for ext in _VIDEO_EXTENSIONS:
-            video = os.path.join(folder, f"movie{ext}")
-            if os.path.isfile(video):
-                media.append({"title": name, "video": video, "srt": srt})
-                break
+            stream_index = pick_text_subtitle_stream(probe_subtitle_streams(video))
+            if stream_index is None:
+                print(f"  skip {name}: no movie.srt and no text-based embedded subtitle track")
+                continue
+            if not extract_embedded_subtitle(video, stream_index, srt):
+                print(f"  skip {name}: found an embedded subtitle track but extraction failed")
+                continue
+            print(f"  {name}: extracted embedded subtitle track -> movie.srt")
+
+        media.append({"title": name, "video": video, "srt": srt})
     return media
 
 

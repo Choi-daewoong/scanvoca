@@ -128,6 +128,30 @@ class TestFfmpegCommand:
         assert "-vf" not in cmd
 
 
+class TestPickTextSubtitleStream:
+    """Pure: choose the first extractable (text-based) embedded subtitle stream."""
+
+    def test_picks_subrip_stream(self):
+        from main import pick_text_subtitle_stream
+
+        streams = [
+            {"index": 2, "codec_name": "subrip"},
+            {"index": 3, "codec_name": "ass"},
+        ]
+        assert pick_text_subtitle_stream(streams) == 2
+
+    def test_skips_image_based_pgs(self):
+        from main import pick_text_subtitle_stream
+
+        streams = [{"index": 2, "codec_name": "hdmv_pgs_subtitle"}]
+        assert pick_text_subtitle_stream(streams) is None
+
+    def test_no_streams(self):
+        from main import pick_text_subtitle_stream
+
+        assert pick_text_subtitle_stream([]) is None
+
+
 class TestFindSourceMedia:
     """find_source_media accepts non-mp4 containers (ffmpeg reads bytes, not extensions)."""
 
@@ -143,6 +167,46 @@ class TestFindSourceMedia:
         assert len(media) == 1
         assert media[0]["title"] == "Friends"
         assert media[0]["video"].endswith("movie.mkv")
+
+    def test_auto_extracts_embedded_text_subtitle(self, tmp_path, monkeypatch):
+        import main
+
+        folder = tmp_path / "Friends"
+        folder.mkdir()
+        (folder / "movie.mkv").write_bytes(b"fake")
+        # No movie.srt on disk - main.py must extract one from the embedded track.
+
+        monkeypatch.setattr(
+            main, "probe_subtitle_streams",
+            lambda video: [{"index": 2, "codec_name": "subrip"}],
+        )
+
+        def fake_extract(video, stream_index, out_path):
+            assert stream_index == 2
+            with open(out_path, "w") as f:
+                f.write("1\n00:00:01,000 --> 00:00:02,000\nHi\n")
+            return True
+
+        monkeypatch.setattr(main, "extract_embedded_subtitle", fake_extract)
+
+        media = main.find_source_media(str(tmp_path))
+        assert len(media) == 1
+        assert os.path.isfile(folder / "movie.srt")
+
+    def test_skips_when_no_extractable_subtitle(self, tmp_path, monkeypatch):
+        import main
+
+        folder = tmp_path / "HardsubOnly"
+        folder.mkdir()
+        (folder / "movie.mkv").write_bytes(b"fake")
+        # No movie.srt, and probe finds only an image-based (PGS) track.
+
+        monkeypatch.setattr(
+            main, "probe_subtitle_streams",
+            lambda video: [{"index": 2, "codec_name": "hdmv_pgs_subtitle"}],
+        )
+
+        assert main.find_source_media(str(tmp_path)) == []
 
     def test_prefers_mp4_when_both_present(self, tmp_path):
         from main import find_source_media
