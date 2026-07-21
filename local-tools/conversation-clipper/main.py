@@ -2,7 +2,7 @@
 
 Flow (per the phase-2 contract §2-3):
   1. GET  {BACKEND_API_BASE}/admin/blog/conversation-clips/pending-topics  (X-Api-Key)
-  2. For each pending topic: scan NAS source ({title}/movie.mp4 + movie.srt), find the
+  2. For each pending topic: scan NAS source ({title}/movie.{mp4,mkv,mov,avi,webm} + movie.srt), find the
      best-matching dialogue window by keyword overlap, compute a padded clip window.
   3. ffmpeg-cut that window with burned-in subtitles into the NAS output dir.
   4. POST {BACKEND_API_BASE}/admin/blog/conversation-clips  with the result (X-Api-Key).
@@ -94,8 +94,13 @@ def post_clip(cfg: Config, payload: Dict) -> Dict:
     return resp.json()
 
 
+# ffmpeg reads the container/codec from the file's own bytes, not its extension, so any
+# of these work as a source video - only the on-disk filename needs to match one of them.
+_VIDEO_EXTENSIONS = (".mp4", ".mkv", ".mov", ".avi", ".webm")
+
+
 def find_source_media(source_dir: str) -> List[Dict]:
-    """Scan NAS source for {title}/movie.mp4 + movie.srt folders (thin os wrapper)."""
+    """Scan NAS source for {title}/movie.{mp4,mkv,...} + movie.srt folders (thin os wrapper)."""
     media: List[Dict] = []
     if not os.path.isdir(source_dir):
         return media
@@ -103,10 +108,14 @@ def find_source_media(source_dir: str) -> List[Dict]:
         folder = os.path.join(source_dir, name)
         if not os.path.isdir(folder):
             continue
-        mp4 = os.path.join(folder, "movie.mp4")
         srt = os.path.join(folder, "movie.srt")
-        if os.path.isfile(mp4) and os.path.isfile(srt):
-            media.append({"title": name, "mp4": mp4, "srt": srt})
+        if not os.path.isfile(srt):
+            continue
+        for ext in _VIDEO_EXTENSIONS:
+            video = os.path.join(folder, f"movie{ext}")
+            if os.path.isfile(video):
+                media.append({"title": name, "video": video, "srt": srt})
+                break
     return media
 
 
@@ -143,7 +152,7 @@ def build_clip_payload(
         "end_seconds": end,
         "clip_url": clip_url,
         "_ffmpeg": build_ffmpeg_command(
-            media["mp4"], media["srt"], start, end,
+            media["video"], media["srt"], start, end,
             os.path.join(cfg.output_dir, output_filename),
         ),
     }

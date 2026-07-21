@@ -126,3 +126,51 @@ class TestFfmpegCommand:
             "in.mp4", "s.srt", 0.0, 5.0, "out.mp4", burn_subtitles=False
         )
         assert "-vf" not in cmd
+
+
+class TestFindSourceMedia:
+    """find_source_media accepts non-mp4 containers (ffmpeg reads bytes, not extensions)."""
+
+    def test_finds_mkv_source(self, tmp_path):
+        from main import find_source_media
+
+        folder = tmp_path / "Friends"
+        folder.mkdir()
+        (folder / "movie.mkv").write_bytes(b"fake")
+        (folder / "movie.srt").write_text("1\n00:00:01,000 --> 00:00:02,000\nHi\n")
+
+        media = find_source_media(str(tmp_path))
+        assert len(media) == 1
+        assert media[0]["title"] == "Friends"
+        assert media[0]["video"].endswith("movie.mkv")
+
+    def test_prefers_mp4_when_both_present(self, tmp_path):
+        from main import find_source_media
+
+        folder = tmp_path / "Friends"
+        folder.mkdir()
+        (folder / "movie.mp4").write_bytes(b"fake")
+        (folder / "movie.mkv").write_bytes(b"fake")
+        (folder / "movie.srt").write_text("1\n00:00:01,000 --> 00:00:02,000\nHi\n")
+
+        media = find_source_media(str(tmp_path))
+        assert media[0]["video"].endswith("movie.mp4")
+
+    def test_skips_folder_without_subtitles(self, tmp_path):
+        from main import find_source_media
+
+        folder = tmp_path / "NoSubs"
+        folder.mkdir()
+        (folder / "movie.mkv").write_bytes(b"fake")
+
+        assert find_source_media(str(tmp_path)) == []
+
+    def test_skips_folder_with_unsupported_video_ext(self, tmp_path):
+        from main import find_source_media
+
+        folder = tmp_path / "Weird"
+        folder.mkdir()
+        (folder / "movie.flv").write_bytes(b"fake")
+        (folder / "movie.srt").write_text("1\n00:00:01,000 --> 00:00:02,000\nHi\n")
+
+        assert find_source_media(str(tmp_path)) == []
