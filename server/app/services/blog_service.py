@@ -34,7 +34,12 @@ class ReflectImage:
 # Path template inside the content repo
 BLOG_CONTENT_DIR = "web/content/blog"
 BLOG_IMAGE_DIR = "web/public/blog-images"
+BLOG_FILE_DIR = "web/public/blog-files"
 GITHUB_API_BASE = "https://api.github.com"
+
+# Upload size limits (checked on the base64-decoded actual bytes, not the encoded string).
+MAX_IMAGE_BYTES = 8 * 1024 * 1024        # 8MB
+MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024  # 20MB
 
 # ----- Category default promo hooks (single source of truth) -----
 # Promoted from seed_blog_topics.py so the seed and the "add topic" endpoint share
@@ -53,8 +58,13 @@ CATEGORY_DEFAULT_HOOKS: Dict[str, str] = {
     "자격시험": HOOK_E,
 }
 
-# Filenames allowed under web/public/blog-images/{slug}/  (path-traversal guard)
-_IMAGE_FILENAME_RE = re.compile(r"^[A-Za-z0-9._-]+\.png$")
+# Filenames allowed under web/public/blog-images/{slug}/  (path-traversal guard).
+# AI-generated images are {n}.png; admin direct uploads add jpg/jpeg/webp/gif.
+_IMAGE_FILENAME_RE = re.compile(r"^[A-Za-z0-9._-]+\.(png|jpe?g|webp|gif)$", re.IGNORECASE)
+# Filenames allowed under web/public/blog-files/{slug}/ — safe document types only.
+_ATTACHMENT_FILENAME_RE = re.compile(
+    r"^[A-Za-z0-9._-]+\.(pdf|docx?|xlsx?|pptx?|hwp|zip)$", re.IGNORECASE
+)
 # A level-2 markdown heading line: "## text" (not "###")
 _H2_RE = re.compile(r"^##(?!#)\s+(.+?)\s*$")
 
@@ -413,6 +423,18 @@ class BlogService:
         if "/" in remainder or "\\" in remainder or ".." in remainder:
             return False
         return bool(_IMAGE_FILENAME_RE.match(remainder))
+
+    @staticmethod
+    def is_valid_attachment_path(path: str, slug: str) -> bool:
+        """Only web/public/blog-files/{slug}/{name}.{안전한 문서 확장자} 허용 (no traversal/subdirs).
+        exe/html/svg/js 등 실행·스크립트 가능 확장자는 절대 허용하지 않는다 (저장형 XSS/실행파일 배포 방지)."""
+        prefix = f"{BLOG_FILE_DIR}/{slug}/"
+        if not path.startswith(prefix):
+            return False
+        remainder = path[len(prefix):]
+        if "/" in remainder or "\\" in remainder or ".." in remainder:
+            return False
+        return bool(_ATTACHMENT_FILENAME_RE.match(remainder))
 
     # ----- Markdown assembly -----
 

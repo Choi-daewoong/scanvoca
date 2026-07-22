@@ -80,12 +80,13 @@ export const blogService = {
     });
   },
 
-  /** 게재 — GitHub 커밋 후 blog_url 반환. images 있으면 md+이미지 단일 커밋 */
+  /** 게재 — GitHub 커밋 후 blog_url 반환. images/attachments 있으면 md+파일 단일 커밋 */
   async publish(payload: {
     slug: string;
     markdown: string;
     topic_id?: number;
     images?: BlogPublishImage[];
+    attachments?: BlogPublishImage[];
   }): Promise<BlogPublishResult> {
     return apiFetch<BlogPublishResult>('/api/v1/admin/blog/publish', {
       method: 'POST',

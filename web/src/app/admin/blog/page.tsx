@@ -7,8 +7,14 @@ import TopicPanel from './_components/TopicPanel';
 import PublishedPostsPanel from './_components/PublishedPostsPanel';
 import DraftEditor from './_components/DraftEditor';
 import ImagePlanPanel from './_components/ImagePlanPanel';
+import AttachmentPanel from './_components/AttachmentPanel';
 import FinalPreview from './_components/FinalPreview';
-import { PlanItem, ReflectImage, reflectImages } from './_components/blogWorkflow';
+import {
+  PlanItem,
+  ReflectImage,
+  AttachmentItem,
+  reflectImages,
+} from './_components/blogWorkflow';
 
 type TopicStatus = 'unused' | 'used' | 'all';
 
@@ -29,6 +35,7 @@ export default function AdminBlogPage() {
   const [plans, setPlans] = useState<PlanItem[]>([]);
   const [planned, setPlanned] = useState(false);
   const [previewImages, setPreviewImages] = useState<ReflectImage[]>([]);
+  const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
 
   // 게재 상태
   const [publishing, setPublishing] = useState(false);
@@ -59,6 +66,7 @@ export default function AdminBlogPage() {
     setPlans([]);
     setPlanned(false);
     setPreviewImages([]);
+    setAttachments([]);
     setPublishResult(null);
   };
 
@@ -109,6 +117,14 @@ export default function AdminBlogPage() {
         ...(activeTopicId !== null ? { topic_id: activeTopicId } : {}),
         ...(previewImages.length > 0
           ? { images: previewImages.map((i) => ({ path: i.path, base64: i.base64 })) }
+          : {}),
+        ...(attachments.length > 0
+          ? {
+              attachments: attachments.map((a) => ({
+                path: `web/public/blog-files/${draftSlug}/${a.filename}`,
+                base64: a.base64,
+              })),
+            }
           : {}),
       });
       setPublishResult(result);
@@ -170,6 +186,13 @@ export default function AdminBlogPage() {
             onReflect={handleReflect}
             planned={planned}
             setPlanned={setPlanned}
+          />
+          <AttachmentPanel
+            slug={draftSlug}
+            markdown={markdown}
+            onInsert={(snippet) => setMarkdown((m) => m + snippet)}
+            attachments={attachments}
+            setAttachments={setAttachments}
           />
           <FinalPreview
             markdown={markdown}

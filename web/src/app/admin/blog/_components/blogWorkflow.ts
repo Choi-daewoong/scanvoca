@@ -3,6 +3,22 @@
 
 import type { BlogImagePlan } from '@/types';
 
+/** 업로드/생성 이미지 허용 확장자 (BE 1-3과 반드시 동일) */
+export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+export const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+export const ALLOWED_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+export const ALLOWED_ATTACHMENT_EXTENSIONS = [
+  'pdf',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'ppt',
+  'pptx',
+  'hwp',
+  'zip',
+];
+
 /** 이미지 계획 항목 + 편집기 UI 상태 */
 export interface PlanItem {
   id: string; // 로컬 key
@@ -14,7 +30,46 @@ export interface PlanItem {
   include: boolean; // 포함 체크박스
   imageBase64: string | null; // 생성된 이미지 (없으면 null)
   mimeType: string | null;
+  ext: string; // 파일 확장자 (AI 생성은 'png', 직접 업로드는 원본 확장자)
   generating: boolean; // 개별 생성 로딩
+}
+
+/** 첨부파일 (PDF 등 문서) 항목 */
+export interface AttachmentItem {
+  id: string;
+  filename: string; // 슬러그화된 안전한 파일명 (업로드 시 원본에서 변환)
+  ext: string;
+  base64: string;
+  sizeBytes: number;
+}
+
+let attachSeq = 0;
+/** 첨부파일 항목 id 생성 */
+export function nextAttachmentId(): string {
+  attachSeq += 1;
+  return `attach-${Date.now()}-${attachSeq}`;
+}
+
+/**
+ * 원본 파일명을 안전한 파일명으로 변환한다.
+ * - 확장자와 베이스 이름을 분리, 확장자는 소문자로.
+ * - 공백은 '-'로, 허용 문자(A-Za-z0-9._-) 외 문자는 제거.
+ * - 베이스가 비면 'file'로 대체.
+ */
+export function sanitizeFilename(original: string): string {
+  const dot = original.lastIndexOf('.');
+  const rawBase = dot > 0 ? original.slice(0, dot) : original;
+  const rawExt = dot > 0 ? original.slice(dot + 1) : '';
+
+  let base = rawBase
+    .replace(/\s+/g, '-')
+    .replace(/[^A-Za-z0-9._-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^[-.]+|[-.]+$/g, '');
+  if (!base) base = 'file';
+
+  const ext = rawExt.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return ext ? `${base}.${ext}` : base;
 }
 
 let seq = 0;
@@ -36,6 +91,7 @@ export function toPlanItem(plan: BlogImagePlan): PlanItem {
     include: true,
     imageBase64: null,
     mimeType: null,
+    ext: 'png',
     generating: false,
   };
 }
@@ -52,6 +108,7 @@ export function emptyPlanItem(): PlanItem {
     include: true,
     imageBase64: null,
     mimeType: null,
+    ext: 'png',
     generating: false,
   };
 }
@@ -64,7 +121,7 @@ export function anchorLabel(item: PlanItem): string {
 }
 
 export interface ReflectImage {
-  path: string; // web/public/blog-images/{slug}/{n}.png
+  path: string; // web/public/blog-images/{slug}/{n}.{ext}
   base64: string;
   mime: string;
 }
@@ -101,7 +158,7 @@ export function reflectImages(markdown: string, slug: string, items: PlanItem[])
   const numbered = included.map((it, i) => ({ ...it, n: i + 1 }));
 
   const images: ReflectImage[] = numbered.map((it) => ({
-    path: `web/public/blog-images/${slug}/${it.n}.png`,
+    path: `web/public/blog-images/${slug}/${it.n}.${it.ext}`,
     base64: it.imageBase64 as string,
     mime: it.mimeType || 'image/png',
   }));
@@ -113,8 +170,8 @@ export function reflectImages(markdown: string, slug: string, items: PlanItem[])
 
   // frontmatter에 thumbnail 필드 추가 (대표 이미지가 있을 때, 이미 없으면)
   if (topItems.length > 0 && frontmatter && !/^thumbnail:/m.test(frontmatter)) {
-    const heroN = topItems[0].n;
-    const thumbnailLine = `thumbnail: "/blog-images/${slug}/${heroN}.png"`;
+    const hero = topItems[0];
+    const thumbnailLine = `thumbnail: "/blog-images/${slug}/${hero.n}.${hero.ext}"`;
     frontmatter = frontmatter.replace(/\n---(\n?)$/, `\n${thumbnailLine}\n---$1`);
   }
 
@@ -130,7 +187,7 @@ export function reflectImages(markdown: string, slug: string, items: PlanItem[])
           if (used.has(it.n)) continue;
           if (it.anchor_text && normHeading(it.anchor_text) === normHeading(line)) {
             out.push('');
-            out.push(`![${it.alt}](/blog-images/${slug}/${it.n}.png)`);
+            out.push(`![${it.alt}](/blog-images/${slug}/${it.n}.${it.ext})`);
             used.add(it.n);
             break;
           }
@@ -143,7 +200,7 @@ export function reflectImages(markdown: string, slug: string, items: PlanItem[])
   // top 삽입 (본문 최상단)
   if (topItems.length > 0) {
     const block = topItems
-      .map((it) => `![${it.alt}](/blog-images/${slug}/${it.n}.png)`)
+      .map((it) => `![${it.alt}](/blog-images/${slug}/${it.n}.${it.ext})`)
       .join('\n\n');
     body = `${block}\n\n${body.replace(/^\n+/, '')}`;
   }

@@ -594,16 +594,224 @@ class TestPublishWithImages:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
+class TestPublishWithAttachments:
+    """첨부파일(문서) 포함 게재 테스트 (Git Data API 단일 커밋 mock)"""
+
+    def test_publish_with_attachment_single_commit(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+        captured = {}
+
+        async def fake_commit_files(files, message):
+            captured["files"] = files
+            captured["message"] = message
+            return "https://github.com/Choi-daewoong/scanvoca/commit/att123"
+
+        monkeypatch.setattr(BlogService, "commit_files", staticmethod(fake_commit_files))
+
+        import base64 as _b64
+        pdf_b64 = _b64.b64encode(b"%PDF-1.4 data").decode()
+
+        response = client.post(
+            "/api/v1/admin/blog/publish",
+            json={
+                "slug": "toeic-guide",
+                "markdown": "---\ntitle: x\n---\n본문",
+                "attachments": [
+                    {"path": "web/public/blog-files/toeic-guide/handout.pdf", "base64": pdf_b64},
+                ],
+            },
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["commit_url"].endswith("att123")
+        # 단일 커밋에 md + 첨부파일 1개 = 2개 파일
+        assert len(captured["files"]) == 2
+        paths = [f[0] for f in captured["files"]]
+        assert "web/content/blog/toeic-guide.md" in paths
+        assert "web/public/blog-files/toeic-guide/handout.pdf" in paths
+        assert "+1 files" in captured["message"]
+
+    def test_publish_images_and_attachments_together(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+        captured = {}
+
+        async def fake_commit_files(files, message):
+            captured["files"] = files
+            captured["message"] = message
+            return "https://github.com/Choi-daewoong/scanvoca/commit/mix123"
+
+        monkeypatch.setattr(BlogService, "commit_files", staticmethod(fake_commit_files))
+
+        import base64 as _b64
+        jpg_b64 = _b64.b64encode(b"jpegdata").decode()
+        pdf_b64 = _b64.b64encode(b"%PDF data").decode()
+
+        response = client.post(
+            "/api/v1/admin/blog/publish",
+            json={
+                "slug": "mix-post",
+                "markdown": "---\n---\n본문",
+                "images": [
+                    {"path": "web/public/blog-images/mix-post/1.jpg", "base64": jpg_b64},
+                ],
+                "attachments": [
+                    {"path": "web/public/blog-files/mix-post/doc.pdf", "base64": pdf_b64},
+                ],
+            },
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # md + 이미지 1 + 첨부 1 = 3개
+        assert len(captured["files"]) == 3
+        assert "+1 images, +1 files" in captured["message"]
+
+    def test_publish_rejects_bad_attachment_extension(
+        self, client, admin_auth_headers, monkeypatch
+    ):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_commit_files(files, message):
+            raise AssertionError("commit_files should not be called for a bad attachment")
+
+        monkeypatch.setattr(BlogService, "commit_files", staticmethod(fake_commit_files))
+
+        import base64 as _b64
+        response = client.post(
+            "/api/v1/admin/blog/publish",
+            json={
+                "slug": "my-post",
+                "markdown": "---\n---\n본문",
+                "attachments": [
+                    {"path": "web/public/blog-files/my-post/evil.exe", "base64": _b64.b64encode(b"x").decode()},
+                ],
+            },
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_publish_rejects_attachment_traversal(
+        self, client, admin_auth_headers, monkeypatch
+    ):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_commit_files(files, message):
+            raise AssertionError("commit_files should not be called for a traversal path")
+
+        monkeypatch.setattr(BlogService, "commit_files", staticmethod(fake_commit_files))
+
+        import base64 as _b64
+        response = client.post(
+            "/api/v1/admin/blog/publish",
+            json={
+                "slug": "my-post",
+                "markdown": "---\n---\n본문",
+                "attachments": [
+                    {"path": "web/public/blog-files/my-post/../../secret.pdf", "base64": _b64.b64encode(b"x").decode()},
+                ],
+            },
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_publish_rejects_oversized_image(
+        self, client, admin_auth_headers, monkeypatch
+    ):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_commit_files(files, message):
+            raise AssertionError("commit_files should not be called for an oversized image")
+
+        monkeypatch.setattr(BlogService, "commit_files", staticmethod(fake_commit_files))
+
+        import base64 as _b64
+        big = _b64.b64encode(b"a" * (8 * 1024 * 1024 + 1)).decode()
+        response = client.post(
+            "/api/v1/admin/blog/publish",
+            json={
+                "slug": "my-post",
+                "markdown": "---\n---\n본문",
+                "images": [
+                    {"path": "web/public/blog-images/my-post/1.png", "base64": big},
+                ],
+            },
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert "이미지 용량" in response.json()["detail"]
+
+    def test_publish_rejects_oversized_attachment(
+        self, client, admin_auth_headers, monkeypatch
+    ):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_commit_files(files, message):
+            raise AssertionError("commit_files should not be called for an oversized attachment")
+
+        monkeypatch.setattr(BlogService, "commit_files", staticmethod(fake_commit_files))
+
+        import base64 as _b64
+        big = _b64.b64encode(b"a" * (20 * 1024 * 1024 + 1)).decode()
+        response = client.post(
+            "/api/v1/admin/blog/publish",
+            json={
+                "slug": "my-post",
+                "markdown": "---\n---\n본문",
+                "attachments": [
+                    {"path": "web/public/blog-files/my-post/doc.pdf", "base64": big},
+                ],
+            },
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert "첨부파일 용량" in response.json()["detail"]
+
+
 class TestImagePlanValidationUnit:
     """validate_image_plans / is_valid_image_path 단위 테스트"""
 
     def test_is_valid_image_path(self):
         slug = "my-post"
         assert BlogService.is_valid_image_path("web/public/blog-images/my-post/1.png", slug)
+        # 확장자 화이트리스트 확장: jpg/jpeg/webp/gif (대소문자 무관) 허용
+        assert BlogService.is_valid_image_path("web/public/blog-images/my-post/1.jpg", slug)
+        assert BlogService.is_valid_image_path("web/public/blog-images/my-post/photo.jpeg", slug)
+        assert BlogService.is_valid_image_path("web/public/blog-images/my-post/pic.webp", slug)
+        assert BlogService.is_valid_image_path("web/public/blog-images/my-post/anim.gif", slug)
+        assert BlogService.is_valid_image_path("web/public/blog-images/my-post/UP.PNG", slug)
+        # 여전히 거부: 다른 slug, 화이트리스트 밖 확장자, traversal, 서브디렉터리
         assert not BlogService.is_valid_image_path("web/public/blog-images/other/1.png", slug)
-        assert not BlogService.is_valid_image_path("web/public/blog-images/my-post/1.jpg", slug)
+        assert not BlogService.is_valid_image_path("web/public/blog-images/my-post/evil.svg", slug)
+        assert not BlogService.is_valid_image_path("web/public/blog-images/my-post/evil.exe", slug)
         assert not BlogService.is_valid_image_path("web/public/blog-images/my-post/../x.png", slug)
         assert not BlogService.is_valid_image_path("web/public/blog-images/my-post/sub/1.png", slug)
+
+    def test_is_valid_attachment_path(self):
+        slug = "my-post"
+        # 화이트리스트 문서 확장자 허용 (대소문자 무관)
+        assert BlogService.is_valid_attachment_path("web/public/blog-files/my-post/doc.pdf", slug)
+        assert BlogService.is_valid_attachment_path("web/public/blog-files/my-post/a.docx", slug)
+        assert BlogService.is_valid_attachment_path("web/public/blog-files/my-post/a.doc", slug)
+        assert BlogService.is_valid_attachment_path("web/public/blog-files/my-post/a.xlsx", slug)
+        assert BlogService.is_valid_attachment_path("web/public/blog-files/my-post/a.pptx", slug)
+        assert BlogService.is_valid_attachment_path("web/public/blog-files/my-post/note.hwp", slug)
+        assert BlogService.is_valid_attachment_path("web/public/blog-files/my-post/pack.zip", slug)
+        assert BlogService.is_valid_attachment_path("web/public/blog-files/my-post/UP.PDF", slug)
+        # 실행·스크립트 가능 확장자 거부 (저장형 XSS/실행파일 배포 방지)
+        assert not BlogService.is_valid_attachment_path("web/public/blog-files/my-post/x.exe", slug)
+        assert not BlogService.is_valid_attachment_path("web/public/blog-files/my-post/x.html", slug)
+        assert not BlogService.is_valid_attachment_path("web/public/blog-files/my-post/x.svg", slug)
+        assert not BlogService.is_valid_attachment_path("web/public/blog-files/my-post/x.js", slug)
+        assert not BlogService.is_valid_attachment_path("web/public/blog-files/my-post/x.png", slug)
+        # 다른 slug / traversal / 서브디렉터리 거부
+        assert not BlogService.is_valid_attachment_path("web/public/blog-files/other/x.pdf", slug)
+        assert not BlogService.is_valid_attachment_path("web/public/blog-files/my-post/../x.pdf", slug)
+        assert not BlogService.is_valid_attachment_path("web/public/blog-files/my-post/sub/x.pdf", slug)
+        # 이미지 디렉터리 경로는 첨부파일 경로로 인정하지 않음
+        assert not BlogService.is_valid_attachment_path("web/public/blog-images/my-post/x.pdf", slug)
 
     def test_extract_h2_headings(self):
         md = "# 제목\n## 첫째\n본문\n### 소소제목\n## 둘째\n"

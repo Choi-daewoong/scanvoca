@@ -7,6 +7,8 @@ import {
   toPlanItem,
   emptyPlanItem,
   anchorLabel,
+  MAX_IMAGE_BYTES,
+  ALLOWED_IMAGE_EXTENSIONS,
 } from './blogWorkflow';
 
 interface Props {
@@ -32,9 +34,49 @@ export default function ImagePlanPanel({
   const [planning, setPlanning] = useState(false);
   const [generatingAll, setGeneratingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 항목별 업로드 인라인 에러 (id → 메시지)
+  const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
 
   const updateItem = (id: string, patch: Partial<PlanItem>) =>
     setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+
+  const setUploadError = (id: string, msg: string | null) =>
+    setUploadErrors((prev) => {
+      const next = { ...prev };
+      if (msg) next[id] = msg;
+      else delete next[id];
+      return next;
+    });
+
+  /** 로컬 사진 파일을 해당 plan 항목에 반영 (AI 생성 대신 직접 업로드) */
+  const handleUploadImage = (id: string, file: File) => {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (!ALLOWED_IMAGE_EXTENSIONS.includes(ext)) {
+      setUploadError(id, '지원하지 않는 이미지 형식입니다');
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setUploadError(id, '이미지 용량이 너무 큽니다 (최대 8MB)');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      const base64 = result.includes(',') ? result.slice(result.indexOf(',') + 1) : '';
+      if (!base64) {
+        setUploadError(id, '파일을 읽지 못했습니다');
+        return;
+      }
+      updateItem(id, {
+        imageBase64: base64,
+        mimeType: file.type || `image/${ext === 'jpg' ? 'jpeg' : ext}`,
+        ext,
+      });
+      setUploadError(id, null);
+    };
+    reader.onerror = () => setUploadError(id, '파일을 읽지 못했습니다');
+    reader.readAsDataURL(file);
+  };
 
   const removeItem = (id: string) => setPlans((prev) => prev.filter((p) => p.id !== id));
 
@@ -60,7 +102,13 @@ export default function ImagePlanPanel({
       setPlans((prev) =>
         prev.map((p) =>
           p.id === item.id
-            ? { ...p, imageBase64: res.image_base64, mimeType: res.mime_type, generating: false }
+            ? {
+                ...p,
+                imageBase64: res.image_base64,
+                mimeType: res.mime_type,
+                ext: 'png',
+                generating: false,
+              }
             : p,
         ),
       );
@@ -201,7 +249,7 @@ export default function ImagePlanPanel({
                 />
               </div>
 
-              {/* 미리보기 + 개별 생성 */}
+              {/* 미리보기 + 개별 생성 / 직접 업로드 */}
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   onClick={() => runGenerate(item)}
@@ -210,10 +258,27 @@ export default function ImagePlanPanel({
                 >
                   {item.generating ? '생성 중...' : item.imageBase64 ? '다시 생성' : '이미지 생성'}
                 </button>
+                <label className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800">
+                  파일에서 업로드
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleUploadImage(item.id, file);
+                      e.target.value = ''; // 같은 파일 재선택 허용
+                    }}
+                  />
+                </label>
                 {item.generating && (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
                 )}
               </div>
+
+              {uploadErrors[item.id] && (
+                <p className="text-xs text-red-500 dark:text-red-400">{uploadErrors[item.id]}</p>
+              )}
 
               {item.imageBase64 && !item.generating && (
                 // eslint-disable-next-line @next/next/no-img-element

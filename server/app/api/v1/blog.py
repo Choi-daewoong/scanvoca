@@ -39,7 +39,13 @@ from app.schemas.blog import (
     BlogNaverVersionRequest,
     BlogNaverVersionResponse,
 )
-from app.services.blog_service import BlogService, GitHubPublishError, BLOG_CONTENT_DIR
+from app.services.blog_service import (
+    BlogService,
+    GitHubPublishError,
+    BLOG_CONTENT_DIR,
+    MAX_IMAGE_BYTES,
+    MAX_ATTACHMENT_BYTES,
+)
 from app.services.email_service import send_auto_publish_failure_email
 from app.services.gemini_service import GeminiService
 
@@ -668,8 +674,8 @@ async def publish_post(
         )
 
     try:
-        if payload.images:
-            # Validate every image path against the whitelist before touching GitHub.
+        if payload.images or payload.attachments:
+            # Validate every image/attachment path against its whitelist before touching GitHub.
             files: List[tuple] = [
                 (f"{BLOG_CONTENT_DIR}/{payload.slug}.md", payload.markdown.encode("utf-8"))
             ]
@@ -686,10 +692,39 @@ async def publish_post(
                         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                         detail="이미지 데이터가 올바르지 않습니다.",
                     )
+                if len(raw) > MAX_IMAGE_BYTES:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail=f"이미지 용량이 너무 큽니다 (최대 8MB): {img.path}",
+                    )
                 files.append((img.path, raw))
 
+            for att in payload.attachments:
+                if not BlogService.is_valid_attachment_path(att.path, payload.slug):
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail=f"허용되지 않은 첨부파일 경로입니다: {att.path}",
+                    )
+                try:
+                    raw = base64.b64decode(att.base64)
+                except Exception:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail="첨부파일 데이터가 올바르지 않습니다.",
+                    )
+                if len(raw) > MAX_ATTACHMENT_BYTES:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail=f"첨부파일 용량이 너무 큽니다 (최대 20MB): {att.path}",
+                    )
+                files.append((att.path, raw))
+
             commit_url = await BlogService.commit_files(
-                files, message=f"blog: publish {payload.slug} (+{len(payload.images)} images)"
+                files,
+                message=(
+                    f"blog: publish {payload.slug} "
+                    f"(+{len(payload.images)} images, +{len(payload.attachments)} files)"
+                ),
             )
         else:
             commit_url = await BlogService.commit_markdown(payload.slug, payload.markdown)

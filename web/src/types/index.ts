@@ -332,10 +332,19 @@ export interface BlogPostContent {
   markdown: string;
 }
 
-// publish 요청의 이미지 항목 (경로 + base64)
+// publish 요청의 이미지/첨부파일 항목 (경로 + base64) — 이미지·첨부 양쪽에 재사용
 export interface BlogPublishImage {
-  path: string; // web/public/blog-images/{slug}/{n}.png
+  path: string; // 이미지: web/public/blog-images/{slug}/{n}.{ext} · 첨부: web/public/blog-files/{slug}/{filename}
   base64: string;
+}
+
+// publish 요청 페이로드 (images/attachments 모두 BlogPublishImage shape 재사용)
+export interface BlogPublishRequest {
+  slug: string;
+  markdown: string;
+  topic_id?: number;
+  images?: BlogPublishImage[];
+  attachments?: BlogPublishImage[];
 }
 
 // POST /naver-version 응답 — 네이버 블로그 붙여넣기용 재작성본

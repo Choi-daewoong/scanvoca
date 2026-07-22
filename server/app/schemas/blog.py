@@ -223,6 +223,7 @@ class BlogPublishRequest(BaseModel):
     markdown: str = Field(..., min_length=1)
     topic_id: Optional[int] = None
     images: List[BlogPublishImage] = Field(default_factory=list)
+    attachments: List[BlogPublishImage] = Field(default_factory=list)  # 추가 필드(하위호환: 생략 시 빈 배열)
 
 
 class BlogPublishResult(BaseModel):
