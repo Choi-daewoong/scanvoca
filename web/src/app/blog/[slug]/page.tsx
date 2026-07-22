@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { getAllSlugs, getPostBySlug } from '@/lib/blog';
+import AdminEditButton from '../_components/AdminEditButton';
 
 /**
  * 발행 마크다운은 GitHub 저장소 원문이 아니라 AI 생성 파이프라인(자동발행 포함)을 거친
@@ -108,6 +109,9 @@ export default async function BlogDetailPage({ params }: Props) {
                 })}
               </span>
             )}
+            <span className="ml-auto">
+              <AdminEditButton slug={slug} />
+            </span>
           </div>
           <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">{post.title}</h1>
 

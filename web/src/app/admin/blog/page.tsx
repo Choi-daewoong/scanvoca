@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { blogService } from '@/services/blogService';
 import { BlogTopic, BlogPublishResult } from '@/types';
 import TopicPanel from './_components/TopicPanel';
@@ -18,7 +19,8 @@ import {
 
 type TopicStatus = 'unused' | 'used' | 'all';
 
-export default function AdminBlogPage() {
+function AdminBlogContent() {
+  const searchParams = useSearchParams();
   // 주제 테이블
   const [topics, setTopics] = useState<BlogTopic[]>([]);
   const [loadingTopics, setLoadingTopics] = useState(true);
@@ -97,6 +99,13 @@ export default function AdminBlogPage() {
       setLoadingSlug(null);
     }
   };
+
+  // 공개 글 페이지의 "수정" 버튼(/blog/[slug])이 ?edit={slug}로 넘어오면 편집기에 자동 로드
+  useEffect(() => {
+    const editSlug = searchParams.get('edit');
+    if (editSlug) handleLoadPost(editSlug);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /** 선택·생성된 이미지를 편집기 마크다운에 반영 후 편집기로 복귀 */
   const handleReflect = () => {
@@ -204,5 +213,13 @@ export default function AdminBlogPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function AdminBlogPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminBlogContent />
+    </Suspense>
   );
 }
