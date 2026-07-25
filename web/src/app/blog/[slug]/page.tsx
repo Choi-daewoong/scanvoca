@@ -117,7 +117,7 @@ export default async function BlogDetailPage({ params }: Props) {
 
           {/* rehypeRaw로 raw HTML(일상회화 클립 <video> 태그)을 파싱한 뒤,
               rehypeSanitize(blogHtmlSchema)로 <video>/<source>/<track>만 허용해 XSS를 차단한다. */}
-          <div className="prose prose-sm dark:prose-invert max-w-none break-words">
+          <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-img:mx-auto prose-img:max-h-72 prose-img:w-auto prose-img:rounded-xl">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw, [rehypeSanitize, blogHtmlSchema]]}

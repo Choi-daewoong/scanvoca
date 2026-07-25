@@ -162,9 +162,10 @@ Important:
         category}] so the model avoids repeating content and may naturally cross-link one
         when genuinely relevant (never forced).
         include_practice_questions (optional): when True, the model additionally returns a
-        `practice_questions` array (TOEIC Part 5/7 style) which the caller renders into a
-        `## 실전 연습문제` section placed before the promo section. Default False keeps the
-        existing manual-workflow output shape unchanged.
+        `practice_questions` array which the caller renders into a `## 실전 연습문제` section
+        placed before the promo section. The model picks the TOEIC part(s) (5/6 grammar-blank
+        vs. 7 reading) that actually match the topic instead of always mixing both. Default
+        False keeps the existing manual-workflow output shape unchanged.
         source_passage (optional, suneung pipeline): a real exam passage
         {passage_text, question_text, choices, answer, source_label}. When given, the model
         writes an explainer that quotes the passage verbatim (never invents one) and appends
@@ -203,10 +204,16 @@ Important:
         if include_practice_questions:
             practice_instruction = (
                 "\n11. 본문 마지막 홍보 섹션 **앞에** `## 실전 연습문제` 섹션이 들어갈 것입니다. "
-                "아래 JSON의 practice_questions 필드에 TOEIC Part 5(문법/어휘 빈칸) 문제 2~3개와 "
-                "Part 7(짧은 지문 독해) 문제 1~2개를 채우세요. 각 문제는 보기 4개(choices)와 "
-                "정답 인덱스(answer_index, 0부터 시작), 한국어 해설(explanation)을 포함해야 합니다. "
-                "Part 7 문제는 passage(짧은 영문 지문)를 포함하세요. Part 5 문제는 passage를 비워도 됩니다. "
+                "먼저 위 주제(제목/방향)가 TOEIC의 어느 파트에 해당하는 내용인지 판단하세요 — "
+                "문법 공식·품사·어형 변화·빈칸 채우기 같은 문법/어휘 주제라면 Part 5·6, "
+                "지문을 읽고 정보를 찾는 독해 전략·스킴 주제라면 Part 7입니다. "
+                "**본문 내용과 같은 파트의 문제만** practice_questions에 3~4개 채우세요 — "
+                "글이 문법 빈칸 주제인데 지문 독해(Part 7) 문제를 섞거나, 반대로 독해 주제인데 "
+                "단문 빈칸(Part 5) 문제만 넣는 식으로 본문과 어긋나는 파트를 섞지 마세요. "
+                "각 문제는 type 필드에 실제 해당하는 파트("
+                "\"Part 5\"/\"Part 6\"/\"Part 7\")를 쓰고, 보기 4개(choices)와 정답 인덱스"
+                "(answer_index, 0부터 시작), 한국어 해설(explanation)을 포함해야 합니다. "
+                "Part 6·7 문제는 passage(짧은 영문 지문)를 포함하세요. Part 5 문제는 passage를 비워도 됩니다. "
                 "body 안에는 연습문제 내용을 직접 쓰지 말고, practice_questions 필드에만 넣으세요."
             )
             practice_schema = (
@@ -270,7 +277,7 @@ Important:
 2. 본문 분량: 1,500~2,500자 (공백 포함)
 3. `##` 마크다운 소제목을 3~5개 사용해 구조화
 4. 실용적이고 구체적인 내용 (막연한 조언 금지, 실제로 따라 할 수 있는 방법·예시 포함)
-5. **마지막 섹션은 반드시** "결국 단어는 외워야 한다"는 필요성으로 자연스럽게 연결한 뒤, Scan Voca(https://scanvoca.com)를 홍보하는 내용으로 마무리하세요. 마크다운 링크 [Scan Voca 시작하기](https://scanvoca.com) 를 포함하세요.
+5. **마지막 섹션에서는** 방금 다룬 본문 내용(팁·문제·표현 등 이 글의 구체적인 소재)에서 출발해, 그 흐름이 자연스럽게 이어지는 자기만의 문장으로 Scan Voca(https://scanvoca.com)를 홍보하며 마무리하세요. "결국 단어는 외워야 한다" 같은 정해진 문구를 매번 그대로 쓰지 말고, 글마다 다른 표현으로 전환하세요. 마크다운 링크 [Scan Voca 시작하기](https://scanvoca.com) 를 포함하세요.
 6. 특정 AI 모델명(예: Gemini, GPT, ChatGPT 등)을 본문·제목·어디에도 절대 쓰지 마세요.
 7. 카테고리는 다음 고정 목록 중 가장 적합한 하나를 고르세요: {categories_str}
 8. slug는 영문 소문자·숫자·하이픈만 사용한 ASCII kebab-case로 만드세요 (예: toeic-vocab-30days).

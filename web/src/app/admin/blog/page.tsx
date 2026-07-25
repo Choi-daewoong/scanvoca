@@ -3,8 +3,8 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { blogService } from '@/services/blogService';
-import { BlogTopic, BlogPublishResult } from '@/types';
-import TopicPanel from './_components/TopicPanel';
+import { BlogPublishResult } from '@/types';
+import CustomPromptPanel from './_components/CustomPromptPanel';
 import PublishedPostsPanel from './_components/PublishedPostsPanel';
 import DraftEditor from './_components/DraftEditor';
 import ImagePlanPanel from './_components/ImagePlanPanel';
@@ -17,21 +17,13 @@ import {
   reflectImages,
 } from './_components/blogWorkflow';
 
-type TopicStatus = 'unused' | 'used' | 'all';
-
 function AdminBlogContent() {
   const searchParams = useSearchParams();
-  // 주제 테이블
-  const [topics, setTopics] = useState<BlogTopic[]>([]);
-  const [loadingTopics, setLoadingTopics] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<TopicStatus>('unused');
-  const [categoryFilter, setCategoryFilter] = useState<string>('전체');
 
   // 초안 편집기 상태
   const [generating, setGenerating] = useState(false);
   const [draftSlug, setDraftSlug] = useState('');
   const [markdown, setMarkdown] = useState('');
-  const [activeTopicId, setActiveTopicId] = useState<number | null>(null);
 
   // 이미지 워크플로우
   const [plans, setPlans] = useState<PlanItem[]>([]);
@@ -45,22 +37,6 @@ function AdminBlogContent() {
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTopics = async (status: TopicStatus) => {
-    setLoadingTopics(true);
-    try {
-      const data = await blogService.listTopics(status);
-      setTopics(data);
-    } catch {
-      setTopics([]);
-    } finally {
-      setLoadingTopics(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTopics(statusFilter);
-  }, [statusFilter]);
-
   /** 편집기에 마크다운 로드 + 이미지 워크플로우 초기화 */
   const loadDraft = (slug: string, md: string) => {
     setDraftSlug(slug);
@@ -72,12 +48,11 @@ function AdminBlogContent() {
     setPublishResult(null);
   };
 
-  const handleGenerate = async (payload: { topic_id: number } | { custom_prompt: string }) => {
+  const handleGenerate = async (customPrompt: string) => {
     setGenerating(true);
     setError(null);
-    setActiveTopicId('topic_id' in payload ? payload.topic_id : null);
     try {
-      const result = await blogService.generate(payload);
+      const result = await blogService.generate({ custom_prompt: customPrompt });
       loadDraft(result.slug, result.markdown);
     } catch (e) {
       setError(e instanceof Error ? e.message : '생성에 실패했습니다.');
@@ -91,7 +66,6 @@ function AdminBlogContent() {
     setError(null);
     try {
       const res = await blogService.getPost(slug);
-      setActiveTopicId(null); // 재게재는 topic 연결 없이 업데이트
       loadDraft(res.slug, res.markdown);
     } catch (e) {
       setError(e instanceof Error ? e.message : '글을 불러오지 못했습니다.');
@@ -123,7 +97,6 @@ function AdminBlogContent() {
       const result = await blogService.publish({
         slug: draftSlug,
         markdown,
-        ...(activeTopicId !== null ? { topic_id: activeTopicId } : {}),
         ...(previewImages.length > 0
           ? { images: previewImages.map((i) => ({ path: i.path, base64: i.base64 })) }
           : {}),
@@ -137,7 +110,6 @@ function AdminBlogContent() {
           : {}),
       });
       setPublishResult(result);
-      fetchTopics(statusFilter); // used 처리 반영
     } catch (e) {
       setError(e instanceof Error ? e.message : '게재에 실패했습니다.');
     } finally {
@@ -151,18 +123,7 @@ function AdminBlogContent() {
     <div className="space-y-6">
       <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">블로그</h1>
 
-      <TopicPanel
-        topics={topics}
-        loading={loadingTopics}
-        statusFilter={statusFilter}
-        categoryFilter={categoryFilter}
-        generating={generating}
-        onStatusFilter={setStatusFilter}
-        onCategoryFilter={setCategoryFilter}
-        onGenerateFromTopic={(id) => handleGenerate({ topic_id: id })}
-        onGenerateFromPrompt={(prompt) => handleGenerate({ custom_prompt: prompt })}
-        onTopicsChanged={() => fetchTopics(statusFilter)}
-      />
+      <CustomPromptPanel generating={generating} onGenerate={handleGenerate} />
 
       <PublishedPostsPanel loadingSlug={loadingSlug} onLoad={handleLoadPost} />
 

@@ -1,6 +1,5 @@
 import { apiFetch } from './api';
 import {
-  BlogTopic,
   BlogDraft,
   BlogPublishResult,
   BlogImagePlanResponse,
@@ -13,33 +12,8 @@ import {
 
 // 계약서 3절 — 관리자 블로그 API (모두 admin 권한 필요)
 export const blogService = {
-  /** 주제 목록 조회 (기본 unused) */
-  async listTopics(status: 'unused' | 'used' | 'all' = 'unused'): Promise<BlogTopic[]> {
-    return apiFetch<BlogTopic[]>(`/api/v1/admin/blog/topics?status=${status}`);
-  },
-
-  /** 주제 직접 추가 (2단계) — angle 생략 시 BE가 카테고리 기본 훅으로 채움 */
-  async createTopic(payload: {
-    category: string;
-    title: string;
-    angle?: string;
-  }): Promise<BlogTopic> {
-    return apiFetch<BlogTopic>('/api/v1/admin/blog/topics', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-  },
-
-  /** 주제의 방향(angle)을 직접 수정 — 카테고리 기본 홍보 훅을 주제별로 덮어쓸 때 사용 */
-  async updateTopicAngle(topicId: number, angle: string): Promise<BlogTopic> {
-    return apiFetch<BlogTopic>(`/api/v1/admin/blog/topics/${topicId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ angle }),
-    });
-  },
-
-  /** AI 글 생성 — topic_id 또는 custom_prompt 중 하나 필수 */
-  async generate(payload: { topic_id: number } | { custom_prompt: string }): Promise<BlogDraft> {
+  /** AI 글 생성 — 직접 프롬프트로 작성 */
+  async generate(payload: { custom_prompt: string }): Promise<BlogDraft> {
     return apiFetch<BlogDraft>('/api/v1/admin/blog/generate', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -84,7 +58,6 @@ export const blogService = {
   async publish(payload: {
     slug: string;
     markdown: string;
-    topic_id?: number;
     images?: BlogPublishImage[];
     attachments?: BlogPublishImage[];
   }): Promise<BlogPublishResult> {

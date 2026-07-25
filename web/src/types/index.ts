@@ -342,7 +342,6 @@ export interface BlogPublishImage {
 export interface BlogPublishRequest {
   slug: string;
   markdown: string;
-  topic_id?: number;
   images?: BlogPublishImage[];
   attachments?: BlogPublishImage[];
 }
