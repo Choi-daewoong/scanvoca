@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   },
   description: '사진 찍으면 AI가 영단어를 자동 인식하는 영단어 앱. 수능·토익·토플 단어장을 무료로 만들어보세요.',
   keywords: ['영단어 앱', '단어장 앱', 'AI 영단어', '영어 단어 암기', '수능 영단어'],
+  verification: {
+    other: {
+      'naver-site-verification': '81051c79e95a31975a94d4bc903084f5b29edbef',
+    },
+  },
   icons: {
     icon: '/icons/favicon.ico',
     shortcut: '/icons/favicon-16x16.png',
