@@ -153,6 +153,45 @@ class ConversationClipCreateRequest(BaseModel):
     clip_url: str = Field(..., min_length=1, max_length=500)
 
 
+class ConversationTopicDiscoverRequest(BaseModel):
+    """Ask whether a raw subtitle excerpt is worth a post (POST .../discover-topic).
+
+    Dialogue-first discovery: the clipper walks real subtitles and sends candidate excerpts
+    here instead of trying to match pre-written topic wording (which strands clips whenever
+    no owned video happens to use that phrasing).
+    """
+    dialogue_en: str = Field(..., min_length=1)
+    video_title: str = Field(..., min_length=1, max_length=200)
+
+
+class ConversationTopicSuggestion(BaseModel):
+    """AI-proposed topic derived from a subtitle excerpt (nothing persisted yet)."""
+    title: str
+    angle: str
+
+
+class ConversationTopicDiscoverResponse(BaseModel):
+    """Discovery result. suggestion=None means "no teachable expression here" — a normal,
+    expected outcome (HTTP 200), not an error: the clipper simply tries the next excerpt."""
+    suggestion: Optional[ConversationTopicSuggestion] = None
+
+
+class ConversationClipDiscoveredCreateRequest(BaseModel):
+    """Register an AI-discovered topic + its already-cut clip in one call (POST .../discovered).
+
+    Carries title/angle instead of topic_id because the topic does not exist yet — it is
+    created from this payload, so the clip can never be orphaned by a missing topic.
+    """
+    title: str = Field(..., min_length=1, max_length=200)
+    angle: str = Field(..., min_length=1, max_length=500)
+    video_title: str = Field(..., min_length=1, max_length=200)
+    dialogue_en: str = Field(..., min_length=1)
+    dialogue_ko: Optional[str] = None
+    start_seconds: float = Field(..., ge=0)
+    end_seconds: float = Field(..., ge=0)
+    clip_url: str = Field(..., min_length=1, max_length=500)
+
+
 class ConversationClipResponse(BaseModel):
     """A conversation clip row (POST result + GET /admin/blog/conversation-clips)."""
     id: int

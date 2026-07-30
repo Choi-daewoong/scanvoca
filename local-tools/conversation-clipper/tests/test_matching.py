@@ -18,6 +18,9 @@ from clipper.matching import (  # noqa: E402
     format_seconds,
     build_ffmpeg_command,
     is_english_subtitles,
+    build_dialogue_windows,
+    window_dialogue_text,
+    window_bounds,
 )
 
 
@@ -356,3 +359,43 @@ class TestIsEnglishSubtitles:
         mixed = [{"text": "hi 안녕 hello 반가워 ok 좋아 sure 그래"}]
         # 라틴 문자 수 < 한글 문자 수인 경우 (대략) 임계값 미만으로 거부되는지
         assert is_english_subtitles(mixed, min_latin_ratio=0.9) is False
+
+
+class TestDiscoverWindows:
+    """자막을 먼저 훑어서 좋은 표현을 찾는 "discover" 모드용 순수 함수들.
+
+    기존 "match" 모드(find_best_subtitle_index)는 주제가 먼저 있고 그에 맞는 한 줄을
+    찾지만, discover 모드는 반대로 전체 대사를 겹치지 않는 구간으로 쪼개 각 구간을
+    AI에게 순서대로 보여준다 — 주제가 실제 대사에서 나오므로 구조적으로 매칭 실패가
+    없다."""
+
+    LINES = [
+        {"index": i, "start": float(i * 3), "end": float(i * 3 + 2), "text": f"line {i}"}
+        for i in range(1, 14)  # 13 lines
+    ]
+
+    def test_windows_cover_all_lines_without_overlap(self):
+        windows = build_dialogue_windows(self.LINES, window_size=6)
+        assert windows == [(0, 5), (6, 11), (12, 12)]
+
+    def test_windows_exact_multiple(self):
+        exact = self.LINES[:12]  # 12 lines, window_size=6 → 정확히 2등분
+        assert build_dialogue_windows(exact, window_size=6) == [(0, 5), (6, 11)]
+
+    def test_windows_empty_subtitles(self):
+        assert build_dialogue_windows([], window_size=6) == []
+
+    def test_window_dialogue_text_joins_non_blank_lines(self):
+        subs = [{"text": "Hey there"}, {"text": ""}, {"text": "How are you"}]
+        assert window_dialogue_text(subs, 0, 2) == "Hey there\nHow are you"
+
+    def test_window_bounds_pads_and_clamps(self):
+        subs = [{"start": 10.0, "end": 12.0}, {"start": 13.0, "end": 15.0}]
+        start, end = window_bounds(subs, 0, 1, pad=0.3)
+        assert start == 9.7
+        assert end == 15.3
+
+    def test_window_bounds_clamps_negative_start(self):
+        subs = [{"start": 0.1, "end": 1.0}]
+        start, _ = window_bounds(subs, 0, 0, pad=0.3, min_start=0.0)
+        assert start == 0.0

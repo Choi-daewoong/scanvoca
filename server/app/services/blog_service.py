@@ -294,6 +294,51 @@ class BlogService:
         return clip
 
     @staticmethod
+    def create_discovered_conversation_topic_and_clip(
+        db: Session,
+        *,
+        title: str,
+        angle: str,
+        video_title: str,
+        dialogue_en: str,
+        dialogue_ko: Optional[str],
+        start_seconds: float,
+        end_seconds: float,
+        clip_url: str,
+    ) -> ConversationClip:
+        """Create a conversation topic AND its clip together (dialogue-first discovery).
+
+        The original flow registered topics up front and let the clipper hunt for matching
+        footage, which strands a topic forever when no owned video uses that phrasing. Here
+        the topic is derived from footage we already have, so topic and clip are born as a
+        pair and the "topic with no possible clip" state cannot occur.
+
+        Category is fixed to '일상영어' and pipeline to 'conversation' — the only combination
+        the conversation auto-publish selector looks at. Reuses create_topic_with_pipeline +
+        create_conversation_clip unchanged; each commits in turn on the same session, and a
+        clip failure after the topic commit would only leave a topic in the normal
+        "awaiting a clip" state the pending-topics queue already handles, so no compensating
+        rollback is needed.
+        """
+        topic = BlogService.create_topic_with_pipeline(
+            db,
+            category="일상영어",
+            title=title,
+            angle=angle,
+            pipeline="conversation",
+        )
+        return BlogService.create_conversation_clip(
+            db,
+            topic_id=topic.id,
+            video_title=video_title,
+            dialogue_en=dialogue_en,
+            dialogue_ko=dialogue_ko,
+            start_seconds=start_seconds,
+            end_seconds=end_seconds,
+            clip_url=clip_url,
+        )
+
+    @staticmethod
     def list_conversation_clips(
         db: Session, status_filter: str = "all"
     ) -> List[ConversationClip]:

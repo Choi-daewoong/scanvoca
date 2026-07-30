@@ -564,6 +564,101 @@ Important:
                 print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
             return None
 
+    async def suggest_conversation_topic_from_dialogue(
+        self,
+        dialogue_en: str,
+        video_title: str,
+        existing_titles: Optional[List[str]] = None,
+    ) -> Optional[Dict[str, str]]:
+        """Propose a blog topic FROM a real subtitle excerpt (dialogue-first discovery).
+
+        Inverts the conversation pipeline: instead of writing a topic first and hunting for
+        a clip that happens to match its wording (which dead-ends at "no_ready_clip" whenever
+        the pre-written phrasing never appears in the videos we actually own), the local
+        clipper walks the subtitles and asks this method whether THIS excerpt is worth a post.
+
+        Returns {"title", "angle"} when the excerpt genuinely teaches something, or None when
+        it doesn't. None is the expected, common answer: most lines are filler. Forcing a
+        topic out of a mediocre excerpt is exactly the failure mode this redesign removes, so
+        the prompt states the "no expression -> say so" escape explicitly and the caller is
+        expected to just move on to the next excerpt. Also None on any API/parse error — the
+        caller has thousands of other excerpts, so a retry here buys nothing.
+        """
+        if self.model is None:
+            print("Gemini API key not configured")
+            return None
+
+        existing_block = ""
+        if existing_titles:
+            lines = "\n".join(f'- "{t}"' for t in existing_titles)
+            existing_block = f"\n[이미 등록된 주제 (중복 금지)]\n{lines}\n"
+
+        prompt = f"""당신은 영어 학습 서비스 "Scan Voca"의 콘텐츠 전략가입니다.
+아래는 실제 영상에서 그대로 가져온 대사 구간입니다. 이 대사가 일상 영어회화 학습자에게 가르칠 만한 표현을 담고 있는지 판단하세요.
+
+[영상 제목]
+{video_title}
+
+[대사 구간 (원문 그대로)]
+{dialogue_en}
+{existing_block}
+판단 기준:
+1. 원어민이 실제로 자주 쓰지만 한국인 학습자가 교과서에서 배우기 어려운 표현(관용구, 구동사, 뉘앙스 표현 등)이 있으면 좋은 소재입니다.
+2. 다음 중 하나라도 해당하면 좋은 소재가 아닙니다:
+   - 의미 없는 필러 대사(yeah, okay, um, hi 등 위주)
+   - 중학교 수준의 너무 뻔한 문장
+   - 앞뒤 맥락이 잘려 무슨 뜻인지 알 수 없는 대사
+   - 고유명사·줄거리에만 의존해서 그 영상을 안 본 사람에게는 쓸모없는 대사
+3. 좋은 소재가 아니면 억지로 주제를 만들지 말고 반드시 has_expression을 false로 답하세요. 억지로 만든 주제는 무가치하며, false는 정상적이고 흔한 답입니다.
+
+좋은 소재일 때만:
+4. title은 그 표현을 소재로 한 블로그 글 제목(한국어, 구어체, 클릭하고 싶어지는 톤).
+5. angle은 글의 방향·타깃·핵심 키워드 메모(한국어 1~2문장). **위 대사 중 핵심 표현을 원문 그대로 인용**해서 포함하세요.
+6. 위 [이미 등록된 주제]와 겹치는 주제는 만들지 마세요 (겹친다면 has_expression을 false로).
+7. 특정 AI 모델명(Gemini, GPT 등)은 절대 언급하지 마세요.
+
+반드시 아래 구조의 JSON 객체만 반환하세요. 다른 텍스트 금지:
+{{
+  "has_expression": true 또는 false,
+  "title": "주제 제목 (has_expression이 false면 빈 문자열)",
+  "angle": "글 방향/타깃/키워드 메모 (has_expression이 false면 빈 문자열)"
+}}"""
+
+        try:
+            response = self.model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0.8,
+                    "max_output_tokens": 2048,
+                    "response_mime_type": "application/json",
+                },
+            )
+            content = (response.text or "").strip()
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            result = json.loads(content.strip(), strict=False)
+            if not isinstance(result, dict):
+                return None
+            if not result.get("has_expression"):
+                return None
+            title = str(result.get("title", "")).strip()
+            angle = str(result.get("angle", "")).strip()
+            if not title or not angle:
+                # has_expression=true but nothing usable -> treat as "no expression".
+                return None
+            return {"title": title, "angle": angle}
+        except Exception as e:  # noqa: BLE001 - caller just moves to the next excerpt
+            error_msg = f"Conversation topic discovery error: {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
     async def tag_exam_passage(
         self, passage_text: str, question_text: str
     ) -> Optional[List[str]]:

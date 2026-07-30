@@ -1072,6 +1072,248 @@ class TestConversationClipEndpoints:
         assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+class TestConversationTopicDiscovery:
+    """자막 우선(dialogue-first) 발견 흐름 — 주제 판단 + 주제·클립 동시 등록."""
+
+    NAS_HEADERS = {"X-Api-Key": "naskey"}
+    DISCOVER_URL = "/api/v1/admin/blog/conversation-clips/discover-topic"
+    DISCOVERED_URL = "/api/v1/admin/blog/conversation-clips/discovered"
+
+    def _discover_payload(self):
+        return {
+            "dialogue_en": "You're totally off the hook for tonight.",
+            "video_title": "Friends S01E05",
+        }
+
+    def _discovered_payload(self, **overrides):
+        payload = {
+            "title": "off the hook, 진짜 뜻은 '봐준다'입니다",
+            "angle": "실제 대사 \"You're totally off the hook\"으로 배우는 원어민 표현",
+            "video_title": "Friends S01E05",
+            "dialogue_en": "You're totally off the hook for tonight.",
+            "dialogue_ko": "오늘 밤은 봐줄게.",
+            "start_seconds": 12.5,
+            "end_seconds": 18.0,
+            "clip_url": "https://clips.scanvoca.com/off-the-hook.mp4",
+        }
+        payload.update(overrides)
+        return payload
+
+    # ----- /discover-topic -----
+
+    def test_discover_requires_nas_key(self, client, monkeypatch):
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+        resp = client.post(self.DISCOVER_URL, json=self._discover_payload())
+        assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_discover_admin_jwt_not_allowed(self, client, admin_auth_headers, monkeypatch):
+        """사람용 JWT로는 불가 — 로컬 도구 전용 머신 엔드포인트."""
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+        resp = client.post(
+            self.DISCOVER_URL, json=self._discover_payload(), headers=admin_auth_headers
+        )
+        assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_discover_returns_suggestion(self, client, monkeypatch):
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+
+        async def fake_suggest(self, dialogue_en, video_title, existing_titles=None):
+            return {"title": "제안 제목", "angle": "제안 앵글"}
+
+        monkeypatch.setattr(
+            GeminiService, "suggest_conversation_topic_from_dialogue", fake_suggest
+        )
+        resp = client.post(
+            self.DISCOVER_URL, json=self._discover_payload(), headers=self.NAS_HEADERS
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.json()["suggestion"] == {"title": "제안 제목", "angle": "제안 앵글"}
+
+    def test_discover_no_expression_returns_null_suggestion(self, client, monkeypatch):
+        """쓸 만한 표현이 없으면 에러가 아니라 200 + suggestion=null (정상 결과)."""
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+
+        async def fake_suggest(self, dialogue_en, video_title, existing_titles=None):
+            return None
+
+        monkeypatch.setattr(
+            GeminiService, "suggest_conversation_topic_from_dialogue", fake_suggest
+        )
+        resp = client.post(
+            self.DISCOVER_URL, json=self._discover_payload(), headers=self.NAS_HEADERS
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.json()["suggestion"] is None
+
+    def test_discover_passes_existing_titles(self, client, db_session, monkeypatch):
+        """중복 제안 방지용으로 '일상영어' 기존 제목이 AI에 전달된다."""
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+        db_session.add_all([
+            BlogTopic(category="일상영어", title="기존 회화 주제", angle="a",
+                      status="unused", pipeline="conversation"),
+            BlogTopic(category="토익·비즈니스", title="토익 주제", angle="a",
+                      status="unused", pipeline="toeic"),
+        ])
+        db_session.commit()
+        captured = {}
+
+        async def fake_suggest(self, dialogue_en, video_title, existing_titles=None):
+            captured["titles"] = existing_titles
+            return None
+
+        monkeypatch.setattr(
+            GeminiService, "suggest_conversation_topic_from_dialogue", fake_suggest
+        )
+        client.post(
+            self.DISCOVER_URL, json=self._discover_payload(), headers=self.NAS_HEADERS
+        )
+        assert "기존 회화 주제" in captured["titles"]
+        assert "토익 주제" not in captured["titles"]
+
+    # ----- /discovered -----
+
+    def test_discovered_requires_nas_key(self, client, monkeypatch):
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+        resp = client.post(self.DISCOVERED_URL, json=self._discovered_payload())
+        assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_discovered_creates_topic_and_clip(self, client, db_session, monkeypatch):
+        """한 번의 호출로 BlogTopic + ConversationClip이 둘 다 생성된다."""
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+        payload = self._discovered_payload()
+
+        resp = client.post(self.DISCOVERED_URL, json=payload, headers=self.NAS_HEADERS)
+        assert resp.status_code == status.HTTP_201_CREATED
+        data = resp.json()
+        assert data["status"] == "ready"
+        assert data["clip_url"] == payload["clip_url"]
+        assert data["dialogue_ko"] == payload["dialogue_ko"]
+
+        clip = db_session.query(ConversationClip).filter_by(id=data["id"]).first()
+        assert clip is not None
+        assert clip.status == "ready"
+        assert clip.start_seconds == payload["start_seconds"]
+
+        topic = db_session.query(BlogTopic).filter_by(id=data["topic_id"]).first()
+        assert topic is not None
+        assert topic.title == payload["title"]
+        assert topic.angle == payload["angle"]
+        assert topic.category == "일상영어"
+        assert topic.pipeline == "conversation"
+        assert topic.status == "unused"
+
+    def test_discovered_topic_is_publishable_immediately(self, client, db_session, monkeypatch):
+        """생성 직후 conversation 자동발행 셀렉터가 바로 집어갈 수 있어야 한다
+        (주제만 있고 클립이 없어 no_ready_clip으로 막히던 구조적 문제의 해소 지점)."""
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+        resp = client.post(
+            self.DISCOVERED_URL, json=self._discovered_payload(), headers=self.NAS_HEADERS
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+
+        found = BlogService.get_unused_conversation_topic_with_ready_clip(db_session)
+        assert found is not None
+        topic, clip = found
+        assert topic.id == resp.json()["topic_id"]
+        assert clip.id == resp.json()["id"]
+
+    def test_discovered_service_returns_clip_linked_to_new_topic(self, db_session):
+        """서비스 단독 호출 — 새 토픽이 만들어지고 클립이 그 토픽을 가리킨다."""
+        clip = BlogService.create_discovered_conversation_topic_and_clip(
+            db_session,
+            title="새 주제",
+            angle="새 앵글",
+            video_title="Video",
+            dialogue_en="Let's call it a day.",
+            dialogue_ko="오늘은 여기까지 하죠.",
+            start_seconds=0.0,
+            end_seconds=4.0,
+            clip_url="https://clips.scanvoca.com/a.mp4",
+        )
+        topic = db_session.query(BlogTopic).filter_by(id=clip.topic_id).first()
+        assert topic.title == "새 주제"
+        assert topic.pipeline == "conversation"
+        assert topic.category == "일상영어"
+        assert clip.status == "ready"
+
+    def test_discovered_rejects_blank_title(self, client, monkeypatch):
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+        resp = client.post(
+            self.DISCOVERED_URL,
+            json=self._discovered_payload(title=""),
+            headers=self.NAS_HEADERS,
+        )
+        assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+class TestSuggestConversationTopicFromDialogue:
+    """GeminiService.suggest_conversation_topic_from_dialogue 단위 테스트 (모델 mock)."""
+
+    @staticmethod
+    def _run(payload_text, existing_titles=None):
+        captured = {}
+
+        class FakeResponse:
+            text = payload_text
+
+        class FakeModel:
+            def generate_content(self, prompt, generation_config=None):
+                captured["prompt"] = prompt
+                return FakeResponse()
+
+        service = GeminiService.__new__(GeminiService)
+        service.model = FakeModel()
+        out = asyncio.run(service.suggest_conversation_topic_from_dialogue(
+            dialogue_en="You're totally off the hook.",
+            video_title="Friends S01E05",
+            existing_titles=existing_titles,
+        ))
+        return out, captured.get("prompt", "")
+
+    def test_has_expression_true_returns_topic(self):
+        out, _ = self._run(json.dumps({
+            "has_expression": True, "title": "제목", "angle": "앵글",
+        }))
+        assert out == {"title": "제목", "angle": "앵글"}
+
+    def test_has_expression_false_returns_none(self):
+        out, _ = self._run(json.dumps({
+            "has_expression": False, "title": "", "angle": "",
+        }))
+        assert out is None
+
+    def test_true_but_empty_title_returns_none(self):
+        """has_expression=true인데 내용이 비면 억지 주제로 취급하지 않고 None."""
+        out, _ = self._run(json.dumps({
+            "has_expression": True, "title": "", "angle": "앵글",
+        }))
+        assert out is None
+
+    def test_invalid_json_returns_none(self):
+        out, _ = self._run("not json at all")
+        assert out is None
+
+    def test_prompt_includes_dialogue_and_existing_titles(self):
+        _, prompt = self._run(
+            json.dumps({"has_expression": False, "title": "", "angle": ""}),
+            existing_titles=["이미 있는 주제"],
+        )
+        assert "You're totally off the hook." in prompt
+        assert "Friends S01E05" in prompt
+        assert "이미 있는 주제" in prompt
+        # 억지 매칭 방지 지시 + AI 모델명 비노출 관례
+        assert "has_expression" in prompt
+        assert "Gemini" in prompt and "언급하지 마세요" in prompt
+
+    def test_no_model_returns_none(self):
+        service = GeminiService.__new__(GeminiService)
+        service.model = None
+        out = asyncio.run(service.suggest_conversation_topic_from_dialogue(
+            dialogue_en="d", video_title="v",
+        ))
+        assert out is None
+
+
 class TestAdminPassageAndClipGet:
     """관리자용 조회 엔드포인트 (JWT)."""
 

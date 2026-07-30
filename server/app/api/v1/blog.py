@@ -24,7 +24,11 @@ from app.schemas.blog import (
     ExamPassageResponse,
     ConversationPendingTopic,
     ConversationClipCreateRequest,
+    ConversationClipDiscoveredCreateRequest,
     ConversationClipResponse,
+    ConversationTopicDiscoverRequest,
+    ConversationTopicDiscoverResponse,
+    ConversationTopicSuggestion,
     BlogGenerateRequest,
     BlogDraft,
     BlogImagePlanRequest,
@@ -469,6 +473,70 @@ async def create_conversation_clip(
     clip = BlogService.create_conversation_clip(
         db,
         topic_id=payload.topic_id,
+        video_title=payload.video_title,
+        dialogue_en=payload.dialogue_en,
+        dialogue_ko=payload.dialogue_ko,
+        start_seconds=payload.start_seconds,
+        end_seconds=payload.end_seconds,
+        clip_url=payload.clip_url,
+    )
+    return clip
+
+
+@router.post(
+    "/conversation-clips/discover-topic",
+    response_model=ConversationTopicDiscoverResponse,
+)
+async def discover_conversation_topic(
+    payload: ConversationTopicDiscoverRequest,
+    db: Session = Depends(get_db),
+    _auth: None = Depends(require_nas_tool_key),
+):
+    """Judge one subtitle excerpt as blog-topic material (local clipper tool only — NAS key).
+
+    Dialogue-first half of the inverted conversation pipeline: the clipper streams real
+    subtitle excerpts here, and only the ones the AI judges genuinely teachable come back
+    with a topic. Persists NOTHING — the clipper cuts the clip first and then registers both
+    via /conversation-clips/discovered, so no topic is ever created without its footage.
+
+    "No good expression here" is returned as 200 with suggestion=null, not an error: most
+    excerpts are filler and the clipper is expected to walk right past them.
+    """
+    existing_titles = BlogService.list_titles_for_category(db, "일상영어")
+    suggestion = await GeminiService().suggest_conversation_topic_from_dialogue(
+        dialogue_en=payload.dialogue_en,
+        video_title=payload.video_title,
+        existing_titles=existing_titles,
+    )
+    if suggestion is None:
+        return ConversationTopicDiscoverResponse(suggestion=None)
+    return ConversationTopicDiscoverResponse(
+        suggestion=ConversationTopicSuggestion(
+            title=suggestion["title"], angle=suggestion["angle"]
+        )
+    )
+
+
+@router.post(
+    "/conversation-clips/discovered",
+    response_model=ConversationClipResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_discovered_conversation_clip(
+    payload: ConversationClipDiscoveredCreateRequest,
+    db: Session = Depends(get_db),
+    _auth: None = Depends(require_nas_tool_key),
+):
+    """Register an AI-discovered topic + its finished clip in one call (NAS key only).
+
+    Unlike POST /conversation-clips (which attaches a clip to a pre-existing topic_id and
+    409s on duplicates), the topic is created here from title/angle, so there is no existing
+    topic to collide with and no 404/409 path.
+    """
+    clip = BlogService.create_discovered_conversation_topic_and_clip(
+        db,
+        title=payload.title,
+        angle=payload.angle,
         video_title=payload.video_title,
         dialogue_en=payload.dialogue_en,
         dialogue_ko=payload.dialogue_ko,

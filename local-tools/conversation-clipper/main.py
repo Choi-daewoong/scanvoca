@@ -1,33 +1,57 @@
 """conversation-clipper — local NAS video clipping tool (NOT deployed to Cloud Run).
 
-Flow (per the phase-2 contract §2-3):
-  1. GET  {BACKEND_API_BASE}/admin/blog/conversation-clips/pending-topics  (X-Api-Key)
-  2. For each pending topic: scan NAS source ({title}/movie.{mp4,mkv,mov,avi,webm} + movie.srt), find the
-     best-matching dialogue window by keyword overlap, compute a padded clip window.
-  3. ffmpeg-cut that window with burned-in subtitles into the NAS output dir.
-  4. POST {BACKEND_API_BASE}/admin/blog/conversation-clips  with the result (X-Api-Key).
+Two modes:
 
-All the decision logic (matching, timestamps, ffmpeg argv) lives in clipper/matching.py as
-pure functions. This file only wires that logic to the NAS filesystem, ffmpeg, and the
-backend — each of those is a thin wrapper monkeypatchable in tests.
+  --mode match (topic-first, legacy): a topic is written first (in the admin UI), and
+    this tool searches NAS subtitles for dialogue overlapping that topic's wording.
+      1. GET  {BACKEND_API_BASE}/admin/blog/conversation-clips/pending-topics  (X-Api-Key)
+      2. For each pending topic: scan NAS source ({title}/movie.{mp4,mkv,mov,avi,webm} +
+         movie.srt), find the best-matching dialogue window by keyword overlap.
+      3. ffmpeg-cut that window with burned-in subtitles into the NAS output dir.
+      4. POST {BACKEND_API_BASE}/admin/blog/conversation-clips  with the result (X-Api-Key).
+    Structurally unreliable: a topic written without seeing the actual subtitle library
+    often has zero overlap with anything on the NAS and just sits stuck (real case: two
+    topics never matched any of the available shows/movies).
+
+  --mode discover (dialogue-first, default): scan every available English-subtitled
+    video's dialogue and let the model decide what's worth teaching, instead of hoping a
+    pre-written topic happens to match.
+      1. Scan NAS source, keep only videos whose subtitles pass is_english_subtitles.
+      2. Slice each video's subtitles into non-overlapping windows (build_dialogue_windows).
+      3. POST each window's text to {BACKEND_API_BASE}/admin/blog/conversation-clips/discover-topic
+         (X-Api-Key) — the model returns a topic {title, angle} grounded in that dialogue,
+         or null if the window isn't good teaching material (skipped, no forced match).
+      4. ffmpeg-cut a matched window, then POST {BACKEND_API_BASE}/admin/blog/conversation-clips/discovered
+         (X-Api-Key) to create the topic and its clip together in one call.
+    Every created topic is guaranteed to have a matching clip, by construction.
+
+All the decision logic (matching, windowing, timestamps, ffmpeg argv) lives in
+clipper/matching.py as pure functions. This file only wires that logic to the NAS
+filesystem, ffmpeg, and the backend — each of those is a thin wrapper monkeypatchable in
+tests.
 
 Config (CLI flags override .env / environment):
   NAS_SOURCE_DIR, NAS_OUTPUT_DIR, BACKEND_API_BASE, NAS_TOOL_API_KEY, CLIP_URL_PREFIX
+  DISCOVER_WINDOW_SIZE, DISCOVER_MAX_WINDOWS_PER_VIDEO, DISCOVER_MAX_NEW_TOPICS
 """
 from __future__ import annotations
 
 import argparse
 import os
+import re
 import subprocess
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from clipper.matching import (
+    build_dialogue_windows,
     build_ffmpeg_command,
     collect_dialogue,
     compute_clip_bounds,
     find_best_subtitle_index,
     is_english_subtitles,
+    window_bounds,
+    window_dialogue_text,
 )
 
 
@@ -40,6 +64,9 @@ class Config:
     clip_url_prefix: str
     context: int = 1
     pad: float = 0.3
+    discover_window_size: int = 6
+    discover_max_windows_per_video: int = 40
+    discover_max_new_topics: int = 5
 
 
 # ---------------- Thin IO wrappers (monkeypatched in tests) ----------------
@@ -87,6 +114,36 @@ def post_clip(cfg: Config, payload: Dict) -> Dict:
 
     resp = requests.post(
         f"{cfg.backend_api_base}/admin/blog/conversation-clips",
+        headers={"X-Api-Key": cfg.api_key},
+        json=payload,
+        timeout=30,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def fetch_topic_discovery(cfg: Config, dialogue_en: str, video_title: str) -> Optional[Dict]:
+    """POST a dialogue window to the backend; returns a {title, angle} suggestion or None
+    when the model judged the window isn't good teaching material (X-Api-Key auth)."""
+    import requests  # lazy
+
+    resp = requests.post(
+        f"{cfg.backend_api_base}/admin/blog/conversation-clips/discover-topic",
+        headers={"X-Api-Key": cfg.api_key},
+        json={"dialogue_en": dialogue_en, "video_title": video_title},
+        timeout=60,
+    )
+    resp.raise_for_status()
+    return resp.json().get("suggestion")
+
+
+def post_discovered_clip(cfg: Config, payload: Dict) -> Dict:
+    """POST an AI-discovered topic + its already-cut clip; backend creates both in one
+    call (X-Api-Key auth)."""
+    import requests  # lazy
+
+    resp = requests.post(
+        f"{cfg.backend_api_base}/admin/blog/conversation-clips/discovered",
         headers={"X-Api-Key": cfg.api_key},
         json=payload,
         timeout=30,
@@ -281,7 +338,84 @@ def process(cfg: Config) -> List[Dict]:
     return posted
 
 
-def _load_config_from_args() -> Config:
+# A discovered clip has no topic id yet at cut time (the topic is created together with
+# the clip in one call to /discovered, after the file already exists) — name the output
+# from the source video + window position instead, which is unique per (video, window).
+_SLUG_RE = re.compile(r"[^A-Za-z0-9]+")
+
+
+def _slugify(text: str) -> str:
+    return _SLUG_RE.sub("-", text).strip("-").lower() or "clip"
+
+
+# Skip windows too short to plausibly contain a real expression, without spending an AI
+# call on them — cheap local filter before the network round-trip.
+MIN_DISCOVER_WINDOW_CHARS = 40
+
+
+def discover(cfg: Config) -> List[Dict]:
+    """Scan every English-subtitled video's dialogue and let the model pick good
+    expressions, creating a topic + its clip together for each one found (the reverse of
+    process(): dialogue first, topic second — see module docstring).
+    """
+    media_files = find_source_media(cfg.source_dir)
+    created: List[Dict] = []
+
+    for media in media_files:
+        if len(created) >= cfg.discover_max_new_topics:
+            break
+
+        subtitles = load_subtitles(media["srt"])
+        if not is_english_subtitles(subtitles):
+            print(f"  skip {media['title']}: subtitle text isn't English (language mismatch)")
+            continue
+
+        windows = build_dialogue_windows(subtitles, window_size=cfg.discover_window_size)
+        windows = windows[: cfg.discover_max_windows_per_video]
+
+        for lo, hi in windows:
+            if len(created) >= cfg.discover_max_new_topics:
+                break
+
+            text = window_dialogue_text(subtitles, lo, hi)
+            if len(text) < MIN_DISCOVER_WINDOW_CHARS:
+                continue
+
+            suggestion = fetch_topic_discovery(cfg, text, media["title"])
+            if suggestion is None:
+                continue
+
+            start, end = window_bounds(subtitles, lo, hi, pad=cfg.pad)
+            output_filename = f"discover-{_slugify(media['title'])}-{lo}-{hi}.mp4"
+            ffmpeg_cmd = build_ffmpeg_command(
+                media["video"], media["srt"], start, end,
+                os.path.join(cfg.output_dir, output_filename),
+            )
+            code = run_ffmpeg(ffmpeg_cmd)
+            if code != 0:
+                print(f"  {media['title']} [{lo}:{hi}]: ffmpeg failed (exit {code}), skipping.")
+                continue
+
+            clip_url = f"{cfg.clip_url_prefix.rstrip('/')}/{output_filename}"
+            payload = {
+                "title": suggestion["title"],
+                "angle": suggestion["angle"],
+                "video_title": media["title"],
+                "dialogue_en": text,
+                "dialogue_ko": None,
+                "start_seconds": start,
+                "end_seconds": end,
+                "clip_url": clip_url,
+            }
+            result = post_discovered_clip(cfg, payload)
+            created.append(result)
+            print(f'  discovered "{suggestion["title"]}" from {media["title"]} [{lo}:{hi}] -> {clip_url}')
+
+    print(f"Done. {len(created)} new topic+clip pair(s) created.")
+    return created
+
+
+def _load_config_from_args() -> Tuple[Config, str]:
     try:
         from dotenv import load_dotenv  # lazy: keeps this module importable without it
 
@@ -290,6 +424,11 @@ def _load_config_from_args() -> Config:
         pass
 
     parser = argparse.ArgumentParser(description="conversation-clipper (local NAS tool)")
+    parser.add_argument(
+        "--mode", choices=["discover", "match"], default=os.getenv("CLIPPER_MODE", "discover"),
+        help="discover (default): scan dialogue first, let the model pick topics. "
+             "match (legacy): match pre-written topics against dialogue.",
+    )
     parser.add_argument("--source-dir", default=os.getenv("NAS_SOURCE_DIR"))
     parser.add_argument("--output-dir", default=os.getenv("NAS_OUTPUT_DIR"))
     parser.add_argument("--backend-api-base", default=os.getenv("BACKEND_API_BASE"))
@@ -297,6 +436,18 @@ def _load_config_from_args() -> Config:
     parser.add_argument("--clip-url-prefix", default=os.getenv("CLIP_URL_PREFIX"))
     parser.add_argument("--context", type=int, default=int(os.getenv("CLIP_CONTEXT", "1")))
     parser.add_argument("--pad", type=float, default=float(os.getenv("CLIP_PAD", "0.3")))
+    parser.add_argument(
+        "--discover-window-size", type=int,
+        default=int(os.getenv("DISCOVER_WINDOW_SIZE", "6")),
+    )
+    parser.add_argument(
+        "--discover-max-windows-per-video", type=int,
+        default=int(os.getenv("DISCOVER_MAX_WINDOWS_PER_VIDEO", "40")),
+    )
+    parser.add_argument(
+        "--discover-max-new-topics", type=int,
+        default=int(os.getenv("DISCOVER_MAX_NEW_TOPICS", "5")),
+    )
     args = parser.parse_args()
 
     missing = [
@@ -314,12 +465,18 @@ def _load_config_from_args() -> Config:
         clip_url_prefix=args.clip_url_prefix,
         context=args.context,
         pad=args.pad,
-    )
+        discover_window_size=args.discover_window_size,
+        discover_max_windows_per_video=args.discover_max_windows_per_video,
+        discover_max_new_topics=args.discover_max_new_topics,
+    ), args.mode
 
 
 def main() -> None:
-    cfg = _load_config_from_args()
-    process(cfg)
+    cfg, mode = _load_config_from_args()
+    if mode == "discover":
+        discover(cfg)
+    else:
+        process(cfg)
 
 
 if __name__ == "__main__":

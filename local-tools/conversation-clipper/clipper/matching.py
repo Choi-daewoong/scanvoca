@@ -70,6 +70,46 @@ def is_english_subtitles(
     return (latin / total) >= min_latin_ratio
 
 
+def build_dialogue_windows(subtitles: List[Dict], window_size: int = 6) -> List[Tuple[int, int]]:
+    """Non-overlapping [lo, hi] index windows spanning every subtitle line, in order.
+
+    Used by "discover" mode (scan-first: read all dialogue, let the model pick good
+    expressions) as opposed to "match" mode's find_best_subtitle_index (topic-first: find
+    the line that best overlaps an already-written topic). The last window may be shorter
+    than `window_size` if the line count doesn't divide evenly.
+    """
+    windows: List[Tuple[int, int]] = []
+    i = 0
+    n = len(subtitles)
+    while i < n:
+        end = min(i + window_size - 1, n - 1)
+        windows.append((i, end))
+        i = end + 1
+    return windows
+
+
+def window_dialogue_text(subtitles: List[Dict], lo: int, hi: int) -> str:
+    """Joined non-blank line text for an explicit [lo, hi] index window (inclusive)."""
+    lines = [subtitles[i].get("text", "").strip() for i in range(lo, hi + 1)]
+    return "\n".join(ln for ln in lines if ln)
+
+
+def window_bounds(
+    subtitles: List[Dict], lo: int, hi: int, pad: float = 0.3, min_start: float = 0.0
+) -> Tuple[float, float]:
+    """(start, end) seconds spanning an explicit [lo, hi] index window, padded.
+
+    Same padding rule as compute_clip_bounds, but for an explicit index range instead of
+    a symmetric center+context — discover mode's windows aren't necessarily centered on
+    anything, so there's no single "center" to express this in terms of.
+    """
+    start = subtitles[lo]["start"] - pad
+    if start < min_start:
+        start = min_start
+    end = subtitles[hi]["end"] + pad
+    return round(start, 3), round(end, 3)
+
+
 def _window_range(total: int, center_index: int, context: int) -> Tuple[int, int]:
     """Clamped [lo, hi] index range of `context` lines on each side of center."""
     lo = max(0, center_index - context)
