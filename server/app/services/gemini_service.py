@@ -107,7 +107,7 @@ Important:
                     content = content[:-3]
                 content = content.strip()
 
-                result = json.loads(content)
+                result = json.loads(content, strict=False)
                 return result
 
         except json.JSONDecodeError as e:
@@ -209,7 +209,9 @@ Important:
         # structured JSON (the caller renders the markdown from that structure).
         if include_practice_questions:
             practice_instruction = (
-                "\n11. 본문 마지막 홍보 섹션 **앞에** `## 실전 연습문제` 섹션이 들어갈 것입니다. "
+                "\n11. 이 글은 TOEIC RC(Reading, Part 5·6·7)만 다룹니다 — 본문 전체가 문법·어휘·독해 "
+                "관련 내용이어야 하며, LC(Listening, Part 1~4)는 본문에서도 절대 다루지 마세요. "
+                "\n12. 본문 마지막 홍보 섹션 **앞에** `## 실전 연습문제` 섹션이 들어갈 것입니다. "
                 "먼저 위 주제(제목/방향)가 TOEIC의 어느 파트에 해당하는 내용인지 판단하세요 — "
                 "문법 공식·품사·어형 변화·빈칸 채우기 같은 문법/어휘 주제라면 Part 5·6, "
                 "지문을 읽고 정보를 찾는 독해 전략·스킴 주제라면 Part 7입니다. "
@@ -343,7 +345,7 @@ Important:
                 content = content[:-3]
             content = content.strip()
 
-            result = json.loads(content)
+            result = json.loads(content, strict=False)
 
             # Normalize / validate
             slug = str(result.get("slug", "")).strip().lower()
@@ -438,7 +440,9 @@ Important:
         count = max(1, min(int(count or 5), 10))
 
         pipeline_hints = {
-            "toeic": "TOEIC(토익) 시험 대비 학습자를 대상으로, 실전 연습문제를 곁들일 수 있는 실용적인 주제.",
+            "toeic": "TOEIC(토익) 시험 대비 학습자를 대상으로, 실전 연습문제를 곁들일 수 있는 실용적인 주제. "
+            "반드시 RC(Reading, 문법·어휘·독해 — Part 5·6·7) 관련 주제만 제안하고, "
+            "LC(Listening, 파트 1~4) 관련 주제는 절대 제안하지 마세요.",
             "suneung": "수능·내신 영어를 준비하는 고등학생을 대상으로 하는 주제.",
             "conversation": "일상 영어회화 표현·상황을 다루는 주제.",
             "manual": "영어 학습 일반 주제.",
@@ -490,7 +494,7 @@ Important:
                 content = content[3:]
             if content.endswith("```"):
                 content = content[:-3]
-            result = json.loads(content.strip())
+            result = json.loads(content.strip(), strict=False)
             raw = result.get("suggestions") if isinstance(result, dict) else result
             if not isinstance(raw, list):
                 return []
@@ -561,7 +565,7 @@ Important:
                 content = content[3:]
             if content.endswith("```"):
                 content = content[:-3]
-            result = json.loads(content.strip())
+            result = json.loads(content.strip(), strict=False)
             raw = result.get("tags") if isinstance(result, dict) else result
             if not isinstance(raw, list):
                 return []
@@ -625,7 +629,7 @@ Important:
                 content = content[3:]
             if content.endswith("```"):
                 content = content[:-3]
-            result = json.loads(content.strip())
+            result = json.loads(content.strip(), strict=False)
             naver_title = str(result.get("title", "")).strip()
             naver_content = str(result.get("content", "")).strip()
             if not naver_title or not naver_content:
@@ -707,7 +711,7 @@ Important:
                 content = content[:-3]
             content = content.strip()
 
-            result = json.loads(content)
+            result = json.loads(content, strict=False)
             plans = result.get("plans") if isinstance(result, dict) else result
             if not isinstance(plans, list):
                 return []
@@ -836,7 +840,7 @@ Rules:
                 return {"words": [], "raw_text": ""}
 
             content = content[start:end]
-            words_list = json.loads(content)
+            words_list = json.loads(content, strict=False)
 
             if not isinstance(words_list, list):
                 return {"words": [], "raw_text": ""}
