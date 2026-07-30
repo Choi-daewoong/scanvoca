@@ -26,6 +26,9 @@ server/check_user_wordbooks.py
 server/set_admin.py
 idea.md
 
+# 저작권 있는 수능/모의고사 원본 PDF (ingest_exam_pdfs.py 로컬 인제스트용, 커밋 금지)
+docs/
+
 # Node modules
 node_modules/
 
