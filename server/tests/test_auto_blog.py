@@ -1178,24 +1178,47 @@ class TestIngestParsing:
         }
         assert validate_parsed_item(item) is not None
 
-    def test_validate_parsed_item_rejects_embedded_marker_even_when_shape_looks_valid(self):
-        # 실운영 버그: 2022 29번(어법상 틀린 것)이 choices 5개 각각 250자 미만(최대 249자)
-        # 으로 우연히 형태 검사를 통과해 그대로 DB에 들어갔다 — 실제로 나온 블로그 글이
-        # 보기에 없는 단어를 설명하는 사고로 이어졌다. 길이/개수가 우연히 정상처럼 보여도
-        # question_text 자체로 이 유형은 걸러져야 한다.
+    def test_validate_parsed_item_rejects_underline_choice_with_wrong_span_count(self):
+        # 실운영 버그: 2022 29번(어법상 틀린 것)이 parse_choices로 잘못 쪼개져 choices 5개가
+        # 전부 250자 미만(최대 249자)으로 우연히 형태 검사를 통과해 그대로 DB에 들어갔다 —
+        # 실제로 나온 블로그 글이 보기에 없는 단어를 설명하는 사고로 이어졌다(이제
+        # parse_underline_choice_block이 <u> 구간에서만 choices를 뽑으므로 이 시나리오
+        # 자체는 재현 안 되지만, 밑줄 감지가 5개를 못 찾은 경우는 여전히 걸러져야 한다).
         from ingest_exam_pdfs import validate_parsed_item
         item = {
             "question_text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [3점]",
-            "passage_text": "Like whole individuals, cells have a life span in the cell cycle.",
-            # 5개, 전부 250자 미만 — 형태만 보면 정상 보기 목록처럼 보이는 실제 사례 재현.
-            "choices": ["short one", "short two", "short three", "short four", "short five"],
+            "passage_text": "Like whole individuals, cells have a <u>life</u> span in the cell cycle.",
+            "choices": ["life"],  # 밑줄 감지가 1개만 찾은 경우 — 5개가 아니므로 거부
         }
         assert validate_parsed_item(item) is not None
 
-    def test_validate_parsed_item_rejects_vocab_in_context_type(self):
+    def test_validate_parsed_item_accepts_underline_choice_with_five_spans(self):
         from ingest_exam_pdfs import validate_parsed_item
         item = {
             "question_text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+            "passage_text": "Some passage text here that is long enough for a real reading passage.",
+            "choices": ["a", "b", "c", "d", "e"],  # 실제로는 <u> 추출 결과라고 가정
+        }
+        assert validate_parsed_item(item) is None
+
+    def test_validate_parsed_item_rejects_irrelevant_sentence_type(self):
+        # 무관 문장 찾기는 밑줄이 없어(문장 앞 번호만) 아직 지원하지 않는다.
+        from ingest_exam_pdfs import validate_parsed_item
+        item = {
+            "question_text": "다음 글에서 전체 흐름과 관계 없는 문장은?",
+            "passage_text": "Some passage text here that is long enough for a real reading passage.",
+            "choices": ["a", "b", "c", "d", "e"],
+        }
+        assert validate_parsed_item(item) is not None
+
+    def test_validate_parsed_item_rejects_irrelevant_sentence_with_stray_underline(self):
+        # 실운영 버그: 이 유형의 문제 지문 자체("...관계 없는 문장은?")에 강조용 밑줄이
+        # 붙어("관계 <u>없는</u> 문장") 그대로 감지되면, 그 태그가 문구 중간에 끼어들어
+        # 리터럴 정규식 매치가 깨지고 이 유형이 걸러지지 않은 채 옛 마커분할 경로로 흘러가
+        # (실제로 5개 연도 전부, 재인제스트 한 번에 깨진 채로 다시 들어갔었다) 회귀 발생.
+        from ingest_exam_pdfs import validate_parsed_item
+        item = {
+            "question_text": "다음 글에서 전체 흐름과 관계 <u>없는</u> 문장은?",
             "passage_text": "Some passage text here that is long enough for a real reading passage.",
             "choices": ["a", "b", "c", "d", "e"],
         }
@@ -1247,6 +1270,92 @@ class TestIngestParsing:
             "35. 다음 글의 흐름과 관계 없는 문장은?\n"
             "Since their introduction, information systems have changed business.\n"
             "① This is particularly true. ② The networks cover units.\n"
+        )
+        assert parse_exam_text(text) == []
+
+    def test_parse_underline_choice_block_extracts_u_spans_as_choices(self):
+        from ingest_exam_pdfs import parse_underline_choice_block
+        block = (
+            "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [3점]\n"
+            "A cell is born as a twin when its mother cell <u>divides</u>,\n"
+            "producing two daughter cells that <u>grows</u> until it becomes\n"
+            "as large as the mother cell <u>was</u>. The cell then <u>matures</u>\n"
+            "and differentiates into a specialized cell <u>involving</u> parts."
+        )
+        parsed = parse_underline_choice_block(block)
+        assert parsed["question_text"] == "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [3점]"
+        assert parsed["choices"] == ["divides", "grows", "was", "matures", "involving"]
+        # 지문이 마커 위치로 잘리지 않고 끝까지 온전히 보존되는지 (실운영 버그: 첫 마커에서
+        # passage_text가 잘려버렸었다).
+        assert "specialized cell" in parsed["passage_text"]
+        assert "involving" in parsed["passage_text"]
+
+    def test_parse_exam_text_accepts_real_underline_choice_shape(self):
+        # 2022 수능 29번과 같은 구조(<u> 5개)를 실제로 파싱 성공시키는지 — 회귀 시 이게
+        # 다시 스킵되면 무엇보다 심각하다(전체 유형이 영구히 봉쇄됨).
+        from ingest_exam_pdfs import parse_exam_text
+        text = (
+            "29. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [3점]\n"
+            "A cell is born as a twin when its mother cell <u>divides</u>,\n"
+            "producing two daughter cells that <u>grows</u> until it becomes\n"
+            "as large as the mother cell <u>was</u>. The cell then <u>matures</u>\n"
+            "and differentiates into a specialized cell <u>involving</u> parts.\n"
+        )
+        results = parse_exam_text(text)
+        assert len(results) == 1
+        item = results[0]
+        assert item["problem_number"] == 29
+        assert item["choices"] == ["divides", "grows", "was", "matures", "involving"]
+        assert "specialized cell" in item["passage_text"]
+
+    def test_parse_underline_choice_block_strips_fused_circled_digit_and_question_underline(self):
+        # 실제 2022 29번 PDF에서 그대로 재현된 형태: 원문자가 밑줄 친 단어에 공백 없이
+        # 붙어(pdfplumber가 "①producing"을 한 토큰으로 인식) <u> 태그 안에 함께 들어오고,
+        # 문제 지문 자체의 강조용 밑줄("어법상 <u>틀린</u> 것은?")도 그대로 남는다.
+        from ingest_exam_pdfs import parse_underline_choice_block
+        block = (
+            "다음 글의 밑줄 친 부분 중, 어법상 <u>틀린</u> 것은? [3점]\n"
+            "cell divides, <u>①producing</u> two daughter cells. Each daughter\n"
+            "cell is smaller until it becomes as large as the mother cell <u>②was.</u>\n"
+            "metabolism shifts <u>③differentiates</u> into a specialized cell.\n"
+            "involving all cell parts. <u>④What</u> cell metabolism and structure\n"
+            "only a small number of parts, each <u>⑤responsible</u> for a distinct."
+        )
+        parsed = parse_underline_choice_block(block)
+        assert parsed["question_text"] == "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [3점]"
+        assert "<u>" not in parsed["question_text"]
+        assert parsed["choices"] == ["producing", "was.", "differentiates", "What", "responsible"]
+
+    def test_parse_underline_choice_block_handles_wrapped_question_stem(self):
+        # 실제 2022 30번 재현: 질문 문장이 길어서 2줄로 줄바꿈되고, 그 두 번째 줄
+        # ("않은 것은?")에 강조용 밑줄까지 걸려 있었다 — lines[0]만 question_text로 쓰면
+        # 두 번째 줄이 지문 맨 앞에 섞여 들어가고, 그 밑줄이 진짜 보기 하나를 밀어낸다.
+        from ingest_exam_pdfs import parse_underline_choice_block
+        block = (
+            "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지\n"
+            "<u>않은</u> 것은?\n"
+            "It has been suggested that organic methods would <u>①reduce</u>\n"
+            "yields. Inorganic nitrogen supplies are <u>②essential</u> for crops,\n"
+            "and there are <u>③benefits</u> to manure. Weed control needs\n"
+            "<u>④fewer</u> people willing to do this work as societies age,\n"
+            "and crop rotation can make <u>⑤contributions</u> to sustainability."
+        )
+        parsed = parse_underline_choice_block(block)
+        assert parsed["question_text"] == "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?"
+        assert "<u>" not in parsed["question_text"]
+        assert parsed["choices"] == ["reduce", "essential", "benefits", "fewer", "contributions"]
+        assert not parsed["passage_text"].startswith("않은")
+
+    def test_parse_exam_text_rejects_underline_choice_with_missing_span(self):
+        # 밑줄 감지가 5개 중 하나를 놓치면(실제 PDF에서 벌어질 수 있는 일) 통째로 스킵되어야
+        # 한다 — 4개짜리 잘못된 choices로 들어가는 것보다 안전하다.
+        from ingest_exam_pdfs import parse_exam_text
+        text = (
+            "29. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [3점]\n"
+            "A cell is born as a twin when its mother cell <u>divides</u>,\n"
+            "producing two daughter cells that grows until it becomes\n"
+            "as large as the mother cell <u>was</u>. The cell then <u>matures</u>\n"
+            "and differentiates into a specialized cell <u>involving</u> parts.\n"
         )
         assert parse_exam_text(text) == []
 

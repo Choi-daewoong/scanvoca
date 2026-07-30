@@ -72,15 +72,51 @@ def parse_choices(block: str) -> tuple:
     return body, choices
 
 
-# 어법상 틀린 것/문맥상 낱말 쓰임/무관한 문장 유형: ①~⑤ 표시가 지문 끝에 나열된 목록이
-# 아니라 지문 문장 **중간중간**에 박혀 있다. split_problems/parse_choices는 "지문 다음에
-# 짧은 보기 5개가 나열된" 구조만 가정하므로, 이 유형은 항상 passage_text가 첫 표시에서
-# 잘리고 choices에는 표시 사이사이의 지문 조각이 담긴다 — 우연히 조각 길이가 250자 이하로
-# 나오면(실측: 2022 29번이 249자로 통과) 아래 길이 휴리스틱을 피해간다. 이 세 유형은 문구가
-# 항상 고정돼 있으므로(실측 5개 연도 전부 동일 문구) 길이가 아니라 문제 유형 자체로 걸러낸다.
-_EMBEDDED_MARKER_QUESTION_RE = re.compile(
-    r"(밑줄\s*친\s*부분\s*중|전체\s*흐름과\s*관계\s*없는\s*문장)"
-)
+# 어법상 틀린 것/문맥상 낱말 쓰임 유형: ①~⑤ 표시가 지문 끝에 나열된 목록이 아니라, 지문
+# 문장 중간중간 밑줄 친 단어/구 바로 앞에 박혀 있다. 이 유형은 word_is_underlined()가 남긴
+# <u>...</u> 구간(collect_underline_shapes 참고)이 실제 선택지이므로, 마커 위치로 지문을
+# 자르지 않고 그 구간들을 그대로 뽑아 쓴다(parse_underline_choice_block).
+_UNDERLINE_CHOICE_QUESTION_RE = re.compile(r"밑줄\s*친\s*부분\s*중")
+# 무관 문장 찾기: ①~⑤가 밑줄 없이 문장 앞에만 붙는다 — 문장 단위 분리가 별도로 필요해
+# 아직 지원하지 않는다(이 유형은 계속 스킵).
+_UNSUPPORTED_EMBEDDED_QUESTION_RE = re.compile(r"전체\s*흐름과\s*관계\s*없는\s*문장")
+_UNDERLINE_SPAN_RE = re.compile(r"<u>(.*?)</u>", re.DOTALL)
+# The circled digit sits immediately against the underlined word in the source PDF with
+# no space ("①producing"), so pdfplumber's whitespace-delimited word extraction fuses
+# them into one token and the underline stroke covers both — strip the label back off
+# the extracted choice text (real answer text is never itself a circled digit).
+_LEADING_CIRCLED_RE = re.compile(r"^[①②③④⑤]\s*")
+
+
+def parse_underline_choice_block(block: str) -> Dict[str, object]:
+    """Parse an 어법상 틀린 것/문맥상 낱말 쓰임 block into {question_text, passage_text, choices}.
+
+    Unlike parse_choices, the passage is kept whole (never truncated at a marker
+    position) — the quoted passage must stay complete for a reader to judge "which
+    underlined part", and the actual choices come from the <u>...</u> spans already
+    present in `block`'s text (see word_is_underlined / _words_to_text), not from
+    slicing at circled-digit positions.
+    """
+    lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
+    # The question stem can wrap across 2+ physical lines when it's long (real case:
+    # "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지\n않은 것은?" — 2022 30번).
+    # Taking only lines[0] then left the second half ("않은 것은?") glued onto the front
+    # of passage_text, which also dragged that line's stray emphasis-underline into the
+    # choice scan below. The stem always ends in '?', so join every line up to and
+    # including the first one containing '?' — a single-line stem (the common case)
+    # degrades to exactly the old lines[0] behavior.
+    q_end = next((i for i, ln in enumerate(lines) if "?" in ln), 0)
+    # The question stem itself sometimes has its own emphasis underline (e.g. "어법상
+    # <u>틀린</u> 것은?") from the same detection pass — that's typographic emphasis in
+    # the source, not an answer choice, so it's stripped back to plain text here rather
+    # than leaking raw <u> markup into a field nothing downstream expects it in.
+    question_text = _UNDERLINE_SPAN_RE.sub(r"\1", " ".join(lines[: q_end + 1])) if lines else ""
+    passage_text = "\n".join(lines[q_end + 1 :]).strip()
+    choices = [
+        _LEADING_CIRCLED_RE.sub("", m.group(1).strip()).strip()
+        for m in _UNDERLINE_SPAN_RE.finditer(passage_text)
+    ]
+    return {"question_text": question_text, "passage_text": passage_text, "choices": choices}
 
 
 def validate_parsed_item(item: Dict) -> Optional[str]:
@@ -95,15 +131,31 @@ def validate_parsed_item(item: Dict) -> Optional[str]:
     that got swallowed into `choices` (or the reverse) rather than a genuine short option.
     """
     question_text = item.get("question_text", "")
-    if _EMBEDDED_MARKER_QUESTION_RE.search(question_text):
-        return "embedded-marker question type (밑줄 친 부분 중/무관한 문장) unsupported by this parser"
     choices = item.get("choices")
-    if choices is not None:
+    # Type-classification must run on de-tagged text: a stray emphasis-underline on a
+    # word *inside* the matched phrase (real case: "관계 <u>없는</u> 문장" — 무관 문장
+    # 찾기's own instruction word got underlined) breaks a literal-phrase regex match,
+    # letting the item silently fall through to the old marker-splitting path instead of
+    # being rejected — the exact corruption this whole check exists to prevent.
+    classify_text = _UNDERLINE_SPAN_RE.sub(r"\1", question_text)
+    if _UNSUPPORTED_EMBEDDED_QUESTION_RE.search(classify_text):
+        return "무관 문장 찾기 unsupported by this parser (no underline to anchor choices to)"
+    is_underline_choice = bool(_UNDERLINE_CHOICE_QUESTION_RE.search(classify_text))
+    if is_underline_choice:
+        # Real 수능 어법/어휘-문맥 items always underline exactly 5 spans. Anything else
+        # means underline detection missed/over-matched on this passage — skip rather
+        # than ingest choices that don't correspond to the real ①~⑤ markers (the exact
+        # failure mode that produced a wrong live post — see conversation history).
+        if not choices or len(choices) != 5:
+            return f"underline-choice item needs exactly 5 <u> spans, got {len(choices or [])}"
+        if any(len(c) > 250 for c in choices):
+            return "an underlined span is implausibly long"
+    elif choices is not None:
         if len(choices) != 5:
             return f"choice count {len(choices)} != 5"
         if any(len(c) > 250 for c in choices):
             return "a choice is implausibly long (likely swallowed passage text)"
-    if len(item.get("question_text", "")) > 200:
+    if len(question_text) > 200:
         return "question_text implausibly long (likely cross-contaminated block)"
     passage = item.get("passage_text", "")
     if len(passage) < 20:
@@ -131,19 +183,31 @@ def parse_exam_text(text: str) -> List[Dict]:
     """
     results: List[Dict] = []
     for num, block in split_problems(text):
-        body, choices = parse_choices(block)
-        lines = [ln.strip() for ln in body.splitlines() if ln.strip()]
-        if not lines:
-            continue
-        question_text = lines[0]
-        passage_text = "\n".join(lines[1:]).strip()
+        first_line = next((ln.strip() for ln in block.splitlines() if ln.strip()), "")
+        # Classify on de-tagged text (see validate_parsed_item's matching comment) — a
+        # stray emphasis-underline landing inside the matched phrase itself would
+        # otherwise break this routing check the same way it broke the reject-check for
+        # 무관 문장 찾기 (real case: "관계 <u>없는</u> 문장").
+        if _UNDERLINE_CHOICE_QUESTION_RE.search(_UNDERLINE_SPAN_RE.sub(r"\1", first_line)):
+            parsed = parse_underline_choice_block(block)
+            question_text = str(parsed["question_text"])
+            passage_text = str(parsed["passage_text"])
+            choices = parsed["choices"] or None
+        else:
+            body, raw_choices = parse_choices(block)
+            lines = [ln.strip() for ln in body.splitlines() if ln.strip()]
+            if not lines:
+                continue
+            question_text = lines[0]
+            passage_text = "\n".join(lines[1:]).strip()
+            choices = raw_choices or None
         if not question_text or not passage_text:
             continue  # unrecoverable — skip (reported by caller)
         item = {
             "problem_number": num,
             "question_text": question_text,
             "passage_text": passage_text,
-            "choices": choices or None,
+            "choices": choices,
         }
         if validate_parsed_item(item) is not None:
             continue  # implausible shape — skip (reported by caller)
