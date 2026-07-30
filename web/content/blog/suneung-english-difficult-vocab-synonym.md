@@ -37,7 +37,11 @@ continue to believe that computers will take us to a magical new
 world, the longer we will <u>⑤maintain</u> their natural fusion with
 our lives, the hallmark of every major movement that aspires to
 be called a socioeconomic revolution.
+
+
 *hype: 과대광고 **hallmark: 특징"
+
+
 
 이 글은 정보 기술의 발전에 대해 이야기하며, 기술이 우리 삶에 어떻게 통합되는지에 대한 비유를 사용합니다. 밑줄 친 부분 중 문맥상 어색한 단어를 찾는 문제였죠. 정답은 5번 'maintain'이었습니다. 왜 그럴까요? 뒤따르는 "their natural fusion with our lives"라는 표현을 보면, 기술이 우리 삶에 '융합'되기 위해서는 '유지하는 것'이 아니라 오히려 '더욱 적극적으로 받아들이고 통합해야 한다'는 맥락이 자연스럽습니다. 즉, 기술이 우리에게 맞춰져야 한다는 주장과 연결되려면, 우리가 기술을 '유지(maintain)'하는 것이 아니라, 기술이 우리 삶 속으로 '흡수(absorb)'되어야 한다는 내용이 와야 합니다.
 
