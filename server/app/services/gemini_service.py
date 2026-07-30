@@ -1,5 +1,6 @@
 """Gemini service for word definitions and Vision OCR"""
 import json
+import re
 import base64
 from typing import Optional, Dict, Any, List
 import google.generativeai as genai
@@ -19,6 +20,21 @@ BLOG_IMAGE_MODEL = "gemini-2.5-flash-image"
 # only reliable way to control final pixel area.
 HERO_IMAGE_WIDTH = 1672
 HERO_IMAGE_HEIGHT = 940
+
+# conversation-clipper's dialogue-first discovery (suggest_conversation_topic_from_dialogue)
+# runs fully unattended via cron — unlike the manual-add topic flow, no admin reviews a
+# discovered topic before it can be auto-published. The prompt tells the model to avoid
+# profanity, but a real run still produced a title quoting "Fuck realistic" verbatim
+# (source dialogue happened to contain it) — prompt instructions alone aren't a reliable
+# content-safety gate for a service whose stated audience is 중·고등학생, so this is a
+# code-level backstop, not a replacement for the prompt instruction.
+_PROFANITY_RE = re.compile(
+    r"\b(fuck|shit|bitch|asshole|dick|pussy|cunt|bastard)\w*\b", re.IGNORECASE
+)
+
+
+def _contains_profanity(*texts: str) -> bool:
+    return any(_PROFANITY_RE.search(t) for t in texts)
 
 
 def _has_api_key() -> bool:
@@ -602,6 +618,8 @@ Important:
 [대사 구간 (원문 그대로)]
 {dialogue_en}
 {existing_block}
+이 서비스의 타겟 사용자는 중·고등학생입니다 — 판단 시 반드시 고려하세요.
+
 판단 기준:
 1. 원어민이 실제로 자주 쓰지만 한국인 학습자가 교과서에서 배우기 어려운 표현(관용구, 구동사, 뉘앙스 표현 등)이 있으면 좋은 소재입니다.
 2. 다음 중 하나라도 해당하면 좋은 소재가 아닙니다:
@@ -609,6 +627,7 @@ Important:
    - 중학교 수준의 너무 뻔한 문장
    - 앞뒤 맥락이 잘려 무슨 뜻인지 알 수 없는 대사
    - 고유명사·줄거리에만 의존해서 그 영상을 안 본 사람에게는 쓸모없는 대사
+   - **욕설·비속어·성적 표현이 핵심 표현이거나, 그런 단어를 그대로 인용해야만 설명이 되는 대사** (중·고등학생 대상 서비스에 절대 부적절 — 표현 자체가 욕설이 아니어도 주변 대사에 욕설이 섞여 있으면 그 부분은 인용하지 말고, 욕설을 빼면 소재가 안 될 정도라면 has_expression을 false로)
 3. 좋은 소재가 아니면 억지로 주제를 만들지 말고 반드시 has_expression을 false로 답하세요. 억지로 만든 주제는 무가치하며, false는 정상적이고 흔한 답입니다.
 
 좋은 소재일 때만:
@@ -649,6 +668,12 @@ Important:
             angle = str(result.get("angle", "")).strip()
             if not title or not angle:
                 # has_expression=true but nothing usable -> treat as "no expression".
+                return None
+            if _contains_profanity(title, angle):
+                # Prompt already asks the model to avoid this; a real run still slipped
+                # one through (see _PROFANITY_RE comment) — treat like "no expression"
+                # rather than raising, since the caller just moves on to the next excerpt.
+                print(f"Conversation topic discovery: rejected for profanity: {title!r}")
                 return None
             return {"title": title, "angle": angle}
         except Exception as e:  # noqa: BLE001 - caller just moves to the next excerpt

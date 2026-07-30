@@ -1289,6 +1289,32 @@ class TestSuggestConversationTopicFromDialogue:
         }))
         assert out is None
 
+    def test_profanity_in_title_rejected(self):
+        """실운영 버그: 프롬프트 지시에도 불구하고 실제로 "Fuck realistic"을 그대로 인용한
+        제목이 나온 적이 있다 — 사람 검수 없이 크론으로 바로 발행되는 구조라 프롬프트만
+        믿을 수 없다. 코드 레벨 차단이 실제로 동작하는지 확인."""
+        out, _ = self._run(json.dumps({
+            "has_expression": True,
+            "title": "'현실적으로 생각하자'는 말, 'Fuck realistic'로 뒤집어보세요",
+            "angle": "직장에서 쓸 수 있는 표현",
+        }))
+        assert out is None
+
+    def test_profanity_in_angle_rejected(self):
+        out, _ = self._run(json.dumps({
+            "has_expression": True,
+            "title": "정상적인 제목",
+            "angle": "This asshole move는 실제 대사에서 나온 표현입니다",
+        }))
+        assert out is None
+
+    def test_clean_content_not_falsely_flagged(self):
+        # "damn"이 아니라 문맥상 흔한 단어(예: "classic")가 오탐되지 않는지.
+        out, _ = self._run(json.dumps({
+            "has_expression": True, "title": "그거 완전 클래식이네!", "angle": "classic한 표현",
+        }))
+        assert out == {"title": "그거 완전 클래식이네!", "angle": "classic한 표현"}
+
     def test_invalid_json_returns_none(self):
         out, _ = self._run("not json at all")
         assert out is None
