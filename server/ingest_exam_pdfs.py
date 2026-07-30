@@ -72,6 +72,17 @@ def parse_choices(block: str) -> tuple:
     return body, choices
 
 
+# 어법상 틀린 것/문맥상 낱말 쓰임/무관한 문장 유형: ①~⑤ 표시가 지문 끝에 나열된 목록이
+# 아니라 지문 문장 **중간중간**에 박혀 있다. split_problems/parse_choices는 "지문 다음에
+# 짧은 보기 5개가 나열된" 구조만 가정하므로, 이 유형은 항상 passage_text가 첫 표시에서
+# 잘리고 choices에는 표시 사이사이의 지문 조각이 담긴다 — 우연히 조각 길이가 250자 이하로
+# 나오면(실측: 2022 29번이 249자로 통과) 아래 길이 휴리스틱을 피해간다. 이 세 유형은 문구가
+# 항상 고정돼 있으므로(실측 5개 연도 전부 동일 문구) 길이가 아니라 문제 유형 자체로 걸러낸다.
+_EMBEDDED_MARKER_QUESTION_RE = re.compile(
+    r"(밑줄\s*친\s*부분\s*중|전체\s*흐름과\s*관계\s*없는\s*문장)"
+)
+
+
 def validate_parsed_item(item: Dict) -> Optional[str]:
     """Return a skip-reason string if `item` looks like a bad parse, else None.
 
@@ -83,6 +94,9 @@ def validate_parsed_item(item: Dict) -> Optional[str]:
     5 short options, so anything wildly off that shape is almost certainly passage text
     that got swallowed into `choices` (or the reverse) rather than a genuine short option.
     """
+    question_text = item.get("question_text", "")
+    if _EMBEDDED_MARKER_QUESTION_RE.search(question_text):
+        return "embedded-marker question type (밑줄 친 부분 중/무관한 문장) unsupported by this parser"
     choices = item.get("choices")
     if choices is not None:
         if len(choices) != 5:

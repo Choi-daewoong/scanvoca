@@ -1178,6 +1178,39 @@ class TestIngestParsing:
         }
         assert validate_parsed_item(item) is not None
 
+    def test_validate_parsed_item_rejects_embedded_marker_even_when_shape_looks_valid(self):
+        # 실운영 버그: 2022 29번(어법상 틀린 것)이 choices 5개 각각 250자 미만(최대 249자)
+        # 으로 우연히 형태 검사를 통과해 그대로 DB에 들어갔다 — 실제로 나온 블로그 글이
+        # 보기에 없는 단어를 설명하는 사고로 이어졌다. 길이/개수가 우연히 정상처럼 보여도
+        # question_text 자체로 이 유형은 걸러져야 한다.
+        from ingest_exam_pdfs import validate_parsed_item
+        item = {
+            "question_text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [3점]",
+            "passage_text": "Like whole individuals, cells have a life span in the cell cycle.",
+            # 5개, 전부 250자 미만 — 형태만 보면 정상 보기 목록처럼 보이는 실제 사례 재현.
+            "choices": ["short one", "short two", "short three", "short four", "short five"],
+        }
+        assert validate_parsed_item(item) is not None
+
+    def test_validate_parsed_item_rejects_vocab_in_context_type(self):
+        from ingest_exam_pdfs import validate_parsed_item
+        item = {
+            "question_text": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+            "passage_text": "Some passage text here that is long enough for a real reading passage.",
+            "choices": ["a", "b", "c", "d", "e"],
+        }
+        assert validate_parsed_item(item) is not None
+
+    def test_validate_parsed_item_accepts_normal_shape_still_passes(self):
+        # 회귀 방지: 새 필터가 정상 문제 유형까지 걸러내지 않는지.
+        from ingest_exam_pdfs import validate_parsed_item
+        item = {
+            "question_text": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+            "passage_text": "Some passage text here that is long enough for a real reading passage.",
+            "choices": ["a", "b", "c", "d", "e"],
+        }
+        assert validate_parsed_item(item) is None
+
     def test_validate_parsed_item_rejects_swallowed_passage_as_choice(self):
         from ingest_exam_pdfs import validate_parsed_item
         item = {
