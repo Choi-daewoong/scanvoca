@@ -931,6 +931,41 @@ class BlogService:
             return commit.get("html_url") or commit.get("url") or ""
 
     @staticmethod
+    async def delete_file(path: str, message: str) -> bool:
+        """Delete a single file from the content repo via the GitHub Contents API.
+
+        Returns True if deleted, False if the file didn't exist (already gone — not an
+        error, deletion is the desired end state either way). Raises GitHubPublishError
+        on any other API failure.
+        """
+        repo = settings.GITHUB_REPO
+        branch = settings.GITHUB_BRANCH
+        url = f"{GITHUB_API_BASE}/repos/{repo}/contents/{path}"
+        headers = BlogService._github_headers()
+
+        async with httpx.AsyncClient(timeout=30.0) as http:
+            try:
+                get_resp = await http.get(url, headers=headers, params={"ref": branch})
+            except httpx.HTTPError as e:
+                raise GitHubPublishError(f"GitHub 조회 요청 실패: {e}") from e
+            if get_resp.status_code == 404:
+                return False
+            if get_resp.status_code != 200:
+                raise GitHubPublishError(f"GitHub 파일 조회 실패 ({get_resp.status_code})")
+            sha = get_resp.json().get("sha")
+
+            try:
+                del_resp = await http.request(
+                    "DELETE", url, headers=headers,
+                    json={"message": message, "sha": sha, "branch": branch},
+                )
+            except httpx.HTTPError as e:
+                raise GitHubPublishError(f"GitHub 삭제 요청 실패: {e}") from e
+            if del_resp.status_code not in (200, 204):
+                raise GitHubPublishError(f"GitHub 삭제 실패 ({del_resp.status_code})")
+            return True
+
+    @staticmethod
     def _github_headers() -> Dict[str, str]:
         return {
             "Authorization": f"Bearer {settings.GITHUB_TOKEN}",
@@ -1133,6 +1168,20 @@ class BlogService:
         db.commit()
         db.refresh(post)
         return post
+
+    @staticmethod
+    def delete_published_post(db: Session, slug: str) -> bool:
+        """Remove a slug's published-posts index row. Returns False if it didn't exist.
+
+        Companion to upsert_published_post — call after the GitHub .md file itself has
+        been deleted (delete_file), so the index never points at a file that's gone.
+        """
+        existing = db.scalar(select(BlogPublishedPost).where(BlogPublishedPost.slug == slug))
+        if existing is None:
+            return False
+        db.delete(existing)
+        db.commit()
+        return True
 
     @staticmethod
     def get_recent_posts_for_prompt(

@@ -982,6 +982,23 @@ class TestPublishedPostsIndex:
         assert rows[0].description == "수정된 설명"
         assert rows[0].published_at == first_published_at
 
+
+class TestDeletePublishedPost:
+    """BlogService.delete_published_post — 발행 취소 시 인덱스 행 정리."""
+
+    def test_deletes_existing_row(self, db_session):
+        BlogService.upsert_published_post(
+            db_session, slug="to-delete", title="t", description="d",
+            category="일상영어", tags=[],
+        )
+        assert BlogService.delete_published_post(db_session, "to-delete") is True
+        assert db_session.scalar(
+            select(BlogPublishedPost).where(BlogPublishedPost.slug == "to-delete")
+        ) is None
+
+    def test_returns_false_when_not_found(self, db_session):
+        assert BlogService.delete_published_post(db_session, "never-existed") is False
+
     def test_generate_passes_recent_posts_when_index_has_rows(
         self, client, admin_auth_headers, db_session, monkeypatch
     ):
