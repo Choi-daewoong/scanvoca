@@ -11,6 +11,15 @@ from app.services.image_style import IMAGE_STYLE_GUIDE
 # module import stays cheap and unaffected by the new SDK.
 BLOG_IMAGE_MODEL = "gemini-2.5-flash-image"
 
+# Target hero-image output size: 16:9 at exactly 1.5x the pixel area of the previous
+# 1024x1024 default (the model's un-configured fallback — confirmed by live probe, since
+# it ignores the text-only "prefer 16:9" hint in drawing_agent.md without a structured
+# aspect_ratio param). image_size ("1K"/"2K"/"4K") was probed too and made no difference
+# to actual output resolution for this model, so it isn't used — the resize below is the
+# only reliable way to control final pixel area.
+HERO_IMAGE_WIDTH = 1672
+HERO_IMAGE_HEIGHT = 940
+
 
 def _has_api_key() -> bool:
     return bool(settings.GEMINI_API_KEY and settings.GEMINI_API_KEY != "your-gemini-api-key-here")
@@ -258,20 +267,39 @@ Important:
                 "\n".join(str(c) for c in choices) if choices else "(선택지 없음)"
             )
             source_label = source_passage.get("source_label", "기출문제")
+            problem_number = source_passage.get("problem_number")
+            citation_label = (
+                f"{source_label} {problem_number}번" if problem_number else source_label
+            )
+            has_answer = bool(source_passage.get("answer"))
+            answer_line = (
+                source_passage.get("answer")
+                if has_answer
+                else "정답 미상 — 아래 지문·문제·선택지 내용을 근거로 정답을 직접 판단해서 명시할 것"
+            )
             source_block = (
                 "\n\n[활용할 실제 기출 지문 — 창작 금지, 아래 원문을 그대로 인용할 것]\n"
-                f'출처: {source_label}\n'
-                f'지문(passage):\n"""{source_passage.get("passage_text", "")}"""\n'
+                f'출처: {citation_label}\n'
+                f'지문(passage, 밑줄 친 부분은 <u>...</u>로 표시되어 있으면 본문에서도 그대로 밑줄로 살릴 것):'
+                f'\n"""{source_passage.get("passage_text", "")}"""\n'
                 f'문제(question): {source_passage.get("question_text", "")}\n'
                 f'선택지:\n{choices_str}\n'
-                f'정답: {source_passage.get("answer") or "정답 미상 — 임의로 답을 지어내지 말고, 지문 내용에 근거해 해설할 것"}\n'
+                f'정답: {answer_line}\n'
             )
             source_instruction = (
                 "\n11. 위 [활용할 실제 기출 지문]을 소재로 한 해설형 글을 작성하세요. 지문을 임의로 "
-                "창작하거나 변형하지 말고 주어진 원문 그대로 인용해야 합니다. 본문 하단에 원문 지문 전체 + "
-                "문제 + 정답 + 상세 해설을 포함하세요."
-                f'\n12. 본문에 반드시 "본 지문은 한국교육과정평가원이 출제한 기출문제입니다({source_label})" '
+                "창작하거나 변형하지 말고 주어진 원문 그대로 인용해야 합니다(지문에 <u>...</u> 밑줄 표시가 "
+                "있다면 본문에 인용할 때도 그대로 유지하세요). 본문 하단에 원문 지문 전체 + 문제 + 정답 + "
+                "상세 해설을 포함하세요."
+                f'\n12. 본문에 반드시 "본 지문은 한국교육과정평가원이 출제한 기출문제입니다({citation_label})" '
                 "라는 출처 문구를 포함하세요."
+                + (
+                    ""
+                    if has_answer
+                    else "\n13. 정답이 별도로 제공되지 않았습니다 — 지문·문제·선택지 내용을 근거로 "
+                    "정답을 스스로 판단하고, 애매한 태도 없이 확정된 정답으로 제시한 뒤 그렇게 판단한 "
+                    "근거를 해설에서 논리적으로 설명하세요."
+                )
             )
 
         # Conversation pipeline: inject a real dialogue clip to quote and explain.
@@ -732,6 +760,29 @@ Important:
                 print(msg.encode("ascii", errors="ignore").decode("ascii"))
             return None
 
+    @staticmethod
+    def _resize_hero_image(raw_png: bytes) -> bytes:
+        """Resize a generated hero image to the canonical (HERO_IMAGE_WIDTH, HERO_IMAGE_HEIGHT).
+
+        The model's native output resolution isn't guaranteed stable across calls (only
+        aspect_ratio is requested; image_size has no measurable effect — see the module-level
+        comment), so every image is forced to the same final pixel size here rather than
+        trusted as-is. Falls back to the untouched bytes if Pillow can't decode/resize them
+        (must never turn an otherwise-successful generation into a hard failure).
+        """
+        try:
+            from PIL import Image
+            import io
+
+            img = Image.open(io.BytesIO(raw_png)).convert("RGB")
+            img = img.resize((HERO_IMAGE_WIDTH, HERO_IMAGE_HEIGHT), Image.LANCZOS)
+            buf = io.BytesIO()
+            img.save(buf, format="PNG")
+            return buf.getvalue()
+        except Exception as e:  # noqa: BLE001 - resize is best-effort, never block publishing
+            print(f"Hero image resize failed, using original: {e}")
+            return raw_png
+
     async def generate_blog_image(self, scene: str) -> Optional[bytes]:
         """
         Generate a single blog illustration (IMAGE_STYLE_GUIDE + scene) and return PNG bytes.
@@ -756,14 +807,17 @@ Important:
             response = client.models.generate_content(
                 model=BLOG_IMAGE_MODEL,
                 contents=prompt,
-                config=genai_types.GenerateContentConfig(response_modalities=["IMAGE"]),
+                config=genai_types.GenerateContentConfig(
+                    response_modalities=["IMAGE"],
+                    image_config=genai_types.ImageConfig(aspect_ratio="16:9"),
+                ),
             )
             for cand in getattr(response, "candidates", None) or []:
                 parts = getattr(cand.content, "parts", None) or []
                 for part in parts:
                     inline = getattr(part, "inline_data", None)
                     if inline and getattr(inline, "data", None):
-                        return inline.data
+                        return self._resize_hero_image(inline.data)
             print("Blog image generation returned no image")
             return None
         except Exception as e:

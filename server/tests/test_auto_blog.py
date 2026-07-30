@@ -647,6 +647,121 @@ class TestSuneungAutoPublish:
         assert db_session.get(ExamPassage, passage.id).status == "used"
         assert db_session.get(BlogTopic, topic.id).status == "used"
 
+    def test_source_passage_includes_problem_number(self, client, admin_auth_headers, db_session, monkeypatch):
+        """지문 인용 시 '몇 년도 무슨 형식 몇 번 문제'까지 밝히려면 problem_number가
+        프롬프트로 넘어가야 한다."""
+        topic = self._seed_topic(db_session)
+        _seed_passage(db_session, tags=["빈칸추론", "역접"], problem_number=20)
+        captured = {}
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            captured["source_passage"] = source_passage
+            return {
+                "slug": "suneung-blank-2025", "title": "수능 빈칸추론 해설", "description": "설명",
+                "category": "수능·내신", "tags": ["수능"], "body": SUNEUNG_BODY,
+            }
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=suneung&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert captured["source_passage"]["problem_number"] == 20
+
+    def test_dry_run_word_list_cta_placeholder(
+        self, client, admin_auth_headers, db_session, bot_user, monkeypatch
+    ):
+        """토익과 동일한 단어장 CTA 체인이 수능 파이프라인에서도 동작해야 한다."""
+        from app.models.wordbook import Wordbook
+        from app.models.post import Post
+
+        topic = self._seed_topic(db_session)
+        topic.include_word_list = True
+        db_session.commit()
+        _seed_passage(db_session, tags=["빈칸추론", "역접"])
+        captured = {}
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            captured["include_word_list"] = include_word_list
+            return {
+                "slug": "suneung-wordlist", "title": "수능 빈칸추론 해설", "description": "설명",
+                "category": "수능·내신", "tags": ["수능"], "body": SUNEUNG_BODY,
+                "word_list": ["overcome", "conflict"],
+            }
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=suneung&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert captured["include_word_list"] is True
+        markdown = resp.json()["markdown"]
+        assert "## 이 글에 나온 단어, 한 번에 저장하세요" in markdown
+        assert "code=PREVIEW" in markdown
+
+        db_session.expire_all()
+        assert db_session.query(Wordbook).count() == 0
+        assert db_session.query(Post).count() == 0
+
+    def test_real_publish_creates_wordbook_for_suneung(
+        self, client, admin_auth_headers, db_session, bot_user, monkeypatch
+    ):
+        from app.models.wordbook import Wordbook
+        from app.models.post import Post
+        from app.services.word_service import WordService
+
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+        topic = self._seed_topic(db_session)
+        topic.include_word_list = True
+        db_session.commit()
+        _seed_passage(db_session, tags=["빈칸추론", "역접"])
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            return {
+                "slug": "suneung-wordlist-live", "title": "수능 빈칸추론 해설", "description": "설명",
+                "category": "수능·내신", "tags": ["수능"], "body": SUNEUNG_BODY,
+                "word_list": ["overcome", "conflict"],
+            }
+
+        seeded = _seed_words(db_session, ["overcome", "conflict"])
+
+        async def fake_get_or_create(self, db, words):
+            return _fake_word_results(seeded)
+
+        async def fake_commit(slug, markdown):
+            return "https://github.com/Choi-daewoong/scanvoca/commit/sunwl123"
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+        monkeypatch.setattr(WordService, "get_or_create_words", fake_get_or_create)
+        monkeypatch.setattr(BlogService, "commit_markdown", staticmethod(fake_commit))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=suneung",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.json()["published"] is True
+
+        db_session.expire_all()
+        wordbook = db_session.query(Wordbook).filter(Wordbook.user_id == bot_user.id).one()
+        post = db_session.query(Post).filter(Post.board_type == "share").one()
+        assert post.wordbook_id == wordbook.id
+
 
 class TestConversationAutoPublish:
     """POST /admin/blog/auto-publish/run?pipeline=conversation"""
@@ -1101,6 +1216,111 @@ class TestColumnAwareReconstruction:
         assert "A passage that happens to end in the number 8 like this." in out
 
 
+class TestUnderlineDetection:
+    """수능 '밑줄 친 부분 중' 유형 — pdfplumber lines/rects로 밑줄 스트로크를 감지해
+    passage_text에 <u>...</u>로 살리는 순수 함수 (실제 PDF 없이 좌표로 검증)."""
+
+    @staticmethod
+    def _word(text, x0, x1, top, bottom=None):
+        return {"text": text, "x0": x0, "x1": x1, "top": top, "bottom": bottom or top + 10}
+
+    @staticmethod
+    def _shape(x0, x1, top, bottom):
+        return {"x0": x0, "x1": x1, "top": top, "bottom": bottom}
+
+    def test_is_underline_shape_accepts_thin_wide_stroke(self):
+        from ingest_exam_pdfs import is_underline_shape
+        assert is_underline_shape(x0=100, x1=140, top=20, bottom=20.5) is True
+
+    def test_is_underline_shape_rejects_tall_box(self):
+        from ingest_exam_pdfs import is_underline_shape
+        # A filled choice-letter box or table cell is thin in neither dimension.
+        assert is_underline_shape(x0=100, x1=140, top=10, bottom=30) is False
+
+    def test_is_underline_shape_rejects_full_page_divider(self):
+        from ingest_exam_pdfs import is_underline_shape
+        assert is_underline_shape(x0=0, x1=595, top=50, bottom=50.3) is False
+
+    def test_word_is_underlined_true_when_stroke_just_below_baseline(self):
+        from ingest_exam_pdfs import word_is_underlined
+        word = self._word("report", x0=100, x1=140, top=10, bottom=20)
+        shapes = [self._shape(x0=99, x1=141, top=21, bottom=21.5)]
+        assert word_is_underlined(word, shapes) is True
+
+    def test_word_is_underlined_false_when_stroke_above_baseline(self):
+        from ingest_exam_pdfs import word_is_underlined
+        # A stroke ABOVE the baseline is a strikethrough or unrelated line, not an underline.
+        word = self._word("report", x0=100, x1=140, top=10, bottom=20)
+        shapes = [self._shape(x0=99, x1=141, top=9, bottom=9.5)]
+        assert word_is_underlined(word, shapes) is False
+
+    def test_word_is_underlined_false_when_too_far_below(self):
+        from ingest_exam_pdfs import word_is_underlined
+        word = self._word("report", x0=100, x1=140, top=10, bottom=20)
+        shapes = [self._shape(x0=99, x1=141, top=40, bottom=40.5)]
+        assert word_is_underlined(word, shapes) is False
+
+    def test_word_is_underlined_false_when_no_horizontal_overlap(self):
+        from ingest_exam_pdfs import word_is_underlined
+        word = self._word("report", x0=100, x1=140, top=10, bottom=20)
+        shapes = [self._shape(x0=300, x1=340, top=21, bottom=21.5)]
+        assert word_is_underlined(word, shapes) is False
+
+    def test_words_to_text_wraps_single_underlined_word(self):
+        from ingest_exam_pdfs import _words_to_text
+        words = [
+            self._word("The", x0=50, x1=80, top=10, bottom=20),
+            self._word("report", x0=85, x1=130, top=10, bottom=20),
+            self._word("was", x0=135, x1=165, top=10, bottom=20),
+        ]
+        shapes = [self._shape(x0=84, x1=131, top=21, bottom=21.5)]
+        out = _words_to_text(words, shapes)
+        assert out == "The <u>report</u> was"
+
+    def test_words_to_text_merges_contiguous_underlined_run(self):
+        from ingest_exam_pdfs import _words_to_text
+        words = [
+            self._word("was", x0=50, x1=80, top=10, bottom=20),
+            self._word("submitted", x0=85, x1=150, top=10, bottom=20),
+            self._word("late", x0=155, x1=185, top=10, bottom=20),
+        ]
+        # One continuous stroke spans "submitted late".
+        shapes = [self._shape(x0=84, x1=186, top=21, bottom=21.5)]
+        out = _words_to_text(words, shapes)
+        assert out == "was <u>submitted late</u>"
+
+    def test_words_to_text_no_underline_shapes_unchanged(self):
+        from ingest_exam_pdfs import _words_to_text
+        words = [self._word("plain", x0=50, x1=90, top=10, bottom=20)]
+        assert _words_to_text(words) == "plain"
+
+    def test_reconstruct_page_text_splits_underline_shapes_by_column(self):
+        from ingest_exam_pdfs import reconstruct_page_text
+        words = [
+            self._word("LeftWord", x0=260, x1=300, top=10, bottom=20),
+            self._word("RightWord", x0=500, x1=540, top=10, bottom=20),
+        ]
+        # Underline only under the right-column word.
+        shapes = [self._shape(x0=499, x1=541, top=21, bottom=21.5)]
+        out = reconstruct_page_text(words, page_width=800, underline_shapes=shapes)
+        assert "<u>RightWord</u>" in out
+        assert "<u>LeftWord</u>" not in out
+
+    def test_collect_underline_shapes_filters_lines_and_rects(self):
+        from ingest_exam_pdfs import collect_underline_shapes
+        lines_objs = [
+            {"x0": 100, "x1": 140, "top": 20, "bottom": 20.3},  # plausible underline
+            {"x0": 0, "x1": 595, "top": 50, "bottom": 50.2},  # page divider, too wide
+        ]
+        rects_objs = [
+            {"x0": 200, "x1": 230, "top": 30, "bottom": 30.4},  # plausible underline
+            {"x0": 200, "x1": 230, "top": 30, "bottom": 50},  # filled box, too tall
+        ]
+        shapes = collect_underline_shapes(lines_objs, rects_objs)
+        assert len(shapes) == 2
+        assert {round(s["x0"]) for s in shapes} == {100, 200}
+
+
 class TestSourcePassagePromptSafety:
     """Real dry-run bug: exam_passages.answer is NULL when there's no answer-key PDF,
     and `dict.get("answer", "(미상)")` only falls back on a *missing* key, not a None
@@ -1132,12 +1352,16 @@ class TestSourcePassagePromptSafety:
         return captured["prompt"]
 
     def test_missing_answer_does_not_leak_python_none(self):
+        # Policy: when no answer-key PDF was ingested (answer is NULL), the model is told
+        # to determine and state the answer itself (not refuse) — but "정답: None" must
+        # never leak into the prompt regardless of which policy is active.
         prompt = self._run_generate({
             "passage_text": "Some passage.", "question_text": "Q?",
             "choices": ["a", "b"], "answer": None, "source_label": "라벨",
         })
         assert "정답: None" not in prompt
-        assert "임의로 답을 지어내지" in prompt
+        assert "정답을 직접 판단해서 명시" in prompt
+        assert "정답을 스스로 판단" in prompt
 
     def test_present_answer_is_used_verbatim(self):
         prompt = self._run_generate({
@@ -1145,6 +1369,23 @@ class TestSourcePassagePromptSafety:
             "choices": ["a", "b"], "answer": "3", "source_label": "라벨",
         })
         assert "정답: 3" in prompt
+        assert "정답을 스스로 판단" not in prompt
+
+    def test_problem_number_included_in_citation(self):
+        prompt = self._run_generate({
+            "passage_text": "Some passage.", "question_text": "Q?",
+            "choices": ["a", "b"], "answer": "3", "source_label": "2025학년도 수능 영어",
+            "problem_number": 20,
+        })
+        assert "2025학년도 수능 영어 20번" in prompt
+
+    def test_no_problem_number_falls_back_to_source_label_only(self):
+        prompt = self._run_generate({
+            "passage_text": "Some passage.", "question_text": "Q?",
+            "choices": ["a", "b"], "answer": "3", "source_label": "2025학년도 수능 영어",
+        })
+        assert "2025학년도 수능 영어" in prompt
+        assert "번 기출문제" not in prompt
 
 
 # =============================================================================

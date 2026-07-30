@@ -183,31 +183,119 @@ def find_gutter_x(words: List[Dict], page_width: float) -> Optional[float]:
     return best_mid if best_gap >= 8 else None
 
 
-def _words_to_text(words: List[Dict]) -> str:
-    """Group words into lines by vertical position, then join lines top-to-bottom."""
+def is_underline_shape(x0: float, x1: float, top: float, bottom: float) -> bool:
+    """True when a drawn line/rect looks like a single underline stroke rather than a
+    page border, table gridline, or textbox outline.
+
+    수능 "밑줄 친 부분 중" (which underlined part) questions mark answer choices by
+    drawing a thin horizontal stroke under a word or short phrase — never under a whole
+    page-width line. width>=3pt excludes stray hairline artifacts; height<=1.5pt is the
+    tell for a flat stroke (as opposed to a filled box); width<=400pt excludes page
+    borders/dividers that happen to be thin but span most of the page width.
+    """
+    width = x1 - x0
+    height = abs(bottom - top)
+    return 3 <= width <= 400 and height <= 1.5
+
+
+def collect_underline_shapes(lines_objs: List[Dict], rects_objs: List[Dict]) -> List[Dict]:
+    """Filter a page's raw `lines` + `rects` (pdfplumber) down to underline-shaped strokes.
+
+    KICE PDFs draw underlines as either a straight line or a thin filled rect depending on
+    the export tool, so both object types are checked with the same shape heuristic.
+    """
+    shapes: List[Dict] = []
+    for obj in list(lines_objs or []) + list(rects_objs or []):
+        x0, x1, top, bottom = obj["x0"], obj["x1"], obj["top"], obj["bottom"]
+        if is_underline_shape(x0, x1, top, bottom):
+            shapes.append({"x0": x0, "x1": x1, "top": top, "bottom": bottom})
+    return shapes
+
+
+def word_is_underlined(word: Dict, underline_shapes: List[Dict], tolerance: float = 3.0) -> bool:
+    """True when an underline stroke sits just below `word`'s baseline and overlaps it.
+
+    The stroke must be at/below the word's bottom edge (never above — that would be a
+    strikethrough or the previous line's descender) and within `tolerance` points of it
+    (real underlines sit close to the baseline, not floating below). Horizontal overlap
+    must cover at least half the word's width so a stroke spanning several words in a
+    phrase still marks each of them, while a stroke under a neighboring word doesn't.
+    """
+    wx0, wx1, wbottom = word["x0"], word["x1"], word["bottom"]
+    word_width = wx1 - wx0
+    if word_width <= 0:
+        return False
+    for shape in underline_shapes:
+        if shape["top"] < wbottom - 1 or shape["top"] - wbottom > tolerance:
+            continue
+        overlap = min(wx1, shape["x1"]) - max(wx0, shape["x0"])
+        if overlap >= word_width * 0.5:
+            return True
+    return False
+
+
+def _words_to_text(words: List[Dict], underline_shapes: Optional[List[Dict]] = None) -> str:
+    """Group words into lines by vertical position, then join lines top-to-bottom.
+
+    Words whose baseline has a matching underline stroke (see word_is_underlined) are
+    wrapped in `<u>...</u>`, merging contiguous underlined words into a single span so a
+    multi-word underlined phrase renders as one tag rather than one per word.
+    """
     if not words:
         return ""
+    underline_shapes = underline_shapes or []
     lines: List[List[Dict]] = []
     for w in sorted(words, key=lambda w: (w["top"], w["x0"])):
         if lines and abs(lines[-1][0]["top"] - w["top"]) <= 3:
             lines[-1].append(w)
         else:
             lines.append([w])
-    return "\n".join(" ".join(w["text"] for w in sorted(line, key=lambda w: w["x0"])) for line in lines)
+
+    out_lines: List[str] = []
+    for line in lines:
+        line_words = sorted(line, key=lambda w: w["x0"])
+        pieces: List[str] = []
+        run: List[str] = []
+        run_underlined = False
+
+        def flush() -> None:
+            if not run:
+                return
+            text = " ".join(run)
+            pieces.append(f"<u>{text}</u>" if run_underlined else text)
+            run.clear()
+
+        for w in line_words:
+            underlined = word_is_underlined(w, underline_shapes)
+            if run and underlined != run_underlined:
+                flush()
+            run.append(w["text"])
+            run_underlined = underlined
+        flush()
+        out_lines.append(" ".join(pieces))
+    return "\n".join(out_lines)
 
 
-def reconstruct_page_text(words: List[Dict], page_width: float) -> str:
+def reconstruct_page_text(
+    words: List[Dict], page_width: float, underline_shapes: Optional[List[Dict]] = None
+) -> str:
     """Reorder a page's words into reading order: left column top-to-bottom, then
     right column top-to-bottom. Falls back to single-column (page-wide) order when no
-    gutter is detected.
+    gutter is detected. Underline shapes are split across columns the same way words are,
+    so a stroke under a right-column word isn't matched against a left-column word.
     """
+    underline_shapes = underline_shapes or []
     gutter = find_gutter_x(words, page_width)
     if gutter is None:
-        return _words_to_text(words)
+        return _words_to_text(words, underline_shapes)
 
     left = [w for w in words if (w["x0"] + w["x1"]) / 2 < gutter]
     right = [w for w in words if (w["x0"] + w["x1"]) / 2 >= gutter]
-    return _words_to_text(left) + "\n" + _words_to_text(right)
+    left_shapes = [s for s in underline_shapes if (s["x0"] + s["x1"]) / 2 < gutter]
+    right_shapes = [s for s in underline_shapes if (s["x0"] + s["x1"]) / 2 >= gutter]
+    return (
+        _words_to_text(left, left_shapes) + "\n" + _words_to_text(right, right_shapes)
+    )
 
 
 # Recurring per-page footer furniture printed on every 수능 문제지 page (copyright notice,
@@ -242,7 +330,10 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             words = page.extract_words()
-            parts.append(strip_page_furniture(reconstruct_page_text(words, page.width)))
+            underline_shapes = collect_underline_shapes(page.lines, page.rects)
+            parts.append(
+                strip_page_furniture(reconstruct_page_text(words, page.width, underline_shapes))
+            )
     return "\n".join(parts)
 
 
@@ -270,6 +361,61 @@ async def _tag_new_passages(passage_ids: List[int]) -> None:
                 print(f"  tagged #{passage.problem_number}: {tags}")
     finally:
         db.close()
+
+
+def backfill_answers(
+    *,
+    answers_path: str,
+    year: int,
+    exam_type: str,
+    month: Optional[int] = None,
+) -> None:
+    """Fill in `answer` for already-ingested passages that were inserted without one.
+
+    ingest()'s idempotency check skips any (year, exam_type, month, problem_number) that
+    already exists, so it can never retroactively add an answer to a passage inserted
+    earlier without an answer-key PDF. This is the separate path for that: it never touches
+    passage_text/question_text/choices, only fills `answer` where it's currently NULL.
+    """
+    from app.core.database import SessionLocal
+    from app.models.exam_passage import ExamPassage
+    from sqlalchemy import select
+
+    print(f"Extracting answers: {answers_path}")
+    answers = parse_answers_text(extract_text_from_pdf(answers_path))
+    print(f"Parsed {len(answers)} answers.")
+
+    updated: List[int] = []
+    not_found: List[int] = []
+    already_had_answer: List[int] = []
+    db = SessionLocal()
+    try:
+        for num, answer in answers.items():
+            passage = db.scalar(
+                select(ExamPassage).where(
+                    ExamPassage.year == year,
+                    ExamPassage.exam_type == exam_type,
+                    ExamPassage.month == month,
+                    ExamPassage.problem_number == num,
+                )
+            )
+            if passage is None:
+                not_found.append(num)
+                continue
+            if passage.answer is not None:
+                already_had_answer.append(num)
+                continue
+            passage.answer = answer
+            db.commit()
+            updated.append(num)
+        print(f"Updated {len(updated)}: {sorted(updated)}")
+        if already_had_answer:
+            print(f"Already had an answer, skipped {len(already_had_answer)}: {sorted(already_had_answer)}")
+        if not_found:
+            print(f"No matching passage in DB, skipped {len(not_found)}: {sorted(not_found)}")
+    finally:
+        db.close()
+    print("Done.")
 
 
 def ingest(
@@ -355,14 +501,32 @@ def ingest(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="수능/모의고사 영어 기출 PDF 인제스트")
-    parser.add_argument("--pdf", required=True, help="문제 PDF 경로")
+    parser.add_argument("--pdf", default=None, help="문제 PDF 경로 (--answers-only일 땐 불필요)")
     parser.add_argument("--answers", default=None, help="정답 PDF 경로(선택)")
     parser.add_argument("--year", type=int, required=True)
     parser.add_argument("--exam-type", required=True, choices=["수능", "모의고사"])
     parser.add_argument("--month", type=int, default=None, help="모의고사 시행 월(수능은 생략)")
-    parser.add_argument("--source-label", required=True, help='예: "2025학년도 수능 영어"')
+    parser.add_argument("--source-label", default=None, help='예: "2025학년도 수능 영어" (--answers-only일 땐 불필요)')
     parser.add_argument("--no-tagging", action="store_true", help="AI 태깅 단계 생략")
+    parser.add_argument(
+        "--answers-only", action="store_true",
+        help="이미 적재된 문제에 정답만 채워넣는다 (--pdf 없이 --answers만으로 실행)",
+    )
     args = parser.parse_args()
+
+    if args.answers_only:
+        if not args.answers:
+            parser.error("--answers-only는 --answers가 필요합니다")
+        backfill_answers(
+            answers_path=args.answers,
+            year=args.year,
+            exam_type=args.exam_type,
+            month=args.month,
+        )
+        return
+
+    if not args.pdf or not args.source_label:
+        parser.error("--pdf와 --source-label은 필수입니다 (--answers-only 모드가 아닌 경우)")
 
     ingest(
         pdf_path=args.pdf,

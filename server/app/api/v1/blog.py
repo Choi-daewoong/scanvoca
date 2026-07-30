@@ -123,6 +123,45 @@ async def suggest_topics(
     )
 
 
+async def _apply_word_list_cta(
+    db: Session, topic, result: dict, body: str, dry_run: bool
+) -> str:
+    """Insert the word-list wordbook CTA before body's final `##` section, if opted in.
+
+    Shared by every auto-publish pipeline branch that supports it (currently toeic and
+    suneung) so the dry-run/best-effort/failure-tolerant rules stay identical everywhere:
+    a dry run never touches the DB (PREVIEW placeholder only), and a missing bot account or
+    any failure in the wordbook/share chain degrades to "no CTA" without blocking the
+    publish itself (mirrors the hero-image best-effort precedent below).
+    """
+    if not (topic.include_word_list and result.get("word_list")):
+        return body
+
+    if dry_run:
+        return BlogService.insert_before_final_section(
+            body,
+            BlogService.render_word_list_cta_markdown(result["title"], "PREVIEW", 0),
+        )
+
+    bot_user = BlogService.get_bot_user(db)
+    if bot_user is None:
+        print("Auto-publish word list: BLOG_BOT_USER_ID not configured, skipping CTA")
+        return body
+
+    share = await BlogService.create_word_list_wordbook_and_share(
+        db, bot_user.id, result["title"], result["word_list"]
+    )
+    if share is None:
+        return body
+
+    return BlogService.insert_before_final_section(
+        body,
+        BlogService.render_word_list_cta_markdown(
+            share["wordbook_name"], share["share_code"], share["post_id"]
+        ),
+    )
+
+
 @router.post("/auto-publish/run", response_model=BlogAutoPublishResult)
 async def run_auto_publish(
     pipeline: BlogPipeline,
@@ -187,31 +226,7 @@ async def run_auto_publish(
         # Word-list CTA (opt-in per topic) — inserted BEFORE the practice questions are
         # assembled, so both land before the promo section in the order
         # 본문 → 단어장 CTA → 실전 연습문제 → 프로모션.
-        if topic.include_word_list and result.get("word_list"):
-            if dry_run:
-                # Placeholder only: a dry run must write nothing to the DB so it stays
-                # repeatable, but the admin still sees the CTA's wording and position.
-                clean_body = BlogService.insert_before_final_section(
-                    clean_body,
-                    BlogService.render_word_list_cta_markdown(result["title"], "PREVIEW", 0),
-                )
-            else:
-                # Best-effort, exactly like the hero image below: no bot account configured
-                # or any failure in the chain -> publish continues with no CTA.
-                bot_user = BlogService.get_bot_user(db)
-                if bot_user is not None:
-                    share = await BlogService.create_word_list_wordbook_and_share(
-                        db, bot_user.id, result["title"], result["word_list"]
-                    )
-                    if share is not None:
-                        clean_body = BlogService.insert_before_final_section(
-                            clean_body,
-                            BlogService.render_word_list_cta_markdown(
-                                share["wordbook_name"], share["share_code"], share["post_id"]
-                            ),
-                        )
-                else:
-                    print("Auto-publish word list: BLOG_BOT_USER_ID not configured, skipping CTA")
+        clean_body = await _apply_word_list_cta(db, topic, result, clean_body, dry_run)
 
         body = BlogService.assemble_body_with_questions(clean_body, questions_md)
 
@@ -230,12 +245,14 @@ async def run_auto_publish(
             title=topic.title,
             angle=topic.angle,
             recent_posts=recent_posts,
+            include_word_list=topic.include_word_list,
             source_passage={
                 "passage_text": passage.passage_text,
                 "question_text": passage.question_text,
                 "choices": passage.choices,
                 "answer": passage.answer,
                 "source_label": passage.source_label,
+                "problem_number": passage.problem_number,
             },
         )
         if result is None:
@@ -246,7 +263,7 @@ async def run_auto_publish(
             return BlogAutoPublishResult(
                 published=False, reason="generation_failed", dry_run=dry_run, topic_id=topic.id
             )
-        body = result["body"]
+        body = await _apply_word_list_cta(db, topic, result, result["body"], dry_run)
 
     else:  # conversation
         pair = BlogService.get_unused_conversation_topic_with_ready_clip(db)
