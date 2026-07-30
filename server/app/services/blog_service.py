@@ -161,9 +161,17 @@ class BlogService:
         """Overlap score between a topic angle and a passage's tags.
 
         Deliberately simple (no embeddings / external search — contract forbids over-design):
-        each tag that shares at least one keyword token with the angle scores +1. Because
-        ingest tags are individual keywords (see GeminiService.tag_exam_passage), token
-        overlap is a reasonable, deterministic, testable proxy for relevance.
+        each tag that shares a keyword with the angle scores +1. "Shares" means an angle
+        token is a PREFIX of a tag (or an exact match, the trivial case of prefix) — ingest
+        tags are unspaced compound nouns built head-first (e.g. "빈칸추론" = "빈칸" + "추론",
+        "문법오류" = "문법" + "오류") while angle text is natural Korean prose that splits into
+        separate particle-bearing tokens (e.g. "빈칸 넣기" -> {"빈칸","넣기"}), so an exact-
+        token-equality check almost never overlaps even for genuinely related topics.
+        Prefix (not arbitrary substring-anywhere) matters: unrestricted substring containment
+        was tried and rejected — a generic angle word like "목표" ends up embedded inside
+        unrelated tags like "비즈니스목표" (goal is the SUFFIX there, not the head concept),
+        producing false matches to passages on a completely different subject. Requiring the
+        angle token to be the tag's prefix keeps "빈칸" -> "빈칸추론" while rejecting that case.
         """
         if not tags:
             return 0
@@ -172,7 +180,8 @@ class BlogService:
             return 0
         score = 0
         for tag in tags:
-            if BlogService._keyword_tokens(str(tag)) & angle_tokens:
+            tag_tokens = BlogService._keyword_tokens(str(tag))
+            if any(t.startswith(a) for t in tag_tokens for a in angle_tokens):
                 score += 1
         return score
 
@@ -199,6 +208,25 @@ class BlogService:
                 best_score = s
                 best = p
         return best if best_score > 0 else None
+
+    @staticmethod
+    def get_available_passage_tags(db: Session, limit: int = 200) -> List[str]:
+        """Distinct tags across unused exam passages, for seeding suneung topic suggestions.
+
+        find_matching_passage only ever finds a passage whose tags overlap with a topic's
+        angle text — a topic suggested without seeing real tag vocabulary almost never
+        contains one verbatim (natural prose vs. bare compound-noun tags), so every such
+        topic silently dead-ends at "no_matching_passage". Feeding the model this list lets
+        it write an angle that actually names a real tag, closing that gap at the source.
+        """
+        passages = db.scalars(
+            select(ExamPassage).where(ExamPassage.status == "unused")
+        ).all()
+        tag_set: set = set()
+        for p in passages:
+            if p.tags:
+                tag_set.update(str(t) for t in p.tags)
+        return sorted(tag_set)[:limit]
 
     @staticmethod
     def list_exam_passages(db: Session, status_filter: str = "unused") -> List[ExamPassage]:

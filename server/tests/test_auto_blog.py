@@ -414,7 +414,8 @@ class TestSuggestTopics:
     """POST /admin/blog/topics/suggest"""
 
     def test_suggest_success(self, client, admin_auth_headers, monkeypatch):
-        async def fake_suggest(self, pipeline, category, count, recent_posts=None, existing_titles=None):
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
             assert pipeline == "toeic"
             assert category == "토익·비즈니스"
             return [{"title": "제목1", "angle": "방향1"}, {"title": "제목2", "angle": "방향2"}]
@@ -431,7 +432,8 @@ class TestSuggestTopics:
         assert suggestions[0]["title"] == "제목1"
 
     def test_suggest_ai_failure_502(self, client, admin_auth_headers, monkeypatch):
-        async def fake_suggest(self, pipeline, category, count, recent_posts=None, existing_titles=None):
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
             return None
 
         monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
@@ -449,6 +451,47 @@ class TestSuggestTopics:
             headers=auth_headers,
         )
         assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_suneung_suggest_passes_available_tags(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """no_matching_passage 근본 원인 방지: 실제 지문 태그 어휘를 프롬프트에 넣어야
+        모델이 angle에 진짜 매칭 가능한 태그를 그대로 쓸 수 있다."""
+        _seed_passage(db_session, tags=["빈칸추론", "역접"], problem_number=18)
+        _seed_passage(db_session, tags=["환경"], problem_number=19, status="used")
+        captured = {}
+
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            captured["available_tags"] = available_tags
+            return [{"title": "제목", "angle": "빈칸추론 대비"}]
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        resp = client.post(
+            "/api/v1/admin/blog/topics/suggest",
+            json={"pipeline": "suneung", "category": "수능·내신", "count": 1},
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert set(captured["available_tags"]) == {"빈칸추론", "역접"}  # used 지문 태그는 제외
+
+    def test_toeic_suggest_does_not_pass_available_tags(
+        self, client, admin_auth_headers, monkeypatch
+    ):
+        captured = {}
+
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            captured["available_tags"] = available_tags
+            return [{"title": "제목", "angle": "방향"}]
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        client.post(
+            "/api/v1/admin/blog/topics/suggest",
+            json={"pipeline": "toeic", "category": "토익·비즈니스", "count": 1},
+            headers=admin_auth_headers,
+        )
+        assert captured["available_tags"] is None
 
 
 class TestTopicsPipelineFilter:
@@ -537,6 +580,24 @@ class TestFindMatchingPassage:
         assert BlogService.score_passage_match("빈칸추론", None) == 0
         assert BlogService.score_passage_match("빈칸추론", []) == 0
 
+    def test_score_prefix_match_for_natural_prose_angle(self):
+        """실사고: 관리자가 쓰는 angle은 자연스러운 문장이라 태그가 그대로 한 토큰으로
+        들어있는 경우가 거의 없다 — "빈칸 넣기"(공백 있음)처럼 조사·띄어쓰기가 낀 문장에서
+        "빈칸추론" 태그를 못 잡으면 실제 매칭이 계속 0으로 죽는다(운영에서 실제로 발생)."""
+        assert BlogService.score_passage_match(
+            "수능 영어 빈칸 넣기 유형 정복", ["빈칸추론"]
+        ) == 1
+        assert BlogService.score_passage_match(
+            "고교 내신 문법 포인트 분석", ["문법오류"]
+        ) == 1
+
+    def test_score_prefix_rejects_generic_word_as_tag_suffix(self):
+        """운영에서 실제로 잡은 오탐: "목표"가 "비즈니스목표"의 접미부일 뿐인데 예전
+        구현(부분 문자열 아무 데나)은 이걸 매칭시켰다 — 접두어 전용이면 걸러져야 한다."""
+        assert BlogService.score_passage_match("2등급 목표 학생", ["비즈니스목표"]) == 0
+        # 반대로 "목표"가 진짜 접두어(핵심어)인 복합어는 여전히 매칭되어야 한다.
+        assert BlogService.score_passage_match("2등급 목표 학생", ["목표중심"]) == 1
+
     def test_find_picks_highest_overlap(self, db_session):
         _seed_passage(db_session, tags=["환경"], problem_number=1)
         best = _seed_passage(db_session, tags=["빈칸추론", "역접"], problem_number=2)
@@ -558,6 +619,24 @@ class TestFindMatchingPassage:
     def test_find_ignores_used_passages(self, db_session):
         _seed_passage(db_session, tags=["빈칸추론"], problem_number=1, status="used")
         assert BlogService.find_matching_passage(db_session, "빈칸추론") is None
+
+
+class TestGetAvailablePassageTags:
+    """BlogService.get_available_passage_tags — suneung 주제 제안에 실제 태그 어휘를 심는 재료."""
+
+    def test_collects_distinct_tags_from_unused_only(self, db_session):
+        _seed_passage(db_session, tags=["빈칸추론", "역접"], problem_number=1)
+        _seed_passage(db_session, tags=["역접", "환경"], problem_number=2)
+        _seed_passage(db_session, tags=["문법"], problem_number=3, status="used")
+        tags = BlogService.get_available_passage_tags(db_session)
+        assert set(tags) == {"빈칸추론", "역접", "환경"}
+
+    def test_no_passages_returns_empty(self, db_session):
+        assert BlogService.get_available_passage_tags(db_session) == []
+
+    def test_passage_with_no_tags_skipped(self, db_session):
+        _seed_passage(db_session, tags=None, problem_number=1)
+        assert BlogService.get_available_passage_tags(db_session) == []
 
 
 class TestSuneungAutoPublish:

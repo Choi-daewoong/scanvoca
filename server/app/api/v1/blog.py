@@ -103,6 +103,9 @@ async def suggest_topics(
     """
     recent_posts = BlogService.get_recent_posts_for_prompt(db, category=payload.category, limit=12)
     existing_titles = BlogService.list_titles_for_category(db, payload.category)
+    available_tags = (
+        BlogService.get_available_passage_tags(db) if payload.pipeline == "suneung" else None
+    )
 
     gemini = GeminiService()
     suggestions = await gemini.suggest_blog_topics(
@@ -111,6 +114,7 @@ async def suggest_topics(
         count=payload.count,
         recent_posts=recent_posts,
         existing_titles=existing_titles,
+        available_tags=available_tags,
     )
     if suggestions is None:
         raise HTTPException(

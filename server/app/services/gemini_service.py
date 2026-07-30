@@ -453,6 +453,7 @@ Important:
         count: int = 5,
         recent_posts: Optional[List[Dict[str, str]]] = None,
         existing_titles: Optional[List[str]] = None,
+        available_tags: Optional[List[str]] = None,
     ) -> Optional[List[Dict[str, str]]]:
         """
         Suggest blog topic candidates for a pipeline/category.
@@ -460,6 +461,12 @@ Important:
         the caller (admin UI) edits and confirms candidates separately.
         recent_posts / existing_titles are supplied so the model avoids proposing topics
         that duplicate already-published posts or already-listed topics.
+        available_tags (suneung only): the real tag vocabulary of currently unused exam
+        passages. run_auto_publish can only use a suneung topic if its angle text shares a
+        keyword with some passage's tags (BlogService.find_matching_passage) — natural prose
+        written without seeing that vocabulary essentially never does, so every such topic
+        silently dead-ends at "no_matching_passage". Passing this makes the model name a
+        real tag verbatim in the angle so the topic is actually usable.
         """
         if self.model is None:
             print("Gemini API key not configured")
@@ -487,17 +494,28 @@ Important:
             lines = "\n".join(f'- "{t}"' for t in existing_titles)
             existing_block = f"\n\n[이미 등록된 주제 (중복 금지)]\n{lines}\n"
 
+        tags_block = ""
+        tags_instruction = ""
+        if available_tags:
+            tags_block = "\n\n[실제 사용 가능한 기출 지문 태그 목록]\n" + ", ".join(available_tags) + "\n"
+            tags_instruction = (
+                "\n6. 위 [실제 사용 가능한 기출 지문 태그 목록]에서 이 주제와 어울리는 태그를 "
+                "**최소 1개 골라 angle에 그 단어를 그대로(축약·변형 없이) 포함**시키세요 — "
+                "이 주제는 나중에 그 태그를 가진 실제 기출 지문과 매칭되어야만 실제로 글이 "
+                "발행됩니다. 목록에 없는 단어를 지어내지 마세요."
+            )
+
         prompt = f"""당신은 영어 학습 서비스 "Scan Voca"의 콘텐츠 전략가입니다. 아래 조건에 맞는 블로그 글 주제 후보 {count}개를 제안하세요.
 
 카테고리: "{category}"
 파이프라인 방향: {pipeline_hint}
-{recent_block}{existing_block}
+{recent_block}{existing_block}{tags_block}
 요구사항:
 1. 언어: 한국어
 2. 각 주제는 서로 겹치지 않고, 위 목록에 이미 있는 주제/글과도 겹치지 않게 하세요.
 3. 실제 검색 수요가 있을 법한 구체적이고 실용적인 주제로 만드세요.
 4. title은 블로그 글 제목 후보(한국어), angle은 글의 방향·타깃·핵심 키워드 메모(한국어 1~2문장).
-5. 특정 AI 모델명(Gemini, GPT 등)은 절대 언급하지 마세요.
+5. 특정 AI 모델명(Gemini, GPT 등)은 절대 언급하지 마세요.{tags_instruction}
 
 반드시 아래 구조의 JSON 객체만 반환하세요. 다른 텍스트 금지:
 {{
