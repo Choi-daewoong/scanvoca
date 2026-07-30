@@ -141,6 +141,10 @@ def parse_answers_text(text: str) -> Dict[int, str]:
     """Parse an answer-sheet text into {problem_number: answer_string} (pure).
 
     Circled digits are normalized to '1'..'5'. Best-effort — malformed lines are ignored.
+    Callers with a combined 홀수형+짝수형 sheet MUST slice to one form first via
+    extract_form_section() — this function has no way to tell which table a match came
+    from, so feeding it the whole combined text lets the later (짝수형) table silently
+    overwrite the earlier (홀수형) one for every problem number they share.
     """
     answers: Dict[int, str] = {}
     for m in _ANSWER_RE.finditer(text or ""):
@@ -148,6 +152,32 @@ def parse_answers_text(text: str) -> Dict[int, str]:
         raw = m.group(2)
         answers[num] = _CIRCLED_TO_NUM.get(raw, raw)
     return answers
+
+
+def extract_form_section(text: str, form: str) -> str:
+    """Slice a combined answer-sheet text down to just one booklet form's table.
+
+    KICE answer-key PDFs bundle 홀수형 (odd form) and 짝수형 (even form) tables in one
+    file, in that order, and the two forms have DIFFERENT correct answers for the same
+    problem number (their choice ordering is shuffled between forms) — so which table a
+    given passage's answer must come from depends entirely on which form the *question*
+    PDF that passage's choices were extracted from was. `form` must be "홀수형" or
+    "짝수형". Falls back to the full text unchanged if no form markers are found (a
+    single-form answer sheet, or a sheet using different wording).
+    """
+    odd_pos = text.find("홀수")
+    even_pos = text.find("짝수")
+    markers = sorted(
+        (pos, name) for pos, name in [(odd_pos, "홀수형"), (even_pos, "짝수형")] if pos >= 0
+    )
+    if not markers:
+        return text
+    for i, (pos, name) in enumerate(markers):
+        if name != form:
+            continue
+        end = markers[i + 1][0] if i + 1 < len(markers) else len(text)
+        return text[pos:end]
+    return text
 
 
 # ---------- Column-aware reconstruction (pure — unit-testable without a real PDF) ----------
@@ -365,10 +395,12 @@ async def _tag_new_passages(passage_ids: List[int]) -> None:
 
 def backfill_answers(
     *,
-    answers_path: str,
+    answers_path: Optional[str] = None,
     year: int,
     exam_type: str,
     month: Optional[int] = None,
+    form: str = "홀수형",
+    answers: Optional[Dict[int, str]] = None,
 ) -> None:
     """Fill in `answer` for already-ingested passages that were inserted without one.
 
@@ -376,14 +408,29 @@ def backfill_answers(
     already exists, so it can never retroactively add an answer to a passage inserted
     earlier without an answer-key PDF. This is the separate path for that: it never touches
     passage_text/question_text/choices, only fills `answer` where it's currently NULL.
+
+    `form` selects which booklet's table to read out of a combined 홀수형+짝수형 answer
+    sheet — it MUST match the form the original *question* PDF (passage_text/choices) was
+    ingested from, or every answer for a problem whose choices were reordered between
+    forms will be wrong (see extract_form_section's docstring).
+
+    Pass a pre-parsed `answers` dict directly (skipping `answers_path`/extraction
+    entirely) for an answer sheet with no extractable text layer (e.g. a scanned/
+    image-only PDF pdfplumber can't read) that was transcribed by some other means.
     """
     from app.core.database import SessionLocal
     from app.models.exam_passage import ExamPassage
     from sqlalchemy import select
 
-    print(f"Extracting answers: {answers_path}")
-    answers = parse_answers_text(extract_text_from_pdf(answers_path))
-    print(f"Parsed {len(answers)} answers.")
+    if answers is None:
+        if not answers_path:
+            raise ValueError("answers_path or a pre-parsed answers dict is required")
+        print(f"Extracting answers: {answers_path} (form={form})")
+        section = extract_form_section(extract_text_from_pdf(answers_path), form)
+        answers = parse_answers_text(section)
+        print(f"Parsed {len(answers)} answers.")
+    else:
+        print(f"Using {len(answers)} pre-parsed answers (no PDF extraction).")
 
     updated: List[int] = []
     not_found: List[int] = []
@@ -426,6 +473,7 @@ def ingest(
     source_label: str,
     month: Optional[int] = None,
     answers_path: Optional[str] = None,
+    form: str = "홀수형",
     do_tagging: bool = True,
 ) -> None:
     """Extract → parse → idempotent insert → AI tag. Tolerates partial parse failures."""
@@ -450,8 +498,9 @@ def ingest(
     answers: Dict[int, str] = {}
     if answers_path:
         try:
-            answers = parse_answers_text(extract_text_from_pdf(answers_path))
-            print(f"Parsed {len(answers)} answers.")
+            section = extract_form_section(extract_text_from_pdf(answers_path), form)
+            answers = parse_answers_text(section)
+            print(f"Parsed {len(answers)} answers (form={form}).")
         except Exception as e:  # noqa: BLE001 - answers are optional
             print(f"WARN: failed to parse answers PDF ({e}); continuing without answers.")
 
@@ -512,6 +561,10 @@ def main() -> None:
         "--answers-only", action="store_true",
         help="이미 적재된 문제에 정답만 채워넣는다 (--pdf 없이 --answers만으로 실행)",
     )
+    parser.add_argument(
+        "--form", default="홀수형", choices=["홀수형", "짝수형"],
+        help="정답표에서 읽을 표 — 반드시 --pdf(문제지)를 뽑은 판과 같아야 한다 (기본: 홀수형)",
+    )
     args = parser.parse_args()
 
     if args.answers_only:
@@ -522,6 +575,7 @@ def main() -> None:
             year=args.year,
             exam_type=args.exam_type,
             month=args.month,
+            form=args.form,
         )
         return
 
@@ -535,6 +589,7 @@ def main() -> None:
         month=args.month,
         source_label=args.source_label,
         answers_path=args.answers,
+        form=args.form,
         do_tagging=not args.no_tagging,
     )
 

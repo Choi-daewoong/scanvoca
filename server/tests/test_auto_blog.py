@@ -1306,6 +1306,35 @@ class TestUnderlineDetection:
         assert "<u>RightWord</u>" in out
         assert "<u>LeftWord</u>" not in out
 
+    def test_extract_form_section_splits_odd_then_even(self):
+        from ingest_exam_pdfs import extract_form_section
+        text = (
+            "2022학년도 대학수학능력시험\n영어 영역 정답표\n( 홀수 )형\n"
+            "1 ⑤ 2 13 ③ 3\n"
+            "2022학년도 대학수학능력시험\n영어 영역 정답표\n( 짝수 )형\n"
+            "1 ⑤ 2 13 ③ 3\n2 ④ 2"
+        )
+        odd = extract_form_section(text, "홀수형")
+        even = extract_form_section(text, "짝수형")
+        assert "홀수" in odd and "짝수" not in odd
+        assert "짝수" in even
+        assert "2 ④ 2" in even and "2 ④ 2" not in odd
+
+    def test_extract_form_section_no_markers_returns_whole_text(self):
+        from ingest_exam_pdfs import extract_form_section
+        text = "1 ⑤ 2 13 ③ 3"
+        assert extract_form_section(text, "홀수형") == text
+
+    def test_parse_answers_after_form_split_does_not_leak_other_form(self):
+        from ingest_exam_pdfs import extract_form_section, parse_answers_text
+        # Same problem number, different answer letter per form — the real-world bug
+        # this whole split exists to prevent (choices are reordered between forms).
+        text = "( 홀수 )형\n2 ② 2\n( 짝수 )형\n2 ④ 2"
+        odd_answers = parse_answers_text(extract_form_section(text, "홀수형"))
+        even_answers = parse_answers_text(extract_form_section(text, "짝수형"))
+        assert odd_answers[2] == "2"
+        assert even_answers[2] == "4"
+
     def test_collect_underline_shapes_filters_lines_and_rects(self):
         from ingest_exam_pdfs import collect_underline_shapes
         lines_objs = [
