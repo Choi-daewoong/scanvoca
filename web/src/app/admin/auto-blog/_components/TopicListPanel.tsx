@@ -68,15 +68,22 @@ export default function TopicListPanel({
                   </p>
                 )}
               </div>
-              <span
-                className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                  t.status === 'used'
-                    ? 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                    : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
-                }`}
-              >
-                {t.status === 'used' ? '사용됨' : '미사용'}
-              </span>
+              <div className="flex shrink-0 items-center gap-1.5">
+                {t.include_word_list && (
+                  <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
+                    단어장 첨부
+                  </span>
+                )}
+                <span
+                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    t.status === 'used'
+                      ? 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                      : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
+                  }`}
+                >
+                  {t.status === 'used' ? '사용됨' : '미사용'}
+                </span>
+              </div>
             </li>
           ))}
         </ul>

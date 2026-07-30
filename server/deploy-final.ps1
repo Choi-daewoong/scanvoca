@@ -34,6 +34,7 @@ $GITHUB_BRANCH  = $EnvVars['GITHUB_BRANCH']
 $CRON_SECRET       = $EnvVars['CRON_SECRET']
 $ADMIN_NOTIFY_EMAIL = $EnvVars['ADMIN_NOTIFY_EMAIL']
 $NAS_TOOL_API_KEY  = $EnvVars['NAS_TOOL_API_KEY']
+$BLOG_BOT_USER_ID  = $EnvVars['BLOG_BOT_USER_ID']
 
 if (-not $GEMINI_API_KEY -or -not $JWT_SECRET_KEY -or -not $DATABASE_URL) {
     Write-Host "❌ .env 파일에 필수 변수가 없습니다." -ForegroundColor Red
@@ -127,6 +128,7 @@ gcloud run deploy $SERVICE_NAME `
     --set-env-vars "CRON_SECRET=$CRON_SECRET" `
     --set-env-vars "ADMIN_NOTIFY_EMAIL=$ADMIN_NOTIFY_EMAIL" `
     --set-env-vars "NAS_TOOL_API_KEY=$NAS_TOOL_API_KEY" `
+    --set-env-vars "BLOG_BOT_USER_ID=$BLOG_BOT_USER_ID" `
     --set-env-vars "CORS_ORIGINS=*" `
     --memory 512Mi `
     --cpu 1 `

@@ -149,6 +149,7 @@ Important:
         custom_prompt: Optional[str] = None,
         recent_posts: Optional[List[Dict[str, str]]] = None,
         include_practice_questions: bool = False,
+        include_word_list: bool = False,
         source_passage: Optional[Dict[str, Any]] = None,
         source_dialogue: Optional[Dict[str, Any]] = None,
         retry_count: int = 0,
@@ -166,6 +167,11 @@ Important:
         placed before the promo section. The model picks the TOEIC part(s) (5/6 grammar-blank
         vs. 7 reading) that actually match the topic instead of always mixing both. Default
         False keeps the existing manual-workflow output shape unchanged.
+        include_word_list (optional): when True, the model additionally returns a `word_list`
+        array of 5-15 lowercase English headwords actually covered by the post. Only the
+        headwords — meanings/definitions come from the app's own word DB via
+        WordService.get_or_create_words, so a reader's imported wordbook matches what the
+        app shows everywhere else. Default False leaves the output shape unchanged.
         source_passage (optional, suneung pipeline): a real exam passage
         {passage_text, question_text, choices, answer, source_label}. When given, the model
         writes an explainer that quotes the passage verbatim (never invents one) and appends
@@ -227,6 +233,20 @@ Important:
             practice_instruction = ""
             practice_schema = ""
 
+        # Optional word-list block. The caller turns this into a real Wordbook + share post
+        # and inserts a "가져가기" CTA, so we only need bare headwords here.
+        if include_word_list:
+            word_list_instruction = (
+                "\n[단어 목록] 본문 마지막 홍보 섹션 앞에 이 글의 핵심 단어 목록 안내가 삽입됩니다. "
+                "실제로 본문에서 다루는 단어 중 학습자에게 유용한 5~15개를 word_list에 "
+                "소문자 영단어 원형으로만 나열하세요. 뜻·설명·예문은 만들지 마세요(앱 사전 DB에서 "
+                "별도로 가져옵니다). body 안에는 별도의 단어 목록 섹션을 쓰지 마세요."
+            )
+            word_list_schema = ',\n  "word_list": ["contract", "invoice", "negotiate"]'
+        else:
+            word_list_instruction = ""
+            word_list_schema = ""
+
         # Suneung pipeline: inject a real exam passage the model must quote verbatim.
         source_block = ""
         source_instruction = ""
@@ -282,7 +302,7 @@ Important:
 7. 카테고리는 다음 고정 목록 중 가장 적합한 하나를 고르세요: {categories_str}
 8. slug는 영문 소문자·숫자·하이픈만 사용한 ASCII kebab-case로 만드세요 (예: toeic-vocab-30days).
 9. [이미 발행된 최근 글 목록]이 있다면, 그 글들에서 이미 다룬 것과 똑같은 팁·각도·구성을 반복하지 마세요. 가능하면 다른 관점·예시·정보를 다루세요.
-10. 목록에 있는 글 중 마지막 홍보 섹션 이전 본문에서 정말 자연스럽게 이어지는 경우에만, **최대 1개**를 실제 slug로 마크다운 링크(예: https://scanvoca.com/blog/{{slug}})를 걸어 언급하세요. 관련 있는 글이 없으면 절대 언급하지 마세요. 목록에 없는 slug를 지어내지 마세요. 마지막 홍보 섹션의 Scan Voca 링크와는 별개입니다.{practice_instruction}{source_instruction}{dialogue_instruction}
+10. 목록에 있는 글 중 마지막 홍보 섹션 이전 본문에서 정말 자연스럽게 이어지는 경우에만, **최대 1개**를 실제 slug로 마크다운 링크(예: https://scanvoca.com/blog/{{slug}})를 걸어 언급하세요. 관련 있는 글이 없으면 절대 언급하지 마세요. 목록에 없는 slug를 지어내지 마세요. 마지막 홍보 섹션의 Scan Voca 링크와는 별개입니다.{practice_instruction}{word_list_instruction}{source_instruction}{dialogue_instruction}
 
 반드시 아래 구조의 JSON 객체만 반환하세요. 다른 텍스트는 포함하지 마세요:
 {{
@@ -291,7 +311,7 @@ Important:
   "description": "SEO용 요약 1~2문장 (검색 결과 노출용)",
   "category": "위 목록 중 하나",
   "tags": ["태그1", "태그2", "태그3"],
-  "body": "본문 마크다운 전체 (frontmatter 제외, ## 소제목 포함, 마지막 섹션은 Scan Voca 홍보)"{practice_schema}
+  "body": "본문 마크다운 전체 (frontmatter 제외, ## 소제목 포함, 마지막 섹션은 Scan Voca 홍보)"{practice_schema}{word_list_schema}
 }}
 
 주의:
@@ -356,6 +376,13 @@ Important:
                 raw_questions = result.get("practice_questions")
                 out["practice_questions"] = raw_questions if isinstance(raw_questions, list) else []
 
+            if include_word_list:
+                raw_word_list = result.get("word_list")
+                if not isinstance(raw_word_list, list):
+                    raw_word_list = []
+                word_list = [str(w).strip().lower() for w in raw_word_list if str(w).strip()]
+                out["word_list"] = word_list[:15]
+
             return out
 
         except json.JSONDecodeError as e:
@@ -373,6 +400,7 @@ Important:
                     custom_prompt=custom_prompt,
                     recent_posts=recent_posts,
                     include_practice_questions=include_practice_questions,
+                    include_word_list=include_word_list,
                     source_passage=source_passage,
                     source_dialogue=source_dialogue,
                     retry_count=retry_count + 1,

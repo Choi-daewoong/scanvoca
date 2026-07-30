@@ -22,6 +22,9 @@ class BlogTopicResponse(BaseModel):
     status: str
     post_slug: Optional[str] = None
     pipeline: str = "manual"  # additive field; legacy frontend simply ignores it
+    # additive; when true the toeic auto-publish run also builds a Wordbook from the post's
+    # word list, shares it on the board, and inserts a CTA into the markdown.
+    include_word_list: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -60,6 +63,8 @@ class BlogTopicCreateRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     angle: Optional[str] = Field(None, max_length=500)
     pipeline: BlogPipeline = "manual"  # additive; default keeps legacy /admin/blog behavior identical
+    # Opt-in word-list CTA (toeic pipeline only for now). Default False -> unchanged behavior.
+    include_word_list: bool = False
 
 
 class BlogTopicSuggestRequest(BaseModel):

@@ -85,6 +85,7 @@ async def create_topic(
         title=payload.title,
         angle=payload.angle,
         pipeline=payload.pipeline,
+        include_word_list=payload.include_word_list,
     )
     return topic
 
@@ -164,6 +165,7 @@ async def run_auto_publish(
             angle=topic.angle,
             recent_posts=recent_posts,
             include_practice_questions=True,
+            include_word_list=topic.include_word_list,
         )
         if result is None:
             await send_auto_publish_failure_email(
@@ -181,6 +183,36 @@ async def run_auto_publish(
             result.get("practice_questions") or []
         )
         clean_body = BlogService.strip_practice_section(result["body"])
+
+        # Word-list CTA (opt-in per topic) — inserted BEFORE the practice questions are
+        # assembled, so both land before the promo section in the order
+        # 본문 → 단어장 CTA → 실전 연습문제 → 프로모션.
+        if topic.include_word_list and result.get("word_list"):
+            if dry_run:
+                # Placeholder only: a dry run must write nothing to the DB so it stays
+                # repeatable, but the admin still sees the CTA's wording and position.
+                clean_body = BlogService.insert_before_final_section(
+                    clean_body,
+                    BlogService.render_word_list_cta_markdown(result["title"], "PREVIEW", 0),
+                )
+            else:
+                # Best-effort, exactly like the hero image below: no bot account configured
+                # or any failure in the chain -> publish continues with no CTA.
+                bot_user = BlogService.get_bot_user(db)
+                if bot_user is not None:
+                    share = await BlogService.create_word_list_wordbook_and_share(
+                        db, bot_user.id, result["title"], result["word_list"]
+                    )
+                    if share is not None:
+                        clean_body = BlogService.insert_before_final_section(
+                            clean_body,
+                            BlogService.render_word_list_cta_markdown(
+                                share["wordbook_name"], share["share_code"], share["post_id"]
+                            ),
+                        )
+                else:
+                    print("Auto-publish word list: BLOG_BOT_USER_ID not configured, skipping CTA")
+
         body = BlogService.assemble_body_with_questions(clean_body, questions_md)
 
     elif pipeline == "suneung":

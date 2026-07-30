@@ -1,7 +1,7 @@
 """BlogTopic model - seed pool of blog post topics for the marketing blog"""
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import String, Integer, DateTime
+from sqlalchemy import String, Integer, DateTime, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import Base
 
@@ -28,6 +28,14 @@ class BlogTopic(Base):
     # topics created by the legacy /admin/blog flow keep their existing behavior.
     pipeline: Mapped[str] = mapped_column(
         String(20), default="manual", server_default="manual", nullable=False, index=True
+    )
+
+    # Opt-in: attach this post's core word list as a real Wordbook + share-board post, and
+    # insert a "가져가기" CTA into the published markdown. Admin-checked per topic rather than
+    # inferred from the title — not every topic (e.g. 일상영어 tips) has a natural word list.
+    # Defaults to False so every existing topic and pipeline behaves exactly as before.
+    include_word_list: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
     )
 
     # Timestamps

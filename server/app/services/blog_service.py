@@ -14,7 +14,14 @@ from app.models.blog_topic import BlogTopic
 from app.models.blog_published_post import BlogPublishedPost
 from app.models.exam_passage import ExamPassage
 from app.models.conversation_clip import ConversationClip
+from app.models.user import User
+from app.models.wordbook import Wordbook
 from app.schemas.blog import BLOG_CATEGORIES
+from app.schemas.post import PostCreate
+from app.schemas.wordbook import WordbookCreate, WordbookWordCreate
+from app.services.post_service import PostService
+from app.services.word_service import WordService
+from app.services.wordbook_service import WordbookService
 
 # Keyword tokenizer for the simple passage/angle overlap matcher (no embeddings — see
 # find_matching_passage). Keeps alnum + Hangul runs of length >= 2.
@@ -102,8 +109,13 @@ class BlogService:
         title: str,
         angle: Optional[str] = None,
         pipeline: str = "manual",
+        include_word_list: bool = False,
     ) -> BlogTopic:
-        """Insert a new unused topic tagged with a pipeline. Empty angle -> category hook."""
+        """Insert a new unused topic tagged with a pipeline. Empty angle -> category hook.
+
+        include_word_list opts the topic into the word-list wordbook/CTA flow (toeic only
+        for now); default False keeps every existing caller's behavior identical.
+        """
         resolved_angle = (
             angle.strip() if angle and angle.strip() else BlogService.default_angle(category)
         )
@@ -113,6 +125,7 @@ class BlogService:
             angle=resolved_angle,
             status="unused",
             pipeline=pipeline,
+            include_word_list=include_word_list,
         )
         db.add(topic)
         db.commit()
@@ -318,7 +331,11 @@ class BlogService:
 
     @staticmethod
     def create_topic(
-        db: Session, category: str, title: str, angle: Optional[str] = None
+        db: Session,
+        category: str,
+        title: str,
+        angle: Optional[str] = None,
+        include_word_list: bool = False,
     ) -> BlogTopic:
         """Insert a new unused topic. Empty angle -> category default hook."""
         resolved_angle = angle.strip() if angle and angle.strip() else BlogService.default_angle(category)
@@ -327,6 +344,7 @@ class BlogService:
             title=title.strip(),
             angle=resolved_angle,
             status="unused",
+            include_word_list=include_word_list,
         )
         db.add(topic)
         db.commit()
@@ -545,14 +563,19 @@ class BlogService:
         return "## 실전 연습문제\n\n" + "\n\n".join(blocks)
 
     @staticmethod
-    def assemble_body_with_questions(body: str, questions_markdown: str) -> str:
-        """Insert a rendered `## 실전 연습문제` block before the post's final `##` section.
+    def insert_before_final_section(body: str, block_markdown: str) -> str:
+        """Insert a markdown block just before the body's final `##` section.
 
         The generator is instructed to make the last `##` section the Scan Voca promo
-        (contract §3), so the practice questions go just before it. If no `##` heading is
-        found, the block is appended at the end. Empty questions_markdown -> body unchanged.
+        (contract §3), so anything inserted here lands right before it. If no `##` heading
+        exists, the block is appended at the end. Empty block_markdown -> body unchanged.
+
+        Shared by every "append a section before the promo" caller (practice questions,
+        word-list CTA) so they all place blocks identically. Calling it repeatedly stacks
+        blocks in call order: each new block is inserted before the same final `##`, so it
+        ends up after previously inserted ones.
         """
-        if not questions_markdown.strip():
+        if not block_markdown.strip():
             return body
 
         lines = body.splitlines()
@@ -562,11 +585,159 @@ class BlogService:
                 last_h2_idx = i
 
         if last_h2_idx is None:
-            return f"{body.rstrip()}\n\n{questions_markdown}\n"
+            return f"{body.rstrip()}\n\n{block_markdown}\n"
 
         before = "\n".join(lines[:last_h2_idx]).rstrip()
         after = "\n".join(lines[last_h2_idx:]).strip()
-        return f"{before}\n\n{questions_markdown}\n\n{after}\n"
+        return f"{before}\n\n{block_markdown}\n\n{after}\n"
+
+    @staticmethod
+    def assemble_body_with_questions(body: str, questions_markdown: str) -> str:
+        """Insert a rendered `## 실전 연습문제` block before the post's final `##` section.
+
+        Thin wrapper over insert_before_final_section, kept as the named entry point the
+        auto-publish pipeline uses for practice questions.
+        """
+        return BlogService.insert_before_final_section(body, questions_markdown)
+
+    # ----- Auto-blog: word-list wordbook + share post + CTA -----
+
+    @staticmethod
+    def get_bot_user(db: Session) -> Optional[User]:
+        """The system account that owns auto-generated wordbooks/share posts, or None.
+
+        Returns None when BLOG_BOT_USER_ID is unset AND when it points at a user that no
+        longer exists — the id is re-verified against the DB on every call rather than
+        trusted from config, so a stale/mistyped env value degrades to "feature off"
+        instead of blowing up mid-publish.
+        """
+        bot_id = settings.BLOG_BOT_USER_ID
+        if not bot_id:
+            return None
+        return db.get(User, bot_id)
+
+    @staticmethod
+    def _discard_partial_wordbook(db: Session, wordbook_id: Optional[int]) -> None:
+        """Clean up after a failed word-list run: roll the session back, then delete the
+        half-built wordbook if one was already committed.
+
+        The rollback is the important half and must happen FIRST: when the failure was a
+        DB-level error (IntegrityError on commit/flush) the session is left inactive, and
+        every later statement on it — validate_auto_draft, upsert_published_post,
+        mark_used — raises PendingRollbackError. That would escape run_auto_publish as a
+        500 and fail the publish itself, exactly the outcome this whole path is built to
+        avoid. Deleting the wordbook is the second half: WordbookService.create_wordbook
+        commits immediately, so without this every failed run would leave another orphan
+        wordbook on the bot account. wordbook_words rows go with it via ON DELETE CASCADE.
+
+        Itself failure-proof — cleanup problems are logged and swallowed, never raised.
+        """
+        try:
+            db.rollback()
+        except Exception as e:  # noqa: BLE001
+            print(f"Auto-publish word list: session rollback failed: {e}")
+            return
+
+        if wordbook_id is None:
+            return
+        try:
+            orphan = db.get(Wordbook, wordbook_id)
+            if orphan is not None:
+                db.delete(orphan)
+                db.commit()
+                print(f"Auto-publish word list: discarded partial wordbook id={wordbook_id}")
+        except Exception as e:  # noqa: BLE001
+            print(f"Auto-publish word list: failed to discard wordbook {wordbook_id}: {e}")
+            try:
+                db.rollback()
+            except Exception:  # noqa: BLE001
+                pass
+
+    @staticmethod
+    async def create_word_list_wordbook_and_share(
+        db: Session, bot_user_id: int, wordbook_name: str, word_list: List[str]
+    ) -> Optional[dict]:
+        """Build a Wordbook from `word_list`, share it on the board, return its CTA data.
+
+        Chain: resolve/create each word through the app's own word DB (WordService, so
+        definitions match what users see everywhere else) -> create the wordbook -> attach
+        the words -> issue a share code -> publish a `board_type="share"` post owned by the
+        bot.
+
+        Word resolution deliberately runs BEFORE the wordbook is created: create_wordbook
+        commits on its own, so building it first would leave a committed empty wordbook
+        behind whenever no word resolves (the most likely failure). Any failure after the
+        wordbook exists is undone by _discard_partial_wordbook.
+
+        Returns {"share_code", "post_id", "wordbook_name"}, or None if anything fails —
+        including "no word resolved", which would otherwise share an empty wordbook.
+        Never raises: this runs inside an unattended auto-publish, and a failure here must
+        degrade to "post published without a CTA", never to a failed publish.
+        """
+        wordbook_id: Optional[int] = None
+        try:
+            word_results = await WordService().get_or_create_words(db, word_list)
+            word_ids: List[int] = []
+            for item in word_results.get("results", []):
+                data = item.get("data")
+                if not data or not data.get("id"):
+                    continue  # word failed to resolve — skip it, keep the rest
+                word_ids.append(data["id"])
+
+            if not word_ids:
+                print("Auto-publish word list: no words resolved, skipping wordbook creation")
+                return None
+
+            wordbook = WordbookService.create_wordbook(
+                db,
+                bot_user_id,
+                WordbookCreate(
+                    name=wordbook_name,
+                    description="블로그 글에서 소개한 단어 목록",
+                    is_default=False,
+                ),
+            )
+            wordbook_id = wordbook.id  # plain int: survives a later rollback/expire
+
+            for word_id in word_ids:
+                WordbookService.add_word_to_wordbook(
+                    db, wordbook.id, WordbookWordCreate(word_id=word_id)
+                )
+
+            share_code = WordbookService.get_or_create_share_code(db, wordbook)
+            post = PostService.create_post(
+                db,
+                bot_user_id,
+                PostCreate(
+                    board_type="share",
+                    title=wordbook_name,
+                    content="블로그 글에서 소개한 단어 목록입니다.",
+                    wordbook_id=wordbook.id,
+                ),
+            )
+            return {
+                "share_code": share_code,
+                "post_id": post.id,
+                "wordbook_name": wordbook_name,
+            }
+        except Exception as e:  # noqa: BLE001 - best-effort, must never block publishing
+            print(f"Auto-publish word list wordbook/share failed (continuing without CTA): {e}")
+            BlogService._discard_partial_wordbook(db, wordbook_id)
+            return None
+
+    @staticmethod
+    def render_word_list_cta_markdown(
+        wordbook_name: str, share_code: str, post_id: int
+    ) -> str:
+        """Render the '이 글에 나온 단어' CTA section linking to the import + share pages."""
+        return (
+            "## 이 글에 나온 단어, 한 번에 저장하세요\n"
+            "\n"
+            "이 글에서 다룬 단어들을 단어장으로 정리했어요. 아래 링크로 내 계정에 바로 가져올 수 있습니다.\n"
+            "\n"
+            f"- [단어장 바로 가져오기](https://scanvoca.com/wordbooks/import?code={share_code})\n"
+            f"- [공유 게시글에서 보기](https://scanvoca.com/board/share/{post_id})"
+        )
 
     @staticmethod
     def strip_practice_section(body: str) -> str:

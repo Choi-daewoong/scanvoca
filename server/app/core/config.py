@@ -42,6 +42,13 @@ class Settings(BaseSettings):
     CRON_SECRET: str = ""
     ADMIN_NOTIFY_EMAIL: str = ""
 
+    # 자동 블로그 "단어 목록 → 단어장 → 공유게시판" 기능의 소유자 계정 id.
+    # 예약 실행 경로(Cloud Scheduler)에는 로그인 사용자가 없으므로, 자동 생성되는
+    # 단어장/공유 게시글을 소유할 시스템 계정(is_system=True)을 여기에 지정한다.
+    # 미설정(None)이거나 해당 id의 유저가 실제로 없으면 이 기능만 조용히 비활성화되고
+    # 블로그 발행 자체는 정상 진행된다(fail-soft).
+    BLOG_BOT_USER_ID: Optional[int] = None
+
     # 로컬 영상 클리퍼 도구 인증 (local-tools/conversation-clipper → 백엔드 클립 등록 API)
     # NAS_TOOL_API_KEY: X-Api-Key 헤더 검증용. 비어 있으면(미설정) 이 인증 경로는 항상
     #                   실패한다 — CRON_SECRET과 동일하게 빈 문자열 우회 불가.

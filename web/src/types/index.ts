@@ -280,6 +280,9 @@ export interface BlogTopic {
   // 자동 블로그 파이프라인 1단계 — 기존 /admin/blog 사용처 회귀 방지를 위해 옵셔널.
   // BE는 기본값 'manual'을 항상 채워 응답한다(계약서 1절).
   pipeline?: string;
+  // 핵심 단어 목록 첨부 여부(토픽별 opt-in). BE는 NOT NULL DEFAULT false로 항상 채워 응답한다.
+  // 실제 단어장 생성 + 공유 + 블로그 CTA 삽입은 toeic 파이프라인에서만 동작한다.
+  include_word_list: boolean;
 }
 
 // 관리자 — AI 생성 결과 (BE 응답)

@@ -7,6 +7,7 @@ import { BlogPipeline } from '@/types';
 interface Candidate {
   title: string;
   angle: string;
+  includeWordList: boolean;
   adopting: boolean;
   adopted: boolean;
 }
@@ -33,6 +34,7 @@ export default function SuggestPanel({ pipeline, category, onAdopted }: Props) {
         res.suggestions.map((s) => ({
           title: s.title,
           angle: s.angle,
+          includeWordList: false,
           adopting: false,
           adopted: false,
         })),
@@ -57,7 +59,13 @@ export default function SuggestPanel({ pipeline, category, onAdopted }: Props) {
     updateCandidate(idx, { adopting: true });
     setError(null);
     try {
-      await autoBlogService.createTopic(category, c.title.trim(), c.angle.trim(), pipeline);
+      await autoBlogService.createTopic(
+        category,
+        c.title.trim(),
+        c.angle.trim(),
+        pipeline,
+        c.includeWordList,
+      );
       updateCandidate(idx, { adopting: false, adopted: true });
       onAdopted();
     } catch (e) {
@@ -128,7 +136,22 @@ export default function SuggestPanel({ pipeline, category, onAdopted }: Props) {
                 rows={2}
                 className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
               />
-              <div className="flex justify-end">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label className="flex cursor-pointer items-center gap-2 select-none">
+                  <input
+                    type="checkbox"
+                    checked={c.includeWordList}
+                    onChange={(e) => updateCandidate(idx, { includeWordList: e.target.checked })}
+                    disabled={c.adopted}
+                    className="h-4 w-4 shrink-0 accent-indigo-500 disabled:opacity-60"
+                  />
+                  <span className="text-xs text-gray-600 dark:text-gray-400">
+                    핵심 단어 목록 첨부 (단어장 자동 생성 + 공유)
+                    <span className="ml-1 text-gray-400 dark:text-gray-500">
+                      (TOEIC 파이프라인에서만 적용됩니다)
+                    </span>
+                  </span>
+                </label>
                 {c.adopted ? (
                   <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                     채택됨 ✓

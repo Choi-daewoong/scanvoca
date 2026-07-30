@@ -30,10 +30,18 @@ export const autoBlogService = {
     title: string,
     angle: string,
     pipeline: BlogPipeline,
+    includeWordList: boolean = false,
   ): Promise<BlogTopic> {
     return apiFetch<BlogTopic>('/api/v1/admin/blog/topics', {
       method: 'POST',
-      body: JSON.stringify({ category, title, angle, pipeline }),
+      // BE 스키마는 snake_case이므로 바디 키를 변환 없이 그대로 맞춘다.
+      body: JSON.stringify({
+        category,
+        title,
+        angle,
+        pipeline,
+        include_word_list: includeWordList,
+      }),
     });
   },
 

@@ -131,6 +131,7 @@ class TestRenderPracticeQuestions:
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
                                 recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
                                 source_passage=None, source_dialogue=None):
             return {
                 "slug": "toeic-dup-check", "title": "토익 자동 글5", "description": "설명",
@@ -283,7 +284,8 @@ class TestAutoPublishRun:
         topic_id = topic.id
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
-                                recent_posts=None, include_practice_questions=False):
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False):
             assert include_practice_questions is True
             return {
                 "slug": "toeic-auto-dry", "title": "토익 자동 글", "description": "설명",
@@ -323,7 +325,8 @@ class TestAutoPublishRun:
         topic_id = topic.id
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
-                                recent_posts=None, include_practice_questions=False):
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False):
             return {
                 "slug": "toeic-auto-live", "title": "토익 자동 글2", "description": "설명",
                 "category": "토익·비즈니스", "tags": ["토익"], "body": LONG_BODY,
@@ -359,7 +362,8 @@ class TestAutoPublishRun:
         db_session.commit()
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
-                                recent_posts=None, include_practice_questions=False):
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False):
             return None
 
         monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
@@ -380,7 +384,8 @@ class TestAutoPublishRun:
         topic_id = topic.id
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
-                                recent_posts=None, include_practice_questions=False):
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False):
             return {
                 "slug": "toeic-auto-fail", "title": "토익 자동 글4", "description": "설명",
                 "category": "토익·비즈니스", "tags": ["토익"], "body": LONG_BODY,
@@ -583,6 +588,7 @@ class TestSuneungAutoPublish:
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
                                 recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
                                 source_passage=None, source_dialogue=None):
             captured["source_passage"] = source_passage
             return {
@@ -616,6 +622,7 @@ class TestSuneungAutoPublish:
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
                                 recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
                                 source_passage=None, source_dialogue=None):
             return {
                 "slug": "suneung-live", "title": "수능 해설", "description": "설명",
@@ -681,6 +688,7 @@ class TestConversationAutoPublish:
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
                                 recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
                                 source_passage=None, source_dialogue=None):
             captured["source_dialogue"] = source_dialogue
             return {
@@ -713,6 +721,7 @@ class TestConversationAutoPublish:
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
                                 recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
                                 source_passage=None, source_dialogue=None):
             return {
                 "slug": "daily-live", "title": "일상회화", "description": "설명",
@@ -1136,3 +1145,539 @@ class TestSourcePassagePromptSafety:
             "choices": ["a", "b"], "answer": "3", "source_label": "라벨",
         })
         assert "정답: 3" in prompt
+
+
+# =============================================================================
+# 단어 목록 → 단어장 자동 생성 → 공유게시판 게재 → 블로그 CTA 삽입
+# =============================================================================
+
+@pytest.fixture(scope="function")
+def bot_user(db_session, monkeypatch):
+    """BLOG_BOT_USER_ID로 설정된 시스템 봇 계정."""
+    user = User(
+        email="blogbot@scanvoca.internal",
+        password_hash="x",
+        display_name="Scan Voca Bot",
+        is_system=True,
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    monkeypatch.setattr(settings, "BLOG_BOT_USER_ID", user.id)
+    return user
+
+
+def _fake_word_results(word_ids):
+    """WordService.get_or_create_words의 반환 shape을 흉내낸 결과."""
+    return {
+        "results": [
+            {"word": w, "source": "db", "data": {"id": wid, "word": w},
+             "queued": False, "error": None}
+            for w, wid in word_ids
+        ],
+        "cache_hits": 0, "db_hits": len(word_ids), "gemini_calls": 0,
+    }
+
+
+def _seed_words(db_session, words):
+    """실제 Word row를 만들고 [(word, id)] 반환."""
+    from app.models.word import Word
+    out = []
+    for w in words:
+        row = Word(
+            word=w,
+            meanings=[{"partOfSpeech": "n", "definition": "뜻"}],
+            source="gemini",
+            gpt_generated=True,
+        )
+        db_session.add(row)
+        db_session.commit()
+        db_session.refresh(row)
+        out.append((w, row.id))
+    return out
+
+
+class TestInsertBeforeFinalSection:
+    """insert_before_final_section 추출 후에도 기존 동작이 100% 동일해야 한다."""
+
+    def test_inserts_before_last_h2(self):
+        body = "## 첫째\n\n내용\n\n## 결국 홍보\n\n[Scan Voca](https://scanvoca.com)"
+        out = BlogService.insert_before_final_section(body, "## 새 블록\n\n내용")
+        assert out.index("## 첫째") < out.index("## 새 블록") < out.index("## 결국 홍보")
+
+    def test_appends_when_no_h2(self):
+        body = "헤딩 없는 본문"
+        out = BlogService.insert_before_final_section(body, "## 새 블록")
+        assert out.strip().endswith("## 새 블록")
+        assert out.startswith("헤딩 없는 본문")
+
+    def test_empty_block_returns_body_unchanged(self):
+        body = "## 첫째\n\n내용\n\n## 결국 홍보"
+        assert BlogService.insert_before_final_section(body, "   ") == body
+
+    def test_assemble_wrapper_matches_extracted_function(self):
+        """assemble_body_with_questions는 이제 wrapper — 출력이 완전히 동일해야 한다."""
+        body = "## 첫째\n\n내용\n\n## 결국 홍보\n\n[Scan Voca](https://scanvoca.com)"
+        questions_md = "## 실전 연습문제\n\n**1.** Q"
+        assert (
+            BlogService.assemble_body_with_questions(body, questions_md)
+            == BlogService.insert_before_final_section(body, questions_md)
+        )
+
+    def test_stacking_keeps_call_order_before_promo(self):
+        """CTA 먼저, 연습문제 나중 → 본문 → CTA → 연습문제 → 프로모션 순서."""
+        body = "## 첫째\n\n내용\n\n## 결국 홍보\n\n[Scan Voca](https://scanvoca.com)"
+        with_cta = BlogService.insert_before_final_section(body, "## 단어 CTA")
+        out = BlogService.assemble_body_with_questions(with_cta, "## 실전 연습문제\n\n**1.** Q")
+        assert out.index("## 첫째") < out.index("## 단어 CTA")
+        assert out.index("## 단어 CTA") < out.index("## 실전 연습문제")
+        assert out.index("## 실전 연습문제") < out.index("## 결국 홍보")
+
+
+class TestRenderWordListCta:
+    """render_word_list_cta_markdown — 계약에 명시된 마크다운 그대로."""
+
+    def test_renders_contract_markdown(self):
+        md = BlogService.render_word_list_cta_markdown("토익 필수 단어", "ABC123", 42)
+        assert md.startswith("## 이 글에 나온 단어, 한 번에 저장하세요")
+        assert "[단어장 바로 가져오기](https://scanvoca.com/wordbooks/import?code=ABC123)" in md
+        assert "[공유 게시글에서 보기](https://scanvoca.com/board/share/42)" in md
+
+
+class TestGetBotUser:
+    """get_bot_user — 설정값과 실제 계정 존재 여부를 매번 확인한다."""
+
+    def test_returns_none_when_unset(self, db_session, monkeypatch):
+        monkeypatch.setattr(settings, "BLOG_BOT_USER_ID", None)
+        assert BlogService.get_bot_user(db_session) is None
+
+    def test_returns_none_when_user_missing(self, db_session, monkeypatch):
+        """설정값이 있어도 그 id의 유저가 없으면 None (하드코딩 신뢰 금지)."""
+        monkeypatch.setattr(settings, "BLOG_BOT_USER_ID", 999999)
+        assert BlogService.get_bot_user(db_session) is None
+
+    def test_returns_user_when_configured(self, db_session, bot_user):
+        found = BlogService.get_bot_user(db_session)
+        assert found is not None and found.id == bot_user.id
+
+
+class TestCreateWordListWordbookAndShare:
+    """create_word_list_wordbook_and_share — 단어장 생성 + 공유 체인, 절대 예외를 던지지 않는다."""
+
+    def test_creates_wordbook_words_and_share_post(self, db_session, bot_user, monkeypatch):
+        from app.models.wordbook import Wordbook, WordbookWord
+        from app.models.post import Post
+        from app.services.word_service import WordService
+
+        seeded = _seed_words(db_session, ["contract", "invoice"])
+
+        async def fake_get_or_create(self, db, words):
+            return _fake_word_results(seeded)
+
+        monkeypatch.setattr(WordService, "get_or_create_words", fake_get_or_create)
+
+        out = asyncio.run(BlogService.create_word_list_wordbook_and_share(
+            db_session, bot_user.id, "토익 필수 단어", ["contract", "invoice"]
+        ))
+
+        assert out is not None
+        assert out["wordbook_name"] == "토익 필수 단어"
+        assert isinstance(out["share_code"], str) and out["share_code"]
+        assert isinstance(out["post_id"], int)
+
+        wordbook = db_session.query(Wordbook).filter(Wordbook.user_id == bot_user.id).one()
+        assert wordbook.name == "토익 필수 단어"
+        assert wordbook.share_code == out["share_code"]
+        assert db_session.query(WordbookWord).filter(
+            WordbookWord.wordbook_id == wordbook.id).count() == 2
+
+        post = db_session.get(Post, out["post_id"])
+        assert post.board_type == "share"
+        assert post.user_id == bot_user.id
+        assert post.wordbook_id == wordbook.id
+        assert post.share_code == out["share_code"]
+
+    def test_returns_none_when_no_word_resolves(self, db_session, bot_user, monkeypatch):
+        """단어가 하나도 생성되지 않으면 빈 단어장을 아예 만들지 않고 None."""
+        from app.models.post import Post
+        from app.models.wordbook import Wordbook
+        from app.services.word_service import WordService
+
+        async def fake_get_or_create(self, db, words):
+            return {"results": [
+                {"word": w, "source": "error", "data": None, "queued": False,
+                 "error": "Failed to fetch word definition"} for w in words
+            ], "cache_hits": 0, "db_hits": 0, "gemini_calls": 0}
+
+        monkeypatch.setattr(WordService, "get_or_create_words", fake_get_or_create)
+
+        out = asyncio.run(BlogService.create_word_list_wordbook_and_share(
+            db_session, bot_user.id, "빈 단어장", ["zzzz"]
+        ))
+        assert out is None
+        assert db_session.query(Post).count() == 0
+        # 고아 단어장 금지: create_wordbook은 즉시 commit하므로 단어 해석 이후에 만들어야 한다
+        assert db_session.query(Wordbook).count() == 0
+
+    def test_swallows_exceptions_and_returns_none(self, db_session, bot_user, monkeypatch):
+        """체인 중간에서 예외가 나도 절대 밖으로 던지지 않는다(자동발행이 죽으면 안 됨)."""
+        from app.services.word_service import WordService
+
+        async def boom(self, db, words):
+            raise RuntimeError("word service down")
+
+        monkeypatch.setattr(WordService, "get_or_create_words", boom)
+
+        out = asyncio.run(BlogService.create_word_list_wordbook_and_share(
+            db_session, bot_user.id, "실패 단어장", ["contract"]
+        ))
+        assert out is None
+
+    def test_db_level_exception_leaves_session_usable(self, db_session, bot_user, monkeypatch):
+        """DB 레벨 예외(IntegrityError)에서도 세션이 살아 있어야 한다.
+
+        애플리케이션 예외와 달리 commit/flush 실패는 세션을 inactive로 만든다. rollback을
+        하지 않으면 같은 세션을 계속 쓰는 run_auto_publish의 이후 단계가 전부
+        PendingRollbackError로 죽어 발행 자체가 500이 된다.
+        """
+        from app.models.wordbook import Wordbook
+        from app.services.word_service import WordService
+
+        async def db_boom(self, db, words):
+            db.add(Wordbook(user_id=None, name=None))  # NOT NULL 위반
+            db.commit()
+
+        monkeypatch.setattr(WordService, "get_or_create_words", db_boom)
+
+        out = asyncio.run(BlogService.create_word_list_wordbook_and_share(
+            db_session, bot_user.id, "DB 실패 단어장", ["contract"]
+        ))
+        assert out is None
+        # 세션이 정상 상태여야 한다 — 오염된 세션이면 여기서 PendingRollbackError가 난다
+        assert db_session.query(Wordbook).count() == 0
+        assert db_session.get(User, bot_user.id) is not None
+
+    def test_discards_wordbook_when_share_post_fails(self, db_session, bot_user, monkeypatch):
+        """단어장 커밋 이후 단계가 실패하면 이미 커밋된 단어장을 정리한다(고아 누적 방지)."""
+        from app.models.wordbook import Wordbook, WordbookWord
+        from app.models.post import Post
+        from app.services.post_service import PostService
+        from app.services.word_service import WordService
+
+        seeded = _seed_words(db_session, ["contract"])
+
+        async def fake_get_or_create(self, db, words):
+            return _fake_word_results(seeded)
+
+        def boom_post(db, user_id, data):
+            raise ValueError("이미 이 단어장으로 작성된 공유 게시글이 있습니다")
+
+        monkeypatch.setattr(WordService, "get_or_create_words", fake_get_or_create)
+        monkeypatch.setattr(PostService, "create_post", staticmethod(boom_post))
+
+        out = asyncio.run(BlogService.create_word_list_wordbook_and_share(
+            db_session, bot_user.id, "게시글 실패 단어장", ["contract"]
+        ))
+        assert out is None
+        db_session.expire_all()
+        assert db_session.query(Wordbook).count() == 0
+        assert db_session.query(WordbookWord).count() == 0  # ON DELETE CASCADE
+        assert db_session.query(Post).count() == 0
+
+
+class TestAutoPublishWordListCta:
+    """run_auto_publish(toeic) + include_word_list 연결."""
+
+    @staticmethod
+    def _patch_generate(monkeypatch, word_list, slug="toeic-wordlist"):
+        captured = {}
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            captured["include_word_list"] = include_word_list
+            return {
+                "slug": slug, "title": "토익 단어 글", "description": "설명",
+                "category": "토익·비즈니스", "tags": ["토익"], "body": LONG_BODY,
+                "practice_questions": [
+                    {"type": "Part 5", "question": "Q ___", "choices": ["a", "b", "c", "d"],
+                     "answer_index": 1, "explanation": "e"},
+                ],
+                "word_list": word_list,
+            }
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+        return captured
+
+    @staticmethod
+    def _add_topic(db_session, include_word_list, title="토익 단어 주제"):
+        topic = BlogTopic(category="토익·비즈니스", title=title, angle="a",
+                          status="unused", pipeline="toeic",
+                          include_word_list=include_word_list)
+        db_session.add(topic)
+        db_session.commit()
+        return topic
+
+    def test_dry_run_inserts_placeholder_and_writes_no_rows(
+        self, client, admin_auth_headers, db_session, bot_user, monkeypatch
+    ):
+        """dry_run은 반복 가능해야 한다 — CTA 미리보기만 넣고 DB에는 아무것도 쓰지 않는다."""
+        from app.models.wordbook import Wordbook
+        from app.models.post import Post
+
+        self._add_topic(db_session, include_word_list=True)
+        captured = self._patch_generate(monkeypatch, ["contract", "invoice"])
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        markdown = resp.json()["markdown"]
+
+        # 토픽의 플래그가 실제로 생성 호출까지 전달됐는지
+        assert captured["include_word_list"] is True
+        # placeholder CTA
+        assert "## 이 글에 나온 단어, 한 번에 저장하세요" in markdown
+        assert "code=PREVIEW" in markdown
+        assert "/board/share/0" in markdown
+        # 순서: 본문 → CTA → 실전 연습문제 → 프로모션
+        assert markdown.index("## 이 글에 나온 단어") < markdown.index("## 실전 연습문제")
+        assert markdown.index("## 실전 연습문제") < markdown.index("## 결국, 단어는 외워야 합니다")
+
+        # DB에는 아무것도 생성되지 않아야 한다
+        db_session.expire_all()
+        assert db_session.query(Wordbook).count() == 0
+        assert db_session.query(Post).count() == 0
+
+    def test_dry_run_without_flag_has_no_cta(
+        self, client, admin_auth_headers, db_session, bot_user, monkeypatch
+    ):
+        self._add_topic(db_session, include_word_list=False)
+        captured = self._patch_generate(monkeypatch, ["contract"])
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert captured["include_word_list"] is False
+        assert "이 글에 나온 단어" not in resp.json()["markdown"]
+
+    def test_real_publish_creates_wordbook_share_and_real_links(
+        self, client, admin_auth_headers, db_session, bot_user, monkeypatch
+    ):
+        from app.models.wordbook import Wordbook
+        from app.models.post import Post
+        from app.services.word_service import WordService
+
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+        self._add_topic(db_session, include_word_list=True)
+        self._patch_generate(monkeypatch, ["contract", "invoice"])
+
+        seeded = _seed_words(db_session, ["contract", "invoice"])
+
+        async def fake_get_or_create(self, db, words):
+            return _fake_word_results(seeded)
+
+        monkeypatch.setattr(WordService, "get_or_create_words", fake_get_or_create)
+
+        committed = {}
+
+        async def fake_commit(slug, markdown):
+            committed["markdown"] = markdown
+            return "https://github.com/Choi-daewoong/scanvoca/commit/wl123"
+
+        monkeypatch.setattr(BlogService, "commit_markdown", staticmethod(fake_commit))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.json()["published"] is True
+
+        db_session.expire_all()
+        wordbook = db_session.query(Wordbook).filter(Wordbook.user_id == bot_user.id).one()
+        post = db_session.query(Post).filter(Post.board_type == "share").one()
+        assert post.wordbook_id == wordbook.id
+
+        markdown = committed["markdown"]
+        assert f"code={wordbook.share_code}" in markdown
+        assert f"/board/share/{post.id}" in markdown
+        assert "PREVIEW" not in markdown
+
+    def test_real_publish_without_bot_user_still_publishes(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """봇 계정 미설정이면 CTA만 건너뛰고 발행은 정상 완료된다(fail-soft)."""
+        from app.models.wordbook import Wordbook
+
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+        monkeypatch.setattr(settings, "BLOG_BOT_USER_ID", None)
+        self._add_topic(db_session, include_word_list=True)
+        self._patch_generate(monkeypatch, ["contract"])
+
+        committed = {}
+
+        async def fake_commit(slug, markdown):
+            committed["markdown"] = markdown
+            return "https://github.com/Choi-daewoong/scanvoca/commit/nobot"
+
+        monkeypatch.setattr(BlogService, "commit_markdown", staticmethod(fake_commit))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.json()["published"] is True
+        assert "이 글에 나온 단어" not in committed["markdown"]
+        db_session.expire_all()
+        assert db_session.query(Wordbook).count() == 0
+
+    def test_real_publish_survives_wordbook_failure(
+        self, client, admin_auth_headers, db_session, bot_user, monkeypatch
+    ):
+        """단어장 생성이 실패해도 발행 자체는 막지 않는다."""
+        from app.services.word_service import WordService
+
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+        self._add_topic(db_session, include_word_list=True)
+        self._patch_generate(monkeypatch, ["contract"])
+
+        async def boom(self, db, words):
+            raise RuntimeError("word service down")
+
+        monkeypatch.setattr(WordService, "get_or_create_words", boom)
+
+        committed = {}
+
+        async def fake_commit(slug, markdown):
+            committed["markdown"] = markdown
+            return "https://github.com/Choi-daewoong/scanvoca/commit/wlfail"
+
+        monkeypatch.setattr(BlogService, "commit_markdown", staticmethod(fake_commit))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.json()["published"] is True
+        assert "이 글에 나온 단어" not in committed["markdown"]
+
+    def test_real_publish_survives_db_level_failure(
+        self, client, admin_auth_headers, db_session, bot_user, monkeypatch
+    ):
+        """QA 회귀: DB 레벨 예외(IntegrityError)로 세션이 오염돼도 발행은 200으로 완료된다.
+
+        rollback이 없으면 이후 validate_auto_draft/upsert_published_post/mark_used가
+        PendingRollbackError를 던져 엔드포인트가 500이 됐다. RuntimeError만 주입하던
+        기존 테스트로는 이 경로가 잡히지 않는다.
+        """
+        from app.models.wordbook import Wordbook
+        from app.services.word_service import WordService
+
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+        topic = self._add_topic(db_session, include_word_list=True)
+        topic_id = topic.id
+        self._patch_generate(monkeypatch, ["contract"])
+
+        async def db_boom(self, db, words):
+            db.add(Wordbook(user_id=None, name=None))  # NOT NULL 위반
+            db.commit()
+
+        monkeypatch.setattr(WordService, "get_or_create_words", db_boom)
+
+        committed = {}
+
+        async def fake_commit(slug, markdown):
+            committed["markdown"] = markdown
+            return "https://github.com/Choi-daewoong/scanvoca/commit/dbfail"
+
+        monkeypatch.setattr(BlogService, "commit_markdown", staticmethod(fake_commit))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.json()["published"] is True
+        assert "이 글에 나온 단어" not in committed["markdown"]
+
+        # 세션 오염 없이 후속 DB 작업(mark_used)까지 정상 수행됐는지
+        db_session.expire_all()
+        assert db_session.get(BlogTopic, topic_id).status == "used"
+        assert db_session.query(Wordbook).count() == 0
+
+    def test_empty_word_list_inserts_no_cta(
+        self, client, admin_auth_headers, db_session, bot_user, monkeypatch
+    ):
+        """플래그가 켜져 있어도 모델이 단어를 못 주면 CTA를 넣지 않는다."""
+        self._add_topic(db_session, include_word_list=True)
+        self._patch_generate(monkeypatch, [])
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert "이 글에 나온 단어" not in resp.json()["markdown"]
+
+
+class TestGenerateBlogPostWordList:
+    """generate_blog_post(include_word_list=...) 프롬프트/정규화."""
+
+    @staticmethod
+    def _run(include_word_list, raw_word_list=None):
+        captured = {}
+        payload = {
+            "slug": "x", "title": "t", "description": "d", "category": "토익·비즈니스",
+            "tags": [], "body": "## 첫째\n\n내용\n\n## 결국 홍보\n\n[Scan Voca](https://scanvoca.com)",
+        }
+        if raw_word_list is not None:
+            payload["word_list"] = raw_word_list
+
+        class FakeResponse:
+            text = json.dumps(payload)
+
+        class FakeModel:
+            def generate_content(self, prompt, generation_config=None):
+                captured["prompt"] = prompt
+                return FakeResponse()
+
+        service = GeminiService.__new__(GeminiService)
+        service.model = FakeModel()
+        out = asyncio.run(service.generate_blog_post(
+            title="t", angle="a", include_word_list=include_word_list,
+        ))
+        return out, captured["prompt"]
+
+    def test_prompt_asks_for_word_list_only_when_enabled(self):
+        _, prompt_on = self._run(True, ["contract"])
+        assert "word_list" in prompt_on
+        assert "뜻·설명·예문은 만들지 마세요" in prompt_on
+
+        _, prompt_off = self._run(False, ["contract"])
+        assert "word_list" not in prompt_off
+
+    def test_word_list_absent_when_disabled(self):
+        out, _ = self._run(False, ["Contract"])
+        assert "word_list" not in out
+
+    def test_normalizes_lowercase_trim_and_caps_at_15(self):
+        raw = ["  Contract ", "INVOICE", "", "  "] + [f"word{i}" for i in range(20)]
+        out, _ = self._run(True, raw)
+        assert out["word_list"][:2] == ["contract", "invoice"]
+        assert len(out["word_list"]) == 15
+
+    def test_non_list_word_list_becomes_empty(self):
+        out, _ = self._run(True, "not-a-list")
+        assert out["word_list"] == []
+
+    def test_missing_word_list_becomes_empty(self):
+        out, _ = self._run(True, None)
+        assert out["word_list"] == []
