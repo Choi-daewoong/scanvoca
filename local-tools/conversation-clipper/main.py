@@ -27,6 +27,7 @@ from clipper.matching import (
     collect_dialogue,
     compute_clip_bounds,
     find_best_subtitle_index,
+    is_english_subtitles,
 )
 
 
@@ -254,6 +255,9 @@ def process(cfg: Config) -> List[Dict]:
         chosen: Optional[Dict] = None
         for media in media_files:
             subtitles = load_subtitles(media["srt"])
+            if not is_english_subtitles(subtitles):
+                print(f"  skip {media['title']}: subtitle text isn't English (language mismatch)")
+                continue
             output_filename = f"topic-{topic['id']}.mp4"
             payload = build_clip_payload(topic, media, subtitles, cfg, output_filename)
             if payload is not None:

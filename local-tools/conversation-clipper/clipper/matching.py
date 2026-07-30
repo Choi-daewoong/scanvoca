@@ -14,6 +14,8 @@ from typing import Dict, List, Optional, Tuple
 
 # Keyword tokenizer: alnum + Hangul runs of length >= 2 (same idea as the backend matcher).
 _TOKEN_RE = re.compile(r"[0-9A-Za-z가-힣]+")
+_LATIN_RE = re.compile(r"[A-Za-z]")
+_HANGUL_RE = re.compile(r"[가-힣]")
 
 
 def tokenize(text: str) -> set:
@@ -43,6 +45,29 @@ def find_best_subtitle_index(query: str, subtitles: List[Dict]) -> Optional[int]
             best_score = s
             best_index = i
     return best_index
+
+
+def is_english_subtitles(
+    subtitles: List[Dict], sample_size: int = 30, min_latin_ratio: float = 0.5
+) -> bool:
+    """True when a subtitle file's dialogue text is predominantly English (Latin script).
+
+    This pipeline exists to teach English via real dialogue, so a non-English subtitle
+    file must never be accepted just because it happens to sit next to the right video
+    file on the NAS (real case: "About Time"'s only movie.srt was a Korean dub track —
+    the .mp4 had no embedded subtitle streams at all — and find_source_media() trusted it
+    unchecked, producing "English learning" clips whose dialogue_en field was pure
+    Korean). Samples the first `sample_size` lines rather than the whole file for speed.
+    Latin-vs-Hangul letter ratio is a simple, dependency-free proxy — good enough for a
+    binary accept/reject, no need for a real language-detection library.
+    """
+    sample_text = " ".join(s.get("text", "") for s in subtitles[:sample_size])
+    latin = len(_LATIN_RE.findall(sample_text))
+    hangul = len(_HANGUL_RE.findall(sample_text))
+    total = latin + hangul
+    if total == 0:
+        return False  # no recognizable letters at all - can't confirm English, reject
+    return (latin / total) >= min_latin_ratio
 
 
 def _window_range(total: int, center_index: int, context: int) -> Tuple[int, int]:

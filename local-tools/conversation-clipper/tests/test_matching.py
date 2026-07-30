@@ -17,6 +17,7 @@ from clipper.matching import (  # noqa: E402
     collect_dialogue,
     format_seconds,
     build_ffmpeg_command,
+    is_english_subtitles,
 )
 
 
@@ -324,3 +325,34 @@ class TestFindSourceMedia:
         (folder / "movie.srt").write_text("1\n00:00:01,000 --> 00:00:02,000\nHi\n")
 
         assert find_source_media(str(tmp_path)) == []
+
+
+class TestIsEnglishSubtitles:
+    """실운영 버그: "About Time" 폴더에 영어 자막이 전혀 없고(임베디드 트랙도 0개) 한국어
+    더빙용 movie.srt만 있었는데, find_source_media는 존재 여부만 확인하고 언어는 안 봐서
+    그대로 매칭에 쓰였다 — "영어 학습" 클립의 dialogue_en이 통째로 한국어로 등록됨."""
+
+    def test_english_subtitles_pass(self):
+        assert is_english_subtitles(SUBS) is True
+
+    def test_korean_subtitles_rejected(self):
+        korean_subs = [
+            {"text": "우리 가족이 좀 이상하다는 건 항상"},
+            {"text": "너무 길쭉하고 너무 빼빼하고"},
+            {"text": "엄만 아주 독립적인 분이"},
+        ]
+        assert is_english_subtitles(korean_subs) is False
+
+    def test_empty_subtitles_rejected(self):
+        assert is_english_subtitles([]) is False
+
+    def test_only_samples_first_n_lines(self):
+        # 앞 30줄이 영어면, 뒤에 한국어가 아무리 많아도 샘플 밖이라 영향 없음.
+        english_head = [{"text": "hello there friend"}] * 30
+        korean_tail = [{"text": "안녕하세요 친구입니다"}] * 100
+        assert is_english_subtitles(english_head + korean_tail, sample_size=30) is True
+
+    def test_mixed_below_threshold_rejected(self):
+        mixed = [{"text": "hi 안녕 hello 반가워 ok 좋아 sure 그래"}]
+        # 라틴 문자 수 < 한글 문자 수인 경우 (대략) 임계값 미만으로 거부되는지
+        assert is_english_subtitles(mixed, min_latin_ratio=0.9) is False
