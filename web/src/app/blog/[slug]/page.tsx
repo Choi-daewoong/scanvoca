@@ -4,30 +4,10 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import rehypeSanitize from 'rehype-sanitize';
 import { getAllSlugs, getPostBySlug } from '@/lib/blog';
+import { blogHtmlSchema } from '@/lib/blogHtmlSchema';
 import AdminEditButton from '../_components/AdminEditButton';
-
-/**
- * 발행 마크다운은 GitHub 저장소 원문이 아니라 AI 생성 파이프라인(자동발행 포함)을 거친
- * 콘텐츠라 "신뢰된 입력"으로 취급할 수 없다 — 프롬프트 인젝션이나 자격증명 유출 시
- * <script>가 그대로 실행되는 stored XSS 경로가 된다. 일상회화 클립을 위해 <video> 태그만
- * 예외적으로 허용하고, 그 외 raw HTML은 rehype-raw가 만든 노드를 이 스키마가 걸러낸다.
- */
-const blogHtmlSchema = {
-  ...defaultSchema,
-  tagNames: [...(defaultSchema.tagNames ?? []), 'video', 'source', 'track'],
-  attributes: {
-    ...defaultSchema.attributes,
-    video: ['src', 'controls', 'poster', 'width', 'height', 'preload', 'muted', 'playsInline'],
-    source: ['src', 'type'],
-    track: ['src', 'kind', 'srclang', 'label', 'default'],
-  },
-  protocols: {
-    ...defaultSchema.protocols,
-    src: ['http', 'https'],
-  },
-};
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -115,8 +95,8 @@ export default async function BlogDetailPage({ params }: Props) {
           </div>
           <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">{post.title}</h1>
 
-          {/* rehypeRaw로 raw HTML(일상회화 클립 <video> 태그)을 파싱한 뒤,
-              rehypeSanitize(blogHtmlSchema)로 <video>/<source>/<track>만 허용해 XSS를 차단한다. */}
+          {/* rehypeRaw로 raw HTML(일상회화 클립 <video>, 기출 지문 밑줄 <u> 등)을 파싱한 뒤,
+              rehypeSanitize(blogHtmlSchema, web/src/lib/blogHtmlSchema.ts)로 허용 목록만 통과시켜 XSS를 차단한다. */}
           <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-img:mx-auto prose-img:max-h-72 prose-img:w-auto prose-img:rounded-xl">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
