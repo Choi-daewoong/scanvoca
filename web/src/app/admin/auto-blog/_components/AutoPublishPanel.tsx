@@ -28,8 +28,8 @@ export function reasonMessage(reason: string | null | undefined): string {
   switch (reason) {
     case 'no_unused_topic':
       return '채택된 미사용 토픽이 없습니다. 위에서 먼저 주제를 채택해 주세요.';
-    case 'no_matching_passage':
-      return '토픽과 매칭되는 미사용 기출 지문이 없습니다. 지문 인제스트를 먼저 진행해 주세요.';
+    case 'no_ready_passage':
+      return '지문과 짝지어진 미사용 주제가 없습니다. 지문 재고가 소진됐거나 아직 새 주제가 안 붙었을 수 있습니다.';
     case 'no_ready_clip':
       return '준비완료(ready) 상태의 영상 클립이 없습니다. 로컬 클리퍼 도구로 클립을 먼저 생성해 주세요.';
     case 'generation_failed':

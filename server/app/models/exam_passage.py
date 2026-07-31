@@ -2,12 +2,14 @@
 
 Populated by the one-off ingest script (ingest_exam_pdfs.py), not by the app at runtime.
 Each row is one exam question (passage + question + choices). The auto-blog suneung
-pipeline picks an unused passage matching a topic's angle, writes an explainer post that
-quotes the original passage verbatim, then flips the passage to 'used'.
+pipeline is passage-first: the replenish step picks an unused, not-yet-paired passage,
+derives a blog topic FROM its actual content and pairs the two (topic_id), then the publish
+step writes an explainer post quoting the original passage verbatim and flips the passage
+to 'used'.
 """
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import String, Integer, DateTime, Text, JSON
+from sqlalchemy import String, Integer, DateTime, Text, JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import Base
 
@@ -32,6 +34,20 @@ class ExamPassage(Base):
     choices: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)  # 5지선다, 없으면 NULL
     answer: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)  # 정답, 미상이면 NULL
     tags: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)  # AI가 부여한 문법/소재 키워드
+
+    # 1:1 pairing with the blog topic that was derived FROM this passage (passage-first
+    # discovery). Nullable because passages are ingested in bulk long before any topic
+    # exists — NULL simply means "no topic derived from this one yet", which is the normal
+    # state for freshly ingested rows and the only state get_unused_passage_without_topic
+    # will hand out. SET NULL (not CASCADE) on purpose: passages are scarce, hard-won
+    # ingested content, so deleting a topic must only unpair the passage, never destroy it.
+    topic_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("blog_topics.id", ondelete="SET NULL"),
+        nullable=True,
+        unique=True,
+        index=True,
+    )
 
     # Lifecycle
     status: Mapped[str] = mapped_column(

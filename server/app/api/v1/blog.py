@@ -107,12 +107,15 @@ async def suggest_topics(
 
     Nothing is persisted — the admin edits the candidates and confirms them via the
     existing POST /topics (with pipeline). Model failure -> 502.
+
+    Topic-first by construction, so the admin UI only exposes it for toeic now: a suneung
+    topic adopted this way would have no paired passage and could therefore never be picked
+    by get_unused_suneung_topic_with_passage (dead data). The endpoint itself is left
+    pipeline-agnostic rather than 400-ing on suneung — it persists nothing, so the worst
+    case is a suggestion the admin cannot usefully adopt.
     """
     recent_posts = BlogService.get_recent_posts_for_prompt(db, category=payload.category, limit=12)
     existing_titles = BlogService.list_titles_for_category(db, payload.category)
-    available_tags = (
-        BlogService.get_available_passage_tags(db) if payload.pipeline == "suneung" else None
-    )
 
     gemini = GeminiService()
     suggestions = await gemini.suggest_blog_topics(
@@ -121,7 +124,6 @@ async def suggest_topics(
         count=payload.count,
         recent_posts=recent_posts,
         existing_titles=existing_titles,
-        available_tags=available_tags,
     )
     if suggestions is None:
         raise HTTPException(
@@ -173,8 +175,8 @@ async def _apply_word_list_cta(
     )
 
 
-# Pipelines whose topic queue can be replenished by AI suggestion alone. Values must stay
-# in sync with the frontend TABS mapping in web/src/app/admin/auto-blog/page.tsx.
+# Blog category each auto-replenished pipeline files its topics under. Values must stay in
+# sync with the frontend TABS mapping in web/src/app/admin/auto-blog/page.tsx.
 # 'conversation' is deliberately absent: its topics are born together with a clip via the
 # discover flow, so there is nothing to top up here.
 _PIPELINE_CATEGORY = {"toeic": "토익·비즈니스", "suneung": "수능·내신"}
@@ -233,15 +235,14 @@ async def _publish_one(
         body = BlogService.assemble_body_with_questions(clean_body, questions_md)
 
     elif pipeline == "suneung":
-        topic = BlogService.get_unused_topic_for_pipeline(db, "suneung")
-        if topic is None:
-            return BlogAutoPublishResult(published=False, reason="no_unused_topic", dry_run=dry_run)
-        passage = BlogService.find_matching_passage(db, topic.angle)
-        if passage is None:
-            # Do NOT force an arbitrary passage — no-op until a matching one is ingested.
-            return BlogAutoPublishResult(
-                published=False, reason="no_matching_passage", dry_run=dry_run, topic_id=topic.id
-            )
+        pair = BlogService.get_unused_suneung_topic_with_passage(db)
+        if pair is None:
+            # Either no unused suneung topic, or none paired with a passage yet. One reason
+            # covers both (like conversation's no_ready_clip): since _replenish_suneung_topics
+            # creates the topic and pairs its passage in the same step, "unpaired topic" is no
+            # longer a distinct, actionable state worth reporting separately.
+            return BlogAutoPublishResult(published=False, reason="no_ready_passage", dry_run=dry_run)
+        topic, passage = pair
         recent_posts = BlogService.get_recent_posts_for_prompt(db, category=topic.category, limit=12)
         result = await gemini.generate_blog_post(
             title=topic.title,
@@ -413,12 +414,14 @@ async def _replenish_topic_queue(
 ) -> int:
     """Top the unused-topic pool up to `target` by adopting AI suggestions with no review.
 
-    toeic/suneung only (the caller never passes conversation — see _PIPELINE_CATEGORY).
-    For suneung every candidate is checked against find_matching_passage and dropped when
-    nothing matches, so the "never force an arbitrary passage" rule of the publish step is
-    applied at adoption time too. Capped at 3 rounds to avoid looping forever when the model
-    keeps proposing unmatchable angles; falling short is fine — _publish_one then simply
-    no-ops with no_unused_topic / no_matching_passage.
+    toeic only now. suneung has its own passage-first replenisher (_replenish_suneung_topics)
+    because a topic invented before a passage is chosen can never be guaranteed one to quote;
+    conversation was never replenishable here at all (its topics are born with a clip). The
+    `pipeline` parameter is kept rather than hardcoded so the existing call/test shape and
+    _PIPELINE_CATEGORY lookup stay untouched.
+
+    Capped at 3 rounds so a model that keeps returning nothing usable cannot loop forever;
+    falling short is fine — _publish_one then simply no-ops with no_unused_topic.
 
     Returns: how many topics were actually adopted.
     """
@@ -437,16 +440,12 @@ async def _replenish_topic_queue(
 
         recent_posts = BlogService.get_recent_posts_for_prompt(db, category=category, limit=12)
         existing_titles = BlogService.list_titles_for_category(db, category)
-        available_tags = (
-            BlogService.get_available_passage_tags(db) if pipeline == "suneung" else None
-        )
         suggestions = await gemini.suggest_blog_topics(
             pipeline=pipeline,
             category=category,
             count=max(missing, 1),
             recent_posts=recent_posts,
             existing_titles=existing_titles,
-            available_tags=available_tags,
         )
         # Model failure: give up quietly instead of 502-ing. A batch run must not fail
         # wholesale because one pipeline could not be topped up (unlike /topics/suggest,
@@ -455,8 +454,6 @@ async def _replenish_topic_queue(
             break
 
         for s in suggestions:
-            if pipeline == "suneung" and BlogService.find_matching_passage(db, s["angle"]) is None:
-                continue  # no passage this topic could ever be written from — drop it
             BlogService.create_topic_with_pipeline(
                 db,
                 category=category,
@@ -466,6 +463,70 @@ async def _replenish_topic_queue(
                 include_word_list=False,  # opt-in feature stays off when no human reviews
             )
             added += 1
+
+    return added
+
+
+async def _replenish_suneung_topics(db: Session, target: int, gemini: GeminiService) -> int:
+    """Top the paired suneung topic pool up to `target` by discovering topics FROM passages.
+
+    Passage-first: picks an unused, not-yet-paired ExamPassage, asks the model for a topic
+    grounded in its actual content, then creates the BlogTopic and pairs it
+    (passage.topic_id = topic.id) in the same step — pairing can never fail to match, unlike
+    the old find_matching_passage design. Bounded by `target` attempts (not extra retry
+    rounds like _replenish_topic_queue needs — that function retries because keyword-matching
+    is unreliable; this one isn't, so one pass over up to `target` distinct passages is
+    enough). A passage the model rejects is skipped via exclude_ids for the rest of THIS
+    call, not marked in the DB (see get_unused_passage_without_topic).
+
+    Note the passage stays status='unused' after pairing — only a successful publish flips it
+    via mark_passage_used. 'unused' here means "not yet cited by a post", which is still true.
+
+    Returns: how many topics were newly created and paired.
+    """
+    category = _PIPELINE_CATEGORY["suneung"]
+    current = db.scalar(
+        select(func.count())
+        .select_from(BlogTopic)
+        .where(BlogTopic.pipeline == "suneung", BlogTopic.status == "unused")
+    )
+    missing = target - (current or 0)
+    if missing <= 0:
+        return 0
+
+    existing_titles = BlogService.list_titles_for_category(db, category)
+    tried_ids: List[int] = []
+    added = 0
+
+    for _ in range(missing):
+        passage = BlogService.get_unused_passage_without_topic(db, exclude_ids=tried_ids)
+        if passage is None:
+            break  # 지문 재고 소진 — PDF 인제스트가 필요한 상태, 여기선 더 할 게 없음
+
+        suggestion = await gemini.suggest_topic_from_passage(
+            passage_text=passage.passage_text,
+            question_text=passage.question_text,
+            choices=passage.choices,
+            answer=passage.answer,
+            source_label=passage.source_label,
+            existing_titles=existing_titles,
+        )
+        if suggestion is None:
+            tried_ids.append(passage.id)  # 이번 실행에서만 건너뜀 — DB 상태는 안 건드림
+            continue
+
+        topic = BlogService.create_topic_with_pipeline(
+            db,
+            category=category,
+            title=suggestion["title"],
+            angle=suggestion["angle"],
+            pipeline="suneung",
+            include_word_list=False,  # opt-in feature stays off when no human reviews
+        )
+        passage.topic_id = topic.id
+        db.commit()
+        existing_titles.append(suggestion["title"])
+        added += 1
 
     return added
 
@@ -514,9 +575,14 @@ async def run_auto_publish_daily(
     published=false result (out of stock or generation failure alike) and the run moves on
     to the next pipeline — it never retries to force the requested count.
 
+    Each pipeline is topped up by its own replenisher: toeic adopts AI-suggested topics
+    (_replenish_topic_queue), suneung derives topics from real passages and pairs them
+    (_replenish_suneung_topics), conversation has none (clips come from the local NAS tool).
+
     dry_run skips the replenish step entirely: adopting topics commits rows, which would
     break the existing "a dry run leaves nothing behind" contract. A dry run therefore
-    previews what the CURRENT stock can produce, reporting no_unused_topic when it is short.
+    previews what the CURRENT stock can produce, reporting no_unused_topic / no_ready_passage
+    when it is short.
     """
     gemini = GeminiService()
     out: Dict[str, List[BlogAutoPublishResult]] = {
@@ -524,8 +590,12 @@ async def run_auto_publish_daily(
     }
 
     for pipeline in ("toeic", "suneung", "conversation"):
-        if pipeline in _PIPELINE_CATEGORY and not dry_run:
-            await _replenish_topic_queue(db, pipeline, count_per_pipeline, gemini)
+        if not dry_run:
+            if pipeline == "toeic":
+                await _replenish_topic_queue(db, "toeic", count_per_pipeline, gemini)
+            elif pipeline == "suneung":
+                await _replenish_suneung_topics(db, count_per_pipeline, gemini)
+            # conversation: no replenish — clip supply is the local NAS tool's job.
 
         for _ in range(count_per_pipeline):
             result = await _publish_one(db, pipeline, dry_run, gemini)

@@ -84,12 +84,16 @@ export default function AutoBlogPage() {
       </div>
 
       {/* key={pipeline} — 탭 전환 시 각 패널 내부 상태(후보/dry-run 결과 등) 초기화 */}
-      <SuggestPanel
-        key={`suggest-${pipeline}`}
-        pipeline={pipeline}
-        category={category}
-        onAdopted={() => fetchTopics(statusFilter)}
-      />
+      {/* 수능은 토픽을 반드시 기출 지문과 함께(passage-first discovery) 만들어야 발행 가능하다 —
+          여기서 수동으로 주제만 채택하면 지문 없는 고아 토픽이 생겨 영원히 발행되지 않는다. */}
+      {pipeline !== 'suneung' && (
+        <SuggestPanel
+          key={`suggest-${pipeline}`}
+          pipeline={pipeline}
+          category={category}
+          onAdopted={() => fetchTopics(statusFilter)}
+        />
+      )}
 
       <TopicListPanel
         topics={topics}

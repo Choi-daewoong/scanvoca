@@ -23,11 +23,6 @@ from app.services.post_service import PostService
 from app.services.word_service import WordService
 from app.services.wordbook_service import WordbookService
 
-# Keyword tokenizer for the simple passage/angle overlap matcher (no embeddings — see
-# find_matching_passage). Keeps alnum + Hangul runs of length >= 2.
-_KEYWORD_RE = re.compile(r"[0-9A-Za-z가-힣]+")
-
-
 @dataclass
 class ReflectImage:
     """One image file to commit alongside a post's markdown.
@@ -149,84 +144,52 @@ class BlogService:
         )
         return db.scalar(stmt)
 
-    # ----- Phase 2: exam passage matching (suneung pipeline) -----
+    # ----- Phase 2: exam passages (suneung pipeline, passage-first) -----
 
     @staticmethod
-    def _keyword_tokens(text: str) -> set:
-        """Lowercased alnum/Hangul tokens (len >= 2) — the unit of the overlap matcher."""
-        return {t.lower() for t in _KEYWORD_RE.findall(text or "") if len(t) >= 2}
+    def get_unused_passage_without_topic(
+        db: Session, exclude_ids: Optional[List[int]] = None
+    ) -> Optional[ExamPassage]:
+        """Oldest unused exam passage not yet paired with a topic (FIFO by id), or None.
 
-    @staticmethod
-    def score_passage_match(angle: str, tags: Optional[list]) -> int:
-        """Overlap score between a topic angle and a passage's tags.
-
-        Deliberately simple (no embeddings / external search — contract forbids over-design):
-        each tag that shares a keyword with the angle scores +1. "Shares" means an angle
-        token is a PREFIX of a tag (or an exact match, the trivial case of prefix) — ingest
-        tags are unspaced compound nouns built head-first (e.g. "빈칸추론" = "빈칸" + "추론",
-        "문법오류" = "문법" + "오류") while angle text is natural Korean prose that splits into
-        separate particle-bearing tokens (e.g. "빈칸 넣기" -> {"빈칸","넣기"}), so an exact-
-        token-equality check almost never overlaps even for genuinely related topics.
-        Prefix (not arbitrary substring-anywhere) matters: unrestricted substring containment
-        was tried and rejected — a generic angle word like "목표" ends up embedded inside
-        unrelated tags like "비즈니스목표" (goal is the SUFFIX there, not the head concept),
-        producing false matches to passages on a completely different subject. Requiring the
-        angle token to be the tag's prefix keeps "빈칸" -> "빈칸추론" while rejecting that case.
+        exclude_ids lets one replenish call skip passages it already tried-and-rejected in
+        this same run without mutating their DB state (rejection is not persisted — a passage
+        the model couldn't use today may still be fine tomorrow, e.g. after existing_titles
+        changes).
         """
-        if not tags:
-            return 0
-        angle_tokens = BlogService._keyword_tokens(angle)
-        if not angle_tokens:
-            return 0
-        score = 0
-        for tag in tags:
-            tag_tokens = BlogService._keyword_tokens(str(tag))
-            if any(t.startswith(a) for t in tag_tokens for a in angle_tokens):
-                score += 1
-        return score
-
-    @staticmethod
-    def find_matching_passage(db: Session, angle: str) -> Optional[ExamPassage]:
-        """Best unused exam passage for a topic angle by tag overlap, or None.
-
-        Iterates unused passages oldest-first and keeps the highest score with a strict '>',
-        so a tie naturally resolves to the oldest. Returns None when no passage shares any
-        keyword (score 0) — never forces an arbitrary passage (contract §1-3).
-        """
-        passages = list(
-            db.scalars(
-                select(ExamPassage)
-                .where(ExamPassage.status == "unused")
-                .order_by(ExamPassage.id)
-            ).all()
+        stmt = (
+            select(ExamPassage)
+            .where(ExamPassage.status == "unused", ExamPassage.topic_id.is_(None))
+            .order_by(ExamPassage.id)
         )
-        best: Optional[ExamPassage] = None
-        best_score = 0
-        for p in passages:
-            s = BlogService.score_passage_match(angle, p.tags)
-            if s > best_score:
-                best_score = s
-                best = p
-        return best if best_score > 0 else None
+        if exclude_ids:
+            stmt = stmt.where(ExamPassage.id.notin_(exclude_ids))
+        return db.scalar(stmt.limit(1))
 
     @staticmethod
-    def get_available_passage_tags(db: Session, limit: int = 200) -> List[str]:
-        """Distinct tags across unused exam passages, for seeding suneung topic suggestions.
+    def get_unused_suneung_topic_with_passage(
+        db: Session,
+    ) -> Optional[Tuple[BlogTopic, ExamPassage]]:
+        """Oldest unused suneung topic that already has a paired passage, or None.
 
-        find_matching_passage only ever finds a passage whose tags overlap with a topic's
-        angle text — a topic suggested without seeing real tag vocabulary almost never
-        contains one verbatim (natural prose vs. bare compound-noun tags), so every such
-        topic silently dead-ends at "no_matching_passage". Feeding the model this list lets
-        it write an angle that actually names a real tag, closing that gap at the source.
+        Mirrors get_unused_conversation_topic_with_ready_clip exactly — this is the
+        auto-publish selector for suneung. Since pairing happens atomically at discovery time
+        (_replenish_suneung_topics), any unused suneung topic returned by this join is
+        guaranteed publishable; no matching step is needed here (unlike the old
+        find_matching_passage design, which could dead-end at publish time).
         """
-        passages = db.scalars(
-            select(ExamPassage).where(ExamPassage.status == "unused")
-        ).all()
-        tag_set: set = set()
-        for p in passages:
-            if p.tags:
-                tag_set.update(str(t) for t in p.tags)
-        return sorted(tag_set)[:limit]
+        stmt = (
+            select(BlogTopic, ExamPassage)
+            .join(ExamPassage, ExamPassage.topic_id == BlogTopic.id)
+            .where(
+                BlogTopic.pipeline == "suneung",
+                BlogTopic.status == "unused",
+            )
+            .order_by(BlogTopic.id)
+            .limit(1)
+        )
+        row = db.execute(stmt).first()
+        return (row[0], row[1]) if row else None
 
     @staticmethod
     def list_exam_passages(db: Session, status_filter: str = "unused") -> List[ExamPassage]:

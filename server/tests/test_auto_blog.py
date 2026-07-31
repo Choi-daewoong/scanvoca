@@ -255,8 +255,8 @@ class TestAutoPublishRun:
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_suneung_no_unused_topic_200(self, client, admin_auth_headers):
-        """suneung도 빈 DB에서는 (지문 매칭 이전에) 미사용 토픽이 없어 no_unused_topic."""
+    def test_suneung_no_ready_passage_200(self, client, admin_auth_headers):
+        """suneung은 빈 DB에서 no_ready_passage (지문과 짝지어진 미사용 토픽이 없음)."""
         resp = client.post(
             "/api/v1/admin/blog/auto-publish/run?pipeline=suneung",
             headers=admin_auth_headers,
@@ -264,7 +264,7 @@ class TestAutoPublishRun:
         assert resp.status_code == status.HTTP_200_OK
         data = resp.json()
         assert data["published"] is False
-        assert data["reason"] == "no_unused_topic"
+        assert data["reason"] == "no_ready_passage"
 
     def test_no_unused_topic_200(self, client, admin_auth_headers):
         resp = client.post(
@@ -415,7 +415,7 @@ class TestSuggestTopics:
 
     def test_suggest_success(self, client, admin_auth_headers, monkeypatch):
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
+                               existing_titles=None):
             assert pipeline == "toeic"
             assert category == "토익·비즈니스"
             return [{"title": "제목1", "angle": "방향1"}, {"title": "제목2", "angle": "방향2"}]
@@ -433,7 +433,7 @@ class TestSuggestTopics:
 
     def test_suggest_ai_failure_502(self, client, admin_auth_headers, monkeypatch):
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
+                               existing_titles=None):
             return None
 
         monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
@@ -452,19 +452,18 @@ class TestSuggestTopics:
         )
         assert resp.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_suneung_suggest_passes_available_tags(
+    def test_suggest_never_reads_passage_state(
         self, client, admin_auth_headers, db_session, monkeypatch
     ):
-        """no_matching_passage 근본 원인 방지: 실제 지문 태그 어휘를 프롬프트에 넣어야
-        모델이 angle에 진짜 매칭 가능한 태그를 그대로 쓸 수 있다."""
+        """이 엔드포인트는 topic-first 도구다 — 지문 재고를 전혀 참조하지 않아야 한다.
+        (수능 주제는 이제 지문에서 파생되므로 여기서 태그 어휘를 심을 이유가 사라졌다.)"""
         _seed_passage(db_session, tags=["빈칸추론", "역접"], problem_number=18)
-        _seed_passage(db_session, tags=["환경"], problem_number=19, status="used")
         captured = {}
 
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
-            captured["available_tags"] = available_tags
-            return [{"title": "제목", "angle": "빈칸추론 대비"}]
+                               existing_titles=None, **kwargs):
+            captured["kwargs"] = kwargs
+            return [{"title": "제목", "angle": "방향"}]
 
         monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
         resp = client.post(
@@ -473,25 +472,7 @@ class TestSuggestTopics:
             headers=admin_auth_headers,
         )
         assert resp.status_code == status.HTTP_200_OK
-        assert set(captured["available_tags"]) == {"빈칸추론", "역접"}  # used 지문 태그는 제외
-
-    def test_toeic_suggest_does_not_pass_available_tags(
-        self, client, admin_auth_headers, monkeypatch
-    ):
-        captured = {}
-
-        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
-            captured["available_tags"] = available_tags
-            return [{"title": "제목", "angle": "방향"}]
-
-        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
-        client.post(
-            "/api/v1/admin/blog/topics/suggest",
-            json={"pipeline": "toeic", "category": "토익·비즈니스", "count": 1},
-            headers=admin_auth_headers,
-        )
-        assert captured["available_tags"] is None
+        assert captured["kwargs"] == {}  # available_tags 같은 지문 기반 인자가 없어야 한다
 
 
 class TestTopicsPipelineFilter:
@@ -567,76 +548,111 @@ def _seed_passage(db_session, tags, problem_number=18, status="unused",
     return p
 
 
-class TestFindMatchingPassage:
-    """BlogService.score_passage_match / find_matching_passage 단위 테스트"""
+class TestGetUnusedPassageWithoutTopic:
+    """BlogService.get_unused_passage_without_topic — passage-first 발굴의 입력 큐."""
 
-    def test_score_counts_overlapping_tags(self):
-        assert BlogService.score_passage_match("수능 빈칸추론 대비", ["빈칸추론", "환경"]) == 1
-        assert BlogService.score_passage_match("빈칸추론 환경 지문", ["빈칸추론", "환경", "역접"]) == 2
-        assert BlogService.score_passage_match("전혀 다른 주제", ["빈칸추론", "환경"]) == 0
+    def _pair(self, db_session, passage, title="이미 짝지어진 주제"):
+        topic = BlogTopic(category="수능·내신", title=title, angle="앵글",
+                          status="unused", pipeline="suneung")
+        db_session.add(topic)
+        db_session.commit()
+        passage.topic_id = topic.id
+        db_session.commit()
+        return topic
 
-    def test_score_empty_inputs(self):
-        assert BlogService.score_passage_match("", ["빈칸추론"]) == 0
-        assert BlogService.score_passage_match("빈칸추론", None) == 0
-        assert BlogService.score_passage_match("빈칸추론", []) == 0
-
-    def test_score_prefix_match_for_natural_prose_angle(self):
-        """실사고: 관리자가 쓰는 angle은 자연스러운 문장이라 태그가 그대로 한 토큰으로
-        들어있는 경우가 거의 없다 — "빈칸 넣기"(공백 있음)처럼 조사·띄어쓰기가 낀 문장에서
-        "빈칸추론" 태그를 못 잡으면 실제 매칭이 계속 0으로 죽는다(운영에서 실제로 발생)."""
-        assert BlogService.score_passage_match(
-            "수능 영어 빈칸 넣기 유형 정복", ["빈칸추론"]
-        ) == 1
-        assert BlogService.score_passage_match(
-            "고교 내신 문법 포인트 분석", ["문법오류"]
-        ) == 1
-
-    def test_score_prefix_rejects_generic_word_as_tag_suffix(self):
-        """운영에서 실제로 잡은 오탐: "목표"가 "비즈니스목표"의 접미부일 뿐인데 예전
-        구현(부분 문자열 아무 데나)은 이걸 매칭시켰다 — 접두어 전용이면 걸러져야 한다."""
-        assert BlogService.score_passage_match("2등급 목표 학생", ["비즈니스목표"]) == 0
-        # 반대로 "목표"가 진짜 접두어(핵심어)인 복합어는 여전히 매칭되어야 한다.
-        assert BlogService.score_passage_match("2등급 목표 학생", ["목표중심"]) == 1
-
-    def test_find_picks_highest_overlap(self, db_session):
-        _seed_passage(db_session, tags=["환경"], problem_number=1)
-        best = _seed_passage(db_session, tags=["빈칸추론", "역접"], problem_number=2)
-        _seed_passage(db_session, tags=["문법"], problem_number=3)
-
-        found = BlogService.find_matching_passage(db_session, "빈칸추론 역접 연결사 대비")
-        assert found is not None and found.id == best.id
-
-    def test_find_returns_none_when_no_overlap(self, db_session):
-        _seed_passage(db_session, tags=["환경"], problem_number=1)
-        assert BlogService.find_matching_passage(db_session, "역접 연결사") is None
-
-    def test_find_tie_breaks_to_oldest(self, db_session):
+    def test_returns_oldest_unpaired_first(self, db_session):
         oldest = _seed_passage(db_session, tags=["빈칸추론"], problem_number=1)
-        _seed_passage(db_session, tags=["빈칸추론"], problem_number=2)
-        found = BlogService.find_matching_passage(db_session, "빈칸추론")
-        assert found.id == oldest.id
+        _seed_passage(db_session, tags=["역접"], problem_number=2)
+        found = BlogService.get_unused_passage_without_topic(db_session)
+        assert found is not None and found.id == oldest.id
 
-    def test_find_ignores_used_passages(self, db_session):
+    def test_skips_passages_already_paired_with_a_topic(self, db_session):
+        first = _seed_passage(db_session, tags=["빈칸추론"], problem_number=1)
+        second = _seed_passage(db_session, tags=["역접"], problem_number=2)
+        self._pair(db_session, first)
+        found = BlogService.get_unused_passage_without_topic(db_session)
+        assert found is not None and found.id == second.id
+
+    def test_ignores_used_passages(self, db_session):
         _seed_passage(db_session, tags=["빈칸추론"], problem_number=1, status="used")
-        assert BlogService.find_matching_passage(db_session, "빈칸추론") is None
+        assert BlogService.get_unused_passage_without_topic(db_session) is None
+
+    def test_exclude_ids_skips_this_runs_rejects(self, db_session):
+        first = _seed_passage(db_session, tags=["빈칸추론"], problem_number=1)
+        second = _seed_passage(db_session, tags=["역접"], problem_number=2)
+        found = BlogService.get_unused_passage_without_topic(
+            db_session, exclude_ids=[first.id]
+        )
+        assert found is not None and found.id == second.id
+        # 거절은 DB에 남지 않는다 — 다음 실행에서는 다시 후보가 되어야 한다.
+        assert BlogService.get_unused_passage_without_topic(db_session).id == first.id
+
+    def test_none_when_everything_excluded(self, db_session):
+        p = _seed_passage(db_session, tags=["빈칸추론"], problem_number=1)
+        assert BlogService.get_unused_passage_without_topic(
+            db_session, exclude_ids=[p.id]
+        ) is None
+
+    def test_empty_pool_returns_none(self, db_session):
+        assert BlogService.get_unused_passage_without_topic(db_session) is None
 
 
-class TestGetAvailablePassageTags:
-    """BlogService.get_available_passage_tags — suneung 주제 제안에 실제 태그 어휘를 심는 재료."""
+class TestGetUnusedSuneungTopicWithPassage:
+    """BlogService.get_unused_suneung_topic_with_passage — suneung 자동발행 셀렉터."""
 
-    def test_collects_distinct_tags_from_unused_only(self, db_session):
-        _seed_passage(db_session, tags=["빈칸추론", "역접"], problem_number=1)
-        _seed_passage(db_session, tags=["역접", "환경"], problem_number=2)
-        _seed_passage(db_session, tags=["문법"], problem_number=3, status="used")
-        tags = BlogService.get_available_passage_tags(db_session)
-        assert set(tags) == {"빈칸추론", "역접", "환경"}
+    def _seed_topic(self, db_session, pipeline="suneung", status_="unused", title="수능 주제"):
+        t = BlogTopic(category="수능·내신", title=title, angle="앵글",
+                      status=status_, pipeline=pipeline)
+        db_session.add(t)
+        db_session.commit()
+        db_session.refresh(t)
+        return t
 
-    def test_no_passages_returns_empty(self, db_session):
-        assert BlogService.get_available_passage_tags(db_session) == []
+    def _pair(self, db_session, passage, topic):
+        passage.topic_id = topic.id
+        db_session.commit()
 
-    def test_passage_with_no_tags_skipped(self, db_session):
-        _seed_passage(db_session, tags=None, problem_number=1)
-        assert BlogService.get_available_passage_tags(db_session) == []
+    def test_returns_paired_topic_and_passage(self, db_session):
+        topic = self._seed_topic(db_session)
+        passage = _seed_passage(db_session, tags=["빈칸추론"], problem_number=1)
+        self._pair(db_session, passage, topic)
+
+        pair = BlogService.get_unused_suneung_topic_with_passage(db_session)
+        assert pair is not None
+        assert pair[0].id == topic.id
+        assert pair[1].id == passage.id
+
+    def test_none_when_topic_has_no_paired_passage(self, db_session):
+        """옛 topic-first 방식으로 만들어진 고아 토픽은 절대 선택되지 않는다(설계상 의도)."""
+        self._seed_topic(db_session)
+        _seed_passage(db_session, tags=["빈칸추론"], problem_number=1)  # 짝 없음
+        assert BlogService.get_unused_suneung_topic_with_passage(db_session) is None
+
+    def test_ignores_used_topics(self, db_session):
+        topic = self._seed_topic(db_session, status_="used")
+        passage = _seed_passage(db_session, tags=["빈칸추론"], problem_number=1)
+        self._pair(db_session, passage, topic)
+        assert BlogService.get_unused_suneung_topic_with_passage(db_session) is None
+
+    def test_ignores_other_pipelines(self, db_session):
+        topic = self._seed_topic(db_session, pipeline="toeic")
+        passage = _seed_passage(db_session, tags=["빈칸추론"], problem_number=1)
+        self._pair(db_session, passage, topic)
+        assert BlogService.get_unused_suneung_topic_with_passage(db_session) is None
+
+    def test_fifo_by_topic_id(self, db_session):
+        first = self._seed_topic(db_session, title="먼저")
+        second = self._seed_topic(db_session, title="나중")
+        p1 = _seed_passage(db_session, tags=["a"], problem_number=1)
+        p2 = _seed_passage(db_session, tags=["b"], problem_number=2)
+        # 일부러 순서를 뒤집어 짝지어도 topic.id 순서로 나와야 한다.
+        self._pair(db_session, p2, second)
+        self._pair(db_session, p1, first)
+        pair = BlogService.get_unused_suneung_topic_with_passage(db_session)
+        assert pair[0].id == first.id and pair[1].id == p1.id
+
+    def test_empty_db_returns_none(self, db_session):
+        assert BlogService.get_unused_suneung_topic_with_passage(db_session) is None
 
 
 class TestSuneungAutoPublish:
@@ -650,19 +666,42 @@ class TestSuneungAutoPublish:
         db_session.refresh(t)
         return t
 
-    def test_no_matching_passage(self, client, admin_auth_headers, db_session):
+    def _seed_paired(self, db_session, angle="빈칸추론 역접 연결사 대비", **passage_kwargs):
+        """발행 가능한 상태(토픽 + 그 토픽에서 파생된 지문)를 만든다."""
+        topic = self._seed_topic(db_session, angle=angle)
+        passage = _seed_passage(db_session, **passage_kwargs)
+        passage.topic_id = topic.id
+        db_session.commit()
+        db_session.refresh(passage)
+        return topic, passage
+
+    def test_no_ready_passage_when_topic_has_no_paired_passage(
+        self, client, admin_auth_headers, db_session
+    ):
+        """토픽만 있고 짝지어진 지문이 없으면 conversation의 no_ready_clip과 같은 모양으로
+        no_ready_passage — topic_id는 응답에 실리지 않는다(어느 토픽 탓도 아니므로)."""
         self._seed_topic(db_session)
-        _seed_passage(db_session, tags=["환경"])  # no overlap with angle
+        _seed_passage(db_session, tags=["환경"])  # 짝이 안 지어진 지문
         resp = client.post(
             "/api/v1/admin/blog/auto-publish/run?pipeline=suneung",
             headers=admin_auth_headers,
         )
         assert resp.status_code == status.HTTP_200_OK
-        assert resp.json()["reason"] == "no_matching_passage"
+        data = resp.json()
+        assert data["published"] is False
+        assert data["reason"] == "no_ready_passage"
+        assert data["topic_id"] is None
+
+    def test_no_ready_passage_on_empty_db(self, client, admin_auth_headers):
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=suneung",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.json()["reason"] == "no_ready_passage"
 
     def test_dry_run_keeps_passage_and_topic_unused(self, client, admin_auth_headers, db_session, monkeypatch):
-        topic = self._seed_topic(db_session)
-        passage = _seed_passage(db_session, tags=["빈칸추론", "역접"])
+        topic, passage = self._seed_paired(db_session, tags=["빈칸추론", "역접"])
         captured = {}
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
@@ -696,8 +735,7 @@ class TestSuneungAutoPublish:
 
     def test_real_publish_marks_passage_used(self, client, admin_auth_headers, db_session, monkeypatch):
         monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
-        topic = self._seed_topic(db_session)
-        passage = _seed_passage(db_session, tags=["빈칸추론", "역접"])
+        topic, passage = self._seed_paired(db_session, tags=["빈칸추론", "역접"])
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
                                 recent_posts=None, include_practice_questions=False,
@@ -729,8 +767,7 @@ class TestSuneungAutoPublish:
     def test_source_passage_includes_problem_number(self, client, admin_auth_headers, db_session, monkeypatch):
         """지문 인용 시 '몇 년도 무슨 형식 몇 번 문제'까지 밝히려면 problem_number가
         프롬프트로 넘어가야 한다."""
-        topic = self._seed_topic(db_session)
-        _seed_passage(db_session, tags=["빈칸추론", "역접"], problem_number=20)
+        self._seed_paired(db_session, tags=["빈칸추론", "역접"], problem_number=20)
         captured = {}
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
@@ -759,10 +796,9 @@ class TestSuneungAutoPublish:
         from app.models.wordbook import Wordbook
         from app.models.post import Post
 
-        topic = self._seed_topic(db_session)
+        topic, _passage = self._seed_paired(db_session, tags=["빈칸추론", "역접"])
         topic.include_word_list = True
         db_session.commit()
-        _seed_passage(db_session, tags=["빈칸추론", "역접"])
         captured = {}
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
@@ -801,10 +837,9 @@ class TestSuneungAutoPublish:
         from app.services.word_service import WordService
 
         monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
-        topic = self._seed_topic(db_session)
+        topic, _passage = self._seed_paired(db_session, tags=["빈칸추론", "역접"])
         topic.include_word_list = True
         db_session.commit()
-        _seed_passage(db_session, tags=["빈칸추론", "역접"])
 
         async def fake_generate(self, title=None, angle=None, custom_prompt=None,
                                 recent_posts=None, include_practice_questions=False,
@@ -1336,6 +1371,91 @@ class TestSuggestConversationTopicFromDialogue:
         service.model = None
         out = asyncio.run(service.suggest_conversation_topic_from_dialogue(
             dialogue_en="d", video_title="v",
+        ))
+        assert out is None
+
+
+class TestSuggestTopicFromPassage:
+    """GeminiService.suggest_topic_from_passage — 기출 지문에서 주제를 뽑는 passage-first 발굴."""
+
+    @staticmethod
+    def _run(payload_text, existing_titles=None, choices=None, answer=None):
+        captured = {}
+
+        class FakeResponse:
+            text = payload_text
+
+        class FakeModel:
+            def generate_content(self, prompt, generation_config=None):
+                captured["prompt"] = prompt
+                return FakeResponse()
+
+        service = GeminiService.__new__(GeminiService)
+        service.model = FakeModel()
+        out = asyncio.run(service.suggest_topic_from_passage(
+            passage_text="The scientist argued that memory is reconstructive.",
+            question_text="다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+            choices=choices,
+            answer=answer,
+            source_label="2025학년도 수능 영어",
+            existing_titles=existing_titles,
+        ))
+        return out, captured.get("prompt", "")
+
+    def test_returns_title_and_angle(self):
+        out, _ = self._run(json.dumps({"title": "제목", "angle": "앵글"}))
+        assert out == {"title": "제목", "angle": "앵글"}
+
+    def test_strips_code_fence(self):
+        out, _ = self._run('```json\n{"title": "제목", "angle": "앵글"}\n```')
+        assert out == {"title": "제목", "angle": "앵글"}
+
+    def test_empty_title_returns_none(self):
+        out, _ = self._run(json.dumps({"title": "", "angle": "앵글"}))
+        assert out is None
+
+    def test_empty_angle_returns_none(self):
+        out, _ = self._run(json.dumps({"title": "제목", "angle": "  "}))
+        assert out is None
+
+    def test_invalid_json_returns_none(self):
+        """OCR이 망가진 지문 등으로 모델이 헛소리를 해도 호출자는 다음 지문으로 넘어간다."""
+        out, _ = self._run("not json at all")
+        assert out is None
+
+    def test_non_dict_json_returns_none(self):
+        out, _ = self._run(json.dumps(["제목", "앵글"]))
+        assert out is None
+
+    def test_prompt_includes_passage_question_and_source(self):
+        _, prompt = self._run(
+            json.dumps({"title": "제목", "angle": "앵글"}),
+            existing_titles=["이미 있는 주제"],
+            choices=["선택지A", "선택지B"],
+            answer="3",
+        )
+        assert "The scientist argued that memory is reconstructive." in prompt
+        assert "다음 빈칸에 들어갈 말로 가장 적절한 것은?" in prompt
+        assert "2025학년도 수능 영어" in prompt
+        assert "선택지A" in prompt and "선택지B" in prompt
+        assert "[정답]" in prompt
+        assert "이미 있는 주제" in prompt
+        # 특정 AI 모델명 비노출 관례
+        assert "Gemini" in prompt and "언급하지 마세요" in prompt
+
+    def test_prompt_omits_optional_blocks_when_absent(self):
+        """choices/answer가 없는 지문(주관식·정답 미상)에서 파이썬 None이 새어나가면 안 된다."""
+        _, prompt = self._run(json.dumps({"title": "제목", "angle": "앵글"}))
+        assert "None" not in prompt
+        assert "[선택지]" not in prompt
+        assert "[정답]" not in prompt
+
+    def test_no_model_returns_none(self):
+        service = GeminiService.__new__(GeminiService)
+        service.model = None
+        out = asyncio.run(service.suggest_topic_from_passage(
+            passage_text="p", question_text="q", choices=None, answer=None,
+            source_label="s",
         ))
         assert out is None
 
@@ -2469,7 +2589,7 @@ class TestReplenishTopicQueue:
         calls = []
 
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
+                               existing_titles=None):
             calls.append(count)
             return [{"title": "새 주제", "angle": "새 앵글"}]
 
@@ -2483,7 +2603,7 @@ class TestReplenishTopicQueue:
         self._seed_topics(db_session, "suneung", "수능·내신", 5)
 
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
+                               existing_titles=None):
             return [{"title": f"자동 주제{i}", "angle": "앵글"} for i in range(count)]
 
         monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
@@ -2494,7 +2614,7 @@ class TestReplenishTopicQueue:
         self._seed_topics(db_session, "toeic", "토익·비즈니스", 3, status_="used")
 
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
+                               existing_titles=None):
             return [{"title": f"자동 주제{i}", "angle": "앵글"} for i in range(count)]
 
         monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
@@ -2506,7 +2626,7 @@ class TestReplenishTopicQueue:
         requested = []
 
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
+                               existing_titles=None):
             requested.append(count)
             return [{"title": f"자동 주제{i}", "angle": "앵글"} for i in range(count)]
 
@@ -2520,7 +2640,7 @@ class TestReplenishTopicQueue:
     def test_adopted_topics_never_opt_into_word_list(self, db_session, monkeypatch):
         """사람이 검토하지 않으므로 옵트인 기능(include_word_list)은 기본값 유지."""
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
+                               existing_titles=None):
             return [{"title": "자동 주제", "angle": "앵글"}]
 
         monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
@@ -2530,74 +2650,25 @@ class TestReplenishTopicQueue:
         assert topic.category == "토익·비즈니스"
         assert topic.status == "unused"
 
-    def test_toeic_does_not_request_passage_tags(self, db_session, monkeypatch):
+    def test_does_not_request_passage_state(self, db_session, monkeypatch):
+        """토픽 큐 보충은 지문 재고와 무관해야 한다(지문 기반 인자를 넘기지 않는다)."""
         captured = {}
 
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
-            captured["available_tags"] = available_tags
+                               existing_titles=None, **kwargs):
+            captured["kwargs"] = kwargs
             return [{"title": "자동 주제", "angle": "앵글"}]
 
         monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
         self._run(db_session, "toeic", 1)
-        assert captured["available_tags"] is None
-
-    def test_suneung_drops_candidates_without_matching_passage(self, db_session, monkeypatch):
-        """매칭 지문이 없는 후보는 버린다 — 발행 단계의 '억지 매칭 금지'를 채택 시점에도 적용."""
-        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
-            return [
-                {"title": "못 쓰는 주제", "angle": "bad"},
-                {"title": "쓸 수 있는 주제", "angle": "good"},
-            ]
-
-        def fake_match(db, angle):
-            return object() if angle == "good" else None
-
-        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
-        monkeypatch.setattr(BlogService, "find_matching_passage", staticmethod(fake_match))
-
-        assert self._run(db_session, "suneung", 2) == 2
-        titles = [t.title for t in db_session.query(BlogTopic).all()]
-        assert titles == ["쓸 수 있는 주제", "쓸 수 있는 주제"]  # bad는 한 번도 저장되지 않음
-
-    def test_suneung_gives_up_after_three_rounds(self, db_session, monkeypatch):
-        """전부 매칭 불가면 무한 루프 없이 3라운드에서 포기하고 채운 만큼(0)만 반환."""
-        rounds = []
-
-        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
-            rounds.append(count)
-            return [{"title": "못 쓰는 주제", "angle": "bad"}]
-
-        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
-        monkeypatch.setattr(
-            BlogService, "find_matching_passage", staticmethod(lambda db, angle: None)
-        )
-
-        assert self._run(db_session, "suneung", 2) == 0
-        assert len(rounds) == 3
-        assert db_session.query(BlogTopic).count() == 0
-
-    def test_suneung_passes_available_tags(self, db_session, monkeypatch):
-        _seed_passage(db_session, tags=["빈칸추론", "역접"], problem_number=11)
-        captured = {}
-
-        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
-            captured["available_tags"] = available_tags
-            return [{"title": "수능 주제", "angle": "빈칸추론 대비"}]
-
-        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
-        assert self._run(db_session, "suneung", 1) == 1
-        assert set(captured["available_tags"]) == {"빈칸추론", "역접"}
+        assert captured["kwargs"] == {}
 
     def test_model_failure_stops_immediately(self, db_session, monkeypatch):
         """모델이 None을 주면 502 대신 조용히 포기(배치 전체를 실패시키지 않는다)."""
         calls = []
 
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
+                               existing_titles=None):
             calls.append(count)
             return None
 
@@ -2608,12 +2679,182 @@ class TestReplenishTopicQueue:
 
     def test_empty_suggestion_list_stops_immediately(self, db_session, monkeypatch):
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
+                               existing_titles=None):
             return []
 
         monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
         assert self._run(db_session, "toeic", 3) == 0
         assert db_session.query(BlogTopic).count() == 0
+
+
+class TestReplenishSuneungTopics:
+    """_replenish_suneung_topics — 실제 기출 지문에서 주제를 뽑아 그 자리에서 짝지어 둔다."""
+
+    def _run(self, db_session, target):
+        return asyncio.run(
+            blog_module._replenish_suneung_topics(db_session, target, GeminiService())
+        )
+
+    def _seed_topics(self, db_session, n, status_="unused", pipeline="suneung"):
+        for i in range(n):
+            db_session.add(BlogTopic(category="수능·내신", title=f"기존 수능 주제{i}",
+                                     angle="a", status=status_, pipeline=pipeline))
+        db_session.commit()
+
+    @staticmethod
+    def _fake_suggest(results):
+        """passage_text -> {"title","angle"} | None 매핑으로 모델을 대역한다."""
+        seen = []
+
+        async def fake(self, passage_text, question_text, choices, answer,
+                       source_label, existing_titles=None):
+            seen.append({"passage_text": passage_text, "existing_titles": list(existing_titles or [])})
+            return results(passage_text)
+
+        fake.seen = seen
+        return fake
+
+    def test_noop_when_stock_meets_target(self, db_session, monkeypatch):
+        self._seed_topics(db_session, 2)
+        _seed_passage(db_session, tags=["빈칸추론"], problem_number=1)
+        fake = self._fake_suggest(lambda t: {"title": "새 주제", "angle": "새 앵글"})
+        monkeypatch.setattr(GeminiService, "suggest_topic_from_passage", fake)
+
+        assert self._run(db_session, 2) == 0
+        assert fake.seen == []  # 모델 호출 자체가 없어야 한다
+        assert db_session.query(BlogTopic).count() == 2
+
+    def test_used_topics_do_not_count_as_stock(self, db_session, monkeypatch):
+        self._seed_topics(db_session, 2, status_="used")
+        _seed_passage(db_session, tags=["빈칸추론"], problem_number=1)
+        fake = self._fake_suggest(lambda t: {"title": "새 주제", "angle": "새 앵글"})
+        monkeypatch.setattr(GeminiService, "suggest_topic_from_passage", fake)
+
+        assert self._run(db_session, 1) == 1
+
+    def test_other_pipeline_stock_does_not_count(self, db_session, monkeypatch):
+        self._seed_topics(db_session, 3, pipeline="toeic")
+        _seed_passage(db_session, tags=["빈칸추론"], problem_number=1)
+        fake = self._fake_suggest(lambda t: {"title": "새 주제", "angle": "새 앵글"})
+        monkeypatch.setattr(GeminiService, "suggest_topic_from_passage", fake)
+
+        assert self._run(db_session, 1) == 1
+
+    def test_fills_only_the_missing_count(self, db_session, monkeypatch):
+        self._seed_topics(db_session, 1)
+        for n in range(1, 6):
+            _seed_passage(db_session, tags=["빈칸추론"], problem_number=n,
+                          passage_text=f"passage-{n}")
+        fake = self._fake_suggest(lambda t: {"title": f"주제 {t}", "angle": f"앵글 {t}"})
+        monkeypatch.setattr(GeminiService, "suggest_topic_from_passage", fake)
+
+        assert self._run(db_session, 3) == 2
+        assert len(fake.seen) == 2  # 정확히 부족분만큼만 시도
+        # FIFO: 가장 오래된 지문부터 소비한다
+        assert [s["passage_text"] for s in fake.seen] == ["passage-1", "passage-2"]
+
+    def test_pairs_topic_to_passage_and_keeps_passage_unused(self, db_session, monkeypatch):
+        passage = _seed_passage(db_session, tags=["빈칸추론"], problem_number=1)
+        fake = self._fake_suggest(lambda t: {"title": "수능 주제", "angle": "빈칸 추론 앵글"})
+        monkeypatch.setattr(GeminiService, "suggest_topic_from_passage", fake)
+
+        assert self._run(db_session, 1) == 1
+
+        db_session.expire_all()
+        topic = db_session.query(BlogTopic).one()
+        passage = db_session.get(ExamPassage, passage.id)
+        assert passage.topic_id == topic.id
+        # status는 여전히 'unused' — 'used'로 바뀌는 건 발행 성공 시 mark_passage_used뿐이다.
+        assert passage.status == "unused"
+        assert topic.pipeline == "suneung"
+        assert topic.category == "수능·내신"
+        assert topic.status == "unused"
+        assert topic.title == "수능 주제"
+        assert topic.angle == "빈칸 추론 앵글"
+
+    def test_adopted_topics_never_opt_into_word_list(self, db_session, monkeypatch):
+        _seed_passage(db_session, tags=["빈칸추론"], problem_number=1)
+        fake = self._fake_suggest(lambda t: {"title": "수능 주제", "angle": "앵글"})
+        monkeypatch.setattr(GeminiService, "suggest_topic_from_passage", fake)
+
+        self._run(db_session, 1)
+        assert db_session.query(BlogTopic).one().include_word_list is False
+
+    def test_rejected_passage_is_skipped_without_db_change(self, db_session, monkeypatch):
+        """모델이 첫 지문을 못 쓰겠다고 하면 그 지문은 DB를 그대로 둔 채 건너뛰고
+        다음 지문으로 넘어가야 한다 — 같은 지문을 무한 재시도하면 안 된다."""
+        bad = _seed_passage(db_session, tags=["a"], problem_number=1, passage_text="bad-passage")
+        good = _seed_passage(db_session, tags=["b"], problem_number=2, passage_text="good-passage")
+
+        fake = self._fake_suggest(
+            lambda t: None if t == "bad-passage" else {"title": "좋은 주제", "angle": "앵글"}
+        )
+        monkeypatch.setattr(GeminiService, "suggest_topic_from_passage", fake)
+
+        # target=1이면 시도도 1번뿐이라 거절 후 종료된다 — 건너뛰기를 보려면 여유가 필요하다.
+        assert self._run(db_session, 2) == 1
+        assert [s["passage_text"] for s in fake.seen] == ["bad-passage", "good-passage"]
+
+        db_session.expire_all()
+        topic = db_session.query(BlogTopic).one()
+        assert topic.title == "좋은 주제"
+        assert db_session.get(ExamPassage, good.id).topic_id == topic.id
+        # 거절된 지문은 DB 상태가 전혀 바뀌지 않는다(다음 실행에서 다시 후보가 된다).
+        rejected = db_session.get(ExamPassage, bad.id)
+        assert rejected.topic_id is None
+        assert rejected.status == "unused"
+
+    def test_stops_when_passage_stock_runs_out(self, db_session, monkeypatch):
+        _seed_passage(db_session, tags=["a"], problem_number=1, passage_text="only-one")
+        fake = self._fake_suggest(lambda t: {"title": f"주제 {t}", "angle": "앵글"})
+        monkeypatch.setattr(GeminiService, "suggest_topic_from_passage", fake)
+
+        assert self._run(db_session, 3) == 1
+        assert len(fake.seen) == 1  # 재고가 없으면 더 시도하지 않는다
+
+    def test_no_passages_at_all_is_a_quiet_noop(self, db_session, monkeypatch):
+        fake = self._fake_suggest(lambda t: {"title": "주제", "angle": "앵글"})
+        monkeypatch.setattr(GeminiService, "suggest_topic_from_passage", fake)
+
+        assert self._run(db_session, 3) == 0
+        assert fake.seen == []
+        assert db_session.query(BlogTopic).count() == 0
+
+    def test_all_rejected_terminates_without_looping(self, db_session, monkeypatch):
+        """전부 거절돼도 무한 루프 없이 종료하고 0을 반환한다."""
+        for n in range(1, 4):
+            _seed_passage(db_session, tags=["a"], problem_number=n, passage_text=f"p{n}")
+        fake = self._fake_suggest(lambda t: None)
+        monkeypatch.setattr(GeminiService, "suggest_topic_from_passage", fake)
+
+        assert self._run(db_session, 3) == 0
+        assert [s["passage_text"] for s in fake.seen] == ["p1", "p2", "p3"]
+        assert db_session.query(BlogTopic).count() == 0
+
+    def test_already_paired_passages_are_not_reused(self, db_session, monkeypatch):
+        first = _seed_passage(db_session, tags=["a"], problem_number=1, passage_text="p1")
+        _seed_passage(db_session, tags=["b"], problem_number=2, passage_text="p2")
+        fake = self._fake_suggest(lambda t: {"title": f"주제 {t}", "angle": "앵글"})
+        monkeypatch.setattr(GeminiService, "suggest_topic_from_passage", fake)
+
+        assert self._run(db_session, 1) == 1
+        db_session.expire_all()
+        assert db_session.get(ExamPassage, first.id).topic_id is not None
+
+        # 두 번째 실행은 이미 짝지어진 p1을 건너뛰고 p2를 써야 한다.
+        assert self._run(db_session, 2) == 1
+        assert [s["passage_text"] for s in fake.seen] == ["p1", "p2"]
+
+    def test_new_titles_feed_back_into_existing_titles(self, db_session, monkeypatch):
+        """같은 실행 안에서 방금 만든 제목도 중복 방지 목록에 들어가야 한다."""
+        _seed_passage(db_session, tags=["a"], problem_number=1, passage_text="p1")
+        _seed_passage(db_session, tags=["b"], problem_number=2, passage_text="p2")
+        fake = self._fake_suggest(lambda t: {"title": f"주제 {t}", "angle": "앵글"})
+        monkeypatch.setattr(GeminiService, "suggest_topic_from_passage", fake)
+
+        assert self._run(db_session, 2) == 2
+        assert "주제 p1" not in fake.seen[0]["existing_titles"]
+        assert "주제 p1" in fake.seen[1]["existing_titles"]
 
 
 def _stub_publish_one(calls, published=True):
@@ -2633,6 +2874,14 @@ def _stub_replenish(calls):
     """_replenish_topic_queue 대역 — 호출 여부/인자만 기록한다."""
     async def fake_replenish(db, pipeline, target, gemini):
         calls.append((pipeline, target))
+        return 0
+    return fake_replenish
+
+
+def _stub_replenish_suneung(calls):
+    """_replenish_suneung_topics 대역 — pipeline 인자가 없는 별도 시그니처."""
+    async def fake_replenish(db, target, gemini):
+        calls.append(target)
         return 0
     return fake_replenish
 
@@ -2700,24 +2949,35 @@ class TestRunDailyEndpoint:
             assert data[key][0]["published"] is False
             assert data[key][0]["reason"] == "no_unused_topic"
 
-    def test_replenishes_only_toeic_and_suneung(self, client, admin_auth_headers, monkeypatch):
+    def test_each_pipeline_uses_its_own_replenisher(self, client, admin_auth_headers, monkeypatch):
+        """toeic은 주제-우선 보충, suneung은 지문-우선 보충, conversation은 보충 없음."""
         replenished = []
+        suneung_replenished = []
         monkeypatch.setattr(blog_module, "_publish_one", _stub_publish_one([], published=False))
         monkeypatch.setattr(blog_module, "_replenish_topic_queue", _stub_replenish(replenished))
+        monkeypatch.setattr(
+            blog_module, "_replenish_suneung_topics", _stub_replenish_suneung(suneung_replenished)
+        )
 
         resp = client.post(f"{self.URL}?count_per_pipeline=3", headers=admin_auth_headers)
         assert resp.status_code == status.HTTP_200_OK
+        # _replenish_topic_queue는 이제 toeic에만 쓰인다 (suneung 호출이 섞이면 안 된다)
+        assert replenished == [("toeic", 3)]
         # conversation은 discover 파이프라인이 토픽+클립을 함께 만들므로 보충 대상이 아니다
-        assert replenished == [("toeic", 3), ("suneung", 3)]
+        assert suneung_replenished == [3]
 
     def test_dry_run_does_not_replenish(self, client, admin_auth_headers, db_session, monkeypatch):
         """dry_run은 DB에 아무것도 남기지 않는다 — 토픽 자동 채택도 하면 안 된다."""
         replenished = []
+        suneung_replenished = []
         monkeypatch.setattr(blog_module, "_publish_one", _stub_publish_one([], published=False))
         monkeypatch.setattr(blog_module, "_replenish_topic_queue", _stub_replenish(replenished))
+        monkeypatch.setattr(
+            blog_module, "_replenish_suneung_topics", _stub_replenish_suneung(suneung_replenished)
+        )
 
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
+                               existing_titles=None):
             return [{"title": "생기면 안 되는 주제", "angle": "앵글"}]
 
         monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
@@ -2727,6 +2987,7 @@ class TestRunDailyEndpoint:
         )
         assert resp.status_code == status.HTTP_200_OK
         assert replenished == []
+        assert suneung_replenished == []
         db_session.expire_all()
         assert db_session.query(BlogTopic).count() == 0
 
@@ -2737,7 +2998,7 @@ class TestRunDailyEndpoint:
         monkeypatch.setattr(blog_module, "_publish_one", _stub_publish_one([], published=False))
 
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
+                               existing_titles=None):
             return [{"title": "생기면 안 되는 주제", "angle": "앵글"}]
 
         monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
@@ -2760,11 +3021,16 @@ class TestRunDailyEndpoint:
 
     def test_default_count_is_three(self, client, admin_auth_headers, monkeypatch):
         replenished = []
+        suneung_replenished = []
         monkeypatch.setattr(blog_module, "_publish_one", _stub_publish_one([], published=False))
         monkeypatch.setattr(blog_module, "_replenish_topic_queue", _stub_replenish(replenished))
+        monkeypatch.setattr(
+            blog_module, "_replenish_suneung_topics", _stub_replenish_suneung(suneung_replenished)
+        )
         resp = client.post(self.URL, headers=admin_auth_headers)
         assert resp.status_code == status.HTTP_200_OK
-        assert replenished == [("toeic", 3), ("suneung", 3)]
+        assert replenished == [("toeic", 3)]
+        assert suneung_replenished == [3]
 
     def test_end_to_end_empty_stock_publishes_toeic(
         self, client, admin_auth_headers, db_session, monkeypatch
@@ -2773,7 +3039,7 @@ class TestRunDailyEndpoint:
         monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
 
         async def fake_suggest(self, pipeline, category, count, recent_posts=None,
-                               existing_titles=None, available_tags=None):
+                               existing_titles=None):
             if pipeline != "toeic":
                 return None  # 수능은 보충 실패 -> 재고 0으로 no_unused_topic
             return [{"title": "토익 자동 채택 주제", "angle": "토익 앵글"}]
@@ -2803,9 +3069,9 @@ class TestRunDailyEndpoint:
         assert len(data["toeic"]) == 1
         assert data["toeic"][0]["published"] is True
         assert data["toeic"][0]["blog_url"] == "https://scanvoca.com/blog/toeic-daily-e2e"
-        # 재고가 없는 파이프라인은 조용히 no-op
+        # 재고가 없는 파이프라인은 조용히 no-op (수능은 지문 재고 자체가 0이라 보충도 못 한다)
         assert data["suneung"][0]["published"] is False
-        assert data["suneung"][0]["reason"] == "no_unused_topic"
+        assert data["suneung"][0]["reason"] == "no_ready_passage"
         assert data["conversation"][0]["reason"] == "no_ready_clip"
 
         db_session.expire_all()
@@ -2813,6 +3079,65 @@ class TestRunDailyEndpoint:
         assert topic.title == "토익 자동 채택 주제"
         assert topic.status == "used"
         assert topic.post_slug == "toeic-daily-e2e"
+
+
+    def test_end_to_end_suneung_discovers_from_passage_and_publishes(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """핵심 시나리오: 수능 미사용 토픽 0개 + 기출 지문만 있는 상태에서, 지문에서 주제를
+        발굴·짝지어 그 지문을 인용한 글이 실제로 발행된다(옛 방식에서 no_matching_passage로
+        영영 막혀 있던 경로)."""
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+        passage = _seed_passage(db_session, tags=["빈칸추론"], problem_number=21,
+                                passage_text="Real exam passage body.")
+
+        async def fake_suggest_from_passage(self, passage_text, question_text, choices,
+                                            answer, source_label, existing_titles=None):
+            return {"title": "수능 빈칸추론 해설", "angle": f"지문 기반 앵글: {passage_text[:10]}"}
+
+        captured = {}
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            captured["source_passage"] = source_passage
+            captured["title"] = title
+            return {
+                "slug": "suneung-daily-e2e", "title": title, "description": "설명",
+                "category": "수능·내신", "tags": ["수능"], "body": SUNEUNG_BODY,
+            }
+
+        async def fake_commit(slug, markdown):
+            return "https://github.com/Choi-daewoong/scanvoca/commit/sun-e2e"
+
+        async def no_toeic_topics(self, pipeline, category, count, recent_posts=None,
+                                  existing_titles=None):
+            return None  # 토익은 이 테스트의 관심사가 아니다
+
+        monkeypatch.setattr(GeminiService, "suggest_topic_from_passage", fake_suggest_from_passage)
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", no_toeic_topics)
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+        monkeypatch.setattr(BlogService, "commit_markdown", staticmethod(fake_commit))
+
+        resp = client.post(f"{self.URL}?count_per_pipeline=1", headers=admin_auth_headers)
+        assert resp.status_code == status.HTTP_200_OK
+        data = resp.json()
+
+        assert data["suneung"][0]["published"] is True
+        assert data["suneung"][0]["blog_url"] == "https://scanvoca.com/blog/suneung-daily-e2e"
+        # 발행에 쓰인 지문이 방금 짝지어진 바로 그 지문인지
+        assert captured["source_passage"]["passage_text"] == "Real exam passage body."
+        assert captured["title"] == "수능 빈칸추론 해설"
+
+        db_session.expire_all()
+        topic = db_session.query(BlogTopic).filter(BlogTopic.pipeline == "suneung").one()
+        assert topic.status == "used"
+        assert topic.post_slug == "suneung-daily-e2e"
+        stored = db_session.get(ExamPassage, passage.id)
+        assert stored.topic_id == topic.id
+        assert stored.status == "used"
 
 
 class TestRunAutoPublishRefactorRegression:

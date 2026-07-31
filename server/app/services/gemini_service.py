@@ -469,7 +469,6 @@ Important:
         count: int = 5,
         recent_posts: Optional[List[Dict[str, str]]] = None,
         existing_titles: Optional[List[str]] = None,
-        available_tags: Optional[List[str]] = None,
     ) -> Optional[List[Dict[str, str]]]:
         """
         Suggest blog topic candidates for a pipeline/category.
@@ -477,12 +476,10 @@ Important:
         the caller (admin UI) edits and confirms candidates separately.
         recent_posts / existing_titles are supplied so the model avoids proposing topics
         that duplicate already-published posts or already-listed topics.
-        available_tags (suneung only): the real tag vocabulary of currently unused exam
-        passages. run_auto_publish can only use a suneung topic if its angle text shares a
-        keyword with some passage's tags (BlogService.find_matching_passage) — natural prose
-        written without seeing that vocabulary essentially never does, so every such topic
-        silently dead-ends at "no_matching_passage". Passing this makes the model name a
-        real tag verbatim in the angle so the topic is actually usable.
+
+        Topic-FIRST by nature, so it is now the toeic pipeline's tool only: suneung topics
+        are derived from a real passage by suggest_topic_from_passage instead (a topic
+        invented here could never be guaranteed a passage to quote).
         """
         if self.model is None:
             print("Gemini API key not configured")
@@ -510,28 +507,17 @@ Important:
             lines = "\n".join(f'- "{t}"' for t in existing_titles)
             existing_block = f"\n\n[이미 등록된 주제 (중복 금지)]\n{lines}\n"
 
-        tags_block = ""
-        tags_instruction = ""
-        if available_tags:
-            tags_block = "\n\n[실제 사용 가능한 기출 지문 태그 목록]\n" + ", ".join(available_tags) + "\n"
-            tags_instruction = (
-                "\n6. 위 [실제 사용 가능한 기출 지문 태그 목록]에서 이 주제와 어울리는 태그를 "
-                "**최소 1개 골라 angle에 그 단어를 그대로(축약·변형 없이) 포함**시키세요 — "
-                "이 주제는 나중에 그 태그를 가진 실제 기출 지문과 매칭되어야만 실제로 글이 "
-                "발행됩니다. 목록에 없는 단어를 지어내지 마세요."
-            )
-
         prompt = f"""당신은 영어 학습 서비스 "Scan Voca"의 콘텐츠 전략가입니다. 아래 조건에 맞는 블로그 글 주제 후보 {count}개를 제안하세요.
 
 카테고리: "{category}"
 파이프라인 방향: {pipeline_hint}
-{recent_block}{existing_block}{tags_block}
+{recent_block}{existing_block}
 요구사항:
 1. 언어: 한국어
 2. 각 주제는 서로 겹치지 않고, 위 목록에 이미 있는 주제/글과도 겹치지 않게 하세요.
 3. 실제 검색 수요가 있을 법한 구체적이고 실용적인 주제로 만드세요.
 4. title은 블로그 글 제목 후보(한국어), angle은 글의 방향·타깃·핵심 키워드 메모(한국어 1~2문장).
-5. 특정 AI 모델명(Gemini, GPT 등)은 절대 언급하지 마세요.{tags_instruction}
+5. 특정 AI 모델명(Gemini, GPT 등)은 절대 언급하지 마세요.
 
 반드시 아래 구조의 JSON 객체만 반환하세요. 다른 텍스트 금지:
 {{
@@ -684,6 +670,106 @@ Important:
                 print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
             return None
 
+    async def suggest_topic_from_passage(
+        self,
+        passage_text: str,
+        question_text: str,
+        choices: Optional[list],
+        answer: Optional[str],
+        source_label: str,
+        existing_titles: Optional[List[str]] = None,
+    ) -> Optional[Dict[str, str]]:
+        """Propose a blog topic FROM a real 기출 지문 (passage-first discovery).
+
+        Mirrors suggest_conversation_topic_from_dialogue's inversion for the suneung
+        pipeline — the topic is derived from a passage that already exists, instead of being
+        written first and hunted for a match that may never exist. Returns {"title", "angle"}
+        grounded in this exact passage, or None on failure/parse error (rare in practice since
+        these are curated real exam questions, but the caller must handle it — e.g. OCR
+        garble from a bad PDF page).
+
+        Deliberately has NO has_expression-style veto field (unlike the dialogue version):
+        every row here is an already-curated real exam question, so "this material is not
+        teachable" is not a realistic answer and offering the escape hatch would only invite
+        the model to skip perfectly good passages. Only genuine breakage (API error, JSON
+        parse failure, empty title/angle) yields None.
+        """
+        if self.model is None:
+            print("Gemini API key not configured")
+            return None
+
+        existing_block = ""
+        if existing_titles:
+            lines = "\n".join(f'- "{t}"' for t in existing_titles)
+            existing_block = f"\n[이미 등록된 주제 (중복 금지)]\n{lines}\n"
+
+        choices_block = ""
+        if choices:
+            rendered = "\n".join(f"{i}. {c}" for i, c in enumerate(choices, start=1))
+            choices_block = f"\n[선택지]\n{rendered}\n"
+
+        answer_block = f"\n[정답]\n{answer}\n" if answer else ""
+
+        prompt = f"""당신은 영어 학습 서비스 "Scan Voca"의 콘텐츠 전략가입니다.
+아래는 실제 기출 시험지에서 그대로 가져온 영어 지문과 문제입니다. 이 지문/문제를 소재로 삼아 블로그 글 주제를 하나 뽑으세요.
+
+[출처]
+{source_label}
+
+[지문 (원문 그대로)]
+{passage_text}
+
+[문제]
+{question_text}
+{choices_block}{answer_block}{existing_block}
+이 서비스의 타겟 사용자는 중·고등학생입니다 — 판단 시 반드시 고려하세요.
+
+요구사항:
+1. 언어: 한국어.
+2. title은 이 지문/문제를 해설하는 블로그 글 제목(한국어, 검색해서 들어오고 싶어지는 구체적인 톤).
+3. angle은 글의 방향·타깃·핵심 키워드 메모(한국어 1~2문장). **이 지문의 핵심 문법 포인트나 소재(주제어)를 반드시 구체적으로 포함**하세요 — "수능 영어 대비" 같은 뭉뚱그린 표현만 쓰지 마세요.
+4. 위 [이미 등록된 주제]와 겹치는 제목은 만들지 마세요.
+5. 특정 AI 모델명(Gemini, GPT 등)은 절대 언급하지 마세요.
+
+반드시 아래 구조의 JSON 객체만 반환하세요. 다른 텍스트 금지:
+{{
+  "title": "주제 제목",
+  "angle": "글 방향/타깃/키워드 메모"
+}}"""
+
+        try:
+            response = self.model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0.8,
+                    "max_output_tokens": 2048,
+                    "response_mime_type": "application/json",
+                },
+            )
+            content = (response.text or "").strip()
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            result = json.loads(content.strip(), strict=False)
+            if not isinstance(result, dict):
+                return None
+            title = str(result.get("title", "")).strip()
+            angle = str(result.get("angle", "")).strip()
+            if not title or not angle:
+                # Nothing usable came back — the caller skips this passage for this run.
+                return None
+            return {"title": title, "angle": angle}
+        except Exception as e:  # noqa: BLE001 - caller just moves to the next passage
+            error_msg = f"Passage topic discovery error: {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
     async def tag_exam_passage(
         self, passage_text: str, question_text: str
     ) -> Optional[List[str]]:
@@ -691,8 +777,9 @@ Important:
         Tag a 수능/모의고사 exam passage with 3~5 keywords (grammar point + topic keywords).
         Returns a list of individual keyword strings, or None on error / [] if nothing usable.
         Used by the one-off ingest script to backfill exam_passages.tags. Keywords are kept
-        as individual tokens (e.g. "역접", "빈칸추론") so the simple keyword-overlap matcher in
-        BlogService.find_matching_passage can score them against a topic's angle.
+        as individual tokens (e.g. "역접", "빈칸추론"). They are descriptive metadata for the
+        admin passage list only — no selection logic reads them since the pipeline went
+        passage-first (topics are derived from the passage text itself, not tag matching).
         """
         if self.model is None:
             print("Gemini API key not configured")
