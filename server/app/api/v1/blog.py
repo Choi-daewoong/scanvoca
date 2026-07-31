@@ -1,8 +1,9 @@
 """Admin blog API — topics, AI draft/image generation, GitHub publishing"""
 import base64
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -11,6 +12,7 @@ from app.core.dependencies import (
     require_cron_or_admin,
     require_nas_tool_key,
 )
+from app.models.blog_topic import BlogTopic
 from app.models.user import User
 from app.schemas.blog import (
     BlogTopicResponse,
@@ -20,6 +22,7 @@ from app.schemas.blog import (
     BlogTopicSuggestion,
     BlogTopicSuggestResponse,
     BlogAutoPublishResult,
+    BlogDailyRunResult,
     BlogPipeline,
     ExamPassageResponse,
     ConversationPendingTopic,
@@ -170,33 +173,24 @@ async def _apply_word_list_cta(
     )
 
 
-@router.post("/auto-publish/run", response_model=BlogAutoPublishResult)
-async def run_auto_publish(
-    pipeline: BlogPipeline,
-    dry_run: bool = False,
-    db: Session = Depends(get_db),
-    _auth: None = Depends(require_cron_or_admin),
-):
-    """Run one automated publish for a pipeline (cron secret OR admin JWT).
+# Pipelines whose topic queue can be replenished by AI suggestion alone. Values must stay
+# in sync with the frontend TABS mapping in web/src/app/admin/auto-blog/page.tsx.
+# 'conversation' is deliberately absent: its topics are born together with a clip via the
+# discover flow, so there is nothing to top up here.
+_PIPELINE_CATEGORY = {"toeic": "토익·비즈니스", "suneung": "수능·내신"}
 
-    Returns HTTP 200 for every routine outcome (nothing to publish, generation/guardrail
-    failure) with published=false + reason, so Cloud Scheduler never retry-storms on a
-    no-op. Only genuine infra faults surface as 5xx. On dry_run the topic status is never
-    changed (the run must stay repeatable).
+
+async def _publish_one(
+    db: Session, pipeline: str, dry_run: bool, gemini: GeminiService
+) -> BlogAutoPublishResult:
+    """Pick one topic and take it through draft -> guardrail -> (unless dry_run) publish.
+
+    Extracted verbatim from the old run_auto_publish body — same logic, side effects and
+    return values. `pipeline` is guaranteed to be one of toeic/suneung/conversation by the
+    caller (the 'manual' / pipeline_not_implemented guards live in the route). The caller
+    injects the GeminiService instance so a batch run reuses one client instead of building
+    a new one per post.
     """
-    # 1) 'manual' is never a valid auto pipeline. Any future pipeline value not handled
-    #    below falls through to pipeline_not_implemented (keeps the endpoint extensible).
-    if pipeline == "manual":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="자동발행에 사용할 수 없는 파이프라인입니다.",
-        )
-    if pipeline not in ("toeic", "suneung", "conversation"):
-        return BlogAutoPublishResult(
-            published=False, reason="pipeline_not_implemented", dry_run=dry_run
-        )
-
-    gemini = GeminiService()
     # Pipeline-specific source objects to flip to used/published only on a real publish.
     passage = None  # ExamPassage (suneung)
     clip = None     # ConversationClip (conversation)
@@ -411,6 +405,136 @@ async def run_auto_publish(
         title=result["title"],
         commit_url=commit_url,
         blog_url=f"https://scanvoca.com/blog/{slug}",
+    )
+
+
+async def _replenish_topic_queue(
+    db: Session, pipeline: str, target: int, gemini: GeminiService
+) -> int:
+    """Top the unused-topic pool up to `target` by adopting AI suggestions with no review.
+
+    toeic/suneung only (the caller never passes conversation — see _PIPELINE_CATEGORY).
+    For suneung every candidate is checked against find_matching_passage and dropped when
+    nothing matches, so the "never force an arbitrary passage" rule of the publish step is
+    applied at adoption time too. Capped at 3 rounds to avoid looping forever when the model
+    keeps proposing unmatchable angles; falling short is fine — _publish_one then simply
+    no-ops with no_unused_topic / no_matching_passage.
+
+    Returns: how many topics were actually adopted.
+    """
+    category = _PIPELINE_CATEGORY[pipeline]
+    added = 0
+    max_rounds = 3
+    for _ in range(max_rounds):
+        current = db.scalar(
+            select(func.count())
+            .select_from(BlogTopic)
+            .where(BlogTopic.pipeline == pipeline, BlogTopic.status == "unused")
+        )
+        missing = target - (current or 0)
+        if missing <= 0:
+            break
+
+        recent_posts = BlogService.get_recent_posts_for_prompt(db, category=category, limit=12)
+        existing_titles = BlogService.list_titles_for_category(db, category)
+        available_tags = (
+            BlogService.get_available_passage_tags(db) if pipeline == "suneung" else None
+        )
+        suggestions = await gemini.suggest_blog_topics(
+            pipeline=pipeline,
+            category=category,
+            count=max(missing, 1),
+            recent_posts=recent_posts,
+            existing_titles=existing_titles,
+            available_tags=available_tags,
+        )
+        # Model failure: give up quietly instead of 502-ing. A batch run must not fail
+        # wholesale because one pipeline could not be topped up (unlike /topics/suggest,
+        # which is interactive and does surface 502 to the admin).
+        if not suggestions:
+            break
+
+        for s in suggestions:
+            if pipeline == "suneung" and BlogService.find_matching_passage(db, s["angle"]) is None:
+                continue  # no passage this topic could ever be written from — drop it
+            BlogService.create_topic_with_pipeline(
+                db,
+                category=category,
+                title=s["title"],
+                angle=s["angle"],
+                pipeline=pipeline,
+                include_word_list=False,  # opt-in feature stays off when no human reviews
+            )
+            added += 1
+
+    return added
+
+
+@router.post("/auto-publish/run", response_model=BlogAutoPublishResult)
+async def run_auto_publish(
+    pipeline: BlogPipeline,
+    dry_run: bool = False,
+    db: Session = Depends(get_db),
+    _auth: None = Depends(require_cron_or_admin),
+):
+    """Run one automated publish for a pipeline (cron secret OR admin JWT).
+
+    Returns HTTP 200 for every routine outcome (nothing to publish, generation/guardrail
+    failure) with published=false + reason, so Cloud Scheduler never retry-storms on a
+    no-op. Only genuine infra faults surface as 5xx. On dry_run the topic status is never
+    changed (the run must stay repeatable).
+    """
+    # 1) 'manual' is never a valid auto pipeline. Any future pipeline value not handled
+    #    below falls through to pipeline_not_implemented (keeps the endpoint extensible).
+    if pipeline == "manual":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="자동발행에 사용할 수 없는 파이프라인입니다.",
+        )
+    if pipeline not in ("toeic", "suneung", "conversation"):
+        return BlogAutoPublishResult(
+            published=False, reason="pipeline_not_implemented", dry_run=dry_run
+        )
+
+    return await _publish_one(db, pipeline, dry_run, GeminiService())
+
+
+@router.post("/auto-publish/run-daily", response_model=BlogDailyRunResult)
+async def run_auto_publish_daily(
+    count_per_pipeline: int = Query(3, ge=1, le=10),
+    dry_run: bool = False,
+    db: Session = Depends(get_db),
+    _auth: None = Depends(require_cron_or_admin),
+):
+    """Publish up to count_per_pipeline posts for each of toeic/suneung/conversation.
+
+    Shared by Cloud Scheduler (count_per_pipeline=3, once a day) and the admin page's
+    "완전자동발행" button (count_per_pipeline=1). toeic/suneung have their topic queue
+    topped up before their publish loop starts. A pipeline stops at its first
+    published=false result (out of stock or generation failure alike) and the run moves on
+    to the next pipeline — it never retries to force the requested count.
+
+    dry_run skips the replenish step entirely: adopting topics commits rows, which would
+    break the existing "a dry run leaves nothing behind" contract. A dry run therefore
+    previews what the CURRENT stock can produce, reporting no_unused_topic when it is short.
+    """
+    gemini = GeminiService()
+    out: Dict[str, List[BlogAutoPublishResult]] = {
+        "toeic": [], "suneung": [], "conversation": []
+    }
+
+    for pipeline in ("toeic", "suneung", "conversation"):
+        if pipeline in _PIPELINE_CATEGORY and not dry_run:
+            await _replenish_topic_queue(db, pipeline, count_per_pipeline, gemini)
+
+        for _ in range(count_per_pipeline):
+            result = await _publish_one(db, pipeline, dry_run, gemini)
+            out[pipeline].append(result)
+            if not result.published:
+                break
+
+    return BlogDailyRunResult(
+        toeic=out["toeic"], suneung=out["suneung"], conversation=out["conversation"]
     )
 
 

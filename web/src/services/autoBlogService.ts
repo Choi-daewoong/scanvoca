@@ -3,6 +3,7 @@ import {
   BlogTopic,
   BlogTopicSuggestResponse,
   BlogAutoPublishResult,
+  BlogDailyRunResult,
   BlogPipeline,
   ExamPassage,
   ConversationClip,
@@ -62,6 +63,25 @@ export const autoBlogService = {
     const params = new URLSearchParams({ pipeline, dry_run: String(dryRun) });
     return apiFetch<BlogAutoPublishResult>(
       `/api/v1/admin/blog/auto-publish/run?${params.toString()}`,
+      { method: 'POST' },
+    );
+  },
+
+  /**
+   * 완전자동발행 배치 — 토익·수능·일상회화를 순서대로 각 countPerPipeline건까지 발행한다.
+   * 관리자 페이지 버튼(1건씩)과 스케줄러(N건씩)가 같은 엔드포인트를 공유한다.
+   * 파이프라인당 최대 3회의 AI 생성 + 커밋이 순차로 일어나므로 응답이 수 분 걸릴 수 있다.
+   */
+  async runDailyAutoPublish(
+    countPerPipeline: number,
+    dryRun: boolean,
+  ): Promise<BlogDailyRunResult> {
+    const params = new URLSearchParams({
+      count_per_pipeline: String(countPerPipeline),
+      dry_run: String(dryRun),
+    });
+    return apiFetch<BlogDailyRunResult>(
+      `/api/v1/admin/blog/auto-publish/run-daily?${params.toString()}`,
       { method: 'POST' },
     );
   },

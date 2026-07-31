@@ -22,8 +22,9 @@ function stripFrontmatter(markdown: string): string {
   return after === -1 ? '' : markdown.slice(after + 1).replace(/^\s+/, '');
 }
 
-// published=false일 때 사유별 안내 문구
-function reasonMessage(reason: string | null | undefined): string {
+// published=false일 때 사유별 안내 문구.
+// DailyRunPanel도 같은 매핑을 쓴다 — 문구가 서로 어긋나지 않도록 여기 한 곳에서만 정의한다.
+export function reasonMessage(reason: string | null | undefined): string {
   switch (reason) {
     case 'no_unused_topic':
       return '채택된 미사용 토픽이 없습니다. 위에서 먼저 주제를 채택해 주세요.';

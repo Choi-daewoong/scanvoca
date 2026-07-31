@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { autoBlogService } from '@/services/autoBlogService';
-import { BlogTopic, BlogPipeline } from '@/types';
+import { AUTO_BLOG_PIPELINE_LABELS, BlogTopic, BlogPipeline } from '@/types';
+import DailyRunPanel from './_components/DailyRunPanel';
 import SuggestPanel from './_components/SuggestPanel';
 import TopicListPanel from './_components/TopicListPanel';
 import AutoPublishPanel from './_components/AutoPublishPanel';
@@ -13,9 +14,9 @@ type TopicStatus = 'unused' | 'used' | 'all';
 
 // 파이프라인별 탭 정의 — 2단계에서 수능/일상회화 활성화. 카테고리는 파이프라인별 고정.
 const TABS: { key: BlogPipeline; label: string; category: string }[] = [
-  { key: 'toeic', label: '토익', category: '토익·비즈니스' },
-  { key: 'suneung', label: '수능', category: '수능·내신' },
-  { key: 'conversation', label: '일상회화', category: '일상영어' },
+  { key: 'toeic', label: AUTO_BLOG_PIPELINE_LABELS.toeic, category: '토익·비즈니스' },
+  { key: 'suneung', label: AUTO_BLOG_PIPELINE_LABELS.suneung, category: '수능·내신' },
+  { key: 'conversation', label: AUTO_BLOG_PIPELINE_LABELS.conversation, category: '일상영어' },
 ];
 
 export default function AutoBlogPage() {
@@ -61,6 +62,9 @@ export default function AutoBlogPage() {
           주제만 미리 채택해 두면 이후 발행까지 자동으로 처리되는 파이프라인입니다.
         </p>
       </div>
+
+      {/* 파이프라인 탭과 무관한 전역 동작이라 탭 위에 둔다 */}
+      <DailyRunPanel />
 
       {/* 파이프라인 탭 */}
       <div className="flex gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800">

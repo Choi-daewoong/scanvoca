@@ -107,6 +107,19 @@ class BlogAutoPublishResult(BaseModel):
     blog_url: Optional[str] = None
 
 
+class BlogDailyRunResult(BaseModel):
+    """Result of a daily batch run (POST /admin/blog/auto-publish/run-daily).
+
+    One list per pipeline, in run order. A pipeline's list stops at its first
+    published=false entry (the batch never retries to force the requested count), so an
+    empty/short list is a normal outcome, not an error — the HTTP status stays 200 for the
+    same reason BlogAutoPublishResult does (no Cloud Scheduler retry storms on no-ops).
+    """
+    toeic: List[BlogAutoPublishResult] = []
+    suneung: List[BlogAutoPublishResult] = []
+    conversation: List[BlogAutoPublishResult] = []
+
+
 class BlogTopicUpdateRequest(BaseModel):
     """Request to edit a topic's AI-direction note (PATCH /admin/blog/topics/{id})."""
     angle: str = Field(..., min_length=1, max_length=500)

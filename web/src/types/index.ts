@@ -361,6 +361,16 @@ export interface BlogNaverVersion {
 // 파이프라인 종류 — 이번 범위는 'toeic'만 UI 구현. 나머지는 이후 확장.
 export type BlogPipeline = 'manual' | 'toeic' | 'suneung' | 'conversation';
 
+// 자동발행 대상 파이프라인(manual 제외)과 화면 표기 라벨.
+// 관리자 페이지 탭과 완전자동발행 결과 표시가 같은 문구를 쓰도록 여기서만 정의한다.
+export type AutoBlogPipeline = Exclude<BlogPipeline, 'manual'>;
+export const AUTO_BLOG_PIPELINES = ['toeic', 'suneung', 'conversation'] as const;
+export const AUTO_BLOG_PIPELINE_LABELS: Record<AutoBlogPipeline, string> = {
+  toeic: '토익',
+  suneung: '수능',
+  conversation: '일상회화',
+};
+
 // AI 주제 제안 후보 1건 (POST /admin/blog/topics/suggest 응답 항목)
 export interface BlogTopicSuggestion {
   title: string;
@@ -414,4 +424,12 @@ export interface BlogAutoPublishResult {
   markdown?: string | null; // dry_run=true 또는 검증 참고용일 때만 채워짐
   commit_url?: string | null;
   blog_url?: string | null;
+}
+
+// POST /admin/blog/auto-publish/run-daily 응답 — 파이프라인별 발행 결과 리스트.
+// 백엔드 BlogDailyRunResult 스키마와 1:1 대응(키 이름은 snake_case 그대로 유지).
+export interface BlogDailyRunResult {
+  toeic: BlogAutoPublishResult[];
+  suneung: BlogAutoPublishResult[];
+  conversation: BlogAutoPublishResult[];
 }

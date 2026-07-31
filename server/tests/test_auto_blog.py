@@ -2440,3 +2440,413 @@ class TestGenerateBlogPostWordList:
     def test_missing_word_list_becomes_empty(self):
         out, _ = self._run(True, None)
         assert out["word_list"] == []
+
+
+# ============================================================================
+# 완전자동발행 (하루 배치) — _replenish_topic_queue / POST /auto-publish/run-daily
+# ============================================================================
+
+from app.api.v1 import blog as blog_module  # noqa: E402  (배치 테스트에서 모듈 전역을 패치)
+from app.schemas.blog import BlogAutoPublishResult  # noqa: E402
+
+
+class TestReplenishTopicQueue:
+    """_replenish_topic_queue — 사람 검수 없이 AI 제안을 그대로 채택해 재고를 채운다."""
+
+    def _seed_topics(self, db_session, pipeline, category, n, status_="unused"):
+        for i in range(n):
+            db_session.add(BlogTopic(category=category, title=f"{pipeline}-기존{i}",
+                                     angle="a", status=status_, pipeline=pipeline))
+        db_session.commit()
+
+    def _run(self, db_session, pipeline, target):
+        return asyncio.run(
+            blog_module._replenish_topic_queue(db_session, pipeline, target, GeminiService())
+        )
+
+    def test_noop_when_stock_meets_target(self, db_session, monkeypatch):
+        self._seed_topics(db_session, "toeic", "토익·비즈니스", 3)
+        calls = []
+
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            calls.append(count)
+            return [{"title": "새 주제", "angle": "새 앵글"}]
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        assert self._run(db_session, "toeic", 3) == 0
+        assert calls == []  # 모델 호출 자체가 없어야 한다
+        assert db_session.query(BlogTopic).count() == 3
+
+    def test_other_pipeline_stock_does_not_count(self, db_session, monkeypatch):
+        """수능 재고가 토익 재고로 잘못 세지면 토익은 영원히 보충되지 않는다."""
+        self._seed_topics(db_session, "suneung", "수능·내신", 5)
+
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            return [{"title": f"자동 주제{i}", "angle": "앵글"} for i in range(count)]
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        assert self._run(db_session, "toeic", 2) == 2
+
+    def test_used_topics_do_not_count_as_stock(self, db_session, monkeypatch):
+        """status='used'는 재고가 아니다."""
+        self._seed_topics(db_session, "toeic", "토익·비즈니스", 3, status_="used")
+
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            return [{"title": f"자동 주제{i}", "angle": "앵글"} for i in range(count)]
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        assert self._run(db_session, "toeic", 2) == 2
+        assert db_session.query(BlogTopic).filter(BlogTopic.status == "unused").count() == 2
+
+    def test_fills_only_the_missing_count(self, db_session, monkeypatch):
+        self._seed_topics(db_session, "toeic", "토익·비즈니스", 1)
+        requested = []
+
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            requested.append(count)
+            return [{"title": f"자동 주제{i}", "angle": "앵글"} for i in range(count)]
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        assert self._run(db_session, "toeic", 3) == 2
+        assert requested == [2]  # 부족분만 요청하고, 채워지면 다음 라운드는 안 돈다
+        unused = db_session.query(BlogTopic).filter(BlogTopic.status == "unused").all()
+        assert len(unused) == 3
+        assert all(t.pipeline == "toeic" for t in unused)
+
+    def test_adopted_topics_never_opt_into_word_list(self, db_session, monkeypatch):
+        """사람이 검토하지 않으므로 옵트인 기능(include_word_list)은 기본값 유지."""
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            return [{"title": "자동 주제", "angle": "앵글"}]
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        self._run(db_session, "toeic", 1)
+        topic = db_session.query(BlogTopic).one()
+        assert topic.include_word_list is False
+        assert topic.category == "토익·비즈니스"
+        assert topic.status == "unused"
+
+    def test_toeic_does_not_request_passage_tags(self, db_session, monkeypatch):
+        captured = {}
+
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            captured["available_tags"] = available_tags
+            return [{"title": "자동 주제", "angle": "앵글"}]
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        self._run(db_session, "toeic", 1)
+        assert captured["available_tags"] is None
+
+    def test_suneung_drops_candidates_without_matching_passage(self, db_session, monkeypatch):
+        """매칭 지문이 없는 후보는 버린다 — 발행 단계의 '억지 매칭 금지'를 채택 시점에도 적용."""
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            return [
+                {"title": "못 쓰는 주제", "angle": "bad"},
+                {"title": "쓸 수 있는 주제", "angle": "good"},
+            ]
+
+        def fake_match(db, angle):
+            return object() if angle == "good" else None
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        monkeypatch.setattr(BlogService, "find_matching_passage", staticmethod(fake_match))
+
+        assert self._run(db_session, "suneung", 2) == 2
+        titles = [t.title for t in db_session.query(BlogTopic).all()]
+        assert titles == ["쓸 수 있는 주제", "쓸 수 있는 주제"]  # bad는 한 번도 저장되지 않음
+
+    def test_suneung_gives_up_after_three_rounds(self, db_session, monkeypatch):
+        """전부 매칭 불가면 무한 루프 없이 3라운드에서 포기하고 채운 만큼(0)만 반환."""
+        rounds = []
+
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            rounds.append(count)
+            return [{"title": "못 쓰는 주제", "angle": "bad"}]
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        monkeypatch.setattr(
+            BlogService, "find_matching_passage", staticmethod(lambda db, angle: None)
+        )
+
+        assert self._run(db_session, "suneung", 2) == 0
+        assert len(rounds) == 3
+        assert db_session.query(BlogTopic).count() == 0
+
+    def test_suneung_passes_available_tags(self, db_session, monkeypatch):
+        _seed_passage(db_session, tags=["빈칸추론", "역접"], problem_number=11)
+        captured = {}
+
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            captured["available_tags"] = available_tags
+            return [{"title": "수능 주제", "angle": "빈칸추론 대비"}]
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        assert self._run(db_session, "suneung", 1) == 1
+        assert set(captured["available_tags"]) == {"빈칸추론", "역접"}
+
+    def test_model_failure_stops_immediately(self, db_session, monkeypatch):
+        """모델이 None을 주면 502 대신 조용히 포기(배치 전체를 실패시키지 않는다)."""
+        calls = []
+
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            calls.append(count)
+            return None
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        assert self._run(db_session, "toeic", 3) == 0
+        assert len(calls) == 1  # 재시도하지 않는다
+        assert db_session.query(BlogTopic).count() == 0
+
+    def test_empty_suggestion_list_stops_immediately(self, db_session, monkeypatch):
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            return []
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        assert self._run(db_session, "toeic", 3) == 0
+        assert db_session.query(BlogTopic).count() == 0
+
+
+def _stub_publish_one(calls, published=True):
+    """_publish_one 대역 — 호출 인자를 기록하고 정해진 결과를 돌려준다."""
+    async def fake_publish_one(db, pipeline, dry_run, gemini):
+        calls.append((pipeline, dry_run))
+        return BlogAutoPublishResult(
+            published=published,
+            reason=None if published else "no_unused_topic",
+            dry_run=dry_run,
+            slug=f"{pipeline}-{len(calls)}",
+        )
+    return fake_publish_one
+
+
+def _stub_replenish(calls):
+    """_replenish_topic_queue 대역 — 호출 여부/인자만 기록한다."""
+    async def fake_replenish(db, pipeline, target, gemini):
+        calls.append((pipeline, target))
+        return 0
+    return fake_replenish
+
+
+class TestRunDailyEndpoint:
+    """POST /admin/blog/auto-publish/run-daily"""
+
+    URL = "/api/v1/admin/blog/auto-publish/run-daily"
+
+    def test_requires_auth(self, client, monkeypatch):
+        monkeypatch.setattr(settings, "CRON_SECRET", "supersecret")
+        assert client.post(self.URL).status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_non_admin_jwt_rejected(self, client, auth_headers):
+        resp = client.post(self.URL, headers=auth_headers)
+        assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_cron_secret_passes(self, client, monkeypatch):
+        monkeypatch.setattr(settings, "CRON_SECRET", "supersecret")
+        monkeypatch.setattr(blog_module, "_publish_one", _stub_publish_one([], published=False))
+        monkeypatch.setattr(blog_module, "_replenish_topic_queue", _stub_replenish([]))
+        resp = client.post(
+            f"{self.URL}?count_per_pipeline=1", headers={"X-Cron-Secret": "supersecret"}
+        )
+        assert resp.status_code == status.HTTP_200_OK
+
+    def test_count_out_of_range_422(self, client, admin_auth_headers):
+        assert client.post(
+            f"{self.URL}?count_per_pipeline=0", headers=admin_auth_headers
+        ).status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert client.post(
+            f"{self.URL}?count_per_pipeline=11", headers=admin_auth_headers
+        ).status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_runs_count_per_pipeline_times_for_each_pipeline(
+        self, client, admin_auth_headers, monkeypatch
+    ):
+        calls = []
+        monkeypatch.setattr(blog_module, "_publish_one", _stub_publish_one(calls))
+        monkeypatch.setattr(blog_module, "_replenish_topic_queue", _stub_replenish([]))
+
+        resp = client.post(f"{self.URL}?count_per_pipeline=2", headers=admin_auth_headers)
+        assert resp.status_code == status.HTTP_200_OK
+        data = resp.json()
+        assert [c[0] for c in calls] == [
+            "toeic", "toeic", "suneung", "suneung", "conversation", "conversation"
+        ]
+        assert len(data["toeic"]) == 2
+        assert len(data["suneung"]) == 2
+        assert len(data["conversation"]) == 2
+        assert all(r["published"] is True for r in data["toeic"])
+
+    def test_stops_pipeline_on_first_failure(self, client, admin_auth_headers, monkeypatch):
+        calls = []
+        monkeypatch.setattr(blog_module, "_publish_one", _stub_publish_one(calls, published=False))
+        monkeypatch.setattr(blog_module, "_replenish_topic_queue", _stub_replenish([]))
+
+        resp = client.post(f"{self.URL}?count_per_pipeline=3", headers=admin_auth_headers)
+        assert resp.status_code == status.HTTP_200_OK
+        data = resp.json()
+        # 파이프라인당 딱 1번씩만 시도하고 멈춘다 (3번이 아니라)
+        assert [c[0] for c in calls] == ["toeic", "suneung", "conversation"]
+        for key in ("toeic", "suneung", "conversation"):
+            assert len(data[key]) == 1
+            assert data[key][0]["published"] is False
+            assert data[key][0]["reason"] == "no_unused_topic"
+
+    def test_replenishes_only_toeic_and_suneung(self, client, admin_auth_headers, monkeypatch):
+        replenished = []
+        monkeypatch.setattr(blog_module, "_publish_one", _stub_publish_one([], published=False))
+        monkeypatch.setattr(blog_module, "_replenish_topic_queue", _stub_replenish(replenished))
+
+        resp = client.post(f"{self.URL}?count_per_pipeline=3", headers=admin_auth_headers)
+        assert resp.status_code == status.HTTP_200_OK
+        # conversation은 discover 파이프라인이 토픽+클립을 함께 만들므로 보충 대상이 아니다
+        assert replenished == [("toeic", 3), ("suneung", 3)]
+
+    def test_dry_run_does_not_replenish(self, client, admin_auth_headers, db_session, monkeypatch):
+        """dry_run은 DB에 아무것도 남기지 않는다 — 토픽 자동 채택도 하면 안 된다."""
+        replenished = []
+        monkeypatch.setattr(blog_module, "_publish_one", _stub_publish_one([], published=False))
+        monkeypatch.setattr(blog_module, "_replenish_topic_queue", _stub_replenish(replenished))
+
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            return [{"title": "생기면 안 되는 주제", "angle": "앵글"}]
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+
+        resp = client.post(
+            f"{self.URL}?count_per_pipeline=2&dry_run=true", headers=admin_auth_headers
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert replenished == []
+        db_session.expire_all()
+        assert db_session.query(BlogTopic).count() == 0
+
+    def test_dry_run_no_new_topic_rows_with_real_replenish(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """대역 없이 실제 코드 경로로도 dry_run은 BlogTopic을 한 줄도 만들지 않는다."""
+        monkeypatch.setattr(blog_module, "_publish_one", _stub_publish_one([], published=False))
+
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            return [{"title": "생기면 안 되는 주제", "angle": "앵글"}]
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        resp = client.post(
+            f"{self.URL}?count_per_pipeline=2&dry_run=true", headers=admin_auth_headers
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        db_session.expire_all()
+        assert db_session.query(BlogTopic).count() == 0
+
+    def test_dry_run_flag_propagates_to_publish(self, client, admin_auth_headers, monkeypatch):
+        calls = []
+        monkeypatch.setattr(blog_module, "_publish_one", _stub_publish_one(calls, published=False))
+        resp = client.post(
+            f"{self.URL}?count_per_pipeline=1&dry_run=true", headers=admin_auth_headers
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert all(c[1] is True for c in calls)
+        assert resp.json()["toeic"][0]["dry_run"] is True
+
+    def test_default_count_is_three(self, client, admin_auth_headers, monkeypatch):
+        replenished = []
+        monkeypatch.setattr(blog_module, "_publish_one", _stub_publish_one([], published=False))
+        monkeypatch.setattr(blog_module, "_replenish_topic_queue", _stub_replenish(replenished))
+        resp = client.post(self.URL, headers=admin_auth_headers)
+        assert resp.status_code == status.HTTP_200_OK
+        assert replenished == [("toeic", 3), ("suneung", 3)]
+
+    def test_end_to_end_empty_stock_publishes_toeic(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """핵심 시나리오: 토익 미사용 토픽 0개 상태에서 자동 채택 → 그 토픽으로 실제 발행."""
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_suggest(self, pipeline, category, count, recent_posts=None,
+                               existing_titles=None, available_tags=None):
+            if pipeline != "toeic":
+                return None  # 수능은 보충 실패 -> 재고 0으로 no_unused_topic
+            return [{"title": "토익 자동 채택 주제", "angle": "토익 앵글"}]
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            return {
+                "slug": "toeic-daily-e2e", "title": title, "description": "설명",
+                "category": "토익·비즈니스", "tags": ["토익"], "body": LONG_BODY,
+                "practice_questions": [],
+            }
+
+        async def fake_commit(slug, markdown):
+            return "https://github.com/Choi-daewoong/scanvoca/commit/daily123"
+
+        monkeypatch.setattr(GeminiService, "suggest_blog_topics", fake_suggest)
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+        monkeypatch.setattr(BlogService, "commit_markdown", staticmethod(fake_commit))
+
+        resp = client.post(f"{self.URL}?count_per_pipeline=1", headers=admin_auth_headers)
+        assert resp.status_code == status.HTTP_200_OK
+        data = resp.json()
+
+        assert len(data["toeic"]) == 1
+        assert data["toeic"][0]["published"] is True
+        assert data["toeic"][0]["blog_url"] == "https://scanvoca.com/blog/toeic-daily-e2e"
+        # 재고가 없는 파이프라인은 조용히 no-op
+        assert data["suneung"][0]["published"] is False
+        assert data["suneung"][0]["reason"] == "no_unused_topic"
+        assert data["conversation"][0]["reason"] == "no_ready_clip"
+
+        db_session.expire_all()
+        topic = db_session.query(BlogTopic).filter(BlogTopic.pipeline == "toeic").one()
+        assert topic.title == "토익 자동 채택 주제"
+        assert topic.status == "used"
+        assert topic.post_slug == "toeic-daily-e2e"
+
+
+class TestRunAutoPublishRefactorRegression:
+    """회귀: 단건 엔드포인트가 _publish_one 추출 후에도 동일하게 동작해야 한다."""
+
+    def test_delegates_to_publish_one_with_fresh_gemini(
+        self, client, admin_auth_headers, monkeypatch
+    ):
+        captured = {}
+
+        async def fake_publish_one(db, pipeline, dry_run, gemini):
+            captured["pipeline"] = pipeline
+            captured["dry_run"] = dry_run
+            captured["gemini"] = gemini
+            return BlogAutoPublishResult(published=True, dry_run=dry_run, slug="s")
+
+        monkeypatch.setattr(blog_module, "_publish_one", fake_publish_one)
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert captured["pipeline"] == "toeic"
+        assert captured["dry_run"] is True
+        assert isinstance(captured["gemini"], GeminiService)
+
+    def test_manual_still_400_without_touching_publish_one(
+        self, client, admin_auth_headers, monkeypatch
+    ):
+        async def boom(db, pipeline, dry_run, gemini):
+            raise AssertionError("manual 파이프라인은 _publish_one에 도달하면 안 된다")
+
+        monkeypatch.setattr(blog_module, "_publish_one", boom)
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=manual", headers=admin_auth_headers
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
