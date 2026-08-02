@@ -22,12 +22,12 @@ HERO_IMAGE_WIDTH = 1672
 HERO_IMAGE_HEIGHT = 940
 
 # conversation-clipper's dialogue-first discovery (suggest_conversation_topic_from_dialogue)
-# runs fully unattended via cron — unlike the manual-add topic flow, no admin reviews a
-# discovered topic before it can be auto-published. The prompt tells the model to avoid
-# profanity, but a real run still produced a title quoting "Fuck realistic" verbatim
-# (source dialogue happened to contain it) — prompt instructions alone aren't a reliable
-# content-safety gate for a service whose stated audience is 중·고등학생, so this is a
-# code-level backstop, not a replacement for the prompt instruction.
+# runs fully unattended on a self-looping NAS container — unlike the manual-add topic
+# flow, no admin reviews a discovered topic before it can be auto-published. The prompt
+# tells the model to avoid profanity, but a real run still produced a title quoting "Fuck
+# realistic" verbatim (source dialogue happened to contain it) — prompt instructions alone
+# aren't a reliable content-safety gate for a service whose stated audience is 중·고등학생,
+# so this is a code-level backstop, not a replacement for the prompt instruction.
 _PROFANITY_RE = re.compile(
     r"\b(fuck|shit|bitch|asshole|dick|pussy|cunt|bastard)\w*\b", re.IGNORECASE
 )

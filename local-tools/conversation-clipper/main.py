@@ -139,9 +139,19 @@ def fetch_topic_discovery(cfg: Config, dialogue_en: str, video_title: str) -> Op
     return resp.json().get("suggestion")
 
 
-def post_discovered_clip(cfg: Config, payload: Dict) -> Dict:
+def post_discovered_clip(cfg: Config, payload: Dict) -> Optional[Dict]:
     """POST an AI-discovered topic + its already-cut clip; backend creates both in one
-    call (X-Api-Key auth)."""
+    call (X-Api-Key auth). Returns None on 409 (the backend already has this exact
+    clip_url registered) instead of raising.
+
+    409 is expected, not exceptional: the backend's dedup guard (added alongside this
+    tool's own window_key state) rejects a clip_url it already has, which happens whenever
+    local state doesn't yet know about a window - e.g. the very first run after state
+    persistence was added, when the server already has days of history the fresh local
+    state file knows nothing about. Before this, an unhandled 409 crashed the whole
+    discover() run (and with it, the rest of that run's windows) instead of just skipping
+    the one window that was already covered.
+    """
     import requests  # lazy
 
     resp = requests.post(
@@ -150,6 +160,8 @@ def post_discovered_clip(cfg: Config, payload: Dict) -> Dict:
         json=payload,
         timeout=30,
     )
+    if resp.status_code == 409:
+        return None
     resp.raise_for_status()
     return resp.json()
 
@@ -456,6 +468,9 @@ def discover(cfg: Config) -> List[Dict]:
                 "clip_url": clip_url,
             }
             result = post_discovered_clip(cfg, payload)
+            if result is None:
+                print(f'  {media["title"]} [{lo}:{hi}]: backend already has this clip (409), skipping.')
+                continue
             created.append(result)
             print(f'  discovered "{suggestion["title"]}" from {media["title"]} [{lo}:{hi}] -> {clip_url}')
 

@@ -14,6 +14,9 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import pytest  # noqa: E402
+import requests  # noqa: E402
+
 import main  # noqa: E402
 
 
@@ -115,3 +118,63 @@ class TestDiscoverStatePersistence:
         second_run = main.discover(cfg)
         assert len(second_run) == 1
         assert second_run[0]["video_title"] == "Z Show"  # 두 번째 영상까지 도달
+
+
+class TestPostDiscoveredClip409Handling:
+    """실운영 버그: 백엔드가 clip_url 중복 방지 409를 새로 추가했는데, 클라이언트인
+    post_discovered_clip이 이를 처리하지 않고 raise_for_status()로 그대로 예외를
+    던져 discover() 전체가 크래시했다(그 실행에서 남은 모든 구간이 통째로 날아감).
+    로컬 상태 파일이 아직 서버가 이미 아는 구간을 모르는 첫 실행에서 특히 발생하기
+    쉬운 상황이라 반드시 gracefully 처리해야 한다."""
+
+    def test_returns_none_on_409(self, tmp_path, monkeypatch):
+        class FakeResp:
+            status_code = 409
+
+            def raise_for_status(self):
+                raise AssertionError("409 must be handled before raise_for_status() is called")
+
+        monkeypatch.setattr(requests, "post", lambda *a, **k: FakeResp())
+        cfg = _cfg(tmp_path)
+        assert main.post_discovered_clip(cfg, {"clip_url": "https://x/1.mp4"}) is None
+
+    def test_raises_on_other_http_errors(self, tmp_path, monkeypatch):
+        class FakeResp:
+            status_code = 500
+
+            def raise_for_status(self):
+                raise requests.exceptions.HTTPError("server error")
+
+        monkeypatch.setattr(requests, "post", lambda *a, **k: FakeResp())
+        cfg = _cfg(tmp_path)
+        with pytest.raises(requests.exceptions.HTTPError):
+            main.post_discovered_clip(cfg, {"clip_url": "https://x/1.mp4"})
+
+    def test_discover_skips_409_window_without_crashing(self, tmp_path, monkeypatch):
+        """구간 하나가 409(이미 등록됨)를 받아도 discover() 전체가 죽지 않고, 다음
+        구간으로 넘어가 계속 새 주제를 찾아야 한다."""
+        media = [_media("Emily in Paris S05E01", num_lines=13)]
+        monkeypatch.setattr(main, "find_source_media", lambda source_dir: media)
+        monkeypatch.setattr(main, "load_subtitles", lambda srt: _subs(13))
+        monkeypatch.setattr(main, "is_english_subtitles", lambda subs: True)
+        monkeypatch.setattr(main, "run_ffmpeg", lambda cmd: 0)
+        monkeypatch.setattr(
+            main, "fetch_topic_discovery",
+            lambda cfg, dialogue_en, video_title: {"title": "제목", "angle": "앵글"},
+        )
+
+        calls = {"n": 0}
+
+        def fake_post(cfg, payload):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return None  # 첫 구간: 서버가 이미 갖고 있음 (409)
+            return {"id": 1, **payload}
+
+        monkeypatch.setattr(main, "post_discovered_clip", fake_post)
+
+        cfg = _cfg(tmp_path, discover_window_size=6, discover_max_new_topics=1)
+        created = main.discover(cfg)
+
+        assert calls["n"] == 2  # 첫 구간(409로 스킵) + 두 번째 구간(성공)까지 호출됨
+        assert len(created) == 1  # 크래시 없이, 성공한 구간만 결과에 포함
