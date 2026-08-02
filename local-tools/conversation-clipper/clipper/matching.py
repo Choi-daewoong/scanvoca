@@ -88,6 +88,20 @@ def build_dialogue_windows(subtitles: List[Dict], window_size: int = 6) -> List[
     return windows
 
 
+def window_key(video_title: str, lo: int, hi: int) -> str:
+    """Stable identity for one discover-mode window, used to persist "already scanned".
+
+    Without this, a fresh `discover` run re-walks every video from window 0 every time,
+    with no memory of ranges it already judged (created or rejected) on a previous run.
+    Real-world effect: a handful of videos (e.g. a long-running show with many episodes)
+    can keep re-supplying enough "good material" windows to fill discover_max_new_topics
+    each run, so folders that sort after it alphabetically are never even reached — not
+    because they lack usable dialogue, just because the per-run quota is exhausted first
+    on windows already seen (and re-seen) before them.
+    """
+    return f"{video_title}::{lo}-{hi}"
+
+
 def window_dialogue_text(subtitles: List[Dict], lo: int, hi: int) -> str:
     """Joined non-blank line text for an explicit [lo, hi] index window (inclusive)."""
     lines = [subtitles[i].get("text", "").strip() for i in range(lo, hi + 1)]

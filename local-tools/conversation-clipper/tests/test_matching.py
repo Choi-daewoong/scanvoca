@@ -21,6 +21,7 @@ from clipper.matching import (  # noqa: E402
     build_dialogue_windows,
     window_dialogue_text,
     window_bounds,
+    window_key,
 )
 
 
@@ -399,3 +400,12 @@ class TestDiscoverWindows:
         subs = [{"start": 0.1, "end": 1.0}]
         start, _ = window_bounds(subs, 0, 0, pad=0.3, min_start=0.0)
         assert start == 0.0
+
+    def test_window_key_distinguishes_video_and_bounds(self):
+        """실운영 버그: 상태 저장 없이 매 실행마다 처음부터 다시 훑다 보니, 뒤에
+        정렬되는 다른 영상(예: Finding Dory, Inside Out)에 도달하기도 전에 앞쪽 영상
+        (예: Emily in Paris)만으로 하루치 할당량이 매번 소진됐다. window_key가
+        (영상, 구간)마다 고유해야 "이미 봤다"를 정확히 기억할 수 있다."""
+        assert window_key("Emily in Paris S05E01", 0, 5) == "Emily in Paris S05E01::0-5"
+        assert window_key("Emily in Paris S05E01", 0, 5) != window_key("Finding Dory", 0, 5)
+        assert window_key("Finding Dory", 0, 5) != window_key("Finding Dory", 6, 11)

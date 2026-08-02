@@ -52,6 +52,7 @@ from clipper.matching import (
     is_english_subtitles,
     window_bounds,
     window_dialogue_text,
+    window_key,
 )
 
 
@@ -67,6 +68,7 @@ class Config:
     discover_window_size: int = 6
     discover_max_windows_per_video: int = 40
     discover_max_new_topics: int = 5
+    discover_state_file: Optional[str] = None
 
 
 # ---------------- Thin IO wrappers (monkeypatched in tests) ----------------
@@ -224,6 +226,33 @@ def extract_embedded_subtitle(video_path: str, stream_index: int, out_srt_path: 
     return result.returncode == 0 and os.path.isfile(out_srt_path)
 
 
+def load_discover_state(path: str) -> set:
+    """Load the set of already-scanned window keys (see window_key), or empty if no file yet.
+
+    Corrupt/unreadable state is treated as empty rather than raised - losing the memory of
+    what's already been scanned just means some windows get redundantly re-judged by the
+    model, which is wasteful but harmless. It must never crash the whole run.
+    """
+    import json
+
+    if not os.path.isfile(path):
+        return set()
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return set(data) if isinstance(data, list) else set()
+    except (OSError, json.JSONDecodeError):
+        return set()
+
+
+def save_discover_state(path: str, visited: set) -> None:
+    """Persist the visited-window key set as a JSON array (thin IO wrapper)."""
+    import json
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(sorted(visited), f, ensure_ascii=False, indent=2)
+
+
 def find_source_media(source_dir: str) -> List[Dict]:
     """Scan NAS source for {title}/movie.{mp4,mkv,...} + movie.srt folders (thin os wrapper).
 
@@ -357,7 +386,18 @@ def discover(cfg: Config) -> List[Dict]:
     """Scan every English-subtitled video's dialogue and let the model pick good
     expressions, creating a topic + its clip together for each one found (the reverse of
     process(): dialogue first, topic second — see module docstring).
+
+    Persists which (video, window) pairs it has already judged (see window_key) to
+    discover_state_file, and skips them on every later run. Without this, a run always
+    restarts scanning from window 0 of the first video (alphabetically) with no memory of
+    prior runs - a video with enough "good material" windows to fill discover_max_new_topics
+    on its own (a real case: a 10-episode show sorting before everything else) refills its
+    quota from the same handful of windows every single day, and videos that sort after it
+    are never reached at all, regardless of how much usable dialogue they actually have.
     """
+    state_path = cfg.discover_state_file or os.path.join(cfg.output_dir, "discover_state.json")
+    visited = load_discover_state(state_path)
+
     media_files = find_source_media(cfg.source_dir)
     created: List[Dict] = []
 
@@ -377,11 +417,19 @@ def discover(cfg: Config) -> List[Dict]:
             if len(created) >= cfg.discover_max_new_topics:
                 break
 
+            key = window_key(media["title"], lo, hi)
+            if key in visited:
+                continue
+
             text = window_dialogue_text(subtitles, lo, hi)
             if len(text) < MIN_DISCOVER_WINDOW_CHARS:
+                visited.add(key)
+                save_discover_state(state_path, visited)
                 continue
 
             suggestion = fetch_topic_discovery(cfg, text, media["title"])
+            visited.add(key)
+            save_discover_state(state_path, visited)
             if suggestion is None:
                 continue
 
@@ -448,6 +496,11 @@ def _load_config_from_args() -> Tuple[Config, str]:
         "--discover-max-new-topics", type=int,
         default=int(os.getenv("DISCOVER_MAX_NEW_TOPICS", "5")),
     )
+    parser.add_argument(
+        "--discover-state-file", default=os.getenv("DISCOVER_STATE_FILE"),
+        help="Where to persist already-scanned (video, window) pairs across runs. "
+             "Defaults to <output-dir>/discover_state.json.",
+    )
     args = parser.parse_args()
 
     missing = [
@@ -468,6 +521,7 @@ def _load_config_from_args() -> Tuple[Config, str]:
         discover_window_size=args.discover_window_size,
         discover_max_windows_per_video=args.discover_max_windows_per_video,
         discover_max_new_topics=args.discover_max_new_topics,
+        discover_state_file=args.discover_state_file,
     ), args.mode
 
 
