@@ -2,7 +2,7 @@
 import base64
 import re
 from dataclasses import dataclass
-from datetime import date
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
 
 import httpx
@@ -38,6 +38,11 @@ BLOG_CONTENT_DIR = "web/content/blog"
 BLOG_IMAGE_DIR = "web/public/blog-images"
 BLOG_FILE_DIR = "web/public/blog-files"
 GITHUB_API_BASE = "https://api.github.com"
+
+# Cloud Run's container clock runs in UTC, but the blog's editorial "day" is Korea time —
+# a fixed +9 offset (Korea has no DST) so date.today()-style UTC truncation can't backdate
+# a post published right after midnight KST to the previous day.
+KST = timezone(timedelta(hours=9))
 
 # Upload size limits (checked on the base64-decoded actual bytes, not the encoded string).
 MAX_IMAGE_BYTES = 8 * 1024 * 1024        # 8MB
@@ -226,6 +231,21 @@ class BlogService:
     @staticmethod
     def get_clip_for_topic(db: Session, topic_id: int) -> Optional[ConversationClip]:
         return db.scalar(select(ConversationClip).where(ConversationClip.topic_id == topic_id))
+
+    @staticmethod
+    def get_clip_by_url(db: Session, clip_url: str) -> Optional[ConversationClip]:
+        """Find an existing clip by its output URL.
+
+        The local clipper re-scans videos from scratch on every run with no memory of
+        previously-cut ranges, so it can re-discover and re-submit the same timestamp window
+        as a "new" topic days later — the AI's existing-titles dedup check is a soft,
+        model-judgment guard and has already missed an exact repeat in production. clip_url
+        is deterministic from (video, start, end), so it's a reliable hard key to catch that
+        case regardless of what title the model invents for the repeat.
+        """
+        return db.scalar(
+            select(ConversationClip).where(ConversationClip.clip_url == clip_url.strip())
+        )
 
     @staticmethod
     def create_conversation_clip(
@@ -516,7 +536,7 @@ class BlogService:
             f'description: "{safe_desc}"\n'
             f'category: "{category}"\n'
             f"tags: {tags_json}\n"
-            f'date: "{date.today().isoformat()}"\n'
+            f'date: "{datetime.now(KST).date().isoformat()}"\n'
             f"published: {published_line}\n"
             "---\n"
         )

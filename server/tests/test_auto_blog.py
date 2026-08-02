@@ -1078,6 +1078,30 @@ class TestConversationClipEndpoints:
         )
         assert resp.status_code == status.HTTP_409_CONFLICT
 
+    def test_create_clip_duplicate_clip_url_across_topics_409(self, client, db_session, monkeypatch):
+        """실운영 버그: 클리퍼가 이미 처리한 영상 구간을 다시 스캔해 다른 토픽에 같은
+        clip_url로 재등록하려는 시도 — topic_id는 서로 다르지만 clip_url이 같으면 막혀야
+        중복 게시물(같은 장면이 다른 제목으로 두 번 발행)을 방지할 수 있다."""
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+        topic1 = self._seed_conv_topic(db_session, title="회화주제1")
+        db_session.add(ConversationClip(
+            topic_id=topic1.id, video_title="v", dialogue_en="d",
+            start_seconds=1.0, end_seconds=2.0,
+            clip_url="https://clips.scanvoca.com/dup.mp4", status="ready"))
+        db_session.commit()
+
+        topic2 = self._seed_conv_topic(db_session, title="회화주제2")
+        resp = client.post(
+            "/api/v1/admin/blog/conversation-clips",
+            json={
+                "topic_id": topic2.id, "video_title": "v", "dialogue_en": "d",
+                "start_seconds": 1.0, "end_seconds": 2.0,
+                "clip_url": "https://clips.scanvoca.com/dup.mp4",
+            },
+            headers=self.NAS_HEADERS,
+        )
+        assert resp.status_code == status.HTTP_409_CONFLICT
+
     def test_create_clip_non_conversation_topic_404(self, client, db_session, monkeypatch):
         monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
         t = BlogTopic(category="토익·비즈니스", title="토익", angle="a",
@@ -1271,6 +1295,25 @@ class TestConversationTopicDiscovery:
         assert topic.category == "일상영어"
         assert clip.status == "ready"
 
+    def test_discovered_duplicate_clip_url_409(self, client, db_session, monkeypatch):
+        """실운영 버그: 클리퍼가 상태 기억 없이 매번 처음부터 영상을 재스캔해 이미 컷한
+        구간을 다시 '새 주제'로 제출한 사례가 실제로 있었다(같은 clip_url로 이틀 뒤 재발행
+        -> 동일한 장면을 다른 제목의 글 두 개가 다룸). AI의 existing_titles 기반 중복
+        판단은 모델 판단에 불과해 이미 한 번 실패했으므로, clip_url 자체를 하드 키로
+        막는다."""
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+        first = client.post(
+            self.DISCOVERED_URL, json=self._discovered_payload(), headers=self.NAS_HEADERS
+        )
+        assert first.status_code == status.HTTP_201_CREATED
+
+        second = client.post(
+            self.DISCOVERED_URL,
+            json=self._discovered_payload(title="다른 제목으로 재발견됨", angle="다른 앵글"),
+            headers=self.NAS_HEADERS,
+        )
+        assert second.status_code == status.HTTP_409_CONFLICT
+
     def test_discovered_rejects_blank_title(self, client, monkeypatch):
         monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
         resp = client.post(
@@ -1323,6 +1366,16 @@ class TestSuggestConversationTopicFromDialogue:
             "has_expression": True, "title": "", "angle": "앵글",
         }))
         assert out is None
+
+    def test_prompt_forbids_inventing_unstated_relationships(self):
+        """실운영 버그: 화자 관계가 불분명한 대사(연인 사이 농담)에서 모델이 "상사"라는
+        근거 없는 관계를 지어내 실제 장면과 어긋나는 제목을 만든 사례가 있었다. 프롬프트가
+        이를 명시적으로 금지하는지 확인."""
+        _, prompt = self._run(json.dumps({
+            "has_expression": True, "title": "제목", "angle": "앵글",
+        }))
+        assert "관계" in prompt
+        assert "단정" in prompt
 
     def test_profanity_in_title_rejected(self):
         """실운영 버그: 프롬프트 지시에도 불구하고 실제로 "Fuck realistic"을 그대로 인용한

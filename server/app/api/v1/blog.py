@@ -664,6 +664,11 @@ async def create_conversation_clip(
             status_code=status.HTTP_409_CONFLICT,
             detail="이미 클립이 등록된 토픽입니다.",
         )
+    if BlogService.get_clip_by_url(db, payload.clip_url) is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="이미 등록된 영상 구간입니다.",
+        )
     clip = BlogService.create_conversation_clip(
         db,
         topic_id=payload.topic_id,
@@ -723,10 +728,19 @@ async def create_discovered_conversation_clip(
 ):
     """Register an AI-discovered topic + its finished clip in one call (NAS key only).
 
-    Unlike POST /conversation-clips (which attaches a clip to a pre-existing topic_id and
-    409s on duplicates), the topic is created here from title/angle, so there is no existing
-    topic to collide with and no 404/409 path.
+    Unlike POST /conversation-clips (which attaches a clip to a pre-existing topic_id), the
+    topic is created here from title/angle, so there is no existing topic to 404 against —
+    but a 409 path DOES exist: the clipper re-scans videos from scratch every run with no
+    memory of ranges it already cut, so it can rediscover and resubmit the same window as a
+    "new" topic days later (already happened in production — the AI's existing-titles dedup
+    is a soft judgment call and missed an exact repeat). clip_url is deterministic from
+    (video, start, end), so checking it first is a hard backstop independent of the model.
     """
+    if BlogService.get_clip_by_url(db, payload.clip_url) is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="이미 등록된 영상 구간입니다.",
+        )
     clip = BlogService.create_discovered_conversation_topic_and_clip(
         db,
         title=payload.title,
