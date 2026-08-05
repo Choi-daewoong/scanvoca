@@ -4,6 +4,7 @@
 """
 import asyncio
 
+import httpx
 import pytest
 from fastapi import status
 from sqlalchemy import select
@@ -213,6 +214,53 @@ class TestPublish:
         updated = db_session.get(BlogTopic, topic_id)
         assert updated.status == "used"
         assert updated.post_slug == "toeic-vocab-30days"
+
+    def test_publish_success_notifies_search_engines(self, client, admin_auth_headers, monkeypatch):
+        """게재 성공 시 notify_search_engines가 실제 blog_url로 호출되는지 확인."""
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_commit(slug, markdown):
+            return "https://github.com/Choi-daewoong/scanvoca/commit/abc123"
+
+        monkeypatch.setattr(BlogService, "commit_markdown", staticmethod(fake_commit))
+
+        notified = {}
+
+        async def fake_notify(urls):
+            notified["urls"] = urls
+
+        monkeypatch.setattr(BlogService, "notify_search_engines", staticmethod(fake_notify))
+
+        response = client.post(
+            "/api/v1/admin/blog/publish",
+            json={"slug": "notify-test-slug", "markdown": "---\ntitle: x\n---\nbody"},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert notified["urls"] == ["https://scanvoca.com/blog/notify-test-slug"]
+
+    def test_publish_succeeds_even_if_notify_search_engines_raises(
+        self, client, admin_auth_headers, monkeypatch
+    ):
+        """notify_search_engines가 (버그로) 예외를 던져도 게재 응답 자체는 실패하면 안 된다."""
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_commit(slug, markdown):
+            return "https://github.com/Choi-daewoong/scanvoca/commit/abc123"
+
+        monkeypatch.setattr(BlogService, "commit_markdown", staticmethod(fake_commit))
+
+        async def fake_notify(urls):
+            raise RuntimeError("boom")
+
+        monkeypatch.setattr(BlogService, "notify_search_engines", staticmethod(fake_notify))
+
+        response = client.post(
+            "/api/v1/admin/blog/publish",
+            json={"slug": "notify-fail-slug", "markdown": "---\ntitle: x\n---\nbody"},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == status.HTTP_200_OK
 
     def test_publish_github_failure_502_topic_unchanged(self, client, admin_auth_headers, db_session, monkeypatch):
         """GitHub 실패 시 502 + topic 상태 변경 없음"""
@@ -1151,6 +1199,81 @@ class TestDeletePostService:
         )
         assert response.status_code == status.HTTP_200_OK
         assert captured["recent_posts"] == []
+
+
+class TestNotifySearchEngines:
+    """BlogService.notify_search_engines — 구글 사이트맵 핑 + 네이버 IndexNow 제출 (httpx mock).
+
+    Captures the real implementation at collection time (module import, before any
+    test runs) because conftest's autouse `_no_real_search_engine_pings` fixture
+    replaces BlogService.notify_search_engines with a no-op for every test — calling
+    the class attribute directly inside a test body here would hit that no-op, not
+    the real method these tests exist to verify.
+    """
+
+    _real_notify = staticmethod(BlogService.notify_search_engines)
+
+    class _FakeAsyncClient:
+        def __init__(self, calls, *, fail_get=False, fail_post=False):
+            self.calls = calls
+            self.fail_get = fail_get
+            self.fail_post = fail_post
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc_info):
+            return False
+
+        async def get(self, url, params=None):
+            self.calls.append(("GET", url, params))
+            if self.fail_get:
+                raise httpx.ConnectError("boom")
+
+        async def post(self, url, json=None):
+            self.calls.append(("POST", url, json))
+            if self.fail_post:
+                raise httpx.ConnectError("boom")
+
+    def _patch_client(self, monkeypatch, **kwargs):
+        calls: list = []
+        monkeypatch.setattr(
+            httpx, "AsyncClient", lambda **_: self._FakeAsyncClient(calls, **kwargs)
+        )
+        return calls
+
+    def test_pings_google_sitemap_and_naver_indexnow(self, monkeypatch):
+        from app.services.blog_service import INDEXNOW_KEY, SITEMAP_URL
+
+        calls = self._patch_client(monkeypatch)
+        asyncio.run(self._real_notify(["https://scanvoca.com/blog/x"]))
+
+        assert ("GET", "https://www.google.com/ping", {"sitemap": SITEMAP_URL}) in calls
+        post_calls = [c for c in calls if c[0] == "POST"]
+        assert len(post_calls) == 1
+        _, url, body = post_calls[0]
+        assert url == "https://searchadvisor.naver.com/indexnow"
+        assert body["host"] == "scanvoca.com"
+        assert body["key"] == INDEXNOW_KEY
+        assert body["keyLocation"] == f"https://scanvoca.com/{INDEXNOW_KEY}.txt"
+        assert body["urlList"] == ["https://scanvoca.com/blog/x"]
+
+    def test_skips_indexnow_post_when_no_urls(self, monkeypatch):
+        calls = self._patch_client(monkeypatch)
+        asyncio.run(self._real_notify([]))
+        assert [c for c in calls if c[0] == "POST"] == []
+        assert [c for c in calls if c[0] == "GET"]  # sitemap ping still fires
+
+    def test_google_failure_does_not_block_naver_submission(self, monkeypatch):
+        calls = self._patch_client(monkeypatch, fail_get=True)
+        # Must not raise even though the Google ping fails.
+        asyncio.run(self._real_notify(["https://scanvoca.com/blog/x"]))
+        assert [c for c in calls if c[0] == "POST"]
+
+    def test_naver_failure_does_not_raise(self, monkeypatch):
+        self._patch_client(monkeypatch, fail_post=True)
+        # Must not raise — publish flow depends on this never blocking the response.
+        asyncio.run(self._real_notify(["https://scanvoca.com/blog/x"]))
 
 
 class TestParseFrontmatterFields:

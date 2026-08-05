@@ -39,6 +39,12 @@ BLOG_IMAGE_DIR = "web/public/blog-images"
 BLOG_FILE_DIR = "web/public/blog-files"
 GITHUB_API_BASE = "https://api.github.com"
 
+# IndexNow key file committed at web/public/{key}.txt (its content is just the key
+# itself) — Naver/Bing fetch this to verify we own the domain before accepting
+# submissions. Not a secret: it's served publicly by design, so no .env needed.
+INDEXNOW_KEY = "8ad3a7828b3f92d3639b6de796106966"
+SITEMAP_URL = "https://scanvoca.com/sitemap.xml"
+
 # Cloud Run's container clock runs in UTC, but the blog's editorial "day" is Korea time —
 # a fixed +9 offset (Korea has no DST) so date.today()-style UTC truncation can't backdate
 # a post published right after midnight KST to the previous day.
@@ -902,6 +908,42 @@ class BlogService:
     @staticmethod
     def is_publishing_configured() -> bool:
         return bool(settings.GITHUB_TOKEN)
+
+    @staticmethod
+    async def notify_search_engines(urls: List[str]) -> None:
+        """Best-effort push after a successful publish so search engines pick the new
+        post(s) up sooner. Never raises — the caller has already committed the post;
+        a notification hiccup here must not turn into a failed publish response.
+
+        - Google has no per-URL submission open to regular content (the Indexing API
+          is restricted by Google's terms to JobPosting/BroadcastEvent pages only), so
+          the sanctioned option is pinging the sitemap to nudge a recrawl sooner.
+        - Naver (and Bing, which shares the same protocol) support IndexNow: submitting
+          the exact post URL gets it crawled near-instantly. Submitted straight to
+          Naver's endpoint per its own IndexNow guide, rather than the generic
+          api.indexnow.org relay, so this doesn't depend on cross-relay propagation.
+        """
+        async with httpx.AsyncClient(timeout=10.0) as http:
+            try:
+                await http.get(
+                    "https://www.google.com/ping", params={"sitemap": SITEMAP_URL}
+                )
+            except httpx.HTTPError as e:
+                print(f"Google sitemap ping failed: {e}")
+
+            if urls:
+                try:
+                    await http.post(
+                        "https://searchadvisor.naver.com/indexnow",
+                        json={
+                            "host": "scanvoca.com",
+                            "key": INDEXNOW_KEY,
+                            "keyLocation": f"https://scanvoca.com/{INDEXNOW_KEY}.txt",
+                            "urlList": urls,
+                        },
+                    )
+                except httpx.HTTPError as e:
+                    print(f"IndexNow submission failed: {e}")
 
     @staticmethod
     async def commit_markdown(slug: str, markdown: str) -> str:

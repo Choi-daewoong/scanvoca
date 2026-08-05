@@ -399,6 +399,12 @@ async def _publish_one(
     if clip is not None:
         BlogService.mark_clip_published(db, clip)
 
+    blog_url = f"https://scanvoca.com/blog/{slug}"
+    try:
+        await BlogService.notify_search_engines([blog_url])
+    except Exception as e:  # noqa: BLE001 - best-effort, must not fail the publish response
+        print(f"notify_search_engines failed for {slug}: {e}")
+
     return BlogAutoPublishResult(
         published=True,
         dry_run=False,
@@ -406,7 +412,7 @@ async def _publish_one(
         slug=slug,
         title=result["title"],
         commit_url=commit_url,
-        blog_url=f"https://scanvoca.com/blog/{slug}",
+        blog_url=blog_url,
     )
 
 
@@ -1116,7 +1122,13 @@ async def publish_post(
         if topic is not None:
             BlogService.mark_used(db, topic, payload.slug)
 
+    blog_url = f"https://scanvoca.com/blog/{payload.slug}"
+    try:
+        await BlogService.notify_search_engines([blog_url])
+    except Exception as e:  # noqa: BLE001 - best-effort, must not fail the publish response
+        print(f"notify_search_engines failed for {payload.slug}: {e}")
+
     return BlogPublishResult(
         commit_url=commit_url,
-        blog_url=f"https://scanvoca.com/blog/{payload.slug}",
+        blog_url=blog_url,
     )

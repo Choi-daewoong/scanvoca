@@ -26,6 +26,7 @@ from app.main import app
 from app.core.database import get_db
 from app.models.base import Base
 from app.core.config import settings
+from app.services.blog_service import BlogService
 
 # 테스트용 In-Memory SQLite 데이터베이스
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -63,6 +64,19 @@ def db_session():
         session.close()
         # 테이블 삭제 (다음 테스트를 위해)
         Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture(autouse=True)
+def _no_real_search_engine_pings(monkeypatch):
+    """Blog publish (manual + auto) fires BlogService.notify_search_engines (Google
+    sitemap ping + Naver IndexNow POST) as a best-effort side effect. Autoused for
+    every test so nothing accidentally makes a real outbound network call; a test that
+    wants to verify the call happened can override it with its own monkeypatch.setattr
+    on the same BlogService attribute (later setattr in the same test wins)."""
+    async def _noop(urls):
+        return None
+
+    monkeypatch.setattr(BlogService, "notify_search_engines", staticmethod(_noop))
 
 
 @pytest.fixture(scope="function")
