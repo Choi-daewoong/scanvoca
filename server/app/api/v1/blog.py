@@ -43,6 +43,7 @@ from app.schemas.blog import (
     BlogPostDetail,
     BlogPublishRequest,
     BlogPublishResult,
+    BlogDeleteResult,
     BlogNaverVersionRequest,
     BlogNaverVersionResponse,
 )
@@ -935,6 +936,36 @@ async def get_post(
             detail="게시글을 찾을 수 없습니다.",
         )
     return BlogPostDetail(**post)
+
+
+@router.delete("/posts/{slug}", response_model=BlogDeleteResult)
+async def delete_post(
+    slug: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user),
+):
+    """Remove a published post — markdown, its images/attachments, and the DB index row
+    (admin only). Irreversible from the admin UI: no confirmation step here, so the
+    frontend must confirm before calling this."""
+    if not BlogService.is_publishing_configured():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="블로그 발행이 설정되지 않았습니다.",
+        )
+    try:
+        deleted = await BlogService.delete_post(slug)
+    except GitHubPublishError as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="게시글 삭제에 실패했습니다.",
+        ) from e
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="게시글을 찾을 수 없습니다.",
+        )
+    BlogService.delete_published_post(db, slug)
+    return BlogDeleteResult(deleted=True, slug=slug)
 
 
 @router.post("/naver-version", response_model=BlogNaverVersionResponse)

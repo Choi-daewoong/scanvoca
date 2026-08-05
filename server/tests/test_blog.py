@@ -2,6 +2,8 @@
 블로그 관리자 API 테스트
 /api/v1/admin/blog/* 엔드포인트
 """
+import asyncio
+
 import pytest
 from fastapi import status
 from sqlalchemy import select
@@ -514,6 +516,53 @@ class TestListAndGetPosts:
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
+class TestDeletePostEndpoint:
+    """DELETE /admin/blog/posts/{slug} — 라우터 레벨 (BlogService.delete_post는 mock)"""
+
+    def test_delete_post_success(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_delete_post(slug):
+            return True
+
+        monkeypatch.setattr(BlogService, "delete_post", staticmethod(fake_delete_post))
+        monkeypatch.setattr(
+            BlogService, "delete_published_post", staticmethod(lambda db, slug: True)
+        )
+        response = client.delete("/api/v1/admin/blog/posts/some-slug", headers=admin_auth_headers)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == {"deleted": True, "slug": "some-slug"}
+
+    def test_delete_post_404_when_markdown_missing(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_delete_post(slug):
+            return False
+
+        monkeypatch.setattr(BlogService, "delete_post", staticmethod(fake_delete_post))
+        response = client.delete("/api/v1/admin/blog/posts/missing", headers=admin_auth_headers)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_delete_post_not_configured_503(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "")
+        response = client.delete("/api/v1/admin/blog/posts/some-slug", headers=admin_auth_headers)
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+    def test_delete_post_non_admin_403(self, client, auth_headers):
+        response = client.delete("/api/v1/admin/blog/posts/some-slug", headers=auth_headers)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_delete_post_github_error_502(self, client, admin_auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+
+        async def fake_delete_post(slug):
+            raise GitHubPublishError("boom")
+
+        monkeypatch.setattr(BlogService, "delete_post", staticmethod(fake_delete_post))
+        response = client.delete("/api/v1/admin/blog/posts/some-slug", headers=admin_auth_headers)
+        assert response.status_code == status.HTTP_502_BAD_GATEWAY
+
+
 class TestPublishWithImages:
     """이미지 포함 게재 테스트 (Git Data API 단일 커밋 mock)"""
 
@@ -998,6 +1047,52 @@ class TestDeletePublishedPost:
 
     def test_returns_false_when_not_found(self, db_session):
         assert BlogService.delete_published_post(db_session, "never-existed") is False
+
+
+class TestDeletePostService:
+    """BlogService.delete_post — 마크다운 + 이미지/첨부파일 정리 (delete_file/list_directory는 mock)."""
+
+    def test_returns_false_when_markdown_missing(self, monkeypatch):
+        async def fake_delete_file(path, message):
+            return False
+
+        monkeypatch.setattr(BlogService, "delete_file", staticmethod(fake_delete_file))
+        assert asyncio.run(BlogService.delete_post("missing-slug")) is False
+
+    def test_deletes_markdown_and_image_folder_contents(self, monkeypatch):
+        deleted_paths = []
+
+        async def fake_delete_file(path, message):
+            deleted_paths.append(path)
+            return True
+
+        async def fake_list_directory(path):
+            if path == "web/public/blog-images/my-slug":
+                return [
+                    {"type": "file", "path": "web/public/blog-images/my-slug/1.png"},
+                    {"type": "file", "path": "web/public/blog-images/my-slug/2.png"},
+                ]
+            return []
+
+        monkeypatch.setattr(BlogService, "delete_file", staticmethod(fake_delete_file))
+        monkeypatch.setattr(BlogService, "list_directory", staticmethod(fake_list_directory))
+
+        assert asyncio.run(BlogService.delete_post("my-slug")) is True
+        assert "web/content/blog/my-slug.md" in deleted_paths
+        assert "web/public/blog-images/my-slug/1.png" in deleted_paths
+        assert "web/public/blog-images/my-slug/2.png" in deleted_paths
+
+    def test_text_only_post_with_no_image_folder(self, monkeypatch):
+        """이미지 없는 텍스트 전용 글 — list_directory가 빈 리스트를 반환해도 정상 삭제."""
+        async def fake_delete_file(path, message):
+            return True
+
+        async def fake_list_directory(path):
+            return []
+
+        monkeypatch.setattr(BlogService, "delete_file", staticmethod(fake_delete_file))
+        monkeypatch.setattr(BlogService, "list_directory", staticmethod(fake_list_directory))
+        assert asyncio.run(BlogService.delete_post("text-only-slug")) is True
 
     def test_generate_passes_recent_posts_when_index_has_rows(
         self, client, admin_auth_headers, db_session, monkeypatch

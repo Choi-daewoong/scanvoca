@@ -301,6 +301,12 @@ export interface BlogPublishResult {
   blog_url: string;
 }
 
+// DELETE /posts/{slug} 응답
+export interface BlogDeleteResult {
+  deleted: boolean;
+  slug: string;
+}
+
 // ===== 블로그 2단계 — 이미지 워크플로우 =====
 
 // 관리자 — 이미지 계획 항목 (BE 응답, snake_case — 계약서 3절 /image-plan)

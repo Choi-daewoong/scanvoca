@@ -20,6 +20,9 @@ export default function PublishedPostsPanel({ loadingSlug, onLoad }: Props) {
   const [naverError, setNaverError] = useState<string | null>(null);
   const [copied, setCopied] = useState<'title' | 'content' | null>(null);
 
+  const [deletingSlug, setDeletingSlug] = useState<string | null>(null); // 삭제 중인 slug
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const fetchPosts = async () => {
     setLoading(true);
     setError(null);
@@ -49,6 +52,20 @@ export default function PublishedPostsPanel({ loadingSlug, onLoad }: Props) {
       setNaverError(e instanceof Error ? e.message : '네이버용 변환에 실패했습니다.');
     } finally {
       setNaverSlug(null);
+    }
+  };
+
+  const handleDelete = async (slug: string) => {
+    if (!confirm(`"${slug}" 글을 삭제하시겠습니까? 되돌릴 수 없습니다.`)) return;
+    setDeletingSlug(slug);
+    setDeleteError(null);
+    try {
+      await blogService.deletePost(slug);
+      setPosts((prev) => prev.filter((p) => p.slug !== slug));
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : '글 삭제에 실패했습니다.');
+    } finally {
+      setDeletingSlug(null);
     }
   };
 
@@ -103,10 +120,21 @@ export default function PublishedPostsPanel({ loadingSlug, onLoad }: Props) {
                 >
                   {naverSlug === post.slug ? '변환 중...' : '네이버용'}
                 </button>
+                <button
+                  onClick={() => handleDelete(post.slug)}
+                  disabled={deletingSlug !== null}
+                  className="rounded-lg border border-red-100 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:bg-gray-900 dark:text-red-400 dark:hover:bg-red-950/40"
+                >
+                  {deletingSlug === post.slug ? '삭제 중...' : '삭제'}
+                </button>
               </div>
             </li>
           ))}
         </ul>
+      )}
+
+      {deleteError && (
+        <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">{deleteError}</p>
       )}
 
       {naverError && (

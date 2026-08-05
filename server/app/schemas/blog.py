@@ -289,6 +289,12 @@ class BlogPublishResult(BaseModel):
     blog_url: str
 
 
+class BlogDeleteResult(BaseModel):
+    """Delete response (DELETE /admin/blog/posts/{slug})."""
+    deleted: bool
+    slug: str
+
+
 class BlogNaverVersionRequest(BaseModel):
     """Request a Naver-blog rewrite of a published post."""
     slug: str = Field(..., min_length=1, max_length=200)

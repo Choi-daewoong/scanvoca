@@ -8,6 +8,7 @@ import {
   BlogPostContent,
   BlogPublishImage,
   BlogNaverVersion,
+  BlogDeleteResult,
 } from '@/types';
 
 // 계약서 3절 — 관리자 블로그 API (모두 admin 권한 필요)
@@ -64,6 +65,13 @@ export const blogService = {
     return apiFetch<BlogPublishResult>('/api/v1/admin/blog/publish', {
       method: 'POST',
       body: JSON.stringify(payload),
+    });
+  },
+
+  /** 게재된 글 삭제 — 마크다운 + 이미지/첨부파일 + 인덱스 행까지 정리. 되돌릴 수 없음 */
+  async deletePost(slug: string): Promise<BlogDeleteResult> {
+    return apiFetch<BlogDeleteResult>(`/api/v1/admin/blog/posts/${slug}`, {
+      method: 'DELETE',
     });
   },
 };

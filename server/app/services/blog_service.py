@@ -994,6 +994,51 @@ class BlogService:
             return True
 
     @staticmethod
+    async def list_directory(path: str) -> List[Dict]:
+        """List a directory's entries via the Contents API. Returns [] if it doesn't exist
+        (a slug with no image/attachment folder is normal, not an error)."""
+        repo = settings.GITHUB_REPO
+        branch = settings.GITHUB_BRANCH
+        url = f"{GITHUB_API_BASE}/repos/{repo}/contents/{path}"
+        headers = BlogService._github_headers()
+        async with httpx.AsyncClient(timeout=30.0) as http:
+            try:
+                resp = await http.get(url, headers=headers, params={"ref": branch})
+            except httpx.HTTPError as e:
+                raise GitHubPublishError(f"GitHub 목록 조회 실패: {e}") from e
+            if resp.status_code == 404:
+                return []
+            if resp.status_code != 200:
+                raise GitHubPublishError(f"GitHub 목록 조회 실패 ({resp.status_code})")
+            data = resp.json()
+            return data if isinstance(data, list) else []
+
+    @staticmethod
+    async def delete_post(slug: str) -> bool:
+        """Delete a published post: its markdown file, then any images/attachments filed
+        under its slug folder. Returns False if the markdown file didn't exist (nothing to
+        delete) — the caller should treat that as 404 and skip delete_published_post.
+
+        Images/attachments are best-effort cleanup after the markdown is confirmed gone:
+        a slug with no image folder is normal (text-only posts), so list_directory
+        returning [] there is not an error.
+        """
+        deleted_md = await BlogService.delete_file(
+            f"{BLOG_CONTENT_DIR}/{slug}.md", message=f"blog: delete {slug}"
+        )
+        if not deleted_md:
+            return False
+
+        for base_dir in (BLOG_IMAGE_DIR, BLOG_FILE_DIR):
+            for item in await BlogService.list_directory(f"{base_dir}/{slug}"):
+                if item.get("type") == "file":
+                    await BlogService.delete_file(
+                        item["path"], message=f"blog: delete {slug} asset"
+                    )
+
+        return True
+
+    @staticmethod
     def _github_headers() -> Dict[str, str]:
         return {
             "Authorization": f"Bearer {settings.GITHUB_TOKEN}",
