@@ -1610,6 +1610,16 @@ class TestIngestParsing:
         assert answers[19] == "1"
         assert answers[20] == "5"
 
+    def test_parse_answers_text_flattened_multi_column_row(self):
+        """실운영 버그: 실제 KICE 정답표는 "번호 정답 배점"이 한 줄에 4묶음씩 붙어 나온다
+        (예: "1 ⑤ 2 13 ③ 3 25 ④ 2 37 ⑤ 3"). 배점(단일 숫자) 바로 뒤에 다음 문항번호가
+        붙으면, 배점+문항번호 앞자리를 자기 자신의 (번호, 정답) 쌍으로 오인해 그 뒤 모든
+        항목이 밀리는 실제 사고가 있었다(2022 수능 지문 전체 감사에서 발견). 4묶음 모두
+        정확히 파싱되는지 확인."""
+        from ingest_exam_pdfs import parse_answers_text
+        answers = parse_answers_text("1 ⑤ 2 13 ③ 3 25 ④ 2 37 ⑤ 3")
+        assert answers == {1: "5", 13: "3", 25: "4", 37: "5"}
+
     def test_validate_parsed_item_accepts_normal_shape(self):
         from ingest_exam_pdfs import validate_parsed_item
         item = {

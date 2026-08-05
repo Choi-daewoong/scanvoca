@@ -34,7 +34,18 @@ CIRCLED = "①②③④⑤"
 # A problem starts with "18." at the beginning of a line (1~2 digit number + dot).
 _PROBLEM_RE = re.compile(r"(?m)^\s*(\d{1,2})\.\s")
 # Answer-sheet entry: "18 ③" / "18. 3" / "18) ④" etc.
-_ANSWER_RE = re.compile(r"(\d{1,2})\s*[.)]?\s*([①②③④⑤1-5])")
+#
+# Real KICE answer sheets pack four "번호 정답 배점" triples per line (e.g.
+# "1 ⑤ 2 13 ③ 3 25 ④ 2 37 ⑤ 3"), with 배점(score) always a single digit — but a
+# plain (non-circled) 정답 digit is ALSO a single digit, so without care a
+# 배점 immediately followed by the next entry's 문항번호 misreads as its own
+# (번호, 정답) pair (observed live: "...② 2 13 ③..." parsed as (2, "1") from
+# "2 13", desyncing every match after it — see 2022 수능 audit). The negative
+# lookahead rejects a plain digit as 정답 when another digit immediately
+# follows it (i.e. it's actually the first digit of a 2-digit 문항번호), which
+# a genuine single-digit 정답 never has. Circled digits need no such guard —
+# they're never confused with a 문항번호 or 배점.
+_ANSWER_RE = re.compile(r"(\d{1,2})\s*[.)]?\s*([①②③④⑤]|[1-5](?!\d))")
 _CIRCLED_TO_NUM = {c: str(i + 1) for i, c in enumerate(CIRCLED)}
 _ALPHA_RE = re.compile(r"[A-Za-z]")
 
