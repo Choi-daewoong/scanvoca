@@ -1377,6 +1377,16 @@ class TestSuggestConversationTopicFromDialogue:
         assert "관계" in prompt
         assert "단정" in prompt
 
+    def test_prompt_requires_skip_when_relationship_is_essential_and_unstated(self):
+        """절충안: 표현의 설명/재미가 화자 관계를 반드시 전제해야 하는데 그 관계가 대사·
+        영상 제목에 없으면 얼버무리지 말고 has_expression을 false로 스킵하도록 프롬프트가
+        명시하는지 확인 (관계와 무관하게 통하는 표현은 기존대로 일반화·생략 후 통과)."""
+        _, prompt = self._run(json.dumps({
+            "has_expression": True, "title": "제목", "angle": "앵글",
+        }))
+        assert "전제해야만 성립" in prompt
+        assert "has_expression을 false" in prompt
+
     def test_profanity_in_title_rejected(self):
         """실운영 버그: 프롬프트 지시에도 불구하고 실제로 "Fuck realistic"을 그대로 인용한
         제목이 나온 적이 있다 — 사람 검수 없이 크론으로 바로 발행되는 구조라 프롬프트만
