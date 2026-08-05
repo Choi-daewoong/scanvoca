@@ -62,20 +62,20 @@ broken, much less a clock or a pistol!”
 **문제:** 다음 글의 제목으로 가장 적절한 것은?
 
 **선택지:**
-1. Can Industrialization Mend Our Broken Past?
-2. A Process of Repair: Create, Modify, Transform!
+1. Still Left to the Modern Blacksmith: The Art of Repair
+2. A Historical Survey of How Repairing Skills Evolved
 3. How to Be a Creative Repairperson: Tips and Ideas
-4. A Historical Survey of How Repairing Skills Evolved
-5. Still Left to the Modern Blacksmith: The Art of Repair
+4. A Process of Repair: Create, Modify, Transform!
+5. Can Industrialization Mend Our Broken Past?
 
 **정답:** 1
 
 **상세 해설:**
 
-이 지문은 산업화 이전과 이후의 '제작(production)'과 '수리(repair)'에 필요한 창의성의 차이를 비교하고 있습니다. 산업화 이전에는 대장장이가 고객의 요구에 맞춰 물건을 주문 제작하고 수리하는 과정 모두에 창의성이 필요했습니다. 하지만 산업화와 대량 생산 이후, 제작은 기계와 분업화된 노동으로 대체되어 개별 작업자의 창의성이 제한되었습니다. 반면, 수리 과정은 여전히 전체적인 이해와 설계자의 의도 파악 등 더 높은 수준의 창의성을 요구한다는 점을 강조합니다. 
+이 지문은 산업화 이전과 이후의 '제작(production)'과 '수리(repair)'에 필요한 창의성의 차이를 비교하고 있습니다. 산업화 이전에는 대장장이가 고객의 요구에 맞춰 물건을 주문 제작하고 수리하는 과정 모두에 창의성이 필요했습니다. 하지만 산업화와 대량 생산 이후, 제작은 기계와 분업화된 노동으로 대체되어 개별 작업자의 창의성이 제한되었습니다. 반면, 수리 과정은 여전히 전체적인 이해와 설계자의 의도 파악 등 더 높은 수준의 창의성을 요구한다는 점을 강조합니다.
 
-선택지 1번 'Can Industrialization Mend Our Broken Past?'는 산업화가 과거의 수리 방식을 어떻게 변화시켰는지, 그리고 그 과정에서 잃어버린 것(혹은 얻은 것)에 대한 질문을 던지며 지문의 핵심 내용을 포괄적으로 담고 있습니다. 
+선택지 1번 'Still Left to the Modern Blacksmith: The Art of Repair'는 지문 마지막의 "But all repairing must be done by hand. We can make every detail of a watch or of a gun by machinery, but the machine cannot mend it when broken"과 정확히 맞닿아 있습니다. 제작은 기계화·분업화되었지만, 수리만큼은 여전히 대장장이(blacksmith) 같은 장인의 손과 총체적 이해를 필요로 한다는 지문의 결론을 그대로 담은 제목입니다.
 
-선택지 2번은 수리의 과정만을 나열하고, 3번은 수리 전문가가 되는 방법에 초점을 맞춰 지문의 전체적인 맥락을 다루지 못합니다. 4번은 수리 기술의 역사적 발달 과정을 다룬다고 볼 수 있지만, 지문의 핵심 주제인 '창의성'과 '산업화의 영향'을 직접적으로 드러내지 못합니다. 5번은 현대 대장장이에 초점을 맞추는데, 지문은 대장장이를 예시로 들었을 뿐, 현대의 수리 전반에 대한 논의로 확장됩니다.
+선택지 2번은 수리 기술이 '어떻게 변화해왔는지'의 역사적 개관처럼 들리지만, 지문은 역사적 변천 자체보다 산업화 이후에도 수리에는 창의성이 남아있다는 대비에 초점을 둡니다. 3번은 수리 전문가가 '되는 법(tips and ideas)'을 다루는 실용 가이드처럼 들려 지문의 성격과 다릅니다. 4번은 산업화 이전 대장장이의 맞춤 제작(customizing, modifying, transforming) 방식을 나열할 뿐, 지문의 핵심인 '산업화 이후에도 남아있는 수리의 창의성'을 다루지 않습니다. 5번 'Can Industrialization Mend Our Broken Past?'는 그럴듯하게 들리지만, 지문에는 '과거를 고친다'는 개념 자체가 없으며 산업화가 무언가를 고칠 수 있는지를 묻는 내용도 아닙니다 — 있어 보이지만 실제로는 지문에 없는 내용을 지어낸 오답입니다.
 
-따라서 산업화가 수리라는 행위에 미친 영향을 질문하는 1번이 지문의 내용을 가장 잘 나타내는 제목입니다. 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 24번).
+따라서 산업화 이후에도 수리만큼은 여전히 장인의 손을 필요로 한다는 점을 짚은 1번이 지문의 내용을 가장 잘 나타내는 제목입니다. 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 24번).

@@ -23,13 +23,13 @@ thumbnail: "/blog-images/suneung-english-expert-vs-layperson-2022-3pt-trap/1.png
 
 수능 영어 문제에서 3점짜리 문항이 어려운 이유는 종종 선택지들 사이에 미묘한 차이가 있거나, 지문의 내용을 잘못 해석하도록 유도하는 '오역 함정'이 숨어 있기 때문입니다. 2022학년도 21번 문제의 선택지를 살펴보겠습니다.
 
-*   **① readily applicable information offered by specialized experts**: 전문가가 제공하는 즉시 적용 가능한 정보. 지문은 전문가의 정보가 항상 유효한 것은 아니라고 말하므로, 이 선택지는 너무 일반적입니다.
-*   **② questionable facts that have been popularized by non-experts**: 비전문가들에 의해 대중화된 의심스러운 사실들. 지문은 일반인의 경험이 유용할 수 있다고 했지만, '의심스러운 사실'이라고 단정 짓지는 않았습니다. 오히려 전문가의 지식과 일반인의 경험 사이의 균형점을 묻고 있습니다.
-*   **③ common knowledge that hardly influences crucial decisions**: 중요한 결정에 거의 영향을 미치지 않는 일반 상식. 지문은 전문가 신뢰 없이는 마비된다고 했으므로, 일반 상식이 중요하지 않다는 것은 사실과 다릅니다.
-*   **④ practical information produced by both specialists and lay people**: 전문가와 일반인 모두에 의해 생산된 실용적인 정보. 지문은 전문가의 한계를 인정하고 일반인의 경험을 존중하며, 두 집단 모두에게서 배울 점이 있음을 시사합니다. 그러나 'paralyzed' 상황은 이러한 실용적인 정보를 어떻게 취사선택해야 할지에 대한 불확실성을 나타냅니다.
+*   **① questionable facts that have been popularized by non-experts**: 비전문가들에 의해 대중화된 의심스러운 사실들. 지문은 일반인의 경험이 유용할 수 있다고는 하지만, 밑줄 문장이 말하는 신뢰의 대상은 비전문가가 아니라 바로 다음 문장에 나오는 '지정된 전문가(designated experts)'입니다.
+*   **② readily applicable information offered by specialized experts**: 전문가가 제공하는 즉시 적용 가능한 정보. 지문은 "without some degree of trust in our designated experts... we are paralyzed, ... not knowing whether to make ready for the morning commute or not"라고 말합니다. 즉, 지정된 전문가(예: 기상 전문가)에 대한 최소한의 신뢰가 있어야 통근 준비처럼 일상적인 결정도 내릴 수 있다는 뜻이므로, 밑줄 문장이 가리키는 바를 정확히 나타냅니다.
+*   **③ common knowledge that hardly influences crucial decisions**: 중요한 결정에 거의 영향을 미치지 않는 일반 상식. 오히려 이 정보(전문가에 대한 신뢰 여부)가 통근 준비라는 결정에 직접 영향을 미치므로 지문 내용과 상반됩니다.
+*   **④ practical information produced by both specialists and lay people**: 전문가와 일반인 모두에 의해 생산된 실용적인 정보. 밑줄 문장이 언급하는 것은 '지정된 전문가'에 대한 신뢰이지, 전문가와 일반인 모두가 만든 정보가 아닙니다 — 앞 문단의 'lay people 경험'을 다룬 내용과 혼동하기 쉬운 함정입니다.
 *   **⑤ biased knowledge that is widespread in the local community**: 지역사회에 널리 퍼진 편향된 지식. 지문은 편향된 지식에 대해 직접적으로 언급하지 않았습니다.
 
-정답은 '② questionable facts that have been popularized by non-experts' 입니다. 얼핏 보면 일반인의 경험을 부정하는 듯 보이지만, 지문이 말하는 'blind trust'의 위험성과 전문가의 한계를 고려할 때, 비전문가(non-experts)에 의해 대중화되었지만 검증되지 않았거나 의심스러울 수 있는 정보(questionable facts) 때문에 오히려 결정을 내리지 못하고 마비되는 상황을 가장 잘 나타냅니다. 즉, 'whether to... or not' 상황은 바로 이러한 '의심스러운' 정보들 속에서 무엇을 믿어야 할지 몰라 발생하는 것입니다. 이 문제는 단순히 영어 지문을 해석하는 것을 넘어, 비판적으로 정보를 평가하고 전문가와 일반인의 지식 사이의 관계를 균형 있게 바라보는 능력을 요구합니다.
+정답은 '② readily applicable information offered by specialized experts' 입니다. 앞부분에서 일반인의 경험이 전문가에게 통찰을 줄 수 있다고 말했다고 해서, 밑줄 문장까지 '일반인'에 관한 이야기로 이어질 거라 짐작하면 함정에 빠지기 쉽습니다. 밑줄 문장은 명확히 "designated experts(지정된 전문가)"에 대한 신뢰를 이야기하고 있고, 그 신뢰가 없으면 통근 준비처럼 사소한 일상 결정조차 마비된다는 것입니다. 즉, 'whether to... or not' 상황은 전문가가 제공하는 즉시 활용 가능한 정보(예: 일기예보)를 신뢰할 수 없을 때 발생하는 마비 상태를 뜻합니다. 이 문제는 단순히 영어 지문을 해석하는 것을 넘어, 지문의 앞부분 내용에 이끌려 밑줄 문장의 실제 주어(누구에 대한 신뢰인지)를 놓치지 않는 능력을 요구합니다.
 
 ## 수능 독해력 향상을 위한 비판적 사고 훈련법
 
@@ -72,8 +72,8 @@ the morning commute or not.
 
 **선택지:**
 
-① readily applicable information offered by specialized experts
-② questionable facts that have been popularized by non-experts
+① questionable facts that have been popularized by non-experts
+② readily applicable information offered by specialized experts
 ③ common knowledge that hardly influences crucial decisions
 ④ practical information produced by both specialists and lay people
 ⑤ biased knowledge that is widespread in the local community
@@ -82,9 +82,9 @@ the morning commute or not.
 
 **상세 해설:**
 
-이 문제는 전문가의 지식과 일반인의 경험 사이의 관계, 그리고 신뢰의 한계에 대해 묻고 있습니다. 지문은 전문가가 모든 분야에 대한 권위를 가지는 것이 아니며, 오히려 일반인의 경험에서 배울 점이 있다고 말합니다. 하지만 동시에 전문가에 대한 최소한의 신뢰 없이는 '마비(paralyzed)'되어 아무것도 결정하지 못하는 상황에 처한다고 경고합니다. 밑줄 친 'whether to make ready for the morning commute or not'은 이러한 결정 불능 상태를 구체적으로 묘사합니다. 즉, 어떤 정보를 신뢰해야 할지, 무엇이 맞고 틀린 정보인지 판단하기 어려워 일상적인 결정조차 내리지 못하는 상황을 의미합니다.
+이 문제는 전문가의 지식과 일반인의 경험 사이의 관계, 그리고 신뢰의 한계에 대해 묻고 있습니다. 지문은 전문가가 모든 분야에 대한 권위를 가지는 것이 아니며, 오히려 일반인의 경험에서 배울 점이 있다고 말합니다. 하지만 동시에 전문가에 대한 최소한의 신뢰 없이는 '마비(paralyzed)'되어 아무것도 결정하지 못하는 상황에 처한다고 경고합니다. 밑줄 친 'whether to make ready for the morning commute or not'은 이러한 결정 불능 상태를 구체적으로 묘사합니다. 즉, '지정된 전문가(designated experts)'를 신뢰하지 못하면 통근 준비처럼 사소한 일상적 결정조차 내리지 못하는 상황을 의미합니다.
 
-선택지 ② 'questionable facts that have been popularized by non-experts (비전문가들에 의해 대중화된 의심스러운 사실들)'가 정답인 이유는, 이러한 '의심스러운' 정보들 때문에 무엇을 믿어야 할지 알 수 없어 결정이 마비되는 상황을 가장 잘 나타내기 때문입니다. 비전문가들의 경험이 유용할 수 있다는 점을 인정하면서도, 검증되지 않거나 '의심스러운' 정보에 휩쓸려 판단력을 잃게 되는 상황을 지적하는 것이 이 문제의 핵심입니다. 다른 선택지들은 지문의 내용을 부분적으로만 반영하거나, 핵심적인 '의심'과 '결정 마비'의 연결고리를 놓치고 있습니다.
+선택지 ② 'readily applicable information offered by specialized experts (전문가가 제공하는 즉시 적용 가능한 정보)'가 정답인 이유는, 밑줄 문장이 가리키는 대상이 앞서 언급된 'lay people(일반인)'이 아니라 바로 다음 문장의 'designated experts(지정된 전문가)'이기 때문입니다. 전문가가 제공하는 정보(예: 일기예보)를 신뢰하지 못하면 통근 준비 여부조차 결정하지 못하고 마비된다는 것이 지문의 핵심입니다. 다른 선택지들은 지문 앞부분의 'lay people 경험' 내용과 혼동하기 쉽거나(①, ④), 지문 내용과 상반되거나(③), 지문에 언급되지 않은 내용(⑤)입니다.
 
 ## Scan Voca와 함께라면, 단어 학습부터 비판적 사고까지!
 

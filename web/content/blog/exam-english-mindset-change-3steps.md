@@ -39,14 +39,14 @@ It was Evelyn’s first time to explore the Badlands of Alberta, famous across C
 
 다음 글에 나타난 Evelyn의 심경 변화로 가장 적절한 것은?
 
-① hopeful → disappointed
-② confused → scared
+① confused → scared
+② discouraged → confident
 ③ relaxed → annoyed
 ④ indifferent → depressed
-⑤ discouraged → confident
+⑤ hopeful → disappointed
 
-**정답: 1**
+**정답: 5**
 
 **[상세 해설]**
 
-Evelyn은 처음 배드랜즈를 탐험하며 희망에 차 있었습니다. 'overflowing with anticipation', 'life-long dream', 'eagerly searching' 등의 표현은 그녀의 기대감을 보여줍니다. 하지만 몇 시간 동안 화석을 찾지 못했고 해가 지기 시작하면서 상황은 부정적으로 변합니다. 'unsuccessful', 'far beyond her reach', 'darkening ground' 등의 표현은 그녀의 좌절감을 암시합니다. 마지막에 "I can’t believe I came all this way for nothing. What a waste of time!”이라는 독백은 그녀가 처음의 희망에서 결국 실망감으로 바뀌었음을 명확히 보여줍니다. 따라서 정답은 ① hopeful → disappointed 입니다.
+Evelyn은 처음 배드랜즈를 탐험하며 희망에 차 있었습니다. 'overflowing with anticipation', 'life-long dream', 'eagerly searching' 등의 표현은 그녀의 기대감을 보여줍니다. 하지만 몇 시간 동안 화석을 찾지 못했고 해가 지기 시작하면서 상황은 부정적으로 변합니다. 'unsuccessful', 'far beyond her reach', 'darkening ground' 등의 표현은 그녀의 좌절감을 암시합니다. 마지막에 "I can’t believe I came all this way for nothing. What a waste of time!”이라는 독백은 그녀가 처음의 희망에서 결국 실망감으로 바뀌었음을 명확히 보여줍니다. 따라서 정답은 ⑤ hopeful → disappointed 입니다.
