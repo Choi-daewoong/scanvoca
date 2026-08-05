@@ -120,6 +120,64 @@ class TestDiscoverStatePersistence:
         assert second_run[0]["video_title"] == "Z Show"  # 두 번째 영상까지 도달
 
 
+class TestDiscoverRoundRobinAndCooldown:
+    """실사용 버그: 소재가 잘 나오는 영상 하나가 discover_max_new_topics를 혼자 다
+    채워서 다른 에피소드/작품이 며칠씩 뒤로 밀리고, 같은 영상 안에서도 바로 이웃한
+    구간들이 연달아 뽑혀 블로그에서 봤을 때 같은 장면을 5초 단위로 쪼갠 것처럼
+    타이트하게 느껴진다는 사용자 피드백에 대한 수정."""
+
+    def test_round_robins_across_videos_in_the_same_run(self, tmp_path, monkeypatch):
+        """A Show 혼자서도 할당량(2)을 채울 구간이 있지만, 라운드로빈이면 A에서 1개
+        뽑은 뒤 곧바로 B로 넘어가 1개씩 골고루 나와야 한다(A에서 2개 다 뽑으면 안 됨)."""
+        media = [_media("A Show"), _media("B Show")]
+        monkeypatch.setattr(main, "find_source_media", lambda source_dir: media)
+
+        def fake_load_subtitles(srt):
+            # A Show has 4 windows' worth of lines; B Show has just 1.
+            return _subs(24) if "A Show" in srt else _subs(6)
+
+        monkeypatch.setattr(main, "load_subtitles", fake_load_subtitles)
+        monkeypatch.setattr(main, "is_english_subtitles", lambda subs: True)
+        monkeypatch.setattr(
+            main, "fetch_topic_discovery",
+            lambda cfg, dialogue_en, video_title: {"title": f"{video_title} 표현", "angle": "앵글"},
+        )
+        monkeypatch.setattr(main, "run_ffmpeg", lambda cmd: 0)
+        monkeypatch.setattr(
+            main, "post_discovered_clip", lambda cfg, payload: {"id": 1, **payload}
+        )
+
+        cfg = _cfg(tmp_path, discover_max_new_topics=2)
+        created = main.discover(cfg)
+
+        assert [c["video_title"] for c in created] == ["A Show", "B Show"]
+
+    def test_cooldown_skips_neighboring_windows_in_same_video(self, tmp_path, monkeypatch):
+        """한 구간이 소재로 뽑히면, 같은 영상의 바로 다음 구간들(cooldown 개수만큼)은
+        건너뛰고 그 다음 구간부터 다시 후보가 되어야 한다."""
+        media = [_media("A Show")]
+        monkeypatch.setattr(main, "find_source_media", lambda source_dir: media)
+        monkeypatch.setattr(main, "load_subtitles", lambda srt: _subs(48))  # 8 windows
+        monkeypatch.setattr(main, "is_english_subtitles", lambda subs: True)
+        monkeypatch.setattr(
+            main, "fetch_topic_discovery",
+            lambda cfg, dialogue_en, video_title: {"title": "표현", "angle": "앵글"},
+        )
+        monkeypatch.setattr(main, "run_ffmpeg", lambda cmd: 0)
+        monkeypatch.setattr(
+            main, "post_discovered_clip", lambda cfg, payload: {"id": 1, **payload}
+        )
+
+        cfg = _cfg(tmp_path, discover_max_new_topics=2, discover_cooldown_windows=3)
+        created = main.discover(cfg)
+
+        assert len(created) == 2
+        # window 0 (0-5), then cooldown skips windows 1-3 (6-11, 12-17, 18-23),
+        # landing on window 4 (24-29) — not the immediately-next window 1 (6-11).
+        assert created[0]["clip_url"].endswith("-0-5.mp4")
+        assert created[1]["clip_url"].endswith("-24-29.mp4")
+
+
 class TestPostDiscoveredClip409Handling:
     """실운영 버그: 백엔드가 clip_url 중복 방지 409를 새로 추가했는데, 클라이언트인
     post_discovered_clip이 이를 처리하지 않고 raise_for_status()로 그대로 예외를

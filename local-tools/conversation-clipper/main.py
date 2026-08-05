@@ -33,6 +33,7 @@ tests.
 Config (CLI flags override .env / environment):
   NAS_SOURCE_DIR, NAS_OUTPUT_DIR, BACKEND_API_BASE, NAS_TOOL_API_KEY, CLIP_URL_PREFIX
   DISCOVER_WINDOW_SIZE, DISCOVER_MAX_WINDOWS_PER_VIDEO, DISCOVER_MAX_NEW_TOPICS
+  DISCOVER_COOLDOWN_WINDOWS
 """
 from __future__ import annotations
 
@@ -69,6 +70,7 @@ class Config:
     discover_max_windows_per_video: int = 40
     discover_max_new_topics: int = 5
     discover_state_file: Optional[str] = None
+    discover_cooldown_windows: int = 3
 
 
 # ---------------- Thin IO wrappers (monkeypatched in tests) ----------------
@@ -394,85 +396,123 @@ def _slugify(text: str) -> str:
 MIN_DISCOVER_WINDOW_CHARS = 40
 
 
+def _try_next_window_in_video(
+    cfg: Config, vs: Dict, visited: set, state_path: str
+) -> Optional[Dict]:
+    """Advance one video's window cursor, trying windows in order, until it either lands
+    a new topic+clip or runs out of windows for this run. Returns None in the latter case.
+
+    Skips already-visited windows, too-short windows, and windows the model judged as not
+    good material or the backend already has (409) — all without stopping, since none of
+    those should block reaching a *different* video's turn in the round-robin below. Only
+    a genuine success (or running out of windows) ends this call.
+    """
+    media = vs["media"]
+    subtitles = vs["subtitles"]
+    windows = vs["windows"]
+
+    while vs["next_index"] < len(windows):
+        lo, hi = windows[vs["next_index"]]
+        vs["next_index"] += 1
+
+        key = window_key(media["title"], lo, hi)
+        if key in visited:
+            continue
+
+        text = window_dialogue_text(subtitles, lo, hi)
+        if len(text) < MIN_DISCOVER_WINDOW_CHARS:
+            visited.add(key)
+            save_discover_state(state_path, visited)
+            continue
+
+        suggestion = fetch_topic_discovery(cfg, text, media["title"])
+        visited.add(key)
+        save_discover_state(state_path, visited)
+        if suggestion is None:
+            continue
+
+        start, end = window_bounds(subtitles, lo, hi, pad=cfg.pad)
+        output_filename = f"discover-{_slugify(media['title'])}-{lo}-{hi}.mp4"
+        ffmpeg_cmd = build_ffmpeg_command(
+            media["video"], media["srt"], start, end,
+            os.path.join(cfg.output_dir, output_filename),
+        )
+        code = run_ffmpeg(ffmpeg_cmd)
+        if code != 0:
+            print(f"  {media['title']} [{lo}:{hi}]: ffmpeg failed (exit {code}), skipping.")
+            continue
+
+        clip_url = f"{cfg.clip_url_prefix.rstrip('/')}/{output_filename}"
+        payload = {
+            "title": suggestion["title"],
+            "angle": suggestion["angle"],
+            "video_title": media["title"],
+            "dialogue_en": text,
+            "dialogue_ko": None,
+            "start_seconds": start,
+            "end_seconds": end,
+            "clip_url": clip_url,
+        }
+        result = post_discovered_clip(cfg, payload)
+        if result is None:
+            print(f'  {media["title"]} [{lo}:{hi}]: backend already has this clip (409), skipping.')
+            continue
+
+        # Cooldown: skip the next few windows in this same video so a later pass (or a
+        # future run) doesn't immediately grab the next few seconds of the same
+        # conversation — without this, one chatty scene can fill several posts back to
+        # back, which reads as repetitive/overlapping to anyone browsing the blog.
+        vs["next_index"] += cfg.discover_cooldown_windows
+        print(f'  discovered "{suggestion["title"]}" from {media["title"]} [{lo}:{hi}] -> {clip_url}')
+        return result
+
+    return None
+
+
 def discover(cfg: Config) -> List[Dict]:
     """Scan every English-subtitled video's dialogue and let the model pick good
     expressions, creating a topic + its clip together for each one found (the reverse of
     process(): dialogue first, topic second — see module docstring).
 
+    Round-robins across videos instead of exhausting one before moving to the next: each
+    pass tries at most one new topic per video, cycling through every video until the
+    quota (discover_max_new_topics) is filled or every video has run out of windows.
+    Without this, a video with enough "good material" to fill the quota on its own (a
+    real case: a show whose early episode alone kept supplying 5+ usable expressions)
+    keeps refilling every run from the same neighborhood of windows, and every other
+    video — earlier episodes, other shows entirely — is never reached.
+
     Persists which (video, window) pairs it has already judged (see window_key) to
-    discover_state_file, and skips them on every later run. Without this, a run always
-    restarts scanning from window 0 of the first video (alphabetically) with no memory of
-    prior runs - a video with enough "good material" windows to fill discover_max_new_topics
-    on its own (a real case: a 10-episode show sorting before everything else) refills its
-    quota from the same handful of windows every single day, and videos that sort after it
-    are never reached at all, regardless of how much usable dialogue they actually have.
+    discover_state_file, and skips them on every later run — this is what lets a video
+    exhausted mid-run pick up where it left off next time instead of restarting at
+    window 0.
     """
     state_path = cfg.discover_state_file or os.path.join(cfg.output_dir, "discover_state.json")
     visited = load_discover_state(state_path)
 
-    media_files = find_source_media(cfg.source_dir)
-    created: List[Dict] = []
-
-    for media in media_files:
-        if len(created) >= cfg.discover_max_new_topics:
-            break
-
+    video_states: List[Dict] = []
+    for media in find_source_media(cfg.source_dir):
         subtitles = load_subtitles(media["srt"])
         if not is_english_subtitles(subtitles):
             print(f"  skip {media['title']}: subtitle text isn't English (language mismatch)")
             continue
-
         windows = build_dialogue_windows(subtitles, window_size=cfg.discover_window_size)
         windows = windows[: cfg.discover_max_windows_per_video]
+        video_states.append(
+            {"media": media, "subtitles": subtitles, "windows": windows, "next_index": 0}
+        )
 
-        for lo, hi in windows:
+    created: List[Dict] = []
+    progress = True
+    while len(created) < cfg.discover_max_new_topics and progress:
+        progress = False
+        for vs in video_states:
             if len(created) >= cfg.discover_max_new_topics:
                 break
-
-            key = window_key(media["title"], lo, hi)
-            if key in visited:
-                continue
-
-            text = window_dialogue_text(subtitles, lo, hi)
-            if len(text) < MIN_DISCOVER_WINDOW_CHARS:
-                visited.add(key)
-                save_discover_state(state_path, visited)
-                continue
-
-            suggestion = fetch_topic_discovery(cfg, text, media["title"])
-            visited.add(key)
-            save_discover_state(state_path, visited)
-            if suggestion is None:
-                continue
-
-            start, end = window_bounds(subtitles, lo, hi, pad=cfg.pad)
-            output_filename = f"discover-{_slugify(media['title'])}-{lo}-{hi}.mp4"
-            ffmpeg_cmd = build_ffmpeg_command(
-                media["video"], media["srt"], start, end,
-                os.path.join(cfg.output_dir, output_filename),
-            )
-            code = run_ffmpeg(ffmpeg_cmd)
-            if code != 0:
-                print(f"  {media['title']} [{lo}:{hi}]: ffmpeg failed (exit {code}), skipping.")
-                continue
-
-            clip_url = f"{cfg.clip_url_prefix.rstrip('/')}/{output_filename}"
-            payload = {
-                "title": suggestion["title"],
-                "angle": suggestion["angle"],
-                "video_title": media["title"],
-                "dialogue_en": text,
-                "dialogue_ko": None,
-                "start_seconds": start,
-                "end_seconds": end,
-                "clip_url": clip_url,
-            }
-            result = post_discovered_clip(cfg, payload)
-            if result is None:
-                print(f'  {media["title"]} [{lo}:{hi}]: backend already has this clip (409), skipping.')
-                continue
-            created.append(result)
-            print(f'  discovered "{suggestion["title"]}" from {media["title"]} [{lo}:{hi}] -> {clip_url}')
+            result = _try_next_window_in_video(cfg, vs, visited, state_path)
+            if result is not None:
+                created.append(result)
+                progress = True
 
     print(f"Done. {len(created)} new topic+clip pair(s) created.")
     return created
@@ -516,6 +556,13 @@ def _load_config_from_args() -> Tuple[Config, str]:
         help="Where to persist already-scanned (video, window) pairs across runs. "
              "Defaults to <output-dir>/discover_state.json.",
     )
+    parser.add_argument(
+        "--discover-cooldown-windows", type=int,
+        default=int(os.getenv("DISCOVER_COOLDOWN_WINDOWS", "3")),
+        help="After a topic is found in a video, skip this many further windows in that "
+             "same video before it's eligible again — keeps one chatty scene from "
+             "filling several posts back to back.",
+    )
     args = parser.parse_args()
 
     missing = [
@@ -537,6 +584,7 @@ def _load_config_from_args() -> Tuple[Config, str]:
         discover_max_windows_per_video=args.discover_max_windows_per_video,
         discover_max_new_topics=args.discover_max_new_topics,
         discover_state_file=args.discover_state_file,
+        discover_cooldown_windows=args.discover_cooldown_windows,
     ), args.mode
 
 
