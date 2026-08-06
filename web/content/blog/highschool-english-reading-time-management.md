@@ -45,15 +45,16 @@ productivity.
 **문제:** 다음 글의 주제로 가장 적절한 것은?
 
 **선택지:**
-1. shift in the work-time paradigm brought about by industrialization
-2. effects of standardizing production procedures on labor markets
-3. influence of industrialization on the machine-human relationship
-4. efficient ways to increase the value of time in the Industrial Age
-5. problems that excessive work hours have caused for laborers
+
+① shift in the work-time paradigm brought about by industrialization
+② effects of standardizing production procedures on labor markets
+③ influence of industrialization on the machine-human relationship
+④ efficient ways to increase the value of time in the Industrial Age
+⑤ problems that excessive work hours have caused for laborers
 
 **정답 및 해설:**
 
-이 문제는 지문의 핵심 내용을 파악하는 것이 중요합니다. 지문은 산업화 시대를 맞아 시간, 노동, 자본의 관계가 어떻게 변화했는지에 초점을 맞추고 있습니다. 공장이 24시간 가동되고, 노동 시간이 생산성과 임금에 직접적으로 연결되며, 사회가 생산성 원리에 따라 재편되었다는 내용을 다룹니다. 이를 종합해 볼 때, 가장 적절한 주제는 산업화로 인한 작업 시간 패러다임의 변화(shift in the work-time paradigm brought about by industrialization)입니다. 따라서 정답은 1번입니다. 
+이 문제는 지문의 핵심 내용을 파악하는 것이 중요합니다. 지문은 산업화 시대를 맞아 시간, 노동, 자본의 관계가 어떻게 변화했는지에 초점을 맞추고 있습니다. 공장이 24시간 가동되고, 노동 시간이 생산성과 임금에 직접적으로 연결되며, 사회가 생산성 원리에 따라 재편되었다는 내용을 다룹니다. 이를 종합해 볼 때, 가장 적절한 주제는 산업화로 인한 작업 시간 패러다임의 변화(shift in the work-time paradigm brought about by industrialization)입니다. 따라서 정답은 ①번입니다. 
 
 이러한 유형의 문제는 지문의 첫 부분과 마지막 부분을 주의 깊게 읽고, 핵심 키워드(Industrial Age, time, labor, capital, productivity, clock-oriented)를 중심으로 내용을 파악하면 비교적 빠르게 정답을 찾을 수 있습니다. 시간이 부족하다면, 선택지를 먼저 훑어보고 지문에서 각 선택지와 관련된 내용을 빠르게 찾아보는 것도 효과적인 방법입니다. 
 

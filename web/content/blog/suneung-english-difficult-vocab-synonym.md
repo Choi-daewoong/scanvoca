@@ -9,60 +9,50 @@ thumbnail: "/blog-images/suneung-english-difficult-vocab-synonym/1.png"
 ---
 ![수능 영어 3등급 탈출! 고난도 어휘, 헷갈리는 동의어 확실히 구분하는 비법](/blog-images/suneung-english-difficult-vocab-synonym/1.png)
 
-## 수능 영어 3등급, 고난도 어휘와 헷갈리는 동의어 때문에 고민인가요?
+수능 영어에서 3등급에 머물러 있어 2등급 이상으로 도약하고 싶은 학생들, 특히 고난도 어휘나 비슷해 보이는 동의어 때문에 틀리는 경우가 많다면 주목하세요. 아래 문제를 먼저 직접 풀어본 뒤, 헷갈리는 동의어를 구분하는 비법을 함께 확인해보겠습니다.
 
-수능 영어에서 3등급에 머물러 있어 2등급 이상으로 도약하고 싶은 학생들, 특히 고난도 어휘나 비슷해 보이는 동의어 때문에 틀리는 경우가 많다면 주목하세요. 단순히 단어를 외우는 것을 넘어, 문맥 속에서 단어의 정확한 의미를 파악하고 뉘앙스 차이를 구분하는 능력이 중요합니다. 이번 글에서는 실제 수능 기출문제를 통해 자주 헷갈리는 어휘와 동의어들을 어떻게 공략해야 하는지 구체적인 비법을 알려드리겠습니다.
+## 먼저 풀어보세요 — 2023학년도 수능 영어 30번
 
-## 실제 기출 지문으로 배우는 고난도 어휘 공략법
+본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력시험 영어영역 30번).
 
-본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력시험 영어영역 30번). 이 지문을 통해 어휘 문제에 접근하는 방법을 익혀봅시다.
+**지문(passage):**
 
-"Everywhere we turn we hear about almighty “cyberspace”!
-The hype promises that we will leave our boring lives, put on
-goggles and body suits, and enter some metallic, three-dimensional,
-multimedia otherworld. When the Industrial Revolution arrived
-with its great innovation, the motor, we didn’t leave our world
-to go to some <u>①remote</u> motorspace! On the contrary, we
-brought the motors into our lives, as automobiles, refrigerators,
-drill presses, and pencil sharpeners. This <u>②absorption</u> has
-been so complete that we refer to all these tools with names that
-declare their usage, not their “motorness.” These innovations
-led to a major socioeconomic movement precisely because they
-entered and <u>③affected</u> profoundly our everyday lives. People
-have not changed fundamentally in thousands of years.
-Technology changes constantly. It’s the one that must <u>④adapt</u>
-to us. That’s exactly what will happen with information technology
-and its devices under human-centric computing. The longer we
-continue to believe that computers will take us to a magical new
-world, the longer we will <u>⑤maintain</u> their natural fusion with
-our lives, the hallmark of every major movement that aspires to
-be called a socioeconomic revolution.
+Everywhere we turn we hear about almighty "cyberspace"! The hype promises that we will leave our boring lives, put on goggles and body suits, and enter some metallic, three-dimensional, multimedia otherworld. When the Industrial Revolution arrived with its great innovation, the motor, we didn't leave our world to go to some <u>①remote</u> motorspace! On the contrary, we brought the motors into our lives, as automobiles, refrigerators, drill presses, and pencil sharpeners. This <u>②absorption</u> has been so complete that we refer to all these tools with names that declare their usage, not their "motorness." These innovations led to a major socioeconomic movement precisely because they entered and <u>③affected</u> profoundly our everyday lives. People have not changed fundamentally in thousands of years. Technology changes constantly. It's the one that must <u>④adapt</u> to us. That's exactly what will happen with information technology and its devices under human-centric computing. The longer we continue to believe that computers will take us to a magical new world, the longer we will <u>⑤maintain</u> their natural fusion with our lives, the hallmark of every major movement that aspires to be called a socioeconomic revolution.
 
+*hype: 과대광고 **hallmark: 특징
 
-*hype: 과대광고 **hallmark: 특징"
+**문제(question):** 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?
 
+## 문맥상 낱말 쓰임 문제, 이렇게 접근하면 빨라진다
 
+이 유형은 선택지가 지문 안에 밑줄로 박혀 있는 것이 특징입니다. 그래서 접근법도 다릅니다.
 
-이 글은 정보 기술의 발전에 대해 이야기하며, 기술이 우리 삶에 어떻게 통합되는지에 대한 비유를 사용합니다. 밑줄 친 부분 중 문맥상 어색한 단어를 찾는 문제였죠. 정답은 5번 'maintain'이었습니다. 왜 그럴까요? 뒤따르는 "their natural fusion with our lives"라는 표현을 보면, 기술이 우리 삶에 '융합'되기 위해서는 '유지하는 것'이 아니라 오히려 '더욱 적극적으로 받아들이고 통합해야 한다'는 맥락이 자연스럽습니다. 즉, 기술이 우리에게 맞춰져야 한다는 주장과 연결되려면, 우리가 기술을 '유지(maintain)'하는 것이 아니라, 기술이 우리 삶 속으로 '흡수(absorb)'되어야 한다는 내용이 와야 합니다.
+1. **밑줄 단어 하나하나를 문장 밖으로 꺼내 뜻만 먼저 확인하지 마세요.** 반드시 그 문장, 나아가 앞뒤 문장의 논리 흐름 속에서 자연스러운지를 봐야 합니다. 단어 자체의 뜻은 맞아도 문맥에서는 반대 의미가 필요한 경우가 정답인 경우가 많습니다.
+2. **글 전체의 주장(핵심 문장)을 먼저 파악하세요.** 이 지문처럼 "기술이 우리 삶에 흡수·통합된다"는 주장을 펴는 글이라면, 뒤로 갈수록 그 주장과 반대 방향의 단어가 슬쩍 끼어드는지를 의심하며 읽습니다.
+3. **밑줄 친 단어를 반의어로 바꿔서 읽어보세요.** 다섯 개 중 하나를 반대 뜻으로 바꿨을 때 오히려 문맥이 훨씬 자연스러워진다면, 그 단어가 바로 정답입니다.
 
-## 헷갈리는 동의어, 뉘앙스 차이로 구분하기
+## 상세 해설 — 정답은 무엇일까?
 
-이 문제에서 헷갈릴 수 있는 단어들을 살펴보겠습니다.
+**정답: ⑤ maintain**
 
-*   **remote**: '멀리 떨어진'이라는 뜻으로, 물리적 거리뿐 아니라 관계나 연관성 등 추상적인 거리감을 나타낼 때도 쓰입니다. 여기서는 '실제 세상과는 동떨어진'이라는 의미로 사용되어 문맥상 적절합니다.
-*   **absorption**: '흡수, 몰입'을 의미합니다. 모터 기술이 우리 삶에 완전히 흡수된 것처럼, 정보 기술 역시 우리 삶에 흡수되어야 한다는 맥락에서 적절하게 사용되었습니다.
-*   **affected**: '영향을 미치다'라는 뜻으로, 무언가에 변화를 가져오는 것을 의미합니다. 기술이 우리 일상생활에 깊은 영향을 미쳤다는 의미로 사용되어 적절합니다.
-*   **adapt**: '적응하다'라는 뜻입니다. 여기서는 기술이 인간에게 맞춰져야 한다는 의미로, 'adapt to us' 형태로 쓰여 문맥상 자연스럽습니다.
-*   **maintain**: '유지하다, 지속하다'라는 뜻입니다. 앞서 설명했듯, 기술이 우리 삶에 자연스럽게 융합되기 위해서는 '유지'하는 것이 아니라, 인간이 기술을 받아들이고 통합하는 과정이 필요하므로 이 문맥에서는 어색합니다. 오히려 'achieve', 'foster', 'ensure' 와 같은 단어가 더 적절했을 수 있습니다.
+이 글은 정보 기술의 발전에 대해 이야기하며, 기술이 우리 삶에 어떻게 통합되는지에 대한 비유를 사용합니다. 밑줄 친 부분 중 문맥상 어색한 단어를 찾는 문제였죠. 뒤따르는 "their natural fusion with our lives"라는 표현을 보면, 기술이 우리 삶에 '융합'되기 위해서는 '유지하는 것'이 아니라 오히려 '더욱 적극적으로 받아들이고 통합해야 한다'는 맥락이 자연스럽습니다. 즉, 기술이 우리에게 맞춰져야 한다는 주장과 연결되려면, 우리가 기술을 '유지(maintain)'하는 것이 아니라, 기술이 우리 삶 속으로 '흡수(absorb)'되어야 한다는 내용이 와야 합니다.
+
+각 선택지의 문맥상 쓰임을 정리하면 다음과 같습니다.
+
+- **① remote**: '멀리 떨어진'이라는 뜻으로, 물리적 거리뿐 아니라 관계나 연관성 등 추상적인 거리감을 나타낼 때도 쓰입니다. 여기서는 '실제 세상과는 동떨어진'이라는 의미로 사용되어 문맥상 적절합니다.
+- **② absorption**: '흡수, 몰입'을 의미합니다. 모터 기술이 우리 삶에 완전히 흡수된 것처럼, 정보 기술 역시 우리 삶에 흡수되어야 한다는 맥락에서 적절하게 사용되었습니다.
+- **③ affected**: '영향을 미치다'라는 뜻으로, 무언가에 변화를 가져오는 것을 의미합니다. 기술이 우리 일상생활에 깊은 영향을 미쳤다는 의미로 사용되어 적절합니다.
+- **④ adapt**: '적응하다'라는 뜻입니다. 여기서는 기술이 인간에게 맞춰져야 한다는 의미로, 'adapt to us' 형태로 쓰여 문맥상 자연스럽습니다.
+- **⑤ maintain**: '유지하다, 지속하다'라는 뜻입니다. 앞서 설명했듯, 기술이 우리 삶에 자연스럽게 융합되기 위해서는 '유지'하는 것이 아니라, 인간이 기술을 받아들이고 통합하는 과정이 필요하므로 이 문맥에서는 어색합니다. 오히려 'achieve', 'foster', 'ensure'와 같은 단어가 더 적절했을 수 있습니다.
 
 이처럼 비슷한 뜻을 가진 단어라도 문맥에 따라 그 뉘앙스가 달라지므로, 단어의 기본적인 뜻과 함께 실제 사용되는 예문을 통해 그 쓰임을 익히는 것이 중요합니다.
 
 ## 수능 영어 3등급 탈출을 위한 실전 팁
 
-1.  **문맥 속에서 단어의 의미 파악하기**: 단어만 따로 외우지 말고, 기출문제 지문이나 다양한 영어 텍스트 속에서 단어가 어떻게 쓰이는지 반드시 확인하세요. 밑줄 친 단어 주변의 다른 단어들과의 관계를 파악하는 연습이 중요합니다.
-2.  **동의어 뉘앙스 차이 정리하기**: 자주 헷갈리는 동의어 쌍(예: affect/effect, adapt/adopt, complement/compliment)을 따로 정리하고, 각 단어가 어떤 상황에서 더 적절하게 쓰이는지 예문과 함께 익히세요. Scan Voca 같은 단어 학습 앱을 활용하면 편리합니다.
-3.  **기출문제 반복 학습**: 수능 및 모의평가 기출문제에 나온 어휘와 표현들을 집중적으로 공부하는 것이 가장 효과적입니다. 특히 오답률이 높았던 어휘 문제들을 다시 풀어보며 자신의 약점을 보완하세요.
-4.  **다양한 유형의 영어 텍스트 접하기**: 영어 뉴스를 읽거나, 관심 있는 분야의 영어 블로그를 구독하는 등 꾸준히 영어 텍스트에 노출되는 것이 어휘력 향상에 큰 도움이 됩니다.
+1. **문맥 속에서 단어의 의미 파악하기**: 단어만 따로 외우지 말고, 기출문제 지문이나 다양한 영어 텍스트 속에서 단어가 어떻게 쓰이는지 반드시 확인하세요. 밑줄 친 단어 주변의 다른 단어들과의 관계를 파악하는 연습이 중요합니다.
+2. **동의어 뉘앙스 차이 정리하기**: 자주 헷갈리는 동의어 쌍(예: affect/effect, adapt/adopt, complement/compliment)을 따로 정리하고, 각 단어가 어떤 상황에서 더 적절하게 쓰이는지 예문과 함께 익히세요. Scan Voca 같은 단어 학습 앱을 활용하면 편리합니다.
+3. **기출문제 반복 학습**: 수능 및 모의평가 기출문제에 나온 어휘와 표현들을 집중적으로 공부하는 것이 가장 효과적입니다. 특히 오답률이 높았던 어휘 문제들을 다시 풀어보며 자신의 약점을 보완하세요.
+4. **다양한 유형의 영어 텍스트 접하기**: 영어 뉴스를 읽거나, 관심 있는 분야의 영어 블로그를 구독하는 등 꾸준히 영어 텍스트에 노출되는 것이 어휘력 향상에 큰 도움이 됩니다.
 
 ## 이 글에 나온 단어, 한 번에 저장하세요
 
