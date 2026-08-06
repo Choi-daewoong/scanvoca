@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import { getAllSlugs, getPostBySlug } from '@/lib/blog';
@@ -99,7 +100,7 @@ export default async function BlogDetailPage({ params }: Props) {
               rehypeSanitize(blogHtmlSchema, web/src/lib/blogHtmlSchema.ts)로 허용 목록만 통과시켜 XSS를 차단한다. */}
           <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-img:mx-auto prose-img:max-h-72 prose-img:w-auto prose-img:rounded-xl">
             <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
+              remarkPlugins={[remarkGfm, remarkBreaks]}
               rehypePlugins={[rehypeRaw, [rehypeSanitize, blogHtmlSchema]]}
             >
               {post.content}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import { blogHtmlSchema } from '@/lib/blogHtmlSchema';
@@ -189,7 +190,7 @@ export default function AutoPublishPanel({ pipeline }: Props) {
         <div className="max-h-[40rem] overflow-y-auto rounded-xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="prose prose-sm dark:prose-invert max-w-none break-words">
             <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
+              remarkPlugins={[remarkGfm, remarkBreaks]}
               rehypePlugins={[rehypeRaw, [rehypeSanitize, blogHtmlSchema]]}
             >
               {previewMarkdown}

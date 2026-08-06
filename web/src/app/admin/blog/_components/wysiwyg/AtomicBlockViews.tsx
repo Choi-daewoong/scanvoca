@@ -4,6 +4,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import { blogHtmlSchema } from '@/lib/blogHtmlSchema';
@@ -61,14 +62,14 @@ function AtomicShell({
 
 /**
  * 원문 HTML을 공개 페이지와 완전히 동일한 스택으로 렌더한다.
- * (react-markdown + remarkGfm + rehypeRaw + rehypeSanitize/blogHtmlSchema)
+ * (react-markdown + remarkGfm + remarkBreaks + rehypeRaw + rehypeSanitize/blogHtmlSchema)
  * dangerouslySetInnerHTML을 쓰지 않으므로 AI 생성 본문이 편집기에서 스크립트로 실행될 여지가 없다.
  * 저장 경로는 이 렌더 결과가 아니라 노드 attrs.html 원문이므로 sanitize가 저장물을 바꾸지 않는다.
  */
 function RawHtmlPreview({ html }: { html: string }) {
   return (
     <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
+      remarkPlugins={[remarkGfm, remarkBreaks]}
       rehypePlugins={[rehypeRaw, [rehypeSanitize, blogHtmlSchema]]}
     >
       {html}
