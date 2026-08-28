@@ -27,6 +27,27 @@ _REFERRER_CATEGORY_RULES = (
     (CATEGORY_COMMUNITY, ("dcinside", "ppomppu", "clien", "ruliweb", "theqoo", "fmkorea")),
 )
 
+CATEGORY_KAKAOTALK = "카카오톡"
+CATEGORY_INSTAGRAM = "인스타그램"
+CATEGORY_FACEBOOK = "페이스북"
+CATEGORY_LINE = "라인"
+CATEGORY_NAVER_APP = "네이버 앱"
+CATEGORY_BAND = "밴드"
+CATEGORY_TWITTER = "트위터/X"
+
+# 메신저 인앱 브라우저는 Referer를 안 보내 "direct"로 뭉개지지만, User-Agent에는 자기 앱 흔적을
+# 남기는 경우가 많다 — referrer가 direct일 때만 이 목록으로 재분류한다 (검색/SNS 링크로 들어온
+# 게 확실한 트래픽까지 덮어쓰지 않기 위해).
+_MESSENGER_UA_RULES = (
+    (CATEGORY_KAKAOTALK, ("kakaotalk",)),
+    (CATEGORY_INSTAGRAM, ("instagram",)),
+    (CATEGORY_FACEBOOK, ("fban", "fbav", "fb_iab")),
+    (CATEGORY_LINE, ("line/",)),
+    (CATEGORY_NAVER_APP, ("naver(inapp",)),
+    (CATEGORY_BAND, ("band/",)),
+    (CATEGORY_TWITTER, ("twitter for",)),
+)
+
 # 브라우저 목록이 롱테일로 길어지지 않도록 상위 N개만 남기고 나머지는 "기타"로 합산
 _BROWSER_TOP_N = 6
 _LANDING_PAGE_TOP_N = 10
@@ -39,10 +60,19 @@ _DEVICE_UNKNOWN = "unknown"
 _MAX_USER_AGENT_LEN = 500
 
 
-def _categorize_referrer(referrer: Optional[str]) -> str:
-    """Map a raw referrer host to a marketing channel category"""
+def _categorize_referrer(referrer: Optional[str], user_agent: Optional[str] = None) -> str:
+    """Map a raw referrer host to a marketing channel category.
+
+    referrer가 direct일 때는 User-Agent로 메신저 인앱 브라우저 여부를 한 번 더 확인한다
+    (그 앱들은 Referer는 안 보내도 UA에는 흔적을 남기는 경우가 많다).
+    """
     host = (referrer or DIRECT_REFERRER).lower()
     if host == DIRECT_REFERRER:
+        if user_agent:
+            ua = user_agent.lower()
+            for category, markers in _MESSENGER_UA_RULES:
+                if any(marker in ua for marker in markers):
+                    return category
         return CATEGORY_DIRECT
     for category, markers in _REFERRER_CATEGORY_RULES:
         if any(marker in host for marker in markers):
@@ -134,7 +164,7 @@ class VisitService:
                 hourly_counter[hour] += 1
 
             referrer_counter[row.referrer or DIRECT_REFERRER] += 1
-            category_counter[_categorize_referrer(row.referrer)] += 1
+            category_counter[_categorize_referrer(row.referrer, row.user_agent)] += 1
 
             if row.user_agent:
                 parsed = parse_user_agent(row.user_agent)

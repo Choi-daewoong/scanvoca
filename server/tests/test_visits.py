@@ -246,6 +246,42 @@ class TestVisitStatsAggregation:
             "somenewsite.io": 1,
         }
 
+    def test_direct_referrer_reclassified_by_messenger_user_agent(self, client, db_session, admin_auth_headers):
+        """15. referrer가 direct여도 메신저 인앱 브라우저 UA면 카테고리 재분류, 일반 UA는 직접방문 유지"""
+        today = _today()
+        _seed(
+            db_session, "v-ua-kakao", today, referrer=None,
+            user_agent="Mozilla/5.0 (Linux; Android 13; SM-S911N) AppleWebKit/537.36 "
+                       "(KHTML, like Gecko) Version/4.0 Chrome/120.0.0.0 Mobile Safari/537.36 KAKAOTALK",
+        )
+        _seed(
+            db_session, "v-ua-insta", today, referrer=None,
+            user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 "
+                       "(KHTML, like Gecko) Mobile/21A329 Instagram 302.0.0.0.0",
+        )
+        _seed(
+            db_session, "v-ua-plain", today, referrer=None,
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                       "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        )
+        # referrer가 실제로 SNS 링크인 경우까지 UA로 덮어써서는 안 된다
+        _seed(
+            db_session, "v-ua-real-referrer", today, referrer="instagram.com",
+            user_agent="Mozilla/5.0 (Linux; Android 13) ... KAKAOTALK",
+        )
+
+        data = client.get("/api/v1/admin/visits", headers=admin_auth_headers).json()
+
+        assert data["referrer_categories"]["카카오톡"] == 1
+        assert data["referrer_categories"]["인스타그램"] == 1  # UA로만 잡힌 direct 1건
+        assert data["referrer_categories"]["직접방문"] == 1  # 일반 브라우저 UA는 그대로 직접방문
+        # referrer가 실제로 instagram.com인 건 기존 규칙대로 SNS로 분류되고, UA에 KAKAOTALK가
+        # 있어도 재분류되지 않는다 (direct일 때만 UA 재분류 대상)
+        assert data["referrer_categories"]["SNS"] == 1
+        # 원본 referrer 맵은 영향받지 않는다 (direct 3건 + instagram.com 1건)
+        assert data["referrers"]["direct"] == 3
+        assert data["referrers"]["instagram.com"] == 1
+
     def test_landing_pages_top_10_sorted_desc(self, client, db_session, admin_auth_headers):
         """14. 랜딩 페이지 12종 시드 → 상위 10개, count 내림차순"""
         today = _today()
