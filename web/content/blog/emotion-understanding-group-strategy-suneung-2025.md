@@ -1,0 +1,83 @@
+---
+title: "수능 영어 2025: 집단 속 '나'를 살리는 핵심 전략, 감정 이해 능력!"
+description: "2025학년도 수능 영어 22번 기출문제를 통해 집단 내에서의 감정 이해 능력의 중요성을 파헤칩니다. 팀워크와 협력을 향상시키는 실질적인 전략을 알아보세요."
+category: "수능·내신"
+tags: ["수능 영어", "2025학년도 수능", "감정 이해", "공감 능력", "팀워크", "협력", "의사소통"]
+date: "2026-08-26"
+published: true
+thumbnail: "/blog-images/emotion-understanding-group-strategy-suneung-2025/1.png"
+---
+![수능 영어 2025: 집단 속 '나'를 살리는 핵심 전략, 감정 이해 능력!](/blog-images/emotion-understanding-group-strategy-suneung-2025/1.png)
+
+2025학년도 수능 영어 시험이 다가오면서, 많은 수험생들이 영어 지문의 복잡성과 깊이에 대해 고민하고 있을 것입니다. 특히 올해 수능 영어에서는 단순한 단어 암기나 문법 지식을 넘어, 지문 속에 담긴 미묘한 감정선과 인간관계에 대한 이해가 중요하게 작용할 것으로 예상됩니다. 오늘 우리는 2025학년도 수능 영어 22번 기출문제를 통해, 이러한 '감정 이해 능력'이 집단이라는 환경 속에서 개인의 성공과 팀의 발전에 얼마나 결정적인 역할을 하는지, 그리고 이를 어떻게 향상시킬 수 있는지 구체적으로 알아보겠습니다.
+
+## 2025 수능 영어 22번 기출 원문 및 문제
+
+본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2025학년도 대학수학능력시험 영어영역 22번).
+
+**지문:**
+
+"The ability to understand emotions―to have a diverse
+emotion vocabulary and to understand the causes and
+consequences of emotion―is particularly relevant in group
+settings. Individuals who are skilled in this domain are able to
+express emotions, feelings and moods accurately and thus,
+may facilitate clear communication between co-workers.
+Furthermore, they may be more likely to act in ways that
+accommodate their own needs as well as the needs of others
+(i.e. cooperate). In a group conflict situation, for example, a
+member with a strong ability to understand emotion will be
+able to express how he feels about the problem and why he
+feels this way. He also should be able to take the perspective
+of the other group members and understand why they are
+reacting in a certain manner. Appreciation of differences creates
+an arena for open communication and promotes constructive
+conflict resolution and improved group functioning."
+
+**문제:**
+
+다음 글의 요지로 가장 적절한 것은?
+
+①. 집단 구성원 간 갈등 해소를 위해 감정 조절이 중요하다.
+②. 감정 이해 능력은 집단 내 원활한 소통과 협력을 촉진한다.
+③. 타인에 대한 공감 능력은 자신의 감정 표현 능력을 향상한다.
+④. 감정 관련 어휘에 대한 지식은 공감 능력 발달의 기반이 된다.
+⑤. 자신의 감정 상태에 대한 이해는 사회성 함양에 필수적 요소이다.
+
+## 문제 유형 분석 및 접근 전략
+
+이 문제는 글의 핵심 내용을 파악하는 '요지(Main Idea)' 또는 '주제(Topic)'를 묻는 유형입니다. 수능 영어에서 가장 기본적이면서도 중요한 문제 유형 중 하나죠. 이런 유형의 문제를 풀 때는 다음과 같은 전략을 활용하면 효과적입니다.
+
+1.  **첫 문장과 마지막 문장에 주목하기:** 많은 경우 글의 주제나 요지는 첫 문장(Topic Sentence)에 제시되거나, 마지막 문장에서 요약되는 경향이 있습니다. 지문을 읽기 시작할 때와 끝낼 때 이 두 문장에 특별히 집중하여 글의 전체적인 방향을 파악하는 것이 좋습니다.
+2.  **반복되는 핵심 어구 찾기:** 지문 전체를 훑어보면서 특정 단어나 구절이 반복적으로 등장하는지 확인하세요. 반복되는 키워드는 글쓴이가 강조하고자 하는 핵심 내용과 관련이 깊습니다. 이 지문에서는 'understand emotions', 'group settings', 'communication', 'cooperate', 'conflict resolution', 'group functioning' 등이 반복적으로 등장하며 핵심적인 역할을 합니다.
+3.  **예시나 부연 설명 구분하기:** 글쓴이는 자신의 주장을 뒷받침하기 위해 구체적인 예시나 부연 설명을 덧붙입니다. 'for example'과 같은 연결어구에 주목하여, 예시 부분이 주장의 핵심을 흐리지 않도록 주의해야 합니다. 이 지문에서는 'In a group conflict situation, for example,' 부분이 감정 이해 능력이 실제 갈등 상황에서 어떻게 작용하는지를 보여주는 예시입니다.
+4.  **선택지와의 비교:** 위 전략들을 통해 글의 전체적인 맥락을 파악했다면, 이제 선택지를 하나씩 살펴보며 가장 적절한 것을 골라야 합니다. 각 선택지가 지문의 내용과 얼마나 일치하는지, 그리고 글쓴이가 궁극적으로 말하고자 하는 바를 가장 잘 나타내고 있는지를 비교 분석해야 합니다. 특히, 핵심 내용을 벗어나거나 일부 내용만 언급하는 선택지는 오답일 가능성이 높습니다.
+
+## 정답 및 해설
+
+**정답: ②. 감정 이해 능력은 집단 내 원활한 소통과 협력을 촉진한다.**
+
+**해설:**
+
+*   **①. 집단 구성원 간 갈등 해소를 위해 감정 조절이 중요하다.**
+    지문에서 감정 이해 능력이 갈등 해결에 기여한다고 언급하지만('constructive conflict resolution'), '감정 조절(emotion regulation)' 자체를 핵심 요지로 제시하지는 않습니다. 감정 이해는 갈등 해결의 중요한 요소이지만, 요지는 더 넓은 범위의 '소통과 협력 촉진'입니다.
+
+*   **②. 감정 이해 능력은 집단 내 원활한 소통과 협력을 촉진한다.**
+    이 선택지는 지문의 핵심 내용을 가장 정확하게 요약하고 있습니다. 첫 문장에서 '감정 이해 능력'이 '집단 환경'에서 특히 중요하며('particularly relevant in group settings'), 이러한 능력을 가진 사람들은 '명확한 의사소통을 촉진'하고('facilitate clear communication'), '자신의 필요뿐만 아니라 타인의 필요도 수용하는 방식(협력)'으로 행동할 가능성이 높다고('accommodate their own needs as well as the needs of others (i.e. cooperate)') 명시하고 있습니다. 또한, 마지막 문장에서 '차이에 대한 인정'이 '열린 소통'을 만들고 '건설적인 갈등 해결 및 향상된 집단 기능'을 촉진한다고 마무리하여, 이 선택지가 지문의 요지와 완벽하게 일치함을 보여줍니다.
+
+*   **③. 타인에 대한 공감 능력은 자신의 감정 표현 능력을 향상한다.**
+    지문은 감정 이해 능력이 있는 사람이 자신의 감정을 정확하게 표현할 수 있다고 언급하지만('express emotions, feelings and moods accurately'), 타인에 대한 공감 능력이 '자신의' 감정 표현 능력 향상으로 이어진다는 직접적인 인과관계를 강조하지는 않습니다. 오히려 감정 이해 능력이 소통과 협력을 증진하는 데 초점을 맞추고 있습니다.
+
+*   **④. 감정 관련 어휘에 대한 지식은 공감 능력 발달의 기반이 된다.**
+    지문에서 '다양한 감정 어휘를 가지고(to have a diverse emotion vocabulary)' 있는 것이 감정 이해 능력의 일부라고 언급하지만, 이것이 '공감 능력 발달의 기반'이 된다는 점을 핵심 요지로 삼고 있지는 않습니다. 어휘 지식은 전체 능력의 한 부분일 뿐, 지문 전체의 요지를 설명하기에는 부족합니다.
+
+*   **⑤. 자신의 감정 상태에 대한 이해는 사회성 함양에 필수적 요소이다.**
+    자신의 감정을 이해하는 것은 지문에서 언급된 감정 이해 능력의 일부입니다. 또한, 이는 사회성 함양에 도움이 될 수 있습니다. 하지만 지문은 '자신의 감정 이해'에 국한하지 않고, 타인의 감정을 이해하고 이를 바탕으로 집단 내에서 어떻게 소통하고 협력하는지에 초점을 맞추고 있습니다. 따라서 '자신의 감정 상태 이해'에만 국한된 이 선택지는 지문의 포괄적인 요지를 담기 어렵습니다.
+
+## 집단 속에서 빛나는 '나'를 만드는 감정 코칭
+
+이번 2025학년도 수능 영어 22번 기출문제를 통해 우리는 단순히 영어 지문을 읽고 해석하는 것을 넘어, '감정 이해 능력'이라는 더 깊은 통찰을 얻을 수 있었습니다. 단순히 단어를 많이 외우고 문법 규칙을 익히는 것만으로는 이런 유형의 문제를 완벽하게 대비하기 어렵다는 것을 알 수 있죠. 지문 속 등장인물의 감정을 파악하고, 그 감정이 집단 내에서 어떤 영향을 미치는지, 그리고 어떻게 더 나은 소통과 협력으로 이어질 수 있는지를 이해하는 것이 중요합니다. 이는 비단 수능 시험뿐만 아니라, 학교생활, 동아리 활동, 나아가 미래의 직장생활에서도 반드시 필요한 능력입니다.
+
+집단 속에서 자신의 감정을 정확히 표현하고, 동시에 다른 사람들의 감정을 이해하며 공감하는 능력은 팀워크를 강화하고 갈등을 건설적으로 해결하는 데 결정적인 역할을 합니다. 여러분도 주변 사람들과의 대화에서 상대방의 말뿐만 아니라 그 속에 담긴 감정까지 읽어내려 노력해보세요. 또한, 자신의 감정을 솔직하고 명확하게 표현하는 연습도 꾸준히 하는 것이 좋습니다. 이 과정에서 다양한 감정을 나타내는 영어 어휘를 풍부하게 익혀두는 것은 분명 큰 도움이 될 것입니다.
+
+결국, 이러한 깊이 있는 이해와 소통 능력은 탄탄한 어휘력을 기반으로 합니다. Scan Voca는 여러분이 수능 영어뿐만 아니라 실생활에서도 유용하게 쓰일 감정 관련 어휘를 포함한 방대한 어휘를 효과적으로 학습할 수 있도록 돕습니다. 복잡한 지문 속 숨겨진 의미를 파악하고, 나아가 타인과 더 깊이 소통하는 힘을 기르고 싶다면, 지금 바로 [Scan Voca 시작하기](https://scanvoca.com)를 통해 여러분의 영어 학습 여정을 한 단계 업그레이드해보세요!
