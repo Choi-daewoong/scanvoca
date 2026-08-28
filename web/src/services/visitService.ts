@@ -1,11 +1,11 @@
 import { apiFetch } from './api';
 
 export const visitService = {
-  async track(visitorId: string, referrer: string): Promise<void> {
+  async track(visitorId: string, referrer: string, landingPath: string): Promise<void> {
     await apiFetch('/api/v1/visits/track', {
       method: 'POST',
       skipAuth: true,
-      body: JSON.stringify({ visitor_id: visitorId, referrer }),
+      body: JSON.stringify({ visitor_id: visitorId, referrer, landing_path: landingPath }),
     });
   },
 };

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { visitService } from '@/services/visitService';
 
 const VISITOR_ID_KEY = 'scan_voca_visitor_id';
@@ -29,15 +30,20 @@ function getReferrerHost(): string {
 
 // 하루에 한 번만 방문 기록을 서버로 전송 (방문자 수 집계용)
 export default function VisitTracker() {
+  const pathname = usePathname();
+
   useEffect(() => {
+    // 관리자 본인의 /admin 방문은 마케팅 통계에서 제외
+    if (pathname?.startsWith('/admin')) return;
+
     const today = new Date().toISOString().slice(0, 10);
     if (localStorage.getItem(LAST_VISIT_KEY) === today) return;
 
     visitService
-      .track(getOrCreateVisitorId(), getReferrerHost())
+      .track(getOrCreateVisitorId(), getReferrerHost(), pathname)
       .then(() => localStorage.setItem(LAST_VISIT_KEY, today))
       .catch(() => {});
-  }, []);
+  }, [pathname]);
 
   return null;
 }

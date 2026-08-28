@@ -238,12 +238,29 @@ export interface VisitDailyCount {
   count: number;
 }
 
+export interface VisitHourlyCount {
+  hour: number;
+  count: number;
+}
+
+export interface VisitLandingPageCount {
+  path: string;
+  count: number;
+}
+
 export interface VisitStats {
   today: number;
   week: number;
   month: number;
+  new_visitors: number;
+  returning_visitors: number;
   daily: VisitDailyCount[];
+  hourly: VisitHourlyCount[];
   referrers: Record<string, number>;
+  referrer_categories: Record<string, number>;
+  devices: Record<string, number>;
+  browsers: Record<string, number>;
+  landing_pages: VisitLandingPageCount[];
 }
 
 // ===== 블로그 =====

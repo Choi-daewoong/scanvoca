@@ -35,3 +35,10 @@ pdfplumber==0.11.4
 
 # 블로그 대표 이미지 리사이즈 (gemini_service.generate_blog_image)
 Pillow==12.3.0
+
+# 방문자 User-Agent 파싱 (visit_service.get_stats — 기기/브라우저 통계)
+# ua-parser/ua-parser-builtins도 명시 고정 — builtins는 정규식 DB라 배포마다 버전이
+# 달라지면 동일 UA의 브라우저 판별 결과가 조용히 바뀔 수 있음 (테스트가 특정 문자열을 assert함)
+user-agents==2.2.0
+ua-parser==1.0.2
+ua-parser-builtins==202606

@@ -24,6 +24,7 @@ async def track_visit(
     db: Session = Depends(get_db),
 ):
     """Record a visit for today, deduped by client-provided visitor_id"""
-    if _looks_like_bot(request.headers.get("user-agent", "")):
+    user_agent = request.headers.get("user-agent", "")
+    if _looks_like_bot(user_agent):
         return
-    VisitService.record_visit(db, data.visitor_id, data.referrer)
+    VisitService.record_visit(db, data.visitor_id, data.referrer, data.landing_path, user_agent)

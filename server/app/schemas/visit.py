@@ -7,11 +7,24 @@ class VisitTrackRequest(BaseModel):
     """Body for the public visit-tracking ping"""
     visitor_id: str = Field(..., min_length=8, max_length=64)
     referrer: Optional[str] = Field(None, max_length=255)
+    landing_path: Optional[str] = Field(None, max_length=255)
 
 
 class VisitDailyCount(BaseModel):
     """One day's unique-visitor count"""
     date: str
+    count: int
+
+
+class VisitHourlyCount(BaseModel):
+    """Visits recorded in one KST hour bucket (0-23)"""
+    hour: int
+    count: int
+
+
+class VisitLandingPageCount(BaseModel):
+    """Visit count for one landing path"""
+    path: str
     count: int
 
 
@@ -22,3 +35,10 @@ class VisitStatsResponse(BaseModel):
     month: int
     daily: List[VisitDailyCount]
     referrers: Dict[str, int]
+    new_visitors: int
+    returning_visitors: int
+    hourly: List[VisitHourlyCount]
+    referrer_categories: Dict[str, int]
+    devices: Dict[str, int]
+    browsers: Dict[str, int]
+    landing_pages: List[VisitLandingPageCount]

@@ -16,6 +16,10 @@ class Visit(Base):
     visit_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     # Referring hostname the visitor arrived from that day (e.g. "google.com", "direct")
     referrer: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    # First path the visitor landed on that day (e.g. "/blog/toeic-tips")
+    landing_path: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    # Raw User-Agent string; parsed at read time so parser improvements apply retroactively
+    user_agent: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),
