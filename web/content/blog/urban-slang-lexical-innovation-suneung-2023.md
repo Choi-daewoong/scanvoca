@@ -16,6 +16,7 @@ thumbnail: "/blog-images/urban-slang-lexical-innovation-suneung-2023/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력시험 영어영역 32번).
 
+> People have always wanted to be around other people and
 > to learn from them. Cities have long been dynamos of social
 > possibility, foundries of art, music, and fashion. Slang, or, if you
 > prefer, “lexical innovation,” has always started in cities―an
@@ -26,14 +27,14 @@ thumbnail: "/blog-images/urban-slang-lexical-innovation-suneung-2023/1.png"
 > talks is a “composite result of what he has heard before,” then
 > language innovation would happen where the most people heard
 > and talked to the most other people. Cities drive taste change
-> because they , 
+> because they ________________________,
 > who not surprisingly are often the creative people cities seem
 > to attract. Media, ever more global, ever more far-reaching,
 > spread language faster to more people.
 > 
 > *foundry: 주물 공장 **lexical: 어휘의*
 
-**문제:** People have always wanted to be around other people and
+**문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오.
 
 ①. reduce the social mobility of ambitious outsiders
 ②. offer the greatest exposure to other people
@@ -44,7 +45,7 @@ thumbnail: "/blog-images/urban-slang-lexical-innovation-suneung-2023/1.png"
 ## 빈칸 추론 문제, 어떻게 접근해야 할까?
 이 문제는 지문의 빈칸에 들어갈 가장 적절한 내용을 고르는 '빈칸 추론' 유형입니다. 이러한 유형의 문제를 풀 때는 다음과 같은 전략을 활용하면 좋습니다.
 
-1.  **빈칸 앞뒤 문맥 파악:** 빈칸이 포함된 문장과 그 앞뒤 문장을 주의 깊게 읽으세요. 특히 빈칸 앞의 'People have always wanted to be around other people and'라는 문장은 사람들이 왜 다른 사람들과 함께 있고 싶어 하는지에 대한 이유를 설명하려는 도입부 역할을 합니다. 빈칸에는 이 '이유'를 완성하는 내용이 들어가야 합니다.
+1.  **빈칸 앞뒤 문맥 파악:** 빈칸이 포함된 문장과 그 앞뒤 문장을 주의 깊게 읽으세요. 이 지문의 빈칸은 지문 끝부분 'Cities drive taste change because they ___, who not surprisingly are often the creative people cities seem to attract.'에 있습니다. 빈칸 바로 뒤 'who'가 가리키는 대상이 곧 빈칸의 내용과 이어지므로, 도시가 사람들에게 어떤 역할을 하기에 '창의적인 사람들'과 연결되는지를 완성하는 내용이 들어가야 합니다.
 2.  **지문 전체의 핵심 아이디어 파악:** 이 지문의 핵심은 도시가 다양한 사람들이 모여 교류하는 공간이기 때문에 언어 혁신, 즉 슬랭과 같은 새로운 어휘가 탄생하고 퍼져나가는 진원지가 된다는 것입니다. 'lexical innovation'이 도시에서 시작되어 'transmissible disease'처럼 퍼져나간다는 비유를 사용하며, 이는 사람들이 서로 많이 듣고 말하는 곳에서 언어 혁신이 일어난다는 링귀스트의 주장을 뒷받침합니다.
 3.  **선택지 분석 및 지문과의 연결:** 각 선택지가 지문의 내용과 어떻게 연결되는지, 혹은 벗어나는지를 판단해야 합니다. 사람들이 다른 사람들과 함께 있기를 원하는 이유가 무엇인지, 그리고 그것이 도시의 특징과 어떻게 부합하는지를 중심으로 선택지를 검토하세요.
 

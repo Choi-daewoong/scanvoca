@@ -1,5 +1,5 @@
 ---
-title: "수능 영어 2023학년도 3번: 좌절 속에서 피어난 자신감! '심경 변화' 문제, Ken의 말 한마디가 바꾼 Jamie의 마음"
+title: "수능 영어 2023학년도 19번: 좌절 속에서 피어난 자신감! '심경 변화' 문제, Ken의 말 한마디가 바꾼 Jamie의 마음"
 description: "2023학년도 수능 영어 19번 '심경 변화' 문제 해설. 좌절했던 Jamie이 Ken의 긍정적 피드백으로 자신감을 얻는 과정을 분석하고, 부사구 활용법과 함께 문제 풀이 전략을 제시합니다."
 category: "수능·내신"
 tags: ["수능 영어", "심경 변화", "영어 독해", "학습 전략", "긍정적 피드백", "부사구"]
@@ -7,7 +7,7 @@ date: "2026-08-11"
 published: true
 thumbnail: "/blog-images/2023-suneung-english-3-jamie-ken-confidence-boost/1.png"
 ---
-![수능 영어 2023학년도 3번: 좌절 속에서 피어난 자신감! '심경 변화' 문제, Ken의 말 한마디가 바꾼 Jamie의 마음](/blog-images/2023-suneung-english-3-jamie-ken-confidence-boost/1.png)
+![수능 영어 2023학년도 19번: 좌절 속에서 피어난 자신감! '심경 변화' 문제, Ken의 말 한마디가 바꾼 Jamie의 마음](/blog-images/2023-suneung-english-3-jamie-ken-confidence-boost/1.png)
 
 ## 좌절의 순간, 그리고 변화의 시작: 2023학년도 수능 영어 19번 문제
 

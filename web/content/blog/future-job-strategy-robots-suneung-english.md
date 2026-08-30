@@ -17,61 +17,53 @@ thumbnail: "/blog-images/future-job-strategy-robots-suneung-english/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 38번).
 
-"company will also greatly reduce their fear of being laid
-off.
-Introduction of robots into factories, while employment of human
-workers is being reduced, creates worry and fear. ("""
+**문제:** 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.
+
+**주어진 문장:**
 
 Retraining current employees for new positions within the
+company will also greatly reduce their fear of being laid off.
 
-①. ) It is
+**지문:**
+
+Introduction of robots into factories, while employment of human
+workers is being reduced, creates worry and fear. ( ① ) It is
 the responsibility of management to prevent, or at least, to ease
-these fears.
-②. ) For example, robots could be introduced only
+these fears. ( ② ) For example, robots could be introduced only
 in new plants rather than replacing humans in existing assembly
-lines.
-③. ) Workers should be included in the planning for
+lines. ( ③ ) Workers should be included in the planning for
 new factories or the introduction of robots into existing plants,
-so they can participate in the process.
-④. ) It may be that robots
+so they can participate in the process. ( ④ ) It may be that robots
 are needed to reduce manufacturing costs so that the company
 remains competitive, but planning for such cost reductions
-should be done jointly by labor and management.
-⑤. ) Since
+should be done jointly by labor and management. ( ⑤ ) Since
 robots are particularly good at highly repetitive simple motions,
 the replaced human workers should be moved to positions
 where judgment and decisions beyond the abilities of robots
 are required.
 
+**선택지:**
+①. ②. ③. ④. ⑤.
+
 ## 문제 유형 파악 및 일반적인 풀이 전략
 
-이 문제는 문맥상 빈칸에 들어갈 가장 적절한 문장을 고르는 '빈칸 추론' 유형으로 볼 수 있습니다. 다만, 빈칸의 위치가 문단의 끝에 있고, 앞선 내용과 뒤따르는 선택지들을 통해 문맥을 유추해야 한다는 점에서 조금 더 까다로울 수 있습니다. 이러한 유형의 문제를 풀 때는 다음 전략을 활용하면 도움이 됩니다.
+이 문제는 지문 속 다섯 곳의 표시(①~⑤) 중 주어진 문장이 들어가기에 가장 적절한 위치를 고르는 '문장 삽입' 유형입니다. 이런 유형은 빈칸에 들어갈 말을 새로 만들어내는 게 아니라, 이미 완성된 한 문장을 지문의 논리 흐름 속 정확한 자리에 되돌려 놓는 문제이므로, 다음 전략이 효과적입니다.
 
-1.  **문단 전체의 흐름 파악**: 먼저 제시된 지문(빈칸 앞까지)의 핵심 내용을 파악합니다. 이 지문에서는 로봇 도입으로 인해 발생하는 노동자들의 불안감과 두려움에 대해 이야기하고 있습니다.
-2.  **빈칸 앞뒤 문맥 집중**: 빈칸 바로 앞 문장과 뒤에 이어질 선택지들의 내용을 주의 깊게 읽습니다. 빈칸 앞에서는 "employment of human workers is being reduced, creates worry and fear"라고 언급하며 문제 상황을 제시하고 있습니다. 이는 로봇 도입으로 인한 고용 불안정 문제를 직접적으로 언급합니다.
-3.  **선택지 분석 및 대조**: 각 선택지가 앞뒤 문맥과 얼마나 잘 들어맞는지 개별적으로 대조해봅니다. 선택지가 문단 전체의 논지를 뒷받침하거나, 문제 상황에 대한 해결책을 제시하는지 등을 고려해야 합니다.
-4.  **핵심 키워드 및 논리적 연결**: 지문에서 반복적으로 등장하는 키워드(예: robots, human workers, fear, employment, positions, judgment, decisions)와 선택지 간의 논리적 연결성을 파악하는 것이 중요합니다.
+1.  **주어진 문장의 연결 신호 찾기**: 주어진 문장에 대명사('these', 'this' 등)나 'also', 'however'처럼 앞뒤 문맥을 암시하는 표현이 있는지 확인합니다. 이 문장은 "Retraining current employees for new positions within the company will **also** greatly reduce their fear of being laid off."로 시작하는데, 'also'는 바로 앞에 이미 '두려움을 줄이는 다른 방법'이 하나 언급되어 있어야 자연스럽다는 강력한 단서입니다.
+2.  **지문의 논리 구조 파악**: 지문은 "로봇 도입 → 노동자의 불안감 → 경영진의 책임 → 불안을 줄이는 구체적인 방법들(신규 공장에만 로봇 도입, 계획 과정에 노동자 참여, 비용 절감 계획의 공동 수립, 판단력이 필요한 직무로의 재배치)"이라는 순서로 전개됩니다.
+3.  **삽입 후 앞뒤 문장이 자연스럽게 이어지는지 검증**: 후보 위치에 문장을 넣어보고, 앞 문장과의 연결(대명사·연결어 일치)과 뒤 문장과의 연결이 모두 매끄러운지 확인합니다.
 
 ## 정답 및 상세 해설: 미래 역량 개발의 핵심은 '인간 고유의 강점' 활용!
 
-정답은 **⑤**번입니다. 왜 그럴까요?
+정답은 **⑤번 위치**입니다.
 
-*   **⑤번 선택지**: "Since robots are particularly good at highly repetitive simple motions, the replaced human workers should be moved to positions where judgment and decisions beyond the abilities of robots are required." (로봇은 매우 반복적이고 단순한 동작에 특히 뛰어나기 때문에, 대체된 인간 노동자들은 로봇의 능력을 넘어서는 판단과 결정이 요구되는 직책으로 옮겨져야 한다.)
-    *   **해설**: 이 선택지는 앞선 지문에서 제기된 '로봇 도입으로 인한 노동자들의 불안감과 두려움'이라는 문제 상황에 대한 가장 직접적이고 논리적인 해결책을 제시합니다. 로봇의 장점(반복 작업)과 인간의 고유한 강점(판단력, 의사결정 능력)을 명확히 구분하고, 인간 노동자들이 로봇과 경쟁하는 것이 아니라 보완하는 방식으로 새로운 역할을 찾아야 함을 강조합니다. 이는 미래 사회에서 인간이 가져야 할 핵심 경쟁력이 무엇인지 명확히 보여줍니다.
+**해설:** ⑤ 바로 앞 문장은 "planning for such cost reductions should be done jointly by labor and management(그러한 비용 절감 계획은 노사가 공동으로 수립해야 한다)"이고, ⑤ 바로 뒤 문장은 "Since robots are particularly good at highly repetitive simple motions, the replaced human workers should be moved to positions where judgment and decisions beyond the abilities of robots are required(로봇은 반복 작업에 뛰어나므로, 대체된 노동자는 판단력이 필요한 직무로 재배치되어야 한다)"입니다.
 
-*   **①번 선택지**: "It is the responsibility of management to prevent, or at least, to ease these fears." (경영진은 이러한 두려움을 예방하거나 최소한 완화할 책임이 있다.)
-    *   **해설**: 경영진의 책임에 대해 언급하는 것은 타당하지만, 이것이 빈칸에 들어갈 문장으로서는 구체적인 해결책이나 방향을 제시하기보다 일반적인 주장입니다. 지문은 더 구체적인 '어떻게'에 대한 답을 요구하고 있습니다.
+주어진 문장 "직원 재교육을 통해 새 직무로 전환시키는 것 **역시** 해고에 대한 두려움을 크게 줄여줄 것이다"를 이 사이에 넣으면, 뒤 문장의 '판단력이 필요한 직무로 재배치'라는 구체적인 방법이 바로 앞에서 말한 '재교육을 통한 직무 전환'의 구체적인 실행 방안으로 자연스럽게 이어집니다. 즉, "재교육으로 새 직무를 주는 것도 두려움을 줄인다 → (구체적으로는) 로봇이 잘하는 반복 작업 대신, 판단력이 필요한 직무로 옮겨주면 된다"는 흐름이 완성됩니다.
 
-*   **②번 선택지**: "For example, robots could be introduced only in new plants rather than replacing humans in existing assembly lines." (예를 들어, 로봇은 기존 조립 라인에서 인간을 대체하기보다는 새로운 공장에만 도입될 수 있다.)
-    *   **해설**: 이는 로봇 도입 방식에 대한 하나의 제안일 뿐, 대체된 노동자들이 어떻게 해야 하는지에 대한 직접적인 해결책을 제시하지 못합니다. 또한, 모든 경우에 적용 가능한 해결책이라고 보기 어렵습니다.
+다른 위치에 넣으면 'also'가 가리킬 만한 '앞서 언급된 두려움 해소 방법'이 바로 앞 문장에 없거나(①, ②), 이미 다른 화제(로봇 도입 방식, 노동자 참여, 비용 문제)로 넘어간 뒤라 흐름이 끊깁니다(③, ④).
 
-*   **③번 선택지**: "Workers should be included in the planning for new factories or the introduction of robots into existing plants, so they can participate in the process." (노동자들은 새로운 공장 계획이나 기존 공장에 로봇을 도입하는 과정에 참여해야 한다.)
-    *   **해설**: 노동자 참여는 중요하지만, 이것이 로봇 도입으로 인한 '직접적인 일자리 감소'와 '두려움'에 대한 근본적인 해결책이 되기는 어렵습니다. 참여를 통해 불안감을 줄일 수는 있겠지만, 핵심은 대체된 인력이 어떤 역할을 해야 하는가입니다.
-
-*   **④번 선택지**: "It may be that robots are needed to reduce manufacturing costs so that the company remains competitive, but planning for such cost reductions should be done jointly by labor and management." (로봇이 회사가 경쟁력을 유지하도록 제조 비용을 절감하는 데 필요할 수 있지만, 그러한 비용 절감 계획은 노동자와 경영진이 공동으로 수행해야 한다.)
-    *   **해설**: 비용 절감과 경쟁력 유지의 중요성을 언급하지만, 역시 핵심인 '대체된 노동자의 미래 역할'에 대한 구체적인 해결책을 제시하지 못합니다. 노동자와 경영진의 공동 계획은 앞선 선택지들과 유사한 맥락입니다.
-
-결론적으로, 2022학년도 수능 영어 38번 지문은 로봇 시대의 고용 불안정이라는 현실을 직시하고, 인간의 고유한 능력, 즉 '판단력과 의사결정 능력'을 발휘할 수 있는 직무로 전환하는 것이 미래 사회에서 경쟁력을 갖추는 핵심 전략임을 시사합니다.
+결론적으로, 2022학년도 수능 영어 38번 지문은 로봇 시대의 고용 불안정이라는 현실을 직시하고, 경영진이 신규 공장 로봇 도입·노동자의 계획 참여·재교육을 통한 직무 전환·판단력이 필요한 직무로의 재배치 등 다양한 방법으로 노동자의 불안을 줄여야 한다는 점을 시사합니다.
 
 ## 미래를 준비하는 당신을 위한 Scan Voca의 제안
 

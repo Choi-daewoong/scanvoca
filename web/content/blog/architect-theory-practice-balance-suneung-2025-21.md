@@ -18,12 +18,11 @@ thumbnail: "/blog-images/architect-theory-practice-balance-suneung-2025-21/1.png
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2025학년도 대학수학능력시험 영어영역 21번).
 
 ```
-의미하는 바로 가장 적절한 것은? [3점]
 The position of the architect rose during the Roman Empire, as architecture symbolically became a particularly important political statement. Cicero classed the architect with the physician and the teacher and Vitruvius spoke of “so great a profession as this.” Marcus Vitruvius Pollio, a practicing architect during the rule of Augustus Caesar, recognized that architecture requires both practical and theoretical knowledge, and he listed the disciplines he felt the aspiring architect should master: literature and writing, draftsmanship, mathematics, history, philosophy, music, medicine, law, and astronomy―a curriculum that still has much to recommend it. All of this study was necessary, he argued, because architects who have aimed at acquiring manual skill without scholarship have never been able to reach a position of authority to correspond to their plans, while those who have relied only upon theories and scholarship were obviously “hunting the shadow, not the substance.”
 ```
 
 문제:
-밑줄 친 hunting the shadow, not the substance가 다음 글에서 의미하는 바로 가장 적절한 것은?
+밑줄 친 hunting the shadow, not the substance가 다음 글에서 의미하는 바로 가장 적절한 것은? [3점]
 
 선택지:
 ①. seeking abstract knowledge emphasized by architectural tradition

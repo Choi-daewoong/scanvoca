@@ -21,7 +21,6 @@ thumbnail: "/blog-images/suneung-english-notice-luckwood-festival-2025/1.png"
 
 **[지문]**
 
-일치하는 것은?
 Luckwood Snow Festival
 We’re happy to announce the 15th annual Luckwood
 Snow Festival. Come to the festival to enjoy winter activities.
@@ -40,7 +39,7 @@ and Luckwood Park (One-way fare: $1, cash only).
 
 **[문제]**
 
-Luckwood Snow Festival에 관한 다음 안내문의 내용과
+Luckwood Snow Festival에 관한 다음 안내문의 내용과 일치하는 것은?
 
 **[선택지]**
 

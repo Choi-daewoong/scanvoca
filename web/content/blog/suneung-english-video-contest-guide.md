@@ -17,7 +17,6 @@ thumbnail: "/blog-images/suneung-english-video-contest-guide/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 28번).
 
-안내문의 내용과 일치하는 것은?
 2023 Eastland High School Video Clip Contest
 Shoot and share your most memorable moments with your
 teachers and friends!
@@ -33,7 +32,7 @@ Prizes
 ∙The prize winners will be chosen by the school art teachers.
 ※ For more information, visit the school website.
 
-문제(question): 2023 Eastland High School Video Clip Contest에 관한 다음
+문제(question): 2023 Eastland High School Video Clip Contest에 관한 다음 안내문의 내용과 일치하는 것은?
 
 선택지:
 ①. 출품작의 주제가 정해져 있지 않다.

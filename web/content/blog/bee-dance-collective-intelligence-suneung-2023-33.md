@@ -15,13 +15,16 @@ thumbnail: "/blog-images/bee-dance-collective-intelligence-suneung-2023-33/1.png
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력시험 영어영역 33번).
 
+**문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. [3점]
+
 ```
+The entrance to a honeybee colony, often referred to as
 the dancefloor, is a market place for information about the
 state of the colony and the environment outside the hive.
 Studying interactions on the dancefloor provides us with a
 number of illustrative examples of how individuals
 changing their own behavior in response to local information
-. For
+________________________. For
 example, upon returning to their hive honeybees that have
 collected water search out a receiver bee to unload their water
 to within the hive. If this search time is short then the returning
@@ -33,12 +36,9 @@ themselves or to pass on to other bees and brood, this unloading
 time is correlated with the colony’s overall need of water. Thus
 the individual water forager’s response to unloading time (up or
 down) regulates water collection in response to the colony’s
-need. [3점]
+need.
 *brood: 애벌레 **forager: 조달자
 ```
-
-**문제:**
-The entrance to a honeybee colony, often referred to as
 
 **선택지:**
 ①. allow the colony to regulate its workforce

@@ -18,10 +18,11 @@ thumbnail: "/blog-images/tragedy-of-the-commons-ostrom-participation-2022-suneun
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 33번).
 
 ```
+Elinor Ostrom found that there are several factors critical to
 bringing about stable institutional solutions to the problem of
 the commons. She pointed out, for instance, that the actors
 affected by the rules for the use and care of resources must
-have the right to .
+have the right to ________________________.
 
 For that reason, the people who monitor and control the
 behavior of users should also be users and/or have been given
@@ -38,7 +39,7 @@ and independently ensure observance. [3점]
 *commons: 공유지 **mandate: 위임
 ```
 
-**문제:** Elinor Ostrom found that there are several factors critical to
+**문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. [3점]
 
 **선택지:**
 ①. participate in decisions to change the rules
@@ -49,7 +50,7 @@ and independently ensure observance. [3점]
 
 ## 문제 유형 및 일반적인 풀이 전략
 
-이 문제는 **내용 일치·불일치** 또는 **빈칸 추론** 유형으로 볼 수 있습니다. 밑줄 친 부분의 의미를 파악하고, 지문에서 제시하는 엘리너 오스트롬의 연구 결과를 종합하여 가장 적절한 내용을 선택해야 합니다. 
+이 문제는 지문 중간에 뚫린 빈칸을 채우는 **빈칸 추론** 유형입니다. 지문에서 제시하는 엘리너 오스트롬의 연구 결과를 종합하여, 빈칸 뒤에 이어지는 문장들이 뒷받침하는 내용과 논리적으로 이어지는 선택지를 골라야 합니다.
 
 이런 유형의 문제를 풀 때는 다음과 같은 전략을 활용하면 좋습니다.
 
@@ -64,7 +65,7 @@ and independently ensure observance. [3점]
 
 **해설:**
 
-지문은 엘리너 오스트롬이 공유지의 비극을 해결하기 위한 안정적인 제도적 해결책을 제시하면서, 특히 **"the actors affected by the rules for the use and care of resources must have the right to ."** 라고 언급합니다. 이 빈칸은 문제에서 선택지로 주어졌으며, 바로 뒤이어 "the people who monitor and control the behavior of users should also be users and/or have been given a mandate by all users"라고 설명합니다. 이는 자원의 사용과 관리에 영향을 받는 사람들이 스스로 규칙을 정하고 관리하는 주체가 되어야 함을 의미합니다. 
+지문은 엘리너 오스트롬이 공유지의 비극을 해결하기 위한 안정적인 제도적 해결책을 제시하면서, 특히 **"the actors affected by the rules for the use and care of resources must have the right to ________"** 라며 빈칸으로 결론을 남겨둡니다. 바로 뒤이어 "the people who monitor and control the behavior of users should also be users and/or have been given a mandate by all users"라고 설명합니다. 이는 자원의 사용과 관리에 영향을 받는 사람들이 스스로 규칙을 정하고 관리하는 주체가 되어야 함을 의미합니다. 
 
 또한, 오스트롬은 "democratic decision processes"와 "all users must be given access to local forums for solving problems and conflicts"를 강조하며, 정치 제도가 사용자들이 **"devise their own regulations"** (스스로 규정을 고안하도록) 하도록 허용해야 한다고 말합니다. 이러한 내용들을 종합해 볼 때, 공유지의 비극을 해결하기 위한 핵심 요소는 바로 자원을 사용하는 사람들이 규칙의 변경 결정 과정에 **참여**하는 것입니다.
 

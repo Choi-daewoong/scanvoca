@@ -17,13 +17,16 @@ thumbnail: "/blog-images/context-vs-expression-suneung-2024-33/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 33번).
 
+**문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. [3점]
+
+There have been psychological studies in which subjects
 were shown photographs of people’s faces and asked to
 identify the expression or state of mind evinced. The results
 are invariably very mixed. In the 17th century the French
 painter and theorist Charles Le Brun drew a series of faces
 illustrating the various emotions that painters could be called
 upon to represent. What is striking about them is that
-. What
+________________________. What
 is missing in all this is any setting or context to make the
 emotion determinate. We must know who this person is, who
 these other people are, what their relationship is, what is at
@@ -32,10 +35,10 @@ painting we do not come across just faces; we encounter
 people in particular situations and our understanding of people
 cannot somehow be precipitated and held isolated from the
 social and human circumstances in which they, and we, live
-and breathe and have our being. [3점]
+and breathe and have our being.
 *evince: (감정 따위를) 분명히 나타내다 **precipitate: 촉발하다
 
-**문제:** There have been psychological studies in which subjects
+**선택지:**
 
 ①. all of them could be matched consistently with their intended emotions
 ②. every one of them was illustrated with photographic precision

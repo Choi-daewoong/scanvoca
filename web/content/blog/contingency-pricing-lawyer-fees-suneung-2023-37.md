@@ -15,7 +15,10 @@ thumbnail: "/blog-images/contingency-pricing-lawyer-fees-suneung-2023-37/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력시험 영어영역 37번).
 
+**문제:** 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [3점]
+
 ```
+The most commonly known form of results-based pricing
 is a practice called contingency pricing, used by lawyers.
 (A) Therefore, only an outcome in the client’s favor is
 compensated. From the client’s point of view, the pricing
@@ -33,11 +36,9 @@ risks and rewards of delivering value to the buyer.
 and certain consumer cases are billed. In this approach,
 lawyers do not receive fees or payment until the case is
 settled, when they are paid a percentage of the money that
-the client receives. [3점]
+the client receives.
 *intimidate: 위협하다
 ```
-
-**문제:** The most commonly known form of results-based pricing
 
 **선택지:**
 ①. (A) － (C) － (B)

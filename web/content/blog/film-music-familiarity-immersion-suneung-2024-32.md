@@ -15,7 +15,10 @@ thumbnail: "/blog-images/film-music-familiarity-immersion-suneung-2024-32/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 32번).
 
+**문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것은?
+
 ```text
+A musical score within any film can add an additional layer
 to the film text, which goes beyond simply imitating the action
 viewed. In films that tell of futuristic worlds, composers,
 much like sound designers, have added freedom to create a world that
@@ -24,7 +27,7 @@ designers, composers often shy away from creating unique
 pieces that reflect these new worlds and often present musical
 scores that possess familiar structures and cadences. While it is
 possible that this may interfere with creativity and a sense of
-space and time, it in fact .
+space and time, it in fact ________________.
 Through recognizable scores, visions of the future or a galaxy
 far, far away can be placed within a recognizable context.
 Such familiarity allows the viewer to be placed in a comfortable
@@ -34,7 +37,7 @@ own.
 *score: 악보 **cadence: (율동적인) 박자
 ```
 
-A musical score within any film can add an additional layer
+**선택지:**
 
 ①. frees the plot of its familiarity
 ②. aids in viewer access to the film

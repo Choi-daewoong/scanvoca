@@ -17,8 +17,16 @@ thumbnail: "/blog-images/fictional-vs-real-filtering-2022-suneung-37/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 37번).
 
+**문제:** 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?
+
+**주어진 글:**
+
+In spite of the likeness between the fictional and real
 world, the fictional world deviates from the real one in one
 important respect.
+
+**이어지는 글:**
+
 (A) The author has selected the content according to his own
 worldview and his own conception of relevance, in an
 attempt to be neutral and objective or convey a subjective
@@ -26,21 +34,22 @@ view on the world. Whatever the motives, the author’s
 subjective conception of the world stands between the
 reader and the original, untouched world on which the
 story is based.
+
 (B) Because of the inner qualities with which the individual is
 endowed through heritage and environment, the mind
 functions as a filter; every outside impression that passes
 through it is filtered and interpreted. However, the world
 the reader encounters in literature is already processed
 and filtered by another consciousness.
+
 (C) The existing world faced by the individual is in principle
 an infinite chaos of events and details before it is organized
 by a human mind. This chaos only gets processed and
 modified when perceived by a human mind. [3점]
+
 *deviate: 벗어나다 **endow: 부여하다 ***heritage: 유산
 
-In spite of the likeness between the fictional and real
-
-선택지:
+**선택지:**
 ①. (A) － (C) － (B)
 ②. (B) －(A) － (C)
 ③. (B) － (C) －(A)
@@ -49,11 +58,9 @@ In spite of the likeness between the fictional and real
 
 ## 유형 분석 및 문제 풀이 전략: '필터링'의 흐름을 잡아라!
 
-이 문제는 주어진 문장 'In spite of the likeness between the fictional and real'이 들어갈 가장 적절한 위치를 찾는 문장 삽입 유형입니다. 이러한 유형은 글의 전체적인 논리적 흐름을 파악하는 것이 핵심입니다. 특히, 2022학년도 수능 영어 37번 문제는 '현실 세계'와 '허구 세계'라는 두 가지 대상을 비교하며 그 차이점을 설명하고 있습니다. 따라서 각 문단이 어떤 내용을 다루고 있는지, 그리고 문장 간의 연결고리가 무엇인지 파악하는 것이 중요합니다.
+이 문제는 주어진 글 다음에 이어질 (A), (B), (C) 문단의 논리적 순서를 배열하는 '글의 순서' 유형입니다. 이런 유형을 풀 때는 각 문단의 첫 문장과 지시어·연결어에 주목해 앞뒤 문단과의 논리적 연결고리를 찾는 것이 핵심입니다.
 
-이 지문에서는 '필터링(filtering)'이라는 개념이 핵심적인 역할을 합니다. 먼저, (C) 문단에서는 우리가 현실 세계를 인식할 때, 무질서한 정보의 혼돈 속에서 인간의 마음이 이를 조직화하고 의미를 부여하는 '필터링' 과정을 거친다고 설명합니다. 그다음, (B) 문단에서는 이러한 개인의 마음이 유전과 환경을 통해 부여받은 내적 특성으로 인해 '필터'처럼 기능하며 외부 인상을 걸러내고 해석한다고 말합니다. 하지만 문학 작품 속 세계는 이미 다른 의식에 의해 '처리되고 필터링된' 결과물이라는 점을 지적합니다. 마지막으로 (A) 문단에서는 작가가 자신의 세계관과 관련성에 대한 개념에 따라 내용을 선택하고 편집함으로써, 독자와 원본 세계 사이에 작가의 주관적인 세계관이 개입된다는 점을 설명합니다.
-
-주어진 문장 "In spite of the likeness between the fictional and real"은 '허구 세계와 현실 세계 사이의 유사성에도 불구하고'라는 의미를 내포하고 있습니다. 이는 앞선 내용에서 두 세계의 유사성을 암시하거나 언급한 후에 나와야 자연스럽습니다. 하지만 이 지문은 처음부터 두 세계의 '차이점'에 초점을 맞추고 있습니다. 따라서 주어진 문장은 두 세계가 유사하다는 점을 먼저 언급한 뒤, 그럼에도 불구하고 결정적인 차이가 있다는 점을 강조하는 역할을 할 것입니다. 이러한 맥락을 고려하여 각 문단의 내용을 순서대로 분석하고, 주어진 문장이 들어갈 최적의 위치를 추론해야 합니다.
+주어진 글은 "허구 세계와 현실 세계 사이의 유사성에도 불구하고, 허구 세계는 한 가지 중요한 지점에서 현실과 달라진다"고 말하며, 바로 이어질 문단에서 그 '중요한 차이점'이 무엇인지 설명하리라는 기대를 만듭니다. 이 지문에서는 '필터링(filtering)'이라는 개념이 그 답을 푸는 핵심 열쇠입니다. 먼저, (C) 문단에서는 우리가 현실 세계를 인식할 때, 무질서한 정보의 혼돈 속에서 인간의 마음이 이를 조직화하고 의미를 부여하는 '필터링' 과정을 거친다고 설명합니다. 그다음, (B) 문단에서는 이러한 개인의 마음이 유전과 환경을 통해 부여받은 내적 특성으로 인해 '필터'처럼 기능하며 외부 인상을 걸러내고 해석한다고 말합니다. 하지만 문학 작품 속 세계는 이미 다른 의식에 의해 '처리되고 필터링된' 결과물이라는 점을 지적하며, 이것이 바로 주어진 글에서 예고한 '중요한 차이점'의 실체임을 드러냅니다. 마지막으로 (A) 문단에서는 그 '다른 의식'이 바로 작가이며, 작가가 자신의 세계관과 관련성에 대한 개념에 따라 내용을 선택하고 편집함으로써, 독자와 원본 세계 사이에 작가의 주관적인 세계관이 개입된다는 점을 설명합니다.
 
 ## 정답 및 해설: '필터링'의 다층 구조 파악하기
 
@@ -63,9 +70,9 @@ In spite of the likeness between the fictional and real
 *   **(B) 문단:** (C)에서 언급된 '인간의 마음'이 어떻게 현실 세계의 정보를 '필터링'하고 해석하는지 구체적으로 설명합니다. 이는 우리가 현실을 받아들이는 과정에서의 필터링입니다. 그리고 이어서 문학 작품 속 세계는 '이미 처리되고 필터링된' 결과물이라고 말하며, 여기서 '다른 의식(another consciousness)' 즉, 작가의 개입을 암시합니다. 이 부분이 주어진 문장이 들어갈 후보가 될 수 있습니다. '현실 세계'와 '문학 작품 속 세계'의 유사점(둘 다 필터링된 결과물이라는 점)을 언급하고 바로 뒤에 '차이점'을 이어가기 좋은 위치입니다.
 *   **(A) 문단:** (B)에서 암시된 '다른 의식'이 바로 '작가'이며, 작가가 자신의 세계관에 따라 내용을 선택하고 편집함으로써 독자와 원본 세계 사이에 개입하게 된다는 점을 명확히 설명합니다. 즉, 문학 작품이 '필터링'되는 과정을 작가의 주관성과 연결 짓습니다. (B)에서 제시된 '다른 의식에 의해 필터링된 세계'가 바로 (A)에서 설명하는 '작가의 필터링'을 통해 만들어진 세계임을 보여줍니다.
 
-**주어진 문장이 들어갈 위치 추론:**
+**전체 흐름 정리:**
 
-주어진 문장 "In spite of the likeness between the fictional and real"은 허구 세계와 현실 세계의 유사점을 언급한 뒤, 그럼에도 불구하고 중요한 차이가 있음을 시사합니다. (B) 문단은 개인이 현실을 어떻게 필터링하는지를 설명하고, 나아가 문학 작품의 세계는 '이미 처리되고 필터링된' 것이라고 말합니다. 여기서 '처리되고 필터링된'이라는 표현은 현실 세계와 문학 작품 세계 모두 일종의 필터링 과정을 거친다는 점에서 유사성을 내포합니다. 따라서 (B) 문단 바로 다음에 "In spite of the likeness..."가 오면, '두 세계 모두 필터링 과정을 거친다는 유사성이 있지만, 그 필터링의 주체와 방식에 중요한 차이가 있다'는 흐름으로 자연스럽게 이어질 수 있습니다. 그리고 (A) 문단은 그 차이점, 즉 작가의 주관적인 필터링 과정을 상세히 설명하며 이 글의 핵심 주장을 뒷받침합니다. 따라서 ⑤번이 가장 적절한 위치가 됩니다.
+주어진 글 "In spite of the likeness between the fictional and real world, the fictional world deviates from the real one in one important respect."는 허구 세계와 현실 세계의 유사점을 언급한 뒤, 그럼에도 불구하고 중요한 차이가 있음을 예고합니다. (C)는 그 차이를 설명하기 위한 배경으로, 현실 세계가 인간의 마음에 의해 '필터링'되어 인식된다는 일반 원리를 먼저 제시합니다. (B)는 이 필터링이 개인마다 다르게 작동한다는 점을 부연한 뒤, 문학 속 세계는 '또 다른 의식'에 의해 이미 한 번 더 필터링된 것이라고 밝히며 비로소 '중요한 차이점'의 실체를 드러냅니다. 그리고 (A)는 그 '또 다른 의식'이 바로 작가이며, 작가의 주관적 세계관이 독자와 원본 세계 사이에 개입한다는 점을 상세히 설명하며 이 글의 핵심 주장을 마무리합니다. 따라서 ⑤번 (C)－(B)－(A)가 가장 적절한 순서입니다.
 
 ## Scan Voca와 함께하는 차세대 영어 학습
 

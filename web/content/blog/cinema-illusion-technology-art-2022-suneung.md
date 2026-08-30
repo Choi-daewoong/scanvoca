@@ -15,17 +15,20 @@ thumbnail: "/blog-images/cinema-illusion-technology-art-2022-suneung/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 39번).
 
-**[원문 지문 및 문제]**
+**문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. [3점]
+
+**[원문 지문]**
 
 As long as the irrealism of the silent black and white film predominated, one could not take filmic fantasies for representations of reality.
-Cinema is valuable not for its ability to make visible the hidden outlines of our reality, but for its ability to reveal what reality itself veils―the dimension of fantasy. ("""
+Cinema is valuable not for its ability to make visible the hidden outlines of our reality, but for its ability to reveal what reality itself veils―the dimension of fantasy. ________________________
 
-question:
+**[선택지]**
+
 ①. This is why, to a person, the first great theorists of film decried the introduction of sound and other technical innovations (such as color) that pushed film in the direction of realism.
 ②. Since cinema was an entirely fantasmatic art, these innovations were completely unnecessary.
 ③. And what’s worse, they could do nothing but turn filmmakers and audiences away from the fantasmatic dimension of cinema, potentially transforming film into a mere delivery device for representations of reality.
 ④. But sound and color threatened to create just such an illusion, thereby destroying the very essence of film art.
-⑤. As Rudolf Arnheim puts it, “The creative power of the artist can only come into play where reality and the medium of representation do not coincide.” [3점]
+⑤. As Rudolf Arnheim puts it, “The creative power of the artist can only come into play where reality and the medium of representation do not coincide.”
 
 ## 문제 유형 분석 및 풀이 전략
 

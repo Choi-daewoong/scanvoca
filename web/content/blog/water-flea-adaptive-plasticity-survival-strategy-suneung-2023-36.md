@@ -37,7 +37,7 @@ many species, of adaptive plasticity. Plasticity is conducive
 to fitness if there is sufficient variation in the environment.
 *spine: 가시 돌기 **conducive: 도움되는
 
-**문제:** A fascinating species of water flea exhibits a kind of
+**문제:** 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?
 
 **선택지:**
 ①. (A) － (C) － (B)

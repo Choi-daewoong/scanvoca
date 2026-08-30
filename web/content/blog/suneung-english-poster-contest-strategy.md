@@ -17,7 +17,6 @@ thumbnail: "/blog-images/suneung-english-poster-contest-strategy/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력시험 영어영역 28번).
 
-내용과 일치하는 것은?
 2022 Valestown Recycles Poster Contest
 Join this year’s Valestown Recycles Poster Contest and
 show off your artistic talent!
