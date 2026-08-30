@@ -17,6 +17,8 @@ thumbnail: "/blog-images/rules-as-opportunity-creators-suneung-english-2025-34/1
 
 ### 2025학년도 수능 영어영역 34번 문제 및 지문
 
+**문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것은? [3점]
+
 ```
 The rules of baseball don’t just regulate the behavior of the
 players; they determine the behavior that constitutes playing
@@ -37,7 +39,7 @@ opportunity to occupy the role. [3점]
 *constrain: 속박하다
 ```
 
-Centralized, formal rules can .
+Centralized, formal rules can ________.
 
 ①. categorize one’s patterns of conduct in legal and productive ways
 ②. lead people to reevaluate their roles and practices in a society

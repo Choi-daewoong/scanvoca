@@ -16,8 +16,11 @@ thumbnail: "/blog-images/science-vs-history-precision-determinacy-2022-suneung-3
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 34번).
 
+**문제(Question):** 다음 빈칸에 들어갈 말로 가장 적절한 것은? [3점]
+
 **지문(Passage):**
 ```
+Precision and determinacy are a necessary requirement for
 all meaningful scientific debate, and progress in the sciences
 is, to a large extent, the ongoing process of achieving ever
 greater precision. But historical representation puts a premium
@@ -34,14 +37,11 @@ a careful analysis of what was right and wrong in those
 previous representations. And from this perspective, the
 development of historical insight may indeed be regarded by the
 outsider as a process of creating ever more confusion, a continuous
-questioning of , 
+questioning of ________,
 rather than, as in the sciences, an ever greater approximation
 to the truth. [3점]
 *proliferation: 증식
 ```
-
-**문제(Question):**
-Precision and determinacy are a necessary requirement for
 
 **선택지:**
 ①. criteria for evaluating historical representations
@@ -59,8 +59,8 @@ Precision and determinacy are a necessary requirement for
 **2단계: 역사학의 관점 파악하기**
 반면, 역사학은 '다양한 재현(representations)의 증식'에 중점을 둔다고 합니다. 하나의 정답을 향해 좁혀가는 것이 아니라, 가능한 관점들이 폭발적으로 늘어나는 것에 가치를 둡니다. 역사학은 과거의 확정성이나 정밀성에 대한 '환상을 폭로'하고 새로운 관점을 제시함으로써 발전한다고 설명합니다. 따라서 역사학에서는 과학에서처럼 일률적인 정밀성이나 확정성을 요구하지 않을 수 있습니다.
 
-**3단계: 선택지 분석 및 연결**
-이제 이 두 가지 관점의 차이를 바탕으로 각 선택지를 분석해 봅시다. 과학에서는 정밀성과 확정성이 진리를 향한 필수 조건이지만, 역사학에서는 오히려 과거의 확정성이나 정밀성에 대한 환상을 깨뜨리는 데 초점을 맞춥니다. 이를 염두에 두고 선택지를 살펴보면, 과학의 입장에서 '정밀성과 확정성'이 필요한 이유를 묻는 질문임을 알 수 있습니다.
+**3단계: 빈칸 위치 정확히 짚기**
+빈칸은 지문 첫 문장이 아니라 마지막 부분, "a continuous questioning of ________, rather than, as in the sciences, an ever greater approximation to the truth."에 있습니다. 즉, 역사학의 발전 과정이 외부인에게는 '무엇을 계속 의심하는 과정'으로 보일 수 있는지를 묻는 것이며, 이는 앞서 언급된 "unmasking of previous illusions of determinacy and precision"(이전에 확정성·정밀성을 달성했다고 여겨졌던 것이 사실은 환상이었음을 폭로하는 것)과 정확히 연결되어야 합니다.
 
 ## 정답 및 해설
 
@@ -68,15 +68,17 @@ Precision and determinacy are a necessary requirement for
 
 **해설:**
 
-*   **②. certainty and precision seemingly achieved already:** 지문은 과학의 발전이 '점점 더 큰 정밀성을 달성하는 과정'이라고 명시하고 있습니다. 과학적 논쟁과 발전은 이미 달성된 것처럼 보이는 확실성과 정밀성을 계속해서 추구하고 개선해나가는 과정에 기반합니다. 과학은 객관적이고 검증 가능한 사실을 통해 진리에 더 가까이 다가가고자 하며, 이를 위해 정밀성과 확정성은 필수적인 요구사항입니다. 따라서 이 선택지가 정답입니다.
+지문은 과학과 역사학이 '정밀성(precision)'과 '확정성(determinacy)'을 다루는 방식이 근본적으로 다르다고 설명합니다. 과학은 점점 더 큰 정밀성을 획득해가는 과정인 반면, 역사학은 하나의 해석을 정교화하는 것이 아니라 다양한 해석을 증식시키는 데 중점을 둡니다. 역사적 통찰은 이전 선택지를 좁혀가거나 진리에 근접해가는 과정이 아니라, 가능한 관점들이 '폭발적으로' 늘어나는 과정이며, 새로운 대안적 해석을 통해 "이전의 확정성·정밀성에 대한 환상을 폭로하는 것(unmasking of previous illusions of determinacy and precision)"을 목표로 합니다.
 
-*   **①. criteria for evaluating historical representations:** 역사학은 오히려 다양한 해석을 증식시키는 데 중점을 두므로, 과학에서처럼 '정밀성'이나 '확정성' 자체가 역사적 재현을 평가하는 유일하거나 핵심적인 기준이 되지는 않습니다. 역사학은 다양한 관점을 존중합니다.
+빈칸 문장은 이러한 역사적 통찰의 발전이 외부인에게는 "계속해서 ________을 의심하는 과정(a continuous questioning of ________)"으로 보일 수 있으며, 이는 과학에서처럼 "진리에 더 가까이 다가가는 과정(an ever greater approximation to the truth)"과 대조된다고 말합니다. 앞서 나온 "이전의 확정성·정밀성이라는 환상을 폭로한다"는 내용과 연결하면, 빈칸에는 '이미 달성된 것처럼 보였던 확실성과 정밀성'을 계속 의심한다는 내용이 들어가야 합니다.
 
-*   **③. possibilities of alternative interpretations of an event:** 이것은 역사학의 특징에 가깝습니다. 과학의 정밀성과 확정성이 '대안적 해석의 가능성'을 위한 필수 조건이라고 보기는 어렵습니다. 오히려 과학은 단일한 진리를 향해 나아가는 경향이 있습니다.
+*   **②. certainty and precision seemingly achieved already (정답):** "이미 달성된 것처럼 보이는 확실성과 정밀성"을 계속 캐묻는다는 뜻으로, 앞서 언급된 "unmasking of previous illusions of determinacy and precision"과 정확히 같은 내용을 가리킵니다.
+*   **①. criteria for evaluating historical representations:** 역사적 재현을 평가하는 '기준' 자체를 의심한다는 내용은 지문에서 언급되지 않습니다.
+*   **③. possibilities of alternative interpretations of an event:** 역사학은 오히려 대안적 해석의 '가능성'을 늘리는 쪽이므로, 그 가능성 자체를 의심한다는 것은 지문의 방향과 반대됩니다.
+*   **④. coexistence of multiple viewpoints in historical writing:** 여러 관점의 공존은 역사학이 지향하는 결과이지, 의심의 대상으로 제시되지 않습니다.
+*   **⑤. correctness and reliability of historical evidence collected:** 지문은 '증거의 정확성'이 아니라 '정밀성·확정성이라는 환상' 자체에 대한 의심을 이야기하고 있습니다.
 
-*   **④. coexistence of multiple viewpoints in historical writing:** 여러 관점의 공존은 역사학의 특징이지만, 이것이 과학에서 '정밀성'과 '확정성'이 필요한 직접적인 이유라고 보기는 어렵습니다. 과학은 더 보편적이고 객관적인 진리를 추구합니다.
-
-*   **⑤. correctness and reliability of historical evidence collected:** 역사적 증거의 정확성과 신뢰성은 중요하지만, 지문에서 말하는 '정밀성'과 '확정성'의 필요성을 과학적 맥락에서 설명하는 데 가장 직접적인 선택지는 아닙니다. 과학은 이러한 요소들을 바탕으로 더 근본적인 '진리' 또는 '이론'의 정밀성과 확정성을 추구합니다.
+결론적으로, 역사학은 과학과 달리 진리에 점점 다가가는 것이 아니라, 이미 확립된 것처럼 보였던 정밀성과 확정성 자체를 계속 의심하며 새로운 해석을 만들어내는 학문이라는 것이 지문의 핵심이며, 정답은 ②입니다.
 
 ## 마무리: 단어 학습, Scan Voca로 효율을 더하다
 

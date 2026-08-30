@@ -17,7 +17,12 @@ thumbnail: "/blog-images/reading-evolution-visual-texts-suneung-2024/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 31번).
 
-"learn to read has foregrounded the nature of textuality, and of
+**문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것은?
+
+**지문:**
+
+Over the last decade the attention given to how children
+learn to read has foregrounded the nature of textuality, and of
 the different, interrelated ways in which readers of all ages
 make texts mean. ‘Reading’ now applies to a greater number of
 representational forms than at any time in the past: pictures,
@@ -30,12 +35,11 @@ kind of interpretation than it was when children’s attention
 was focused on the printed text, with sketches or pictures as an
 adjunct. Children now learn from a picture book that words
 and illustrations complement and enhance each other. Reading
-is not simply . Even in the easiest
+is not simply ________. Even in the easiest
 texts, what a sentence ‘says’ is often not what it means.
-*adjunct: 부속물"
+*adjunct: 부속물
 
-**문제:** Over the last decade the attention given to how children
-
+**선택지:**
 ①. word recognition
 ②. imaginative play
 ③. knowledge acquisition
@@ -53,20 +57,21 @@ texts, what a sentence ‘says’ is often not what it means.
 
 ## 2024 수능 영어 31번 상세 해설
 
-**정답: ② imaginative play**
+**정답: ① word recognition**
 
 **해설:**
 
-이 문제는 "Over the last decade the attention given to how children"이라는 문장의 빈칸에 들어갈 가장 적절한 표현을 고르는 문제입니다. 지문은 '읽기'가 과거의 단순한 인쇄 텍스트 해독에서 벗어나, 그림, 지도, 화면 등 다양한 형태의 텍스트를 포함하게 되었다고 설명합니다. 특히 그림책의 경우, 글과 그림이 상호 보완하며 더 복잡한 해석을 요구하게 되었음을 강조합니다.
+빈칸 문장 "Reading is not simply ________. Even in the easiest texts, what a sentence ‘says’ is often not what it means."는 '읽기'가 단순히 무엇이 아닌지를 말하면서, 그 근거로 "가장 쉬운 텍스트에서조차 문장이 '말하는' 것이 종종 '의미하는' 것과 다르다"는 점을 듭니다. 즉, 문자를 있는 그대로 읽어내는 것만으로는 실제 의미에 도달할 수 없다는 뜻이므로, 빈칸에는 '단어를 알아보는 것(word recognition)'만으로는 읽기가 성립하지 않는다는 내용이 들어가야 앞뒤 문맥이 자연스럽게 이어집니다.
 
+지문 전체도 이 결론을 뒷받침합니다. '읽기'가 그림, 지도, 화면, 디자인 그래픽 등 다양한 형태의 텍스트를 포함하게 되면서 더 복잡한 해석을 요구하게 되었고, 그림책에서는 글과 그림이 서로 보완하며 의미를 만들어낸다고 설명합니다. 이는 모두 '단어를 알아보는 것' 이상의 능력이 필요하다는 논지로 이어집니다.
 
-*   **① word recognition (단어 인식):** 지문은 단순한 단어 인식을 넘어선 해석 능력을 강조하므로 오답입니다. ‘Reading is not simply .’ 부분에서 이를 암시합니다.
-*   **② imaginative play (상상 놀이):** 지문에서 그림책과 같이 시각적 요소와 텍스트가 결합된 형태의 텍스트가 아동의 '읽기'에 미치는 영향을 설명하면서, 이러한 텍스트들이 단순한 정보 전달을 넘어 아동의 상상력을 자극하고 놀이와 같은 방식으로 의미를 구성하게 한다는 점을 함축하고 있습니다. 따라서 빈칸에 들어갈 가장 적절한 내용으로 볼 수 있습니다.
-*   **③ knowledge acquisition (지식 습득):** 지문은 '읽기'의 변화를 다루지만, '지식 습득'이라는 특정 결과에만 초점을 맞추지는 않습니다. '어떻게 읽는가'에 대한 변화가 핵심입니다.
-*   **④ image mapping (이미지 매핑):** '이미지 매핑'은 시각적 정보를 다루는 특정 기술을 의미할 수 있으나, 지문에서 말하는 '읽기'의 전반적인 변화를 포괄하기에는 너무 구체적이고 제한적입니다.
-*   **⑤ subjective interpretation (주관적 해석):** 지문은 '읽기'가 더 복잡한 해석을 요구한다고 말하지만, '주관적' 해석만을 강조하지는 않습니다. 글과 그림의 상호 보완을 통한 의미 형성과 같이, 객관적인 맥락 속에서의 해석 또한 중요하게 다루고 있습니다.
+*   **① word recognition (단어 인식, 정답):** 지문 전체가 '읽기'는 단어를 알아보는 것 이상의 복잡한 해석 과정이라고 설명하므로, "읽기는 단순히 단어 인식이 아니다"라는 내용이 빈칸에 가장 적절합니다.
+*   **② imaginative play (상상 놀이):** 지문은 그림과 텍스트의 상호작용을 설명하지만, '읽기'를 '상상 놀이'와 대비시키는 내용은 없습니다.
+*   **③ knowledge acquisition (지식 습득):** 지문은 '지식 습득'이 아니라 다양한 형태의 텍스트를 해석하는 능력에 초점을 둡니다.
+*   **④ image mapping (이미지 매핑):** 지문에 없는 지나치게 기술적이고 구체적인 개념입니다.
+*   **⑤ subjective interpretation (주관적 해석):** 빈칸 뒤 문장은 '문장이 말하는 것과 의미하는 것이 다르다'는 내용을 언급하지만, 빈칸 자체가 부정하는 대상은 '주관적 해석'이 아니라 '단어 인식'입니다.
 
-결론적으로, 텍스트 형식의 진화는 아동의 '읽기' 방식에 영향을 미치며, 이는 단순한 단어 인식을 넘어 상상력을 발휘하는 놀이와 같은 방식으로 의미를 구성하는 과정으로 확장된다고 볼 수 있습니다. 따라서 'imaginative play'가 빈칸에 들어갈 가장 적절한 표현입니다.
+결론적으로, 지문은 '읽기'가 다양한 시각적 형태를 포괄하는 복잡한 해석 과정으로 진화했으며, 그 핵심은 단순한 단어 인식을 넘어선다는 데 있다고 말합니다. 따라서 빈칸에 들어갈 가장 적절한 표현은 'word recognition'입니다.
 
 ## 새로운 시대의 읽기, Scan Voca와 함께
 

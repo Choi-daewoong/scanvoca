@@ -17,9 +17,17 @@ thumbnail: "/blog-images/reputation-market-enforcement-suneung-english-2025-36/1
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2025학년도 대학수학능력시험 영어영역 36번).
 
-```
+**문제:** 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [3점]
+
+**주어진 글:**
+
+The potential for market enforcement is greater when
 contracting parties have developed reputational capital that
 can be devalued when contracts are violated.
+
+**이어지는 글:**
+
+```
 (A) Similarly, a landowner can undermaintain fences, ditches,
 and irrigation systems. Accurate assessments of farmer
 and landowner behavior will be made over time, and
@@ -38,7 +46,7 @@ farming communities, reputations are well known.
 *ditch: 개천 **irrigation: 물을 댐
 ```
 
-**문제:** The potential for market enforcement is greater when
+**선택지:**
 
 ①. (A) － (C) － (B)
 ②. (B) －(A) － (C)
@@ -58,7 +66,7 @@ farming communities, reputations are well known.
 
 *   **두 번째 문장 (B):** (C)에서 구축된 평판이 어떻게 작동하는지에 대한 설명을 이어갑니다. 토지 소유주들이 농부들의 행동(보고된 생산량, 토양 상태, 특이 행동 등)을 관찰하며 간접적으로 감시한다고 설명합니다. 그리고 '농부와 토지 소유주의 평판은 보증 역할을 한다(Farmer and landowner reputations act as a bond)'고 명시하며, 평판이 일종의 '계약 이행 보증' 역할을 함을 분명히 합니다. 또한, 농부가 계약을 위반할 수 있는 구체적인 방법(노력 감소, 토양 남용, 수확량 축소 보고)을 제시하며, 이러한 위반 행위가 발생할 가능성을 언급합니다.
 
-*   **세 번째 문장 (A):** (B)에서 언급된 '계약 위반'의 결과와 시장 강제력을 설명하며 마무리합니다. 만약 농부나 토지 소유주가 상대방을 속여 이득을 취하려 한다면, 시간이 지남에 따라 이러한 행동에 대한 정확한 평가가 이루어질 것이고, 결국 다른 사람들은 그들과 거래하기를 거부할 것임을 예측합니다. 이는 '평판 자본이 계약 위반 시 가치가 하락할 수 있다'는 첫 문장의 내용을 재확인시켜주며, '시장 강제력(market enforcement)'이 어떻게 작동하는지 보여줍니다. 즉, 평판이 나빠지면 시장에서 거래 기회를 잃게 되는 것입니다. 따라서 'The potential for market enforcement is greater when'이라는 질문에 대한 답은, 농부와 토지 소유주들이 서로의 행동을 감시하고 평가하며, 부정직한 거래 상대방과의 거래를 거부하는 시스템이 작동할 때 (즉, (C)에서 구축된 평판이 (B)에서처럼 감시되고 (A)와 같이 거래 거부로 이어질 때) 시장 강제력이 커진다고 해석할 수 있습니다.
+*   **세 번째 문장 (A):** (B)에서 언급된 '계약 위반'의 결과와 시장 강제력을 설명하며 마무리합니다. 만약 농부나 토지 소유주가 상대방을 속여 이득을 취하려 한다면, 시간이 지남에 따라 이러한 행동에 대한 정확한 평가가 이루어질 것이고, 결국 다른 사람들은 그들과 거래하기를 거부할 것임을 예측합니다. 이는 '평판 자본이 계약 위반 시 가치가 하락할 수 있다'는 첫 문장의 내용을 재확인시켜주며, '시장 강제력(market enforcement)'이 어떻게 작동하는지 보여줍니다. 즉, 평판이 나빠지면 시장에서 거래 기회를 잃게 되는 것입니다. 이는 주어진 문장의 "reputational capital that can be devalued when contracts are violated"(계약 위반 시 평판 자본이 가치를 잃는다)는 내용을 구체적으로 완성하는 결론이므로, (C)에서 구축된 평판이 (B)에서처럼 감시되고 (A)와 같이 거래 거부로 이어지는 순서, 즉 (C)－(B)－(A)가 가장 자연스러운 논리적 흐름입니다.
 
 ## 신뢰가 시장을 움직이는 힘: Scan Voca와 함께라면 어렵지 않아요!
 
