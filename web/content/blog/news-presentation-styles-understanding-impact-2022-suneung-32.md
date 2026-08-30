@@ -17,10 +17,13 @@ thumbnail: "/blog-images/news-presentation-styles-understanding-impact-2022-sune
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 32번).
 
+**문제(question):** 다음 빈칸에 들어갈 말로 가장 적절한 것은? [3점]
+
 **지문(passage):**
 
+News, especially in its televised form, is constituted not
 only by its choice of topics and stories but by its
-. Presentational
+________________________. Presentational
 styles have been subject to a tension between an
 informational-educational purpose and the need to engage us
 entertainingly. While current affairs programmes are often
@@ -36,10 +39,6 @@ said to enhance understanding by engaging an audience unwilling
 to endure the longer verbal orientation of older news formats.
 However, they arguably work to reduce understanding by
 failing to provide the structural contexts for news events.
-
-**문제(question):**
-
-News, especially in its televised form, is constituted not
 
 **선택지:**
 ①. coordination with traditional display techniques

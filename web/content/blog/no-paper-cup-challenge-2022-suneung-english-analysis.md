@@ -1,13 +1,13 @@
 ---
-title: "2022 수능 영어 4번 도표 문제 정복! 'No Paper Cup Challenge' 참여 방법부터 함정까지 완벽 분석"
-description: "2022학년도 수능 영어 27번 문제에 등장한 'No Paper Cup Challenge' 안내문을 통해 도표 정보 일치 유형의 함정을 피하고 참여 방법을 정확히 파악하는 실전 독해 전략을 제시합니다."
+title: "2022 수능 영어 안내문 문제 정복! 'No Paper Cup Challenge' 참여 방법부터 함정까지 완벽 분석"
+description: "2022학년도 수능 영어 27번 문제에 등장한 'No Paper Cup Challenge' 안내문을 통해 안내문 내용 일치 유형의 함정을 피하고 참여 방법을 정확히 파악하는 실전 독해 전략을 제시합니다."
 category: "수능·내신"
-tags: ["수능영어", "도표 문제", "No Paper Cup Challenge", "독해 전략", "고등영어"]
+tags: ["수능영어", "안내문 문제", "No Paper Cup Challenge", "독해 전략", "고등영어"]
 date: "2026-08-06"
 published: true
 thumbnail: "/blog-images/no-paper-cup-challenge-2022-suneung-english-analysis/1.png"
 ---
-![2022 수능 영어 4번 도표 문제 정복! 'No Paper Cup Challenge' 참여 방법부터 함정까지 완벽 분석](/blog-images/no-paper-cup-challenge-2022-suneung-english-analysis/1.png)
+![2022 수능 영어 안내문 문제 정복! 'No Paper Cup Challenge' 참여 방법부터 함정까지 완벽 분석](/blog-images/no-paper-cup-challenge-2022-suneung-english-analysis/1.png)
 
 안녕하세요! 영어 학습 서비스 Scan Voca입니다. 수능 영어의 안내문 일치 유형은 꼼꼼하게 세부 정보를 파악하는 능력을 요구합니다. 2022학년도 수능 영어 27번에 출제된 'No Paper Cup Challenge' 안내문으로 먼저 직접 풀어보세요.
 

@@ -19,7 +19,6 @@ thumbnail: "/blog-images/niklas-luhmann-2023-suneung-analysis/1.png"
 
 **지문:**
 
-것은?
 Niklas Luhmann, a renowned sociologist of the twentieth
 century, was born in Lüneburg, Germany in 1927. After World
 War II, he studied law at the University of Freiburg until 1949.

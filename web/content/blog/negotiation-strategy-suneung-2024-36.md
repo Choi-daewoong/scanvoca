@@ -17,19 +17,22 @@ thumbnail: "/blog-images/negotiation-strategy-suneung-2024-36/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 36번).
 
-**[원문 지문 및 문제]**
+**[문제]** 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [3점]
 
-"reconcile conflicting positions in order to reach an acceptable outcome.
-(A) Areas of difference can and do frequently remain, and will perhaps be the subject of future negotiations, or indeed remain irreconcilable. In those instances in which the parties have highly antagonistic or polarised relations, the process is likely to be dominated by the exposition, very often in public, of the areas of conflict.
-(B) In these and sometimes other forms of negotiation, negotiation serves functions other than reconciling conflicting interests. These will include delay, publicity, diverting attention or seeking intelligence about the other party and its negotiating position.
-(C) Whatever the nature of the outcome, which may actually favour one party more than another, the purpose of negotiation is the identification of areas of common interest and conflict. In this sense, depending on the intentions of the parties, the areas of common interest may be clarified, refined and given negotiated form and substance.
-
-*reconcile: 화해시키다 **antagonistic: 적대적인
-***exposition: 설명"
-
-**[문제]**
+**[주어진 글]**
 
 Negotiation can be defined as an attempt to explore and
+reconcile conflicting positions in order to reach an acceptable outcome.
+
+**[이어지는 글]**
+
+(A) Areas of difference can and do frequently remain, and will perhaps be the subject of future negotiations, or indeed remain irreconcilable. In those instances in which the parties have highly antagonistic or polarised relations, the process is likely to be dominated by the exposition, very often in public, of the areas of conflict.
+
+(B) In these and sometimes other forms of negotiation, negotiation serves functions other than reconciling conflicting interests. These will include delay, publicity, diverting attention or seeking intelligence about the other party and its negotiating position.
+
+(C) Whatever the nature of the outcome, which may actually favour one party more than another, the purpose of negotiation is the identification of areas of common interest and conflict. In this sense, depending on the intentions of the parties, the areas of common interest may be clarified, refined and given negotiated form and substance.
+
+*reconcile: 화해시키다 **antagonistic: 적대적인 ***exposition: 설명
 
 **[선택지]**
 

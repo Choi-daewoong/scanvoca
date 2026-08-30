@@ -15,63 +15,54 @@ thumbnail: "/blog-images/mutation-typo-analogy-suneung-2024-39/1.png"
 ## 2024학년도 수능 영어 39번 기출 전문
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 39번).
 
+**문제:** 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오. [3점]
+
+**주어진 문장:**
+
+At the next step in the argument, however, the analogy
 breaks down.
+
+**지문:**
+
 Misprints in a book or in any written message usually have a
 negative impact on the content, sometimes (literally) fatally.
-
-문제(question): At the next step in the argument, however, the analogy
-
-선택지:
-①. ) The displacement of a comma, for instance, may be a
-matter of life and death.
-②. ) Similarly most mutations have
+( ① ) The displacement of a comma, for instance, may be a
+matter of life and death. ( ② ) Similarly most mutations have
 harmful consequences for the organism in which they occur,
-meaning that they reduce its reproductive fitness.
-③. ) Occasionally, however, a mutation may occur that increases
+meaning that they reduce its reproductive fitness. ( ③ ) Occasionally, however, a mutation may occur that increases
 the fitness of the organism, just as an accidental failure to
 reproduce the text of the first edition might provide more
-accurate or updated information.
-④. ) A favorable mutation
+accurate or updated information. ( ④ ) A favorable mutation
 is going to be more heavily represented in the next generation,
 since the organism in which it occurred will have more offspring
-and mutations are transmitted to the offspring.
-⑤. ) By
+and mutations are transmitted to the offspring. ( ⑤ ) By
 contrast, there is no mechanism by which a book that
 accidentally corrects the mistakes of the first edition will tend
-to sell better. [3점]
+to sell better.
 *analogy: 유사 **mutation: 돌연변이
+
+**선택지:**
+①. ②. ③. ④. ⑤.
 
 ## 문제 유형 파악 및 접근 전략
 
-이 문제는 '글의 내용 순서 배열' 또는 '빈칸 추론'과 유사하게, 주어진 글의 논리적 흐름 속에서 빈칸에 들어갈 가장 적절한 문장을 찾는 유형입니다. 핵심은 'analogy(유사)'라는 단어와 앞뒤 문맥을 통해 '돌연변이'와 '책의 오탈자' 비유가 어떻게 연결되는지 파악하는 것입니다. 
+이 문제는 이미 완성된 하나의 문장("At the next step in the argument, however, the analogy breaks down.")을 지문 속 ①~⑤ 중 정확한 위치에 되돌려 놓는 **'문장 삽입'** 유형입니다. 새로운 내용을 추론해 만들어내는 게 아니라, 주어진 문장이 앞뒤 문맥과 자연스럽게 이어지는 지점을 찾는 것이 핵심입니다.
 
-1.  **핵심 키워드 파악:** 지문에서 'misprints'(오탈자), 'negative impact'(부정적 영향), 'fatally'(치명적으로)와 같은 표현에 주목합니다. 이는 책의 오탈자가 내용에 부정적인 영향을 미친다는 점을 강조하고 있습니다.
-2.  **비유의 전환점 찾기:** 'At the next step in the argument, however...'라는 도입부는 앞선 내용과 반대되거나 새로운 방향으로 논의가 전환됨을 암시합니다. 따라서 빈칸에는 오탈자의 부정적인 영향에 대한 설명이 아닌, 다른 관점이나 예시가 나와야 합니다.
-3.  **선택지 분석:** 각 선택지가 '돌연변이'와 '책의 오탈자' 비유 중 어느 부분에 해당하는지, 그리고 앞선 내용과의 논리적 연결성이 있는지 살펴보아야 합니다. 특히 '돌연변이'와 '오탈자' 사이의 유사성을 설명하는 선택지가 정답일 가능성이 높습니다.
-4.  **'돌연변이'와 '오탈자'의 공통점 추론:** 지문 앞부분에서 책의 오탈자가 내용에 부정적인 영향을 미친다고 설명했습니다. 그렇다면 '돌연변이' 역시 일반적으로는 부정적인 영향을 미칠 것이라고 추론할 수 있습니다. 빈칸 이후에는 이 둘 사이의 유사점을 더 발전시키거나, 혹은 긍정적인 측면을 제시할 수도 있습니다. 따라서 선택지에서 '돌연변이'가 부정적인 영향을 미친다는 내용이 나온다면, 이는 앞선 오탈자의 부정적 영향과 유사한 맥락으로 볼 수 있습니다.
+1.  **주어진 문장의 의미 파악:** "그러나 다음 단계에서는 이 비유(analogy)가 깨진다"는 뜻입니다. 즉, 이 문장 앞까지는 '책의 오탈자'와 '돌연변이'가 계속 비슷하게 흘러오다가, 이 문장 이후부터는 두 대상이 서로 다르게 갈라진다는 신호입니다.
+2.  **비유가 유지되는 구간과 깨지는 구간 구분하기:** 지문 초반(오탈자는 치명적일 수 있다 → 돌연변이도 대부분 해롭다)까지는 '오탈자=돌연변이'라는 비유가 그대로 유지됩니다. 하지만 이후 '가끔 유리한 돌연변이가 생기면 다음 세대에 더 많이 퍼진다'는 내용은, '우연히 오타가 고쳐진 책이 더 잘 팔리는 메커니즘은 없다'는 내용과 정반대로 대비되면서 비유가 무너지는 지점입니다.
+3.  **연결어로 확인하기:** ④ 뒤의 문장이 'By contrast(대조적으로)'로 시작한다는 점에 주목하세요. '대조'는 이미 무언가와 다르다는 것을 전제로 하므로, 그 앞에서 이미 '비유가 깨졌다'는 선언이 있어야 자연스럽습니다.
 
 ## 정답 및 해설
 
-**정답: ②**
+**정답: ⑤**
 
-**선택지별 해설:**
+**해설:**
 
-*   **① The displacement of a comma, for instance, may be a matter of life and death.**
-    이 선택지는 책의 오탈자가 치명적일 수 있다는 앞선 내용(misprints...sometimes (literally) fatally)을 구체적인 예시(comma displacement)로 설명하는 내용입니다. 빈칸 앞의 'however'와 연결되지 않고, 오히려 앞선 내용과 같은 맥락을 이어갑니다. 따라서 빈칸에 들어갈 수 없습니다.
+지문은 처음부터 ④까지 '오탈자'와 '돌연변이'의 비유가 계속 유지됩니다: 오탈자는 치명적일 수 있고(①) 돌연변이도 대부분 해롭다는 점이 유사하며(②), 가끔 유리한 돌연변이가 나타날 수 있다는 점(③)과 그 유리한 돌연변이가 다음 세대에 더 많이 퍼진다는 점(④)까지도 두 대상이 나란히 비교됩니다.
 
-*   **② Similarly most mutations have harmful consequences for the organism in which they occur, meaning that they reduce its reproductive fitness.**
-    'Similarly'라는 단어는 앞선 내용과의 유사성을 나타냅니다. 앞선 내용에서 '책의 오탈자'가 내용에 부정적 영향을 미친다고 했습니다. 이 선택지에서는 '돌연변이' 역시 유기체에 해로운 결과를 초래하며 번식 능력을 감소시킨다고 설명합니다. 이는 '책의 오탈자'가 초래하는 부정적 영향과 '돌연변이'가 초래하는 부정적 영향이 유사하다는 점을 명확히 연결해 줍니다. 따라서 'At the next step in the argument, however'라는 전환 후, 앞선 오탈자의 부정적 영향에 대한 유사한 맥락으로 돌연변이의 부정적 영향을 제시하는 것은 매우 자연스럽습니다. 이 선택지가 빈칸에 들어갈 경우, '돌연변이'와 '책의 오탈자'라는 두 가지 비유가 각각 부정적인 영향을 초래한다는 공통점을 갖게 됩니다.
+그런데 ⑤ 뒤 문장은 "By contrast, there is no mechanism by which a book that accidentally corrects the mistakes of the first edition will tend to sell better."(대조적으로, 우연히 오타가 고쳐진 책이 더 잘 팔리게 되는 메커니즘은 없다)라고 말합니다. 이는 ④에서 설명한 '유리한 돌연변이는 번식을 통해 확산된다'는 메커니즘이 책의 오탈자에는 없다는 뜻으로, 여기서 비로소 두 비유가 결정적으로 갈라집니다. 'By contrast'라는 대조 연결어가 자연스러우려면 바로 그 앞에 "이 지점에서 비유가 깨진다"는 선언이 먼저 나와야 합니다. 따라서 주어진 문장 "At the next step in the argument, however, the analogy breaks down."은 ④와 ⑤ 사이, 즉 ⑤ 위치에 들어가는 것이 가장 자연스럽습니다.
 
-*   **③ Occasionally, however, a mutation may occur that increases the fitness of the organism, just as an accidental failure to reproduce the text of the first edition might provide more accurate or updated information.**
-    이 선택지는 '돌연변이'가 긍정적인 영향을 미칠 수도 있다는 내용과, 책의 오탈자가 오히려 더 정확하거나 업데이트된 정보를 제공할 수도 있다는 내용을 제시합니다. 이는 'however' 이후의 새로운 논의 방향을 제시할 수는 있지만, ②번 선택지가 '돌연변이'와 '오탈자'의 '유사성'을 더 직접적으로 연결하고 있습니다. 또한, 'accidental failure to reproduce the text of the first edition'이 긍정적인 결과를 가져온다는 내용은 지문 앞부분에서 언급된 'misprints...usually have a negative impact'와 직접적으로 상반되는 것으로 보이기 어렵습니다. ②번이 돌연변이의 일반적인 부정적 영향에 대한 유사성을 제시한 후, ③번에서 예외적인 긍정적 돌연변이에 대해 논하는 것이 일반적인 논리 흐름일 수 있습니다.
-
-*   **④ A favorable mutation is going to be more heavily represented in the next generation, since the organism in which it occurred will have more offspring and mutations are transmitted to the offspring.**
-    이 선택지는 '유리한 돌연변이(favorable mutation)'가 다음 세대에 더 많이 나타나는 이유를 설명합니다. 이는 돌연변이가 유기체에 미치는 '영향' 자체보다는, 그 돌연변이가 '전달되고 확산되는 메커니즘'에 초점을 맞추고 있습니다. 또한 'favorable'이라는 단어는 긍정적인 측면을 다루는데, 이는 ②번이 제시하는 'harmful consequences'와 직접적으로 연결되지 않습니다. 빈칸 앞의 'however'와 함께, 오탈자의 부정적 영향과 직접적으로 연결되는 유사점을 찾기 어렵습니다.
-
-*   **⑤ By contrast, there is no mechanism by which a book that accidentally corrects the mistakes of the first edition will tend to sell better.**
-    'By contrast'는 앞선 내용과 대조되는 내용을 이끌 때 사용됩니다. 이 선택지는 책이 실수로 오타를 수정하는 경우 판매가 더 잘 될 메커니즘이 없다고 말합니다. 이는 '책의 오탈자'가 판매에 미치는 영향에 대한 논의로, '돌연변이' 비유와의 직접적인 연결고리가 약합니다. 또한, 'however' 뒤에 오는 내용으로는 다소 엉뚱한 방향으로 느껴질 수 있습니다.
-
-결론적으로, 'At the next step in the argument, however' 이후에 '돌연변이'와 '책의 오탈자'라는 두 비유 간의 유사성을 가장 잘 설명하며 논리적으로 자연스럽게 이어지는 것은 ②번 선택지입니다. 책의 오탈자가 내용에 부정적 영향을 미치는 것처럼, 돌연변이 역시 대부분 유기체에 해로운 영향을 미친다는 유사점을 제시하며 글의 논리를 전개합니다.
+*   **①, ②, ③, ④ 위치가 아닌 이유:** 이 네 지점까지는 오탈자와 돌연변이의 비유가 계속 같은 방향으로 유지되고 있어("치명적이다", "대부분 해롭다", "가끔 유리할 수 있다", "유리한 것은 확산된다"), 그 사이에 "비유가 깨진다"는 문장을 넣으면 오히려 흐름이 끊깁니다.
 
 ## Scan Voca와 함께 수능 영어 정복하기
 
