@@ -17,12 +17,17 @@ thumbnail: "/blog-images/critical-thinking-mental-liberation-suneung-english/1.p
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2025학년도 대학수학능력시험 영어영역 32번).
 
+**문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. [3점]
+
+**지문:**
+
+Education, at its best, teaches more than just knowledge.
 It teaches critical thinking: the ability to stop and think
 before acting, to avoid succumbing to emotional pressures.
 This is not thought control. It is the very reverse: mental
 liberation. Even the most advanced intellectual will be
 imperfect at this skill. But even imperfect possession of it
-of being ‘stimulus-driven’,
+________________________ of being ‘stimulus-driven’,
 constantly reacting to the immediate environment, the
 brightest colours or loudest sounds. Being driven by heuristic
 responses, living by instinct and emotion all the time, is a very
@@ -35,22 +40,23 @@ may one day kill us, so our reliance on feelings can do us great
 harm.
 *succumb: 굴복하다 **arterial: 동맥의
 
-Education, at its best, teaches more than just knowledge.
-
+**선택지:**
 ①. intensifies people’s danger
 ②. enhances our understanding
 ③. frees a person from the burden
 ④. allows us to accept the inevitability
 ⑤. requires one to have the experience
 
-## 문제 유형 분석 및 풀이 전략: '글의 요지' 파악하기
+## 문제 유형 분석 및 풀이 전략: 빈칸에 숨은 논리 찾기
 
-이 문제는 '글의 요지'를 묻는 유형입니다. 즉, 글쓴이가 전달하고자 하는 핵심 메시지를 파악하는 것이 중요합니다. 이런 유형의 문제를 풀 때는 몇 가지 전략을 활용할 수 있습니다.
+이 문제는 '글의 요지'를 묻는 유형이 아니라, 지문 중간에 뚫린 빈칸을 채우는 **'빈칸 추론'** 유형입니다. 빈칸 문장을 뜯어보면 "even imperfect possession of it ___ of being 'stimulus-driven', constantly reacting to..."라는 구조인데, 여기서 'it'은 앞 문장의 'critical thinking'을 가리킵니다. 즉 빈칸에는 '비판적 사고 능력을 조금이라도 갖추면, ~하는 것으로부터 (사람을) 벗어나게 해준다'는 의미가 들어가야 문법적으로도 내용상으로도 자연스럽습니다.
 
-1.  **주제문 찾기:** 일반적으로 글의 첫 문장이나 마지막 문장에 주제문이 제시되는 경우가 많습니다. 지문의 첫 문장 "It teaches critical thinking..."과 마지막 문장 "Education, at its best, teaches more than just knowledge."를 주의 깊게 살펴보세요. 이 문장들이 글 전체의 내용을 아우르는 핵심 내용을 담고 있을 가능성이 높습니다.
-2.  **반복되는 핵심 어휘 및 개념 파악:** 'critical thinking', 'emotional pressures', 'mental liberation'과 같은 핵심 어휘들이 지문에서 어떻게 사용되고 있는지 주목하세요. 이러한 어휘들은 글의 주제와 직접적으로 연결됩니다.
-3.  **예시 및 부연 설명 이해:** 지문 중간에 나오는 'stimulus-driven', 'heuristic responses', 'burgers'와 같은 예시들은 핵심 개념을 더 명확하게 설명하기 위해 사용됩니다. 이러한 예시들을 통해 '비판적 사고'가 부족할 때 발생할 수 있는 문제점들을 이해할 수 있습니다.
-4.  **선택지 먼저 읽기 (선택 사항):** 일반적인 요지 파악 문제에서는 선택지를 먼저 읽고 각 선택지가 지문의 어느 부분과 관련 있는지 파악하며 읽는 것이 도움이 될 수 있습니다. 하지만 이 문제의 경우, 지문이 비교적 짧고 핵심 내용이 명확하여 지문을 먼저 읽고 요지를 파악한 뒤 선택지를 확인하는 것이 더 효과적일 수 있습니다.
+이런 유형의 문제를 풀 때는 몇 가지 전략을 활용할 수 있습니다.
+
+1.  **빈칸 앞뒤 문법 구조 확인:** 빈칸 뒤에 'of being ~'이 이어지므로, 빈칸에는 '~로부터 자유롭게 하다/벗어나게 하다'처럼 'of'와 자연스럽게 연결되는 동사구가 들어가야 합니다. 이것만으로도 상당수 오답을 걸러낼 수 있습니다.
+2.  **반복되는 핵심 어휘 및 개념 파악:** 'critical thinking', 'emotional pressures', 'mental liberation'과 같은 핵심 어휘들이 지문에서 어떻게 사용되고 있는지 주목하세요. 특히 'mental liberation(정신적 해방)'이라는 표현은 빈칸에 들어갈 내용을 강하게 암시하는 단서입니다.
+3.  **예시 및 부연 설명 이해:** 빈칸 뒤에 이어지는 'stimulus-driven', 'heuristic responses', 'burgers'와 같은 예시들은 '비판적 사고 없이 감정과 본능에만 의존해 사는 것'이 오히려 해로울 수 있다는 근거로, 빈칸 내용이 '그런 상태에서 벗어나게 해준다'는 의미여야 함을 뒷받침합니다.
+4.  **글 전체의 도입 문장과 연결 짓기:** 첫 문장 "Education, at its best, teaches more than just knowledge."는 이 글이 앞으로 '지식 이상의 것'을 이야기할 것임을 예고합니다. 빈칸을 포함한 문장이 바로 그 '지식 이상의 것'(비판적 사고)이 우리에게 무엇을 해주는지 설명하는 핵심 문장입니다.
 
 이러한 전략들을 바탕으로 지문을 다시 한번 읽어보며, 교육이 '지식'을 넘어서 무엇을 가르치는지, 그리고 그것이 우리에게 어떤 영향을 미치는지 생각해 보세요.
 
@@ -60,11 +66,11 @@ Education, at its best, teaches more than just knowledge.
 
 **해설:**
 
-*   **③. frees a person from the burden (한 사람을 부담에서 해방시킨다):** 지문은 교육이 '비판적 사고'를 가르친다고 말합니다. 비판적 사고는 감정적 압박감에 굴복하지 않고 생각하게 함으로써, 결과적으로 '정신적 해방(mental liberation)'을 가져온다고 설명합니다. 이는 감정이나 즉각적인 반응에 휘둘리는 부담에서 벗어나도록 돕는다는 의미로 해석될 수 있습니다. 따라서 이 선택지가 글의 요지와 가장 잘 부합합니다.
-*   **①. intensifies people’s danger (사람들의 위험을 증폭시킨다):** 지문은 감정에만 의존하는 것이 장기적으로 건강과 생존에 해로울 수 있다고 언급하지만, 교육 자체가 위험을 증폭시킨다고 말하지는 않습니다. 오히려 비판적 사고를 통해 위험을 피하도록 돕는다고 볼 수 있습니다.
-*   **②. enhances our understanding (우리의 이해를 증진시킨다):** 교육이 이해를 증진시키는 것은 사실이지만, 이 지문에서 강조하는 것은 '비판적 사고'를 통한 '정신적 해방'이라는 좀 더 구체적인 결과입니다. '이해 증진'은 너무 일반적인 내용입니다.
-*   **④. allows us to accept the inevitability (필연성을 받아들이게 한다):** 지문은 감정에 휘둘리지 않고 생각하는 능력을 강조할 뿐, 삶의 필연성을 받아들이는 것에 대한 내용은 다루고 있지 않습니다.
-*   **⑤. requires one to have the experience (경험을 갖도록 요구한다):** 지문은 비판적 사고 능력이 아직 완벽하지 않을 수 있다고 언급하며, 경험이 부족할수록 생각하는 것이 어렵다고 말합니다. 하지만 교육이 반드시 경험을 요구한다고 직접적으로 말하지는 않습니다.
+*   **③. frees a person from the burden (한 사람을 부담에서 해방시킨다):** 빈칸 문장은 "even imperfect possession of it ___ of being 'stimulus-driven'"으로, '그것(비판적 사고)을 불완전하게라도 갖추면 ~로부터 벗어나게 해준다'는 뜻이 되어야 자연스럽습니다. 뒤이어 감정과 본능에만 의존해 사는 것이 오히려 해롭다는 내용이 이어지므로, '자극에 즉각 반응하는 부담(burden)에서 벗어나게 한다'는 이 선택지가 빈칸 앞뒤 문맥과 가장 자연스럽게 이어집니다. 이는 앞서 나온 'mental liberation(정신적 해방)'이라는 표현과도 정확히 호응합니다.
+*   **①. intensifies people’s danger (사람들의 위험을 증폭시킨다):** 문법적으로 'of being ~'과 어울리지 않을뿐더러, 지문은 감정에만 의존하는 것이 위험하다고 말할 뿐 비판적 사고 자체가 위험을 증폭시킨다는 내용은 없습니다.
+*   **②. enhances our understanding (우리의 이해를 증진시킨다):** 'enhances ~ of being'은 문법적으로도 어색하고, 지문이 강조하는 것은 단순한 '이해 증진'이 아니라 자극-반응 패턴으로부터의 '해방'입니다.
+*   **④. allows us to accept the inevitability (필연성을 받아들이게 한다):** 지문은 감정에 휘둘리는 상태에서 벗어나는 것을 이야기할 뿐, 무언가를 '받아들이라'는 내용은 없습니다.
+*   **⑤. requires one to have the experience (경험을 갖도록 요구한다):** 지문 뒷부분은 오히려 본능·감정에만 의존하는 삶이 해롭다는 내용이라, '경험을 요구한다'는 방향과는 맞지 않습니다.
 
 결국, 이 지문은 단순히 지식을 습득하는 것을 넘어, 감정적인 어려움 속에서도 균형 잡힌 사고를 통해 스스로를 지키고 성장할 수 있는 능력을 길러주는 것이 교육의 진정한 힘임을 이야기하고 있습니다. 이러한 '비판적 사고' 능력은 복잡한 정보 속에서 길을 잃지 않고, 감정의 폭풍 속에서도 중심을 잡는 데 필수적입니다. 하지만 아무리 좋은 전략이라도 결국 어휘력이라는 탄탄한 기반 없이는 무용지물일 수 있죠. 수능 영어 지문의 깊이 있는 내용을 이해하고, 나아가 여러분의 생각을 영어로 표현하는 힘을 기르고 싶다면, 무엇보다 어휘 학습이 중요합니다. 여러분의 영어 실력 향상을 위한 가장 확실한 첫걸음, Scan Voca와 함께 시작해 보세요!
 

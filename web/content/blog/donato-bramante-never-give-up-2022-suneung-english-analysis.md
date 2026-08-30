@@ -1,5 +1,5 @@
 ---
-title: "건축가 도나토 브라만테, 그의 인생에서 '포기'는 없었다! (2022 수능 영어 3번 문항 분석)"
+title: "건축가 도나토 브라만테, 그의 인생에서 '포기'는 없었다! (2022 수능 영어 26번 문항 분석)"
 description: "2022 수능 영어 기출 지문을 통해 위대한 건축가 도나토 브라만테의 '포기하지 않는 도전' 정신을 배우고, '주된 관심사'와 '포기'의 관계를 나타내는 문장 구조를 분석하여 영어 독해 실력을 향상시키는 방법을 알아봅니다."
 category: "수능·내신"
 tags: ["수능 영어", "도나토 브라만테", "포기하지 않는 도전", "영어 독해", "문장 구조 분석", "2022 수능"]
@@ -7,7 +7,7 @@ date: "2026-08-06"
 published: true
 thumbnail: "/blog-images/donato-bramante-never-give-up-2022-suneung-english-analysis/1.png"
 ---
-![건축가 도나토 브라만테, 그의 인생에서 '포기'는 없었다! (2022 수능 영어 3번 문항 분석)](/blog-images/donato-bramante-never-give-up-2022-suneung-english-analysis/1.png)
+![건축가 도나토 브라만테, 그의 인생에서 '포기'는 없었다! (2022 수능 영어 26번 문항 분석)](/blog-images/donato-bramante-never-give-up-2022-suneung-english-analysis/1.png)
 
 ## 르네상스 건축가의 일대기, '내용 불일치' 문제로 만나보기
 

@@ -17,7 +17,12 @@ thumbnail: "/blog-images/literature-english-immersion-learning/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2025학년도 대학수학능력시험 영어영역 31번).
 
-because of the it fosters in readers.
+**문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. [3점]
+
+**지문:**
+
+Literature can be helpful in the language learning process
+because of the ________________________ it fosters in readers.
 Core language teaching materials must concentrate on how a
 language operates both as a rule-based system and as a
 sociosemantic system. Very often, the process of learning is
@@ -36,8 +41,6 @@ responses. The language becomes ‘transparent’―the fiction
 draws the whole person into its own world.
 *sociosemantic: 사회의미론적인 **transparent: 투명한
 
-**문제:** Literature can be helpful in the language learning process
-
 **선택지:**
 ①. linguistic insight
 ②. artistic imagination
@@ -45,9 +48,11 @@ draws the whole person into its own world.
 ④. alternative perspective
 ⑤. personal involvement
 
-## 문제 유형별 접근 전략: '주제/요지' 파악하기
+## 문제 유형별 접근 전략: 빈칸에 숨은 논리 찾기
 
-이 문제는 '글의 요지' 또는 '주제'를 파악하는 유형에 속합니다. 수능 영어에서 이러한 유형의 문제는 지문의 핵심 메시지를 정확히 이해했는지를 평가합니다. 문제를 풀기 전에 선택지들을 먼저 훑어보면, 지문이 어떤 방향으로 전개될지 예측하는 데 도움이 됩니다. 선택지들이 모두 '문학 학습의 긍정적 효과'와 관련된 내용을 담고 있음을 알 수 있습니다. 따라서 지문을 읽을 때는 각 문장이 문학 학습의 어떤 측면을 강조하는지에 집중하며 읽는 것이 중요합니다. 특히, 'Engaging imaginatively with literature', 'reader begins to ‘inhabit’ the text', 'drawn into the book', 'feels close to certain characters and shares their emotional responses' 와 같이 학습자의 능동적이고 감정적인 참여를 나타내는 표현들에 주목해야 합니다. 이러한 표현들은 지문의 핵심 내용을 파악하는 단서가 됩니다.
+이 문제는 '글의 요지'를 묻는 유형이 아니라, 지문 첫 문장에 뚫린 빈칸을 채우는 **'빈칸 추론'** 유형입니다. 빈칸 문장 "Literature can be helpful in the language learning process because of the ___ it fosters in readers."는 이 글 전체의 결론을 미리 제시하는 주제문이므로, 뒤에 이어지는 내용 전체가 빈칸을 뒷받침하는 근거가 됩니다.
+
+문제를 풀 때는 선택지들을 먼저 훑어보면, 지문이 어떤 방향으로 전개될지 예측하는 데 도움이 됩니다. 선택지들이 모두 '문학 학습의 긍정적 효과'와 관련된 내용을 담고 있음을 알 수 있습니다. 특히, 'reader begins to ‘inhabit’ the text', 'drawn into the book', 'feels close to certain characters and shares their emotional responses' 와 같이 학습자가 텍스트에 감정적으로 깊이 빠져드는 것을 나타내는 표현들에 주목해야 합니다. 이러한 표현들이 곧 빈칸에 들어갈 내용을 뒷받침하는 핵심 단서입니다.
 
 ## 상세 해설: 왜 'personal involvement'가 정답일까?
 

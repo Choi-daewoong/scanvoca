@@ -17,7 +17,12 @@ thumbnail: "/blog-images/humor-cognitive-disengagement-suneung-english-2022/1.pn
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 31번).
 
-> cognitive disengagement. As long as something is funny, we
+**문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. [3점]
+
+**지문:**
+
+> Humour involves not just practical disengagement but
+________________________ cognitive disengagement. As long as something is funny, we
 are for the moment not concerned with whether it is real or
 fictional, true or false. This is why we give considerable
 leeway to people telling funny stories. If they are getting extra
@@ -32,19 +37,20 @@ people’s heads for the pleasure those ideas will bring, not to
 provide information.
 > *cognitive: 인식의 **leeway: 여지
 
-**문제:** Humour involves not just practical disengagement but
-
+**선택지:**
 ①. accurate
 ②. detailed
 ③. useful
 ④. additional
 ⑤. alternative
 
-## 유머와 현실 왜곡: '인지적 거리두기' 전략
+## 유머와 현실 왜곡: 빈칸에 숨은 논리 찾기
 
-이 문제는 유머가 작동하는 방식, 즉 '인지적 거리두기(cognitive disengagement)'의 특성을 묻고 있습니다. 지문은 유머가 있을 때 우리가 그 내용의 사실 여부, 즉 '현실적인지(real)' 혹은 '허구인지(fictional)', '진실인지(true)' 혹은 '거짓인지(false)'에 대해 잠시 신경 쓰지 않게 된다고 설명합니다. 이것이 바로 우리가 웃긴 이야기를 하는 사람들에게 상당한 '여지(leeway)'를 주는 이유입니다. 이야기에 재미를 더하기 위해 과장하거나 사실이 아닌 내용을 만들어내더라도, 우리는 이를 '코믹한 허용(comic licence)' 또는 '시적인 허용(poetic licence)'으로 너그럽게 받아들입니다. 심지어 누군가 웃긴 이야기의 사실 여부를 따지며 끼어든다면, 다른 사람들은 그를 제지할 것입니다. 유머를 창조하는 사람은 정보를 제공하려는 것이 아니라, 사람들이 즐거움을 느끼게 할 아이디어를 머릿속에 넣으려는 것이기 때문입니다.
+이 문제는 지문 첫 문장에 뚫린 빈칸을 채우는 **'빈칸 추론'** 유형입니다. 빈칸 문장 "Humour involves not just practical disengagement but ___ cognitive disengagement."는 이 글 전체가 앞으로 설명할 내용을 미리 요약하는 주제문 역할을 하므로, 뒤에 이어지는 내용과 정확히 호응하는 단어를 찾는 것이 핵심입니다.
 
-이러한 맥락에서, 유머는 단순히 실용적인 측면에서의 '거리두기'뿐만 아니라, 내용의 '정확성'에 대한 요구로부터의 거리두기를 포함한다고 볼 수 있습니다. 선택지들을 살펴보면, 유머가 정확성(accurate)과는 거리가 멀어질 수 있다는 점을 이해하는 것이 중요합니다. 반면, 'detailed(상세한)', 'useful(유용한)', 'additional(추가적인)', 'alternative(대안적인)' 등은 유머의 본질적인 특성이라기보다는 부수적이거나 경우에 따라 달라질 수 있는 요소입니다. 따라서 유머는 본질적으로 현실이나 사실에 대한 '정확한' 정보 전달과는 거리가 있다는 점을 파악하는 것이 핵심입니다.
+지문은 유머가 있을 때 우리가 그 내용의 사실 여부, 즉 '현실적인지(real)' 혹은 '허구인지(fictional)', '진실인지(true)' 혹은 '거짓인지(false)'에 대해 잠시 신경 쓰지 않게 된다고 설명합니다. 이것이 바로 우리가 웃긴 이야기를 하는 사람들에게 상당한 '여지(leeway)'를 주는 이유입니다. 이야기에 재미를 더하기 위해 과장하거나 사실이 아닌 내용을 만들어내더라도, 우리는 이를 '코믹한 허용(comic licence)' 또는 '시적인 허용(poetic licence)'으로 너그럽게 받아들입니다. 심지어 누군가 웃긴 이야기의 사실 여부를 따지며 끼어든다면, 다른 사람들은 그를 제지할 것입니다. 유머를 창조하는 사람은 정보를 제공하려는 것이 아니라, 사람들이 즐거움을 느끼게 할 아이디어를 머릿속에 넣으려는 것이기 때문입니다.
+
+이처럼 지문 전체가 '유머를 즐길 때는 내용이 정확한지 신경 쓰지 않는다'는 내용으로 일관되므로, 빈칸에는 유머가 '정확성(accurate)'에 대한 요구로부터 벗어나게 해준다는 의미가 들어가야 합니다. 반면, 'detailed(상세한)', 'useful(유용한)', 'additional(추가적인)', 'alternative(대안적인)' 등은 지문 어디에서도 직접적으로 뒷받침되지 않는 단어들입니다.
 
 ## 정답 및 해설
 

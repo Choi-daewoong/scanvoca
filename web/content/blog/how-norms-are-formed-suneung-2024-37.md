@@ -15,13 +15,19 @@ thumbnail: "/blog-images/how-norms-are-formed-suneung-2024-37/1.png"
 
 ## 먼저 풀어보기: 2024학년도 수능 영어 37번
 
-**[활용할 실제 기출 지문]**
+본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 37번).
 
-출처: 2024학년도 대학수학능력시험 영어영역 37번
+**문제:** 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [3점]
 
+**주어진 글:**
+
+Norms emerge in groups as a result of people conforming
 to the behavior of others. Thus, the start of a norm occurs
 when one person acts in a particular manner in a particular
 situation because she thinks she ought to.
+
+**이어지는 글:**
+
 (A) Thus, she may prescribe the behavior to them by uttering
 the norm statement in a prescriptive manner. Alternately, 
 she may communicate that conformity is desired in other
@@ -38,20 +44,12 @@ think that others ought to behave as she behaves in
 situations of this sort. [3점]
 *sanction: 제재를 가하다
 
-**문제:** Norms emerge in groups as a result of people conforming
-
 **선택지:**
 ①. (A)－ (C) － (B)
 ②. (B) － (A)－ (C)
 ③. (B) － (C) － (A)
 ④. (C) － (A)－ (B)
 ⑤. (C) － (B) － (A)
-
-[38～39] 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장
-
-적절한 곳을 고르시오.
-
-본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 37번).
 
 ## 일반적인 풀이 전략: 논리적 연결고리를 찾아라!
 
