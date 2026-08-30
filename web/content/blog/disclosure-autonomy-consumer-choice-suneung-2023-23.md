@@ -1,5 +1,5 @@
 ---
-title: "정보 공개가 소비자의 선택권을 넓힌다고? 2023 수능 영어 4번 문제로 '자율성' 키워드 완벽 분석!"
+title: "정보 공개가 소비자의 선택권을 넓힌다고? 2023 수능 영어 23번 문제로 '자율성' 키워드 완벽 분석!"
 description: "2023학년도 수능 영어 23번 기출 지문을 통해 '정보 공개'가 소비자의 '자율성'과 선택권을 어떻게 확장하는지 분석합니다. 핵심 영단어 'autonomy'를 익히며 시장의 유연성과 규제의 균형점을 이해하는 시간을 가져보세요."
 category: "수능·내신"
 tags: ["수능영어", "정보공개", "소비자선택권", "자율성", "autonomy", "경제", "규제"]
@@ -7,7 +7,7 @@ date: "2026-08-12"
 published: true
 thumbnail: "/blog-images/disclosure-autonomy-consumer-choice-suneung-2023-23/1.png"
 ---
-![정보 공개가 소비자의 선택권을 넓힌다고? 2023 수능 영어 4번 문제로 '자율성' 키워드 완벽 분석!](/blog-images/disclosure-autonomy-consumer-choice-suneung-2023-23/1.png)
+![정보 공개가 소비자의 선택권을 넓힌다고? 2023 수능 영어 23번 문제로 '자율성' 키워드 완벽 분석!](/blog-images/disclosure-autonomy-consumer-choice-suneung-2023-23/1.png)
 
 ## 2023 수능 영어 23번: 정보 공개, 소비자의 힘을 키우는 열쇠
 
