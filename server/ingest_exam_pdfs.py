@@ -92,6 +92,15 @@ _UNDERLINE_CHOICE_QUESTION_RE = re.compile(r"밑줄\s*친\s*부분\s*중")
 # 아직 지원하지 않는다(이 유형은 계속 스킵).
 _UNSUPPORTED_EMBEDDED_QUESTION_RE = re.compile(r"전체\s*흐름과\s*관계\s*없는\s*문장")
 _UNDERLINE_SPAN_RE = re.compile(r"<u>(.*?)</u>", re.DOTALL)
+# 실제 수능 지시문("다음 빈칸에 들어갈 말로...", "다음 글의 목적으로...")은 항상 한글이다.
+# parse_exam_text의 기본 분리(lines[0] = 문제, 나머지 = 지문)는 블록 첫 줄이 지시문이라는
+# 전제에 의존하는데, 빈칸 추론 유형처럼 문항 앞에 별도 한글 지시문이 없고 지문이 곧바로
+# 시작되는 경우 지문의 첫 문장이 통째로 "문제"로 오인식된다(실제 발생 사례: 2025 수능 33번
+# "We are famously living in the era of the attention economy,"가 question_text로 잘못
+# 들어가고, 지문은 "where the largest..."부터 시작하며 빈칸 표시까지 유실됨 — 이 사고로
+# 라이브 블로그 글의 지문·해설이 깨져서 발견됨). 한글이 전혀 없는 question_text는 지시문이
+# 아니라 지문 일부가 잘못 잘린 것이므로 복구를 시도하지 말고 건너뛴다.
+_HANGUL_RE = re.compile(r"[가-힣]")
 # The circled digit sits immediately against the underlined word in the source PDF with
 # no space ("①producing"), so pdfplumber's whitespace-delimited word extraction fuses
 # them into one token and the underline stroke covers both — strip the label back off
@@ -143,6 +152,8 @@ def validate_parsed_item(item: Dict) -> Optional[str]:
     """
     question_text = item.get("question_text", "")
     choices = item.get("choices")
+    if question_text and not _HANGUL_RE.search(question_text):
+        return "question_text has no Hangul (likely passage text swallowed as the question — see _HANGUL_RE comment)"
     # Type-classification must run on de-tagged text: a stray emphasis-underline on a
     # word *inside* the matched phrase (real case: "관계 <u>없는</u> 문장" — 무관 문장
     # 찾기's own instruction word got underlined) breaks a literal-phrase regex match,

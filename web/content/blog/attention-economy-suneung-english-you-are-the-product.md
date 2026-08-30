@@ -19,8 +19,11 @@ thumbnail: "/blog-images/attention-economy-suneung-english-you-are-the-product/1
 
 <br>
 
+**문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. [3점]
+
 **지문:**
 
+We are famously living in the era of the attention economy,
 where the largest and most profitable businesses in the world
 are those that consume my attention. The advertising industry
 is literally dedicated to capturing the conscious hours of my
@@ -28,7 +31,7 @@ life and selling them to someone else. It might seem magical
 that so many exciting and useful software systems are
 available to use for free, but it is now conventional wisdom
 that if you can’t see who is paying for something that appears
-to be free, then .
+to be free, then ________________________.
 
 Our creative engagement with other people is mediated by
 AI-based recommendation systems that are designed to trap
@@ -36,13 +39,9 @@ our attention through the process that Nick Seaver calls
 captology, keeping us attending to work sold by one company
 rather than another, replacing the freedom of personal
 exploration with algorithm-generated playlists or even
-algorithm-generated art. [3점]
+algorithm-generated art.
 
 <br>
-
-**문제:**
-
-We are famously living in the era of the attention economy,
 
 **선택지:**
 ①. all of your attention has already been spent
@@ -51,11 +50,11 @@ We are famously living in the era of the attention economy,
 ④. the public may be sponsoring you
 ⑤. you owe the benefits to your friend AI
 
-## 'Attention Economy' 시대, 글의 요지를 파악하는 전략
+## 'Attention Economy' 시대, 빈칸에 숨은 논리를 찾는 전략
 
-이 문제는 '글의 요지' 또는 '주제'를 파악하는 유형으로 볼 수 있습니다. 이런 유형의 문제를 풀 때는 몇 가지 전략이 유용합니다. 첫째, 지문 전체를 꼼꼼히 읽으며 저자가 전달하고자 하는 핵심 메시지가 무엇인지 파악하는 것이 중요합니다. 특히 반복적으로 강조되는 단어나 문장, 혹은 첫 문장과 마지막 문장에 주목해 보세요. 이 문제는 'attention'이라는 단어가 반복적으로 등장하고, 'consume my attention', 'capture the conscious hours of my life and selling them', 'trap our attention'과 같은 표현들을 통해 주의력이 상품화되는 상황을 묘사하고 있습니다.
+이 문제는 지문 중간에 뚫린 빈칸을 채우는 '빈칸 추론' 유형입니다. 이런 유형은 글 전체의 요지를 먼저 파악하기보다, **빈칸 바로 앞뒤 문장의 논리적 연결고리**를 찾는 것이 훨씬 빠르고 정확합니다. 이 지문은 'if you can't see who is paying for something that appears to be free, then ___'처럼 조건문(if ~) 뒤에 결론(then ~)이 빈칸으로 뚫려 있는 구조입니다. 즉, 빈칸에는 "누가 돈을 대는지 알 수 없는 무료 서비스"라는 조건에서 자연스럽게 이어지는 결론이 들어가야 합니다.
 
-둘째, 지문에서 제시하는 근거들을 바탕으로 선택지들을 하나씩 검토합니다. 각 선택지가 지문의 내용과 일치하는지, 혹은 지문의 핵심 내용을 가장 잘 포괄하는지 판단해야 합니다. 특히 'if you can’t see who is paying for something that appears to be free, then .'와 같이 빈칸으로 처리된 부분이나, AI 추천 시스템이 우리의 주의력을 어떻게 활용하는지에 대한 설명이 핵심 단서가 될 수 있습니다. 이러한 부분을 놓치지 않고 맥락 속에서 이해하는 것이 중요합니다.
+둘째, 빈칸 바로 다음 문장이 결정적인 힌트가 되는 경우가 많습니다. 이 지문에서는 빈칸 뒤에 'AI 기반 추천 시스템이 우리의 주의력을 사로잡도록(trap our attention) 설계되어 있다'는 문장이 이어집니다. 이는 결국 우리가 무료라고 생각하며 쓰는 서비스에서 실제로 '거래되고 있는 것'이 우리 자신의 주의력이라는 점을 뒷받침하는 근거입니다. 이렇게 빈칸 앞뒤 문장을 하나의 논리 사슬로 연결해서 읽는 연습이 빈칸 추론 문제를 빠르고 정확하게 푸는 핵심 전략입니다.
 
 ## 정답 및 해설: 당신은 이미 상품이다
 
@@ -63,7 +62,7 @@ We are famously living in the era of the attention economy,
 
 **해설:**
 
-지문은 현대 사회에서 가장 크고 수익성 높은 비즈니스가 우리의 '주의력'을 소비하는 데 기반하고 있다고 설명합니다. 광고 산업은 우리의 의식적인 시간을 포착하여 다른 누군가에게 판매하는 데 전념하고 있습니다. 많은 소프트웨어 시스템이 무료로 제공되는 것처럼 보이지만, 사실은 우리가 지불하는 것이 무엇인지 알 수 없는 경우 '무료'로 보이는 것의 실제 판매자는 바로 우리 자신, 즉 우리의 주의력과 정보라는 점을 시사합니다. AI 기반 추천 시스템은 우리의 주의력을 사로잡기 위해 설계되었고, 이는 개인적인 탐색의 자유를 알고리즘이 생성한 콘텐츠로 대체합니다.
+"if you can’t see who is paying for something that appears to be free, then ___" 뒤에 이어질 결론을 찾는 문제입니다. 지문은 현대 사회에서 가장 크고 수익성 높은 비즈니스가 우리의 '주의력'을 소비하는 데 기반하고 있다고 설명합니다. 광고 산업은 우리의 의식적인 시간을 포착하여 다른 누군가에게 판매하는 데 전념하고 있습니다. 많은 소프트웨어 시스템이 무료로 제공되는 것처럼 보이지만, 사실은 우리가 지불하는 것이 무엇인지 알 수 없는 경우 '무료'로 보이는 것의 실제 판매자는 바로 우리 자신, 즉 우리의 주의력과 정보라는 점을 시사합니다. AI 기반 추천 시스템은 우리의 주의력을 사로잡기 위해 설계되었고, 이는 개인적인 탐색의 자유를 알고리즘이 생성한 콘텐츠로 대체합니다.
 
 따라서 지문은 우리가 무료로 사용하는 서비스의 실제 생산물은 바로 우리 자신, 즉 우리의 주의력과 데이터이며, 이것이 다른 기업에 판매되는 상품이 된다는 점을 명확히 하고 있습니다.
 
