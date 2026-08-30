@@ -28,12 +28,44 @@ class ExamPassage(Base):
     problem_number: Mapped[int] = mapped_column(Integer, nullable=False)
     source_label: Mapped[str] = mapped_column(String(100), nullable=False)  # "2025학년도 수능 영어"
 
+    # Structural discriminator for how passage_text/choices must be quoted downstream
+    # (generate_blog_post branches on it). Every 유형 still boils down to "pick 1 of 5", so
+    # the flat passage/question/choices shape holds for all four — only the *rendering
+    # contract* differs:
+    #   'standard'         — 지문 뒤에 ①~⑤ 선택지가 따로 나열되는 대부분의 유형.
+    #   'underline_choice' — 어법/어휘 문맥. passage_text 안에 <u>...</u> 5구간이 살아 있고
+    #                        choices가 그 구간 텍스트다 (기존 컨벤션 그대로, 변경 없음).
+    #   'embedded_marker'  — 무관 문장 찾기 / 문장 삽입. ①~⑤ 표시가 지문 문장 사이에 박힌
+    #                        채로 passage_text에 그대로 남아 있어야 의미가 통한다.
+    #   'paragraph_order'  — 글의 순서 배열. passage_text가 (A)(B)(C) 라벨을 유지하고
+    #                        choices는 "(B) - (A) - (C)" 같은 순열 문자열이다.
+    # NOT NULL + server_default='standard': 기존 row는 전부 구 regex 파서 산출물이라
+    # standard/underline_choice 모양뿐이고, 아래쪽 <u> 처리는 problem_type과 무관하게 항상
+    # 동작하므로 옛 row에 'standard'가 찍혀도 손해가 없다(백필 불필요).
+    problem_type: Mapped[str] = mapped_column(
+        String(30), default="standard", server_default="standard", nullable=False
+    )
+
     # Content
     passage_text: Mapped[str] = mapped_column(Text, nullable=False)
     question_text: Mapped[str] = mapped_column(Text, nullable=False)
     choices: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)  # 5지선다, 없으면 NULL
     answer: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)  # 정답, 미상이면 NULL
     tags: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)  # AI가 부여한 문법/소재 키워드
+
+    # AI가 추출 단계에서 정답표 PDF와 교차 확인하며 함께 작성한 한국어 해설(왜 정답이고 왜
+    # 나머지가 오답인지). 나중에 generate_blog_post가 "이미 검증된 해설 논리"로 프롬프트에
+    # 넣어 재추론 대신 근거로 삼는다. NULL이면 옛 row(구 파서 산출물)라는 뜻이고, 그때는
+    # 예전처럼 모델이 지문·선택지만 보고 스스로 해설을 만든다.
+    explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # 장문독해(41~42번처럼 여러 문항이 하나의 긴 지문을 공유)에서 같은 지문을 복제해 가진
+    # row들을 묶어보기 위한 관찰용 태그. 관계형 개념이 아니다 — FK도, 이 컬럼을 읽는 조회
+    # 쿼리도 없다. 각 row는 여전히 독립적으로 자기 토픽 1개와 페어링되는 기존
+    # "지문 1 : 토픽 1 : 글 1" 모델을 그대로 따른다. 단일 문항이면 NULL.
+    passage_group_key: Mapped[Optional[str]] = mapped_column(
+        String(60), nullable=True, index=True
+    )
 
     # 1:1 pairing with the blog topic that was derived FROM this passage (passage-first
     # discovery). Nullable because passages are ingested in bulk long before any topic

@@ -412,10 +412,14 @@ export interface ExamPassage {
   exam_type: string; // '수능' | '모의고사'
   month: number | null; // 모의고사 시행 월, 수능은 null
   problem_number: number;
+  // 지문/선택지를 어떻게 읽어야 하는지 나타내는 구조 구분자.
+  // 'standard' | 'underline_choice' | 'embedded_marker' | 'paragraph_order'
+  problem_type: string;
   passage_text: string;
   question_text: string;
   choices: string[] | null; // 5지선다, 없으면 null
   answer: string | null;
+  explanation: string | null; // AI 추출 단계에서 함께 작성한 해설. 구 파서로 적재된 옛 row는 null
   tags: string[] | null;
   source_label: string; // 예: '2025학년도 수능 영어'
   status: 'unused' | 'used';

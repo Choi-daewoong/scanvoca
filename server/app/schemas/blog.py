@@ -135,10 +135,15 @@ class ExamPassageResponse(BaseModel):
     month: Optional[int] = None
     problem_number: int
     source_label: str
+    # 'standard' | 'underline_choice' | 'embedded_marker' | 'paragraph_order' — how
+    # passage_text/choices must be read (see ExamPassage.problem_type).
+    problem_type: str = "standard"
     passage_text: str
     question_text: str
     choices: Optional[List[str]] = None
     answer: Optional[str] = None
+    # AI가 추출 단계에서 함께 작성한 해설. 구 파서로 적재된 옛 row는 NULL.
+    explanation: Optional[str] = None
     tags: Optional[List[str]] = None
     status: str
     created_at: datetime

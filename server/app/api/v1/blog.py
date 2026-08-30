@@ -257,6 +257,8 @@ async def _publish_one(
                 "answer": passage.answer,
                 "source_label": passage.source_label,
                 "problem_number": passage.problem_number,
+                "problem_type": passage.problem_type,
+                "explanation": passage.explanation,
             },
         )
         if result is None:

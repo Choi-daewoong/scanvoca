@@ -12,6 +12,11 @@ from app.services.image_style import IMAGE_STYLE_GUIDE
 # module import stays cheap and unaffected by the new SDK.
 BLOG_IMAGE_MODEL = "gemini-2.5-flash-image"
 
+# Exam-PDF extraction runs on the pro model: it reads two full PDFs jointly and reasons
+# about the answer, and it's a rare unattended batch job (a few runs a year), so accuracy
+# matters far more than per-call cost or latency.
+EXAM_EXTRACTION_MODEL = "gemini-2.5-pro"
+
 # Target hero-image output size: 16:9 at exactly 1.5x the pixel area of the previous
 # 1024x1024 default (the model's un-configured fallback — confirmed by live probe, since
 # it ignores the text-only "prefer 16:9" hint in drawing_agent.md without a structured
@@ -39,6 +44,73 @@ def _contains_profanity(*texts: str) -> bool:
 
 def _has_api_key() -> bool:
     return bool(settings.GEMINI_API_KEY and settings.GEMINI_API_KEY != "your-gemini-api-key-here")
+
+
+# ---------- Exam-PDF extraction prompts (scan_exam_pdf_manifest /
+# extract_exam_problems_from_pdfs — module level so tests can assert on them without a
+# client) ----------
+
+EXAM_MANIFEST_PROMPT = """당신은 한국 수능/모의고사 영어영역 문제지 분석 전문가입니다.
+첨부된 PDF는 실제 수능/모의고사 영어 문제지입니다. 이 문제지에 등장하는 모든 문항 번호를
+빠짐없이 찾아, 각 문항의 유형을 아래 4가지 중 하나로 분류하세요. 본문 내용은 이 단계에서
+추출하지 마세요 — 문항 번호와 유형 분류만 필요합니다.
+
+유형 분류 기준:
+- "standard": 지문 뒤에 ①~⑤ 선택지가 순서대로 나열되는 일반적인 유형 (목적/주장/함의추론/
+  요지/주제/제목/심경/내용일치·불일치/도표/빈칸추론/요약문완성/장문독해 각 문항 등 대부분).
+- "underline_choice": "다음 밑줄 친 부분 중 어법상 틀린 것은?" / "문맥상 낱말의 쓰임이 적절
+  하지 않은 것은?" 유형 — 선택지가 지문 속 5개의 밑줄 친 구간.
+- "embedded_marker": "다음 글에서 전체 흐름과 관계 없는 문장은?" (무관한 문장) 또는
+  "주어진 문장이 들어가기에 가장 적절한 곳은?" (문장 삽입) 유형 — ①~⑤ 표시가 지문 문장
+  중간중간에 박혀 있음.
+- "paragraph_order": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?" 유형 —
+  (A)(B)(C)로 표시된 문단들을 재배열하는 문제.
+
+여러 문항 번호(예: 41, 42)가 하나의 긴 지문을 공유하는 장문독해 세트라면, 각 문항의
+passage_group에 그 세트에 속한 모든 문항 번호(자기 자신 포함)를 나열하세요. 세트가 아니면
+passage_group은 빈 배열로 두세요."""
+
+
+def _build_extraction_prompt(problem_numbers, form: str, has_answers: bool) -> str:
+    """Build the per-batch extraction prompt for extract_exam_problems_from_pdfs.
+
+    Pure (no IO) so tests can assert its content directly. `has_answers` switches between
+    "read the answer from the {form} table of the second PDF" and "decide the answer
+    yourself" — mirroring generate_blog_post's existing has_answer branch.
+    """
+    numbers_str = ", ".join(str(n) for n in problem_numbers)
+    answer_instruction = (
+        f'두 번째 PDF는 정답표입니다. 반드시 "{form}" 표에서 정답을 찾아 answer 필드에 '
+        f'"1"~"5" 중 하나로 채우세요 (①=1 ... ⑤=5).'
+        if has_answers else
+        "정답표가 제공되지 않았습니다 — 지문·문제·선택지 내용을 근거로 정답을 스스로 "
+        "판단해 answer 필드에 채우세요."
+    )
+    return f"""첨부된 문제지 PDF(와 정답표 PDF)를 함께 읽고, 문항 번호 {numbers_str}번만 추출하세요.
+다른 번호는 절대 포함하지 마세요.
+
+각 문항에 대해 다음을 정확히 채우세요:
+1. problem_type: "standard" | "underline_choice" | "embedded_marker" | "paragraph_order" 중
+   실제 이 문항의 유형.
+2. passage_text: 지문을 인쇄된 그대로 완전히 재현하세요. 절대 요약하거나 창작하지 마세요.
+   - problem_type이 "underline_choice"이면, 선택지에 해당하는 5개의 구간을 <u>...</u>로
+     감싸 지문 안에 그대로 표시하세요.
+   - problem_type이 "embedded_marker"이면, 지문에 인쇄된 ①②③④⑤ 표시를 실제 위치 그대로
+     지문 텍스트 안에 남겨두세요 (마지막에 목록으로 빼지 마세요).
+   - problem_type이 "paragraph_order"이면, 지문 도입부와 (A)(B)(C) 문단 표시를 원문 그대로
+     유지하세요.
+   - 빈칸추론 문제는 빈칸 표시(밑줄/괄호 등 원문 표기)를 절대 빠뜨리지 마세요.
+3. question_text: 지시문(한글 질문 문장) 그대로.
+4. choices: 정확히 5개.
+   - "standard"/"underline_choice"/"embedded_marker": 각 선택지(또는 밑줄 구간, 또는
+     지문 속 후보 문장)의 텍스트.
+   - "paragraph_order": 선택지에 인쇄된 순서 표기 그대로(예: "(B) - (A) - (C)").
+5. answer: {answer_instruction}
+6. explanation: 정답이 왜 옳고 나머지 선택지가 왜 틀렸는지 한국어로 상세히 설명하세요. 이
+   해설은 나중에 블로그 글의 해설 섹션 근거로 그대로 쓰이므로, 각 오답 선택지에 대한 반박
+   근거까지 포함해 충분히 구체적으로 작성하세요.
+7. tags: 이 문항의 문법/유형 포인트(예: 빈칸추론, 역접, 인과)와 소재 키워드(예: 환경, 심리)를
+   섞어 3~5개, 짧은 한국어 단어/구로."""
 
 
 class GeminiService:
@@ -336,6 +408,40 @@ Important:
                     "근거를 해설에서 논리적으로 설명하세요."
                 )
             )
+
+            # Structural 유형 hints + the already-verified explanation from the AI ingest
+            # pipeline. Both are strictly additive: an old row (problem_type absent or
+            # 'standard', explanation NULL) leaves both strings empty, so the prompt is
+            # byte-for-byte identical to before this block existed.
+            problem_type = source_passage.get("problem_type", "standard")
+            explanation = source_passage.get("explanation")
+
+            type_instruction = ""
+            if problem_type == "paragraph_order":
+                type_instruction = (
+                    "\n15. 이 문제는 글의 순서 배열형입니다. 지문에 표시된 (A)(B)(C) 문단 "
+                    "구분을 그대로 유지해 인용하고, 선택지도 주어진 순서 표기 그대로(예: "
+                    "①(B)-(A)-(C)) 보여주세요. 해설에서는 올바른 문단 순서를 (A)-(B)-(C) "
+                    "형태로 명확히 밝히고, 각 문단을 연결하는 단서(지시어·연결사·시간 순서 등)를 "
+                    "근거로 설명하세요."
+                )
+            elif problem_type == "embedded_marker":
+                type_instruction = (
+                    "\n15. 이 문제는 지문 속 특정 문장을 고르는 유형입니다(무관한 문장 찾기 "
+                    "또는 문장 삽입 위치 찾기). 지문 내 ①~⑤ 표시를 원문 그대로 유지해 인용하고, "
+                    "해설에서 각 번호가 가리키는 문장을 명확히 지칭하며 설명하세요."
+                )
+
+            explanation_block = ""
+            if explanation:
+                explanation_block = (
+                    "\n\n[이미 검증된 해설 논리 — 참고해서 (4)번 섹션을 작성하되 문장을 그대로 "
+                    "베끼지 말고 자신의 표현으로 재구성할 것. 이 논리를 근거로 삼아 해설을 쓰고, "
+                    f"스스로 새로 추론하려다 이 논리와 다른 답을 내지 마세요]\n{explanation}\n"
+                )
+
+            source_instruction += type_instruction
+            source_block += explanation_block
 
         # Conversation pipeline: inject a real dialogue clip to quote and explain.
         dialogue_block = ""
@@ -848,6 +954,107 @@ Important:
             return [str(t).strip() for t in raw if str(t).strip()][:5]
         except Exception as e:
             error_msg = f"Exam passage tagging error: {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
+    async def scan_exam_pdf_manifest(self, exam_pdf_bytes: bytes):
+        """Cheap first pass over the exam PDF alone: every problem number present, its
+        structural problem_type, and its 장문독해 grouping — WITHOUT extracting full content.
+        Tiny output -> negligible truncation risk; used only to plan batch windows for
+        extract_exam_problems_from_pdfs (see ingest_exam_pdfs.py's _plan_batches).
+        Returns List[ExamManifestEntry], or None on any failure (caller aborts the whole run
+        — there's nothing to batch without a manifest).
+        """
+        if not _has_api_key():
+            print("Gemini API key not configured")
+            return None
+        from google import genai as genai_new
+        from google.genai import types as genai_types
+        from app.schemas.exam_extraction import ExamManifest
+
+        try:
+            client = genai_new.Client(api_key=settings.GEMINI_API_KEY)
+            response = client.models.generate_content(
+                model=EXAM_EXTRACTION_MODEL,
+                contents=[
+                    genai_types.Part.from_bytes(data=exam_pdf_bytes, mime_type="application/pdf"),
+                    EXAM_MANIFEST_PROMPT,
+                ],
+                config=genai_types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=ExamManifest,
+                    temperature=0.1,
+                ),
+            )
+            manifest = ExamManifest.model_validate_json(response.text)
+            return manifest.problems
+        except Exception as e:
+            # UnicodeEncodeError guard, same as every other generate_content handler in this
+            # file: this script is run from a Windows console (cp949 here), and an API/
+            # validation error message can carry characters that codepage cannot encode —
+            # the em dash in this pipeline's own response_schema descriptions is one, and it
+            # comes straight back in an echoed 400. Without the guard, print() itself raises
+            # from inside except and the failure escapes as a crash instead of a clean None.
+            error_msg = f"Exam manifest scan failed: {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
+    async def extract_exam_problems_from_pdfs(
+        self,
+        exam_pdf_bytes: bytes,
+        answers_pdf_bytes,
+        problem_numbers,
+        form: str = "홀수형",
+    ):
+        """Extract + verify one window of problem numbers, reading both PDFs jointly.
+
+        Always attaches the FULL exam PDF (and answer-key PDF, if given) regardless of how
+        narrow problem_numbers is — re-sending full bytes per batch is a non-issue for this
+        rare, non-latency-sensitive script, and it lets the model resolve any single problem
+        using full-document context rather than a pre-sliced fragment.
+
+        Returns List[ExtractedProblem] for this batch, or None if the whole batch failed (bad
+        JSON / API error) — the caller treats that as "this batch got nothing this run" and
+        reports it, never crashing the rest of the ingest.
+        """
+        if not _has_api_key():
+            print("Gemini API key not configured")
+            return None
+        from google import genai as genai_new
+        from google.genai import types as genai_types
+        from app.schemas.exam_extraction import ExtractedProblemBatch
+
+        parts = [genai_types.Part.from_bytes(data=exam_pdf_bytes, mime_type="application/pdf")]
+        if answers_pdf_bytes:
+            parts.append(
+                genai_types.Part.from_bytes(data=answers_pdf_bytes, mime_type="application/pdf")
+            )
+        parts.append(_build_extraction_prompt(problem_numbers, form, bool(answers_pdf_bytes)))
+
+        try:
+            client = genai_new.Client(api_key=settings.GEMINI_API_KEY)
+            response = client.models.generate_content(
+                model=EXAM_EXTRACTION_MODEL,
+                contents=parts,
+                config=genai_types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=ExtractedProblemBatch,
+                    temperature=0.1,
+                ),
+            )
+            batch = ExtractedProblemBatch.model_validate_json(response.text)
+            return batch.problems
+        except Exception as e:
+            # UnicodeEncodeError guard — see scan_exam_pdf_manifest. Critical here: an
+            # unguarded print() would turn "one batch failed, keep going" into a crash that
+            # loses every problem the run had already extracted.
+            error_msg = f"Exam extraction batch {problem_numbers} failed: {e}"
             try:
                 print(error_msg)
             except UnicodeEncodeError:

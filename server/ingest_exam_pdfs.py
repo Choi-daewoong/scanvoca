@@ -15,11 +15,19 @@ seed_blog_topics.py와 같은 성격. 실행 여부는 오케스트레이터가 
         --source-label "2025년 9월 모의고사 영어"
 
 특징:
-- pdfplumber로 텍스트 레이어 추출(스캔본 아니므로 OCR 불필요).
-- 문제번호/선택지(①②③④⑤) 정규식으로 지문·문제·선택지 분리. 파싱 실패 항목은 건너뛰고
-  마지막에 스킵한 문제 번호를 요약 출력(부분 실패를 견디는 구조 — 중간에 죽지 않음).
+- 메인 인제스트 경로는 **AI가 PDF 원본을 직접 읽는다**. pdfplumber로 텍스트를 뽑아 정규식으로
+  자르던 옛 파서는 KICE PDF 유형마다 다르게 깨져(5주간 6번) 전면 폐기했고, 대신 문제지 PDF
+  (+ 정답표 PDF) 바이트를 그대로 모델에 첨부해 구조화 출력(response_schema)으로 받는다:
+    1) scan_exam_pdf_manifest — 문항 번호 + 유형 + 장문독해 그룹만 가볍게 스캔
+    2) _plan_batches로 문항을 배치(장문독해 그룹은 안 쪼갬)로 나눔
+    3) 배치마다 extract_exam_problems_from_pdfs — 지문/문제/선택지/정답/해설/태그 추출
+  덕분에 구 파서가 구조적으로 표현조차 못 하던 글의순서·장문독해·무관문장 유형도 포함된다.
+- validate_extracted_item으로 형태가 이상한 항목만 건너뛰고 사유를 출력한다(부분 실패를
+  견디는 구조 — 배치 하나가 통째로 실패해도 나머지는 계속 진행).
 - 멱등: 같은 (year, exam_type, month, problem_number) 조합이 이미 있으면 스킵.
-- 인제스트 후 각 신규 지문에 대해 AI 1회 호출로 tags(문법 포인트 + 소재 키워드)를 채운다.
+- 태깅은 추출 호출에 합쳐져 있어 별도 AI 호출이 없다(--no-tagging은 tags 저장만 생략).
+- pdfplumber 기반 헬퍼(컬럼 재구성/언더라인 감지/정답표 파싱)는 --answers-only(정답 백필)
+  경로가 계속 쓰므로 그대로 남아 있다.
 
 아래 순수 함수(extract 제외)는 pytest로 검증 가능하도록 IO와 분리되어 있다.
 """
@@ -31,8 +39,6 @@ import re
 from typing import Dict, List, Optional
 
 CIRCLED = "①②③④⑤"
-# A problem starts with "18." at the beginning of a line (1~2 digit number + dot).
-_PROBLEM_RE = re.compile(r"(?m)^\s*(\d{1,2})\.\s")
 # Answer-sheet entry: "18 ③" / "18. 3" / "18) ④" etc.
 #
 # Real KICE answer sheets pack four "번호 정답 배점" triples per line (e.g.
@@ -50,191 +56,109 @@ _CIRCLED_TO_NUM = {c: str(i + 1) for i, c in enumerate(CIRCLED)}
 _ALPHA_RE = re.compile(r"[A-Za-z]")
 
 
-# ---------- Pure parsing helpers (unit-testable, no IO) ----------
+# ---------- Pure validation / batch planning (unit-testable, no IO) ----------
 
-def split_problems(text: str) -> List[tuple]:
-    """Slice raw exam text into (problem_number, block_text) by leading 'NN.' markers."""
-    matches = list(_PROBLEM_RE.finditer(text or ""))
-    blocks: List[tuple] = []
-    for i, m in enumerate(matches):
-        num = int(m.group(1))
-        start = m.end()
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
-        blocks.append((num, text[start:end].strip()))
-    return blocks
-
-
-def parse_choices(block: str) -> tuple:
-    """Split a problem block into (text_before_choices, [choice_texts]).
-
-    Choices are delimited by circled digits ①..⑤ in document order. Returns [] when the
-    block has no circled markers.
-    """
-    positions = [(c, block.find(c)) for c in CIRCLED]
-    present = sorted([(c, i) for c, i in positions if i >= 0], key=lambda x: x[1])
-    if not present:
-        return block.strip(), []
-    body = block[: present[0][1]].strip()
-    choices: List[str] = []
-    for j, (c, pos) in enumerate(present):
-        cstart = pos + len(c)
-        cend = present[j + 1][1] if j + 1 < len(present) else len(block)
-        choices.append(block[cstart:cend].strip())
-    return body, choices
-
-
-# 어법상 틀린 것/문맥상 낱말 쓰임 유형: ①~⑤ 표시가 지문 끝에 나열된 목록이 아니라, 지문
-# 문장 중간중간 밑줄 친 단어/구 바로 앞에 박혀 있다. 이 유형은 word_is_underlined()가 남긴
-# <u>...</u> 구간(collect_underline_shapes 참고)이 실제 선택지이므로, 마커 위치로 지문을
-# 자르지 않고 그 구간들을 그대로 뽑아 쓴다(parse_underline_choice_block).
-_UNDERLINE_CHOICE_QUESTION_RE = re.compile(r"밑줄\s*친\s*부분\s*중")
-# 무관 문장 찾기: ①~⑤가 밑줄 없이 문장 앞에만 붙는다 — 문장 단위 분리가 별도로 필요해
-# 아직 지원하지 않는다(이 유형은 계속 스킵).
-_UNSUPPORTED_EMBEDDED_QUESTION_RE = re.compile(r"전체\s*흐름과\s*관계\s*없는\s*문장")
-_UNDERLINE_SPAN_RE = re.compile(r"<u>(.*?)</u>", re.DOTALL)
 # 실제 수능 지시문("다음 빈칸에 들어갈 말로...", "다음 글의 목적으로...")은 항상 한글이다.
-# parse_exam_text의 기본 분리(lines[0] = 문제, 나머지 = 지문)는 블록 첫 줄이 지시문이라는
-# 전제에 의존하는데, 빈칸 추론 유형처럼 문항 앞에 별도 한글 지시문이 없고 지문이 곧바로
-# 시작되는 경우 지문의 첫 문장이 통째로 "문제"로 오인식된다(실제 발생 사례: 2025 수능 33번
-# "We are famously living in the era of the attention economy,"가 question_text로 잘못
-# 들어가고, 지문은 "where the largest..."부터 시작하며 빈칸 표시까지 유실됨 — 이 사고로
-# 라이브 블로그 글의 지문·해설이 깨져서 발견됨). 한글이 전혀 없는 question_text는 지시문이
-# 아니라 지문 일부가 잘못 잘린 것이므로 복구를 시도하지 말고 건너뛴다.
+# 구 regex 파서는 "문항 블록 첫 줄 = 한글 지시문"을 전제로 지문/문제를 갈랐는데, 지시문 없이
+# 지문이 곧바로 시작되는 블록에서 지문 첫 문장이 통째로 "문제"로 오인식됐다(실제 사고:
+# 2025 수능 33번 "We are famously living in the era of the attention economy,"가
+# question_text로 들어가고 지문은 "where the largest..."부터 시작하며 빈칸 표시까지 유실 —
+# 라이브 블로그 글이 깨져서 발견됨). 파서는 바뀌었지만 "한글 없는 question_text는 지시문이
+# 아니다"라는 판정 자체는 AI 출력에도 그대로 유효한 안전망이라 검증기에 남겨둔다.
 _HANGUL_RE = re.compile(r"[가-힣]")
-# The circled digit sits immediately against the underlined word in the source PDF with
-# no space ("①producing"), so pdfplumber's whitespace-delimited word extraction fuses
-# them into one token and the underline stroke covers both — strip the label back off
-# the extracted choice text (real answer text is never itself a circled digit).
-_LEADING_CIRCLED_RE = re.compile(r"^[①②③④⑤]\s*")
+
+_VALID_PROBLEM_TYPES = {"standard", "underline_choice", "embedded_marker", "paragraph_order"}
+_PAREN_LABEL_RE = re.compile(r"\(([A-C])\)")
+_ORDER_CHOICE_RE = re.compile(r"\(?[A-C]\)?(\s*[-–]\s*\(?[A-C]\)?){2}")
+# embedded_marker 지문 안에 실제로 박혀 있어야 하는 마커들 — 정답표 파싱용 CIRCLED와 같은
+# 문자 집합이지만, 쓰임이 전혀 다른 곳이라 이름을 따로 둔다.
+_CIRCLED_CHARS = CIRCLED
 
 
-def parse_underline_choice_block(block: str) -> Dict[str, object]:
-    """Parse an 어법상 틀린 것/문맥상 낱말 쓰임 block into {question_text, passage_text, choices}.
+def validate_extracted_item(item: Dict) -> Optional[str]:
+    """Return a skip-reason string if an AI-extracted item looks implausible, else None.
 
-    Unlike parse_choices, the passage is kept whole (never truncated at a marker
-    position) — the quoted passage must stay complete for a reader to judge "which
-    underlined part", and the actual choices come from the <u>...</u> spans already
-    present in `block`'s text (see word_is_underlined / _words_to_text), not from
-    slicing at circled-digit positions.
+    Pure — no IO. `item` is one ExtractedProblem.model_dump()'d dict (or a hand-built dict
+    in tests). Mirrors the old validate_parsed_item's tolerant "skip what looks wrong,
+    keep the rest" philosophy, extended with per-problem_type structural checks for the 3
+    types the old regex parser could never represent at all.
     """
-    lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
-    # The question stem can wrap across 2+ physical lines when it's long (real case:
-    # "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지\n않은 것은?" — 2022 30번).
-    # Taking only lines[0] then left the second half ("않은 것은?") glued onto the front
-    # of passage_text, which also dragged that line's stray emphasis-underline into the
-    # choice scan below. The stem always ends in '?', so join every line up to and
-    # including the first one containing '?' — a single-line stem (the common case)
-    # degrades to exactly the old lines[0] behavior.
-    q_end = next((i for i, ln in enumerate(lines) if "?" in ln), 0)
-    # The question stem itself sometimes has its own emphasis underline (e.g. "어법상
-    # <u>틀린</u> 것은?") from the same detection pass — that's typographic emphasis in
-    # the source, not an answer choice, so it's stripped back to plain text here rather
-    # than leaking raw <u> markup into a field nothing downstream expects it in.
-    question_text = _UNDERLINE_SPAN_RE.sub(r"\1", " ".join(lines[: q_end + 1])) if lines else ""
-    passage_text = "\n".join(lines[q_end + 1 :]).strip()
-    choices = [
-        _LEADING_CIRCLED_RE.sub("", m.group(1).strip()).strip()
-        for m in _UNDERLINE_SPAN_RE.finditer(passage_text)
-    ]
-    return {"question_text": question_text, "passage_text": passage_text, "choices": choices}
+    problem_type = item.get("problem_type")
+    if problem_type not in _VALID_PROBLEM_TYPES:
+        return f"unrecognized problem_type: {problem_type!r}"
 
+    question = item.get("question_text") or ""
+    passage = item.get("passage_text") or ""
+    choices = item.get("choices") or []
+    answer = item.get("answer")
+    explanation = item.get("explanation") or ""
 
-def validate_parsed_item(item: Dict) -> Optional[str]:
-    """Return a skip-reason string if `item` looks like a bad parse, else None.
-
-    수능 영어영역 has several problem types this parser's simple "passage, then a
-    trailing list of 5 short choices" model doesn't fit — e.g. 무관 문장 찾기 (the
-    ①~⑤ markers sit *inside* the passage narrative, not after it) or 장문독해 (several
-    problem numbers share one long passage). Rather than special-case every 수능 유형,
-    detect the parse going wrong and drop the item: a real 수능 choice is always one of
-    5 short options, so anything wildly off that shape is almost certainly passage text
-    that got swallowed into `choices` (or the reverse) rather than a genuine short option.
-    """
-    question_text = item.get("question_text", "")
-    choices = item.get("choices")
-    if question_text and not _HANGUL_RE.search(question_text):
-        return "question_text has no Hangul (likely passage text swallowed as the question — see _HANGUL_RE comment)"
-    # Type-classification must run on de-tagged text: a stray emphasis-underline on a
-    # word *inside* the matched phrase (real case: "관계 <u>없는</u> 문장" — 무관 문장
-    # 찾기's own instruction word got underlined) breaks a literal-phrase regex match,
-    # letting the item silently fall through to the old marker-splitting path instead of
-    # being rejected — the exact corruption this whole check exists to prevent.
-    classify_text = _UNDERLINE_SPAN_RE.sub(r"\1", question_text)
-    if _UNSUPPORTED_EMBEDDED_QUESTION_RE.search(classify_text):
-        return "무관 문장 찾기 unsupported by this parser (no underline to anchor choices to)"
-    is_underline_choice = bool(_UNDERLINE_CHOICE_QUESTION_RE.search(classify_text))
-    if is_underline_choice:
-        # Real 수능 어법/어휘-문맥 items always underline exactly 5 spans. Anything else
-        # means underline detection missed/over-matched on this passage — skip rather
-        # than ingest choices that don't correspond to the real ①~⑤ markers (the exact
-        # failure mode that produced a wrong live post — see conversation history).
-        if not choices or len(choices) != 5:
-            return f"underline-choice item needs exactly 5 <u> spans, got {len(choices or [])}"
-        if any(len(c) > 250 for c in choices):
-            return "an underlined span is implausibly long"
-    elif choices is not None:
-        if len(choices) != 5:
-            return f"choice count {len(choices)} != 5"
-        if any(len(c) > 250 for c in choices):
-            return "a choice is implausibly long (likely swallowed passage text)"
-    if len(question_text) > 200:
+    if not question or not _HANGUL_RE.search(question):
+        # ASCII hyphen, not an em dash: this string is interpolated into ingest()'s final
+        # summary print, and the Windows console this script is run from (cp949) cannot
+        # encode U+2014 — an em dash here crashes the run's last line. Hangul is fine in
+        # cp949; only the dash was the problem.
+        return "question_text missing or has no Hangul (likely a mis-split passage - see 2025 수능 33번)"
+    if len(question) > 200:
         return "question_text implausibly long (likely cross-contaminated block)"
-    passage = item.get("passage_text", "")
     if len(passage) < 20:
         return "passage_text implausibly short"
-    # Listening-question fragments (e.g. a lone "Man:"/"Jason:" speaker cue plus a stray
-    # tail of the previous question's Korean instruction, like "적절한 것을 고르시오.
-    # [3점]\nMan:") clear the raw-length bar above but aren't a real reading passage — the
-    # audio script isn't printed in the 문제지, so 수능's listening items (usually 1~17)
-    # have nothing worth quoting anyway. A genuine printed passage is mostly English; these
-    # fragments are almost entirely Korean instruction text. Empirically (5 real exam
-    # years): garbage tops out at 6 Latin letters, real passages start at 89+ — 40 is a
-    # safe cut with margin on both sides.
-    if len(_ALPHA_RE.findall(passage)) < 40:
+    # 장문독해/일반 지문은 인쇄된 영어 본문이므로 라틴 문자가 넉넉히 있어야 한다. 듣기 문항
+    # 조각(한글 지시문 꼬리 + "Man:" 같은 화자 표시)은 길이 검사는 통과해도 영어가 사실상
+    # 없다. paragraph_order는 (A)(B)(C) 라벨 위주로 짧게 나올 수 있어 이 검사에서 제외한다.
+    if problem_type != "paragraph_order" and len(_ALPHA_RE.findall(passage)) < 40:
         return "passage_text has too little English content (likely a listening-question fragment)"
+    if len(choices) != 5:
+        return f"choice count {len(choices)} != 5"
+    if problem_type != "paragraph_order" and any(len(c) > 250 for c in choices):
+        return "a choice is implausibly long (likely swallowed passage text)"
+    if not explanation or not _HANGUL_RE.search(explanation):
+        return "explanation missing or has no Hangul"
+    if answer is not None and answer not in {"1", "2", "3", "4", "5"}:
+        return f"answer {answer!r} is not one of the 5 choice positions"
+
+    if problem_type == "paragraph_order":
+        labels = set(_PAREN_LABEL_RE.findall(passage))
+        if not {"A", "B", "C"}.issubset(labels):
+            return "paragraph_order item missing one of (A)(B)(C) labels in passage_text"
+        if not all(_ORDER_CHOICE_RE.fullmatch(c.strip()) for c in choices):
+            return "paragraph_order choices don't look like (A)-(B)-(C) permutation strings"
+
+    if problem_type == "embedded_marker":
+        markers_found = sum(1 for ch in _CIRCLED_CHARS if ch in passage)
+        if markers_found < 5:
+            return f"embedded_marker item needs 5 embedded ①-⑤ markers in passage_text, found {markers_found}"
+
     return None
 
 
-def parse_exam_text(text: str) -> List[Dict]:
-    """Parse raw exam text into a list of passage dicts (pure — tolerant of partial failure).
-
-    Each item: {problem_number, question_text, passage_text, choices|None}. Problems whose
-    question or passage cannot be recovered, or that fail validate_parsed_item's shape
-    check, are omitted — the caller reports the skips (both reasons) so nothing is
-    silently dropped without a trace.
+def _plan_batches(manifest: List[Dict], batch_size: int = 6) -> List[List[int]]:
+    """Chunk manifest problem numbers into contiguous windows of ~batch_size, never
+    splitting a 장문독해 passage_group across two batches. Pure — takes/returns plain
+    problem-number lists, no Gemini/DB IO. `manifest` is a list of dicts each with at
+    least "problem_number" and "passage_group" (list, possibly empty/singleton) keys.
     """
-    results: List[Dict] = []
-    for num, block in split_problems(text):
-        first_line = next((ln.strip() for ln in block.splitlines() if ln.strip()), "")
-        # Classify on de-tagged text (see validate_parsed_item's matching comment) — a
-        # stray emphasis-underline landing inside the matched phrase itself would
-        # otherwise break this routing check the same way it broke the reject-check for
-        # 무관 문장 찾기 (real case: "관계 <u>없는</u> 문장").
-        if _UNDERLINE_CHOICE_QUESTION_RE.search(_UNDERLINE_SPAN_RE.sub(r"\1", first_line)):
-            parsed = parse_underline_choice_block(block)
-            question_text = str(parsed["question_text"])
-            passage_text = str(parsed["passage_text"])
-            choices = parsed["choices"] or None
-        else:
-            body, raw_choices = parse_choices(block)
-            lines = [ln.strip() for ln in body.splitlines() if ln.strip()]
-            if not lines:
-                continue
-            question_text = lines[0]
-            passage_text = "\n".join(lines[1:]).strip()
-            choices = raw_choices or None
-        if not question_text or not passage_text:
-            continue  # unrecoverable — skip (reported by caller)
-        item = {
-            "problem_number": num,
-            "question_text": question_text,
-            "passage_text": passage_text,
-            "choices": choices,
-        }
-        if validate_parsed_item(item) is not None:
-            continue  # implausible shape — skip (reported by caller)
-        results.append(item)
-    return results
+    seen: set = set()
+    groups: List[List[int]] = []
+    for m in sorted(manifest, key=lambda m: m["problem_number"]):
+        num = m["problem_number"]
+        if num in seen:
+            continue
+        group = sorted(m.get("passage_group") or [num])
+        for n in group:
+            seen.add(n)
+        groups.append(group)
+
+    batches: List[List[int]] = []
+    current: List[int] = []
+    for group in groups:
+        if current and len(current) + len(group) > batch_size:
+            batches.append(current)
+            current = []
+        current.extend(group)
+    if current:
+        batches.append(current)
+    return batches
 
 
 def parse_answers_text(text: str) -> Dict[int, str]:
@@ -469,30 +393,6 @@ def extract_text_from_pdf(pdf_path: str) -> str:
 
 # ---------- Orchestration (DB + AI IO) ----------
 
-async def _tag_new_passages(passage_ids: List[int]) -> None:
-    """Backfill tags for freshly-inserted passages via one AI call each."""
-    if not passage_ids:
-        return
-    from app.core.database import SessionLocal
-    from app.models.exam_passage import ExamPassage
-    from app.services.gemini_service import GeminiService
-
-    gemini = GeminiService()
-    db = SessionLocal()
-    try:
-        for pid in passage_ids:
-            passage = db.get(ExamPassage, pid)
-            if passage is None or passage.tags:
-                continue
-            tags = await gemini.tag_exam_passage(passage.passage_text, passage.question_text)
-            if tags:
-                passage.tags = tags
-                db.commit()
-                print(f"  tagged #{passage.problem_number}: {tags}")
-    finally:
-        db.close()
-
-
 def backfill_answers(
     *,
     answers_path: Optional[str] = None,
@@ -576,40 +476,54 @@ def ingest(
     form: str = "홀수형",
     do_tagging: bool = True,
 ) -> None:
-    """Extract → parse → idempotent insert → AI tag. Tolerates partial parse failures."""
+    """Read PDFs -> AI extract (manifest scan + windowed batches) -> validate ->
+    idempotent insert. Tolerates partial batch/validation failures — never crashes the
+    whole run over one bad batch or one implausible item."""
+    from pathlib import Path
     from app.core.database import SessionLocal
     from app.models.exam_passage import ExamPassage
+    from app.services.gemini_service import GeminiService
     from sqlalchemy import select
 
-    print(f"Extracting text: {pdf_path}")
-    text = extract_text_from_pdf(pdf_path)
-    parsed = parse_exam_text(text)
-    print(f"Parsed {len(parsed)} problems.")
+    exam_bytes = Path(pdf_path).read_bytes()
+    answers_bytes = Path(answers_path).read_bytes() if answers_path else None
 
-    all_nums = sorted({n for n, _ in split_problems(text)})
-    parsed_nums = {item["problem_number"] for item in parsed}
-    skipped_nums = [n for n in all_nums if n not in parsed_nums]
-    if skipped_nums:
-        print(
-            f"Skipped {len(skipped_nums)} unparseable/implausible problems "
-            f"(often 무관문장/순서/장문 유형): {skipped_nums}"
+    gemini = GeminiService()
+    manifest = asyncio.run(gemini.scan_exam_pdf_manifest(exam_bytes))
+    if not manifest:
+        # ASCII hyphen, not an em dash: cp949 (the Windows console this script runs in)
+        # cannot encode U+2014, so an em dash here turns the intended clean abort message
+        # into a UnicodeEncodeError traceback.
+        print("FATAL: manifest scan failed (see error above) - aborting, nothing inserted.")
+        return
+    print(f"Manifest: {len(manifest)} problems found.")
+
+    batches = _plan_batches([m.model_dump() for m in manifest], batch_size=6)
+
+    all_items: List[Dict] = []
+    failed_batches: List[List[int]] = []
+    for numbers in batches:
+        result = asyncio.run(
+            gemini.extract_exam_problems_from_pdfs(exam_bytes, answers_bytes, numbers, form=form)
         )
+        if result is None:
+            failed_batches.append(numbers)
+            continue
+        all_items.extend(r.model_dump() for r in result)
+    if failed_batches:
+        print(f"WARN: {len(failed_batches)} batch(es) failed entirely: {failed_batches}")
 
-    answers: Dict[int, str] = {}
-    if answers_path:
-        try:
-            section = extract_form_section(extract_text_from_pdf(answers_path), form)
-            answers = parse_answers_text(section)
-            print(f"Parsed {len(answers)} answers (form={form}).")
-        except Exception as e:  # noqa: BLE001 - answers are optional
-            print(f"WARN: failed to parse answers PDF ({e}); continuing without answers.")
-
+    skipped_invalid: List[tuple] = []
     inserted_ids: List[int] = []
     skipped_existing: List[int] = []
     db = SessionLocal()
     try:
-        for item in parsed:
+        for item in all_items:
             num = item["problem_number"]
+            reason = validate_extracted_item(item)
+            if reason is not None:
+                skipped_invalid.append((num, reason))
+                continue
             exists = db.scalar(
                 select(ExamPassage).where(
                     ExamPassage.year == year,
@@ -621,30 +535,37 @@ def ingest(
             if exists is not None:
                 skipped_existing.append(num)
                 continue
+            # 장문독해 세트는 같은 지문을 각 row에 그대로 복제해 넣고, 이 키로만 묶어둔다
+            # (관찰용 태그 — 어떤 조회 쿼리도 이 컬럼을 읽지 않는다).
+            group = item.get("passage_group") or [num]
+            group_key = (
+                f"{year}-{exam_type}-{month or 0}-{min(group)}-{max(group)}"
+                if len(group) > 1 else None
+            )
             passage = ExamPassage(
                 year=year,
                 exam_type=exam_type,
                 month=month,
                 problem_number=num,
                 source_label=source_label,
+                problem_type=item["problem_type"],
                 passage_text=item["passage_text"],
                 question_text=item["question_text"],
                 choices=item["choices"],
-                answer=answers.get(num),
+                answer=item.get("answer"),
+                explanation=item["explanation"],
+                tags=(item.get("tags") or None) if do_tagging else None,
+                passage_group_key=group_key,
                 status="unused",
             )
             db.add(passage)
             db.commit()
             db.refresh(passage)
             inserted_ids.append(passage.id)
-        print(f"Inserted {len(inserted_ids)}, skipped {len(skipped_existing)} existing.")
+        print(f"Inserted {len(inserted_ids)}, skipped {len(skipped_existing)} existing, "
+              f"{len(skipped_invalid)} invalid: {skipped_invalid}")
     finally:
         db.close()
-
-    if do_tagging and inserted_ids:
-        print("Tagging new passages with AI...")
-        asyncio.run(_tag_new_passages(inserted_ids))
-
     print("Done.")
 
 
@@ -656,7 +577,10 @@ def main() -> None:
     parser.add_argument("--exam-type", required=True, choices=["수능", "모의고사"])
     parser.add_argument("--month", type=int, default=None, help="모의고사 시행 월(수능은 생략)")
     parser.add_argument("--source-label", default=None, help='예: "2025학년도 수능 영어" (--answers-only일 땐 불필요)')
-    parser.add_argument("--no-tagging", action="store_true", help="AI 태깅 단계 생략")
+    parser.add_argument(
+        "--no-tagging", action="store_true",
+        help="tags를 저장하지 않는다 (태그는 추출 호출에 포함돼 오므로 별도 AI 호출은 원래 없다)",
+    )
     parser.add_argument(
         "--answers-only", action="store_true",
         help="이미 적재된 문제에 정답만 채워넣는다 (--pdf 없이 --answers만으로 실행)",
