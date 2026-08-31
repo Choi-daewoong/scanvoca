@@ -58,6 +58,6 @@ Putting all of her energy into her last steps of the running race, Jamie crossed
 *   “Your running skills have progressed so much **through your consistent training!**” (꾸준한 훈련을 통해 네 달리기 실력이 정말 많이 발전했어!)
 *   “Your running skills have progressed so much, **especially in terms of endurance!**” (특히 지구력 면에서 네 달리기 실력이 정말 많이 발전했어!)
 
-이처럼 부사구를 활용하면 문장의 의미를 더 구체적이고 생생하게 만들 수 있습니다. 이런 표현들을 내 것으로 만들려면 결국 눈에 띄는 단어부터 하나씩 챙겨두는 습관이 중요합니다. Scan Voca는 사진 한 장으로 순식간에 단어장을 만들어, 언제 어디서든 꺼내 보며 외울 수 있게 해주는 단어장 앱입니다.
+이처럼 부사구를 활용하면 문장의 의미를 더 구체적이고 생생하게 만들 수 있습니다. 이런 표현들을 내 것으로 만들려면 결국 눈에 띄는 단어부터 하나씩 챙겨두는 습관이 중요합니다. Scan Voca는 사진 한 장으로 순식간에 단어장을 만들어, 언제 어디서든 꺼내 보며 외울 수 있게 해주는 영어 단어장 앱입니다.
 
 [Scan Voca 시작하기](https://scanvoca.com)

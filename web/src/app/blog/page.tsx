@@ -5,11 +5,11 @@ import BlogList from './_components/BlogList';
 
 export const metadata: Metadata = {
   title: '블로그',
-  description: '영어 단어 암기와 학습법, 시험 대비 노하우를 담은 Scan Voca 블로그. 토익·비즈니스, 수능·내신, 암기법, 일상영어, 자격시험 콘텐츠를 무료로 만나보세요.',
+  description: '영어 단어장 앱 Scan Voca의 블로그. 영어 단어 암기와 학습법, 시험 대비 노하우를 담아 토익·비즈니스, 수능·내신, 암기법, 일상영어, 자격시험 콘텐츠를 무료로 만나보세요.',
   alternates: { canonical: 'https://scanvoca.com/blog' },
   openGraph: {
     title: '블로그 | Scan Voca',
-    description: '영어 단어 암기와 학습법, 시험 대비 노하우를 담은 Scan Voca 블로그.',
+    description: '영어 단어장 앱 Scan Voca의 블로그. 영어 단어 암기와 학습법, 시험 대비 노하우를 담았습니다.',
     url: 'https://scanvoca.com/blog',
     type: 'website',
   },
@@ -34,7 +34,7 @@ export default function BlogPage() {
         <header className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Scan Voca 블로그</h1>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            영어 단어 암기부터 시험 대비까지, 실용적인 학습 콘텐츠를 전합니다.
+            영어 단어장 앱 Scan Voca가 전하는 영어 단어 암기부터 시험 대비까지, 실용적인 학습 콘텐츠입니다.
           </p>
         </header>
 

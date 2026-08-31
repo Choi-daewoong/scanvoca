@@ -4,7 +4,7 @@ import type { Post, PostListResponse } from '@/types';
 
 export const metadata: Metadata = {
   title: '서비스 소개',
-  description: 'Scan Voca가 영단어 암기를 어떻게 더 쉽게 만들어주는지 자세히 알아보세요. 스캔, AI 학습, 단어장, 퀴즈/시험 모드까지 소개합니다.',
+  description: '사진 한 장으로 단어장을 만드는 영어 단어장 앱, Scan Voca가 영단어 암기를 어떻게 더 쉽게 만들어주는지 자세히 알아보세요. 스캔, AI 학습, 단어장, 퀴즈/시험 모드까지 소개합니다.',
   alternates: { canonical: 'https://scanvoca.com/intro' },
 };
 
@@ -30,7 +30,7 @@ export default async function IntroListPage() {
     <div>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">서비스 소개</h1>
       <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-        Scan Voca를 자세히 소개하는 글 모음입니다.
+        사진 한 장으로 단어장을 만드는 영어 단어장 앱, Scan Voca를 자세히 소개하는 글 모음입니다.
       </p>
 
       {posts.length === 0 ? (

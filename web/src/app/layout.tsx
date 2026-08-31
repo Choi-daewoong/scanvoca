@@ -8,8 +8,8 @@ export const metadata: Metadata = {
     default: 'Scan Voca - 스마트 영단어 학습',
     template: '%s | Scan Voca',
   },
-  description: '사진 찍으면 AI가 영단어를 자동 인식하는 영단어 앱. 수능·토익·토플 단어장을 무료로 만들어보세요.',
-  keywords: ['영단어 앱', '단어장 앱', 'AI 영단어', '영어 단어 암기', '수능 영단어'],
+  description: '사진 찍으면 AI가 영단어를 자동 인식하는 영어 단어장 앱. 수능·토익·토플 단어장을 무료로 만들어보세요.',
+  keywords: ['영어 단어장 앱', '영단어 앱', '단어장 앱', 'AI 영단어', '영어 단어 암기', '수능 영단어'],
   verification: {
     other: {
       'naver-site-verification': '81051c79e95a31975a94d4bc903084f5b29edbef',

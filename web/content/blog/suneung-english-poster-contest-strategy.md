@@ -91,6 +91,6 @@ For more information, please visit www.vtco.org.
 ⑤. 1인당 출품할 수 있는 포스터의 수에는 제한이 없다.
 - **오답**입니다. 'Details' 섹션에 "Submissions are limited to one poster per person."이라고 명시되어 있습니다. 1인당 1개의 포스터만 제출할 수 있으므로 제한이 있습니다. 제한이 없다는 내용은 틀렸습니다.
 
-이처럼 안내문 독해 문제는 꼼꼼함이 생명입니다. 각 조건과 세부 사항을 놓치지 않고 정확히 파악하는 연습을 꾸준히 한다면, 어떤 안내문 문제라도 자신 있게 풀어나갈 수 있을 것입니다. 특히 'Recycling for the Future'와 같은 핵심 주제나 'PDF only', 'limited to one poster per person'과 같은 구체적인 조건들을 정확히 이해하는 것이 중요합니다. 이러한 표현들을 익히는 데에는 결국 어휘력과 문장 해석 능력이 뒷받침되어야 합니다. Scan Voca는 사진 한 장으로 순식간에 단어장을 만들어, 언제 어디서든 꺼내 보며 외울 수 있게 해주는 단어장 앱입니다.
+이처럼 안내문 독해 문제는 꼼꼼함이 생명입니다. 각 조건과 세부 사항을 놓치지 않고 정확히 파악하는 연습을 꾸준히 한다면, 어떤 안내문 문제라도 자신 있게 풀어나갈 수 있을 것입니다. 특히 'Recycling for the Future'와 같은 핵심 주제나 'PDF only', 'limited to one poster per person'과 같은 구체적인 조건들을 정확히 이해하는 것이 중요합니다. 이러한 표현들을 익히는 데에는 결국 어휘력과 문장 해석 능력이 뒷받침되어야 합니다. Scan Voca는 사진 한 장으로 순식간에 단어장을 만들어, 언제 어디서든 꺼내 보며 외울 수 있게 해주는 영어 단어장 앱입니다.
 
 [Scan Voca 시작하기](https://scanvoca.com)

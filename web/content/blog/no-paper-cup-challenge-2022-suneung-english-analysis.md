@@ -82,6 +82,6 @@ If you have questions about the challenge, contact us at cornhillsc@chs.edu.
 
 ## Scan Voca와 함께, 안내문 속 숫자 함정까지 완벽하게
 
-결국 영어 실력 향상의 핵심은 꾸준한 어휘 학습과 세부 정보를 놓치지 않는 독해 습관에 달려 있습니다. 'tumbler', 'participant', 'additional' 같은 안내문 단골 어휘부터 챙겨두면, 실전에서 세부 정보를 훨씬 빠르게 짚어낼 수 있습니다. Scan Voca는 사진 한 장으로 순식간에 단어장을 만들어, 언제 어디서든 꺼내 보며 외울 수 있게 해주는 단어장 앱입니다.
+결국 영어 실력 향상의 핵심은 꾸준한 어휘 학습과 세부 정보를 놓치지 않는 독해 습관에 달려 있습니다. 'tumbler', 'participant', 'additional' 같은 안내문 단골 어휘부터 챙겨두면, 실전에서 세부 정보를 훨씬 빠르게 짚어낼 수 있습니다. Scan Voca는 사진 한 장으로 순식간에 단어장을 만들어, 언제 어디서든 꺼내 보며 외울 수 있게 해주는 영어 단어장 앱입니다.
 
 [Scan Voca 시작하기](https://scanvoca.com)
