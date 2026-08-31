@@ -233,3 +233,71 @@ html.dark[data-skin="cream"] body {
 button, a, input[type="button"], input[type="submit"] {
   min-height: 44px;
 }
+
+/* ============================================================
+   블로그 본문의 <details>/<summary> (토익 연습문제 "정답 및 해설")
+   기본 마커만으로는 클릭 가능한 요소로 보이지 않아 눌러볼 생각을
+   못 하는 문제가 있어, 배지 형태 + 화살표 + 안내 문구로 명확히
+   "펼치는 버튼"임을 드러낸다.
+   ============================================================ */
+.prose details {
+  margin: 1.25rem 0;
+  border: 1px solid var(--color-indigo-200);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: var(--color-white);
+}
+.dark .prose details {
+  border-color: var(--color-indigo-900);
+}
+.prose details > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  background: var(--color-indigo-50);
+  color: var(--color-indigo-600);
+  user-select: none;
+}
+.dark .prose details > summary {
+  background: var(--color-indigo-950);
+  color: var(--color-indigo-400);
+}
+.prose details > summary::-webkit-details-marker {
+  display: none;
+}
+.prose details > summary::before {
+  content: "▶";
+  font-size: 0.65em;
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+.prose details[open] > summary::before {
+  transform: rotate(90deg);
+}
+.prose details > summary::after {
+  content: "탭해서 보기";
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-indigo-400);
+}
+.prose details[open] > summary::after {
+  content: "탭해서 접기";
+}
+.prose details > summary:hover {
+  background: var(--color-indigo-100);
+}
+.dark .prose details > summary:hover {
+  background: var(--color-indigo-900);
+}
+.prose details > :not(summary) {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.prose details > :last-child {
+  padding-bottom: 1rem;
+}
