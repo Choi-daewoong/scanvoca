@@ -30,6 +30,10 @@ Cinema is valuable not for its ability to make visible the hidden outlines of ou
 ④. But sound and color threatened to create just such an illusion, thereby destroying the very essence of film art.
 ⑤. As Rudolf Arnheim puts it, “The creative power of the artist can only come into play where reality and the medium of representation do not coincide.”
 
+**해석:**
+
+무성 흑백 영화의 비현실성이 지배적이던 시절에는, 영화적 환상을 현실의 재현으로 받아들이지 않을 수 있었다. 영화는 우리 현실의 감춰진 윤곽을 보이게 하는 능력 때문이 아니라, 현실 그 자체가 가리고 있는 것 — 환상(fantasy)이라는 차원 — 을 드러내는 능력 때문에 가치가 있다. ________________________
+
 ## 문제 유형 분석 및 풀이 전략
 
 이 문제는 빈칸 추론 유형에 해당합니다. 빈칸이 포함된 문장 앞뒤의 내용을 통해 빈칸에 들어갈 가장 적절한 내용을 추론해야 합니다. 특히, 주어진 지문은 영화의 본질에 대한 주장을 담고 있으므로, 빈칸 앞의 내용('cinema is valuable not for its ability to make visible the hidden outlines of our reality, but for its ability to reveal what reality itself veils―the dimension of fantasy.')과 빈칸 뒤에 이어질 내용이 유기적으로 연결되어야 합니다. 
@@ -61,4 +65,6 @@ Cinema is valuable not for its ability to make visible the hidden outlines of ou
 
 우리는 종종 기술의 발전이 모든 것을 더 좋게 만든다고 생각하기 쉽습니다. 스마트폰 카메라가 아무리 좋아져도, 혹은 VR 기술이 아무리 발전해도, 그것이 곧 예술적 깊이를 보장하는 것은 아닙니다. 오히려 기술이 너무 사실적으로 현실을 모방하게 되면, 우리가 영화를 통해 경험할 수 있는 독특한 '환상'의 세계가 좁아질 수도 있습니다. 결국, 기술은 도구일 뿐, 그 도구를 어떻게 사용하느냐에 따라 예술의 본질이 더욱 빛날 수도, 혹은 퇴색될 수도 있는 것이죠. 
 
-이처럼 수능 영어 지문들은 단순히 영어 실력 향상을 넘어, 우리가 살아가는 세상에 대한 깊이 있는 통찰을 제공합니다. 복잡한 개념과 추상적인 내용을 정확히 이해하고 자신의 생각으로 연결하기 위해서는, 단순히 단어를 암기하는 것을 넘어 문맥 속에서 어휘의 의미를 파악하고 문장 구조를 분석하는 능력이 필수적입니다. Scan Voca는 이러한 학습 과정을 돕기 위해 탄생했습니다. 지문의 핵심 어휘와 표현을 효과적으로 학습하고, 기술 발전과 예술의 관계처럼 흥미로운 주제에 대한 이해도를 높여보세요. 지금 바로 [Scan Voca 시작하기](https://scanvoca.com)를 통해 여러분의 영어 실력과 사고력을 한 단계 업그레이드레이드할 기회를 잡으세요!
+이처럼 수능 영어 지문들은 단순히 영어 실력 향상을 넘어, 우리가 살아가는 세상에 대한 깊이 있는 통찰을 제공합니다. Scan Voca는 사진 한 장으로 순식간에 단어장을 만들어, 언제 어디서든 꺼내 보며 외울 수 있게 해주는 단어장 앱입니다.
+
+[Scan Voca 시작하기](https://scanvoca.com)
