@@ -17,6 +17,8 @@ thumbnail: "/blog-images/preferred-residence-by-age-2023-suneung-graph-analysis/
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력시험 영어영역 25번).
 
+![2023학년도 수능 영어 25번 도표: 연령대별 미국인 선호 거주지 유형(2020년 설문)](/blog-images/preferred-residence-by-age-2023-suneung-graph-analysis/graph.png)
+
 The above graph shows the percentages of Americans’
 preferred type of place to live by age group, based on a 2020
 survey.

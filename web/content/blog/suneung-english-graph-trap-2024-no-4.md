@@ -17,6 +17,8 @@ thumbnail: "/blog-images/suneung-english-graph-trap-2024-no-4/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 25번).
 
+![2024학년도 수능 영어 25번 도표: 5개국의 뉴스 회피 응답 비율(2017년, 2019년, 2022년)](/blog-images/suneung-english-graph-trap-2024-no-4/graph.png)
+
 > The above graph shows the percentages of the respondents
 in five countries who sometimes or often actively avoided
 news in 2017, 2019, and 2022.

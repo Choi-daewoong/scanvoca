@@ -15,6 +15,8 @@ thumbnail: "/blog-images/suneung-english-graph-comprehension-2022/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 25번).
 
+![2022학년도 수능 영어 25번 도표: 지역별 세계 중산층 비중(2015년, 2025년 전망)](/blog-images/suneung-english-graph-comprehension-2022/graph.png)
+
 **지문(passage):**
 
 The above graphs show the percentage share of the global middle class by region in 2015 and its projected share in 2025.
