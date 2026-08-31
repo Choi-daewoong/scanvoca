@@ -143,7 +143,11 @@ class TestRenderPracticeQuestions:
                 ],
             }
 
+        async def fake_review(self, questions):
+            return questions  # pass-through: not under test here
+
         monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "review_practice_questions", fake_review)
         monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
 
         resp = client.post(
@@ -156,6 +160,102 @@ class TestRenderPracticeQuestions:
         assert markdown.count("## 실전 연습문제") == 1
         assert "Question 1: Q text" not in markdown
         assert "Real Q" in markdown
+
+
+class TestReviewPracticeQuestions:
+    """GeminiService.review_practice_questions 단위 테스트 (모델 mock).
+
+    실운영 버그(linking-words-business-logic-toeic-rc-part5-6.md 실전 연습문제 3번: 회사의
+    역할/직원의 책임을 대비하는 문맥에 'Moreover'가 정답으로 자동 발행됨 — 실제로는 'On the
+    other hand'가 맞음)를 재현하는 케이스를 포함한다.
+    """
+
+    ONE_QUESTION = [
+        {"type": "Part 5", "passage": "", "question": "The report must be ____ by Friday.",
+         "choices": ["submit", "submits", "submitted", "submitting"],
+         "answer_index": 2, "explanation": "수동태 표현이므로 submitted."},
+    ]
+
+    @staticmethod
+    def _run(questions, payload_text, vision_model="default"):
+        captured = {}
+
+        class FakeResponse:
+            text = payload_text
+
+        class FakeModel:
+            def generate_content(self, prompt, generation_config=None):
+                captured["calls"] = captured.get("calls", 0) + 1
+                captured["prompt"] = prompt
+                return FakeResponse()
+
+        service = GeminiService.__new__(GeminiService)
+        service.vision_model = FakeModel() if vision_model == "default" else vision_model
+        out = asyncio.run(service.review_practice_questions(questions))
+        return out, captured
+
+    def test_empty_input_returns_empty_without_calling_model(self):
+        out, captured = self._run([], "")
+        assert out == []
+        assert "calls" not in captured
+
+    def test_no_api_key_returns_none(self):
+        out, _ = self._run(self.ONE_QUESTION, "", vision_model=None)
+        assert out is None
+
+    def test_confirms_correct_answer_unchanged(self):
+        out, _ = self._run(self.ONE_QUESTION, json.dumps({
+            "reviews": [{"index": 0, "answer_index": 2, "explanation": "수동태이므로 submitted가 맞다.", "drop": False}],
+        }))
+        assert out == [{**self.ONE_QUESTION[0], "explanation": "수동태이므로 submitted가 맞다."}]
+
+    def test_corrects_wrong_answer_and_explanation(self):
+        """실제 사례 재현: 회사 vs. 직원 역할 대비 문맥에서 Moreover(추가) -> On the other
+        hand(대조)로 정정."""
+        questions = [
+            {"type": "Part 6", "passage": "The company will provide a stipend to cover "
+             "essential home office equipment. ____, employees are responsible for "
+             "ensuring a stable internet connection.",
+             "question": "빈칸에 가장 적절한 것은?",
+             "choices": ["Nevertheless", "Therefore", "Moreover", "On the other hand"],
+             "answer_index": 2, "explanation": "회사 지원에 추가되는 직원 의무이므로 Moreover."},
+        ]
+        out, _ = self._run(questions, json.dumps({
+            "reviews": [{"index": 0, "answer_index": 3,
+                         "explanation": "회사의 역할과 직원의 책임을 대비하는 구조이므로 On the other hand가 적절하다.",
+                         "drop": False}],
+        }))
+        assert out[0]["answer_index"] == 3
+        assert "On the other hand" in out[0]["explanation"]
+
+    def test_drops_ambiguous_question_keeps_the_rest(self):
+        two_questions = self.ONE_QUESTION + [
+            {"type": "Part 5", "question": "Ambiguous one.", "choices": ["a", "b", "c", "d"],
+             "answer_index": 0, "explanation": "e"},
+        ]
+        out, _ = self._run(two_questions, json.dumps({
+            "reviews": [
+                {"index": 0, "answer_index": 2, "explanation": "그대로 유효.", "drop": False},
+                {"index": 1, "answer_index": 0, "explanation": "중의적.", "drop": True},
+            ],
+        }))
+        assert len(out) == 1
+        assert out[0]["question"] == self.ONE_QUESTION[0]["question"]
+
+    def test_count_mismatch_returns_none(self):
+        out, _ = self._run(self.ONE_QUESTION, json.dumps({"reviews": []}))
+        assert out is None
+
+    def test_out_of_range_answer_index_returns_none(self):
+        out, _ = self._run(self.ONE_QUESTION, json.dumps({
+            "reviews": [{"index": 0, "answer_index": 99, "explanation": "e", "drop": False}],
+        }))
+        assert out is None
+
+    def test_malformed_json_retries_then_none(self):
+        out, captured = self._run(self.ONE_QUESTION, "not json at all")
+        assert out is None
+        assert captured["calls"] == 2  # initial attempt + 1 retry (max_retries default=1)
 
 
 class TestValidateAutoDraft:
@@ -296,7 +396,11 @@ class TestAutoPublishRun:
                 ],
             }
 
+        async def fake_review(self, questions):
+            return questions  # pass-through: not under test here
+
         monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "review_practice_questions", fake_review)
         # 이미지 생성은 미설정으로 우회
         monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
 
@@ -315,6 +419,89 @@ class TestAutoPublishRun:
         # 토픽 상태 불변 (재시도 가능해야 함)
         db_session.expire_all()
         assert db_session.get(BlogTopic, topic_id).status == "unused"
+
+    def test_review_correction_reaches_published_markdown(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """review_practice_questions가 정답을 정정하면, 그 정정본이 실제 발행 markdown에
+        반영되어야 한다(원본이 아니라)."""
+        topic = BlogTopic(category="토익·비즈니스", title="토익 주제-리뷰", angle="a",
+                          status="unused", pipeline="toeic")
+        db_session.add(topic)
+        db_session.commit()
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False):
+            return {
+                "slug": "toeic-auto-review", "title": "토익 자동 글-리뷰", "description": "설명",
+                "category": "토익·비즈니스", "tags": ["토익"], "body": LONG_BODY,
+                "practice_questions": [
+                    {"type": "Part 6", "question": "빈칸에 가장 적절한 것은?",
+                     "choices": ["Nevertheless", "Therefore", "Moreover", "On the other hand"],
+                     "answer_index": 2, "explanation": "추가되는 의무이므로 Moreover."},
+                ],
+            }
+
+        async def fake_review(self, questions):
+            assert questions[0]["answer_index"] == 2  # 원본(오답)이 그대로 전달됨을 확인
+            corrected = dict(questions[0])
+            corrected["answer_index"] = 3
+            corrected["explanation"] = "역할을 대비하는 구조이므로 On the other hand가 적절하다."
+            return [corrected]
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "review_practice_questions", fake_review)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        markdown = resp.json()["markdown"]
+        assert "정답: (D)" in markdown  # 리뷰가 정정한 인덱스(3 -> D)
+        assert "On the other hand가 적절하다" in markdown
+        assert "추가되는 의무이므로 Moreover" not in markdown  # 원본 오답 해설은 남지 않아야 함
+
+    def test_review_failure_drops_practice_section_instead_of_publishing_unverified(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """review_practice_questions가 None을 반환하면(API 미설정/파싱 실패), 검증되지 않은
+        연습문제를 발행하는 대신 섹션 자체를 빼고 발행해야 한다. 본문 길이는 가드레일을
+        통과할 만큼 충분해야 발행 자체는 계속 진행됨을 함께 확인한다."""
+        topic = BlogTopic(category="토익·비즈니스", title="토익 주제-리뷰실패", angle="a",
+                          status="unused", pipeline="toeic")
+        db_session.add(topic)
+        db_session.commit()
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False):
+            return {
+                "slug": "toeic-auto-review-fail", "title": "토익 자동 글-리뷰실패", "description": "설명",
+                "category": "토익·비즈니스", "tags": ["토익"], "body": LONG_BODY,
+                "practice_questions": [
+                    {"type": "Part 5", "question": "Q ___", "choices": ["a", "b", "c", "d"],
+                     "answer_index": 1, "explanation": "e"},
+                ],
+            }
+
+        async def fake_review(self, questions):
+            return None  # API 미설정 또는 파싱 실패를 시뮬레이션
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "review_practice_questions", fake_review)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        data = resp.json()
+        assert data["slug"] == "toeic-auto-review-fail"
+        assert "## 실전 연습문제" not in data["markdown"]
 
     def test_real_publish_marks_topic_used(self, client, admin_auth_headers, db_session, monkeypatch):
         monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
@@ -1890,7 +2077,11 @@ class TestAutoPublishWordListCta:
                 "word_list": word_list,
             }
 
+        async def fake_review(self, questions):
+            return questions  # pass-through: not under test here
+
         monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "review_practice_questions", fake_review)
         monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
         return captured
 

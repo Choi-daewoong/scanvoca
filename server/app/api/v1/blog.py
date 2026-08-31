@@ -188,6 +188,10 @@ async def _publish_one(
 ) -> BlogAutoPublishResult:
     """Pick one topic and take it through draft -> guardrail -> (unless dry_run) publish.
 
+    toeic drafts additionally get their practice_questions self-reviewed for answer/
+    explanation correctness before rendering (see review_practice_questions) — the
+    guardrail step below only validates post-level shape, not question content.
+
     Extracted verbatim from the old run_auto_publish body — same logic, side effects and
     return values. `pipeline` is guaranteed to be one of toeic/suneung/conversation by the
     caller (the 'manual' / pipeline_not_implemented guards live in the route). The caller
@@ -218,14 +222,27 @@ async def _publish_one(
             return BlogAutoPublishResult(
                 published=False, reason="generation_failed", dry_run=dry_run, topic_id=topic.id
             )
+        # Self-review the generated answer/explanation before it ever reaches
+        # render_practice_questions_markdown, which only checks shape (missing fields,
+        # out-of-range index) — not whether the marked answer is actually correct. A second,
+        # stronger-model pass catches the generator's own blind spots (see
+        # review_practice_questions' docstring for the live mistake that motivated this).
+        # review failure (API unconfigured / unparseable after retries) fails safe: drop the
+        # whole section rather than publish an answer key nothing has verified.
+        raw_questions = result.get("practice_questions") or []
+        if raw_questions:
+            reviewed_questions = await gemini.review_practice_questions(raw_questions)
+            if reviewed_questions is None:
+                reviewed_questions = []
+        else:
+            reviewed_questions = []
+
         # Inject the rendered practice-questions section before the promo section.
         # strip_practice_section first: the model is told not to write its own "실전
         # 연습문제" section, but that's not guaranteed (see its docstring) — without this,
         # an instruction-following slip ships a duplicated section to a live post nobody
         # reviews before publish.
-        questions_md = BlogService.render_practice_questions_markdown(
-            result.get("practice_questions") or []
-        )
+        questions_md = BlogService.render_practice_questions_markdown(reviewed_questions)
         clean_body = BlogService.strip_practice_section(result["body"])
 
         # Word-list CTA (opt-in per topic) — inserted BEFORE the practice questions are

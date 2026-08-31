@@ -594,6 +594,163 @@ Important:
                 print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
             return None
 
+    async def review_practice_questions(
+        self,
+        questions: List[Dict[str, Any]],
+        retry_count: int = 0,
+        max_retries: int = 1,
+    ) -> Optional[List[Dict[str, Any]]]:
+        """
+        Critically re-check each auto-generated TOEIC practice question's marked answer and
+        explanation before publish, correcting or dropping ones that don't hold up.
+
+        generate_blog_post(include_practice_questions=True) writes the question/choices/
+        answer/explanation for TOEIC posts in the same call as the rest of the article, on
+        the fast/cheap generator model — cheap enough to bulk-generate, but occasionally
+        confident about a wrong answer (e.g. a real live case: "The company will provide a
+        stipend... ____, employees are responsible for..." was marked 'Moreover' when the
+        sentence actually contrasts the company's role against the employee's — 'On the
+        other hand' — caught only after publish). Nothing downstream re-checks *content*,
+        only *shape* (render_practice_questions_markdown skips items with missing fields;
+        validate_auto_draft only checks post-level structure like length/category) — this
+        call is the missing correctness gate, run once per generated draft before publish.
+
+        Reviews on the stronger flash model (vision_model, not the flash-lite generator) so
+        the same blind spot that produced the mistake doesn't just rubber-stamp itself, and
+        asks it to return the full corrected {answer_index, explanation} for every item by
+        index rather than trust it to faithfully retype passage/type text verbatim.
+
+        Returns a new list in the same {type, passage, question, choices, answer_index,
+        explanation} shape as the input, with answer_index/explanation replaced by the
+        reviewed versions and any item flagged "drop" (too ambiguous to salvage even after
+        correction) removed entirely. Returns None if review couldn't be completed (API
+        unconfigured, malformed/incomplete response after retries) so the caller can fail
+        safe — drop the whole practice-questions section rather than publish an answer key
+        nothing has verified. Empty input returns an empty list (nothing to review).
+        """
+        if not questions:
+            return []
+        if self.vision_model is None:
+            print("Gemini API key not configured")
+            return None
+
+        numbered_blocks = []
+        for i, q in enumerate(questions):
+            choices = q.get("choices") or []
+            choices_str = "\n".join(f"{idx}: {c}" for idx, c in enumerate(choices))
+            block = f"[문제 {i}]\n문제: {q.get('question', '')}\n"
+            if q.get("passage"):
+                block += f"지문: {q.get('passage')}\n"
+            block += (
+                f"보기(0부터 시작하는 인덱스):\n{choices_str}\n"
+                f"현재 표시된 정답 인덱스: {q.get('answer_index')}\n"
+                f"현재 해설: {q.get('explanation', '')}\n"
+            )
+            numbered_blocks.append(block)
+
+        prompt = (
+            "당신은 TOEIC 문제 검수자입니다. 아래는 자동 생성된 TOEIC RC 연습문제 목록입니다. "
+            "각 문제에 대해 표시된 정답(정답 인덱스)이 실제로 유일하게 맞는 선택지인지, 그리고 "
+            "해설이 그 정답을 논리적으로 정확하게 뒷받침하는지 비판적으로 검증하세요. 채점자의 "
+            "의도가 아니라 문장 자체의 문법·논리·문맥만을 근거로 판단하세요.\n\n"
+            + "\n".join(numbered_blocks)
+            + "\n\n검토 기준:\n"
+            "1. 현재 정답 인덱스가 문법적·논리적으로 유일하게 옳은 선택지인지 확인하세요. "
+            "아니라면 실제로 옳은 선택지의 인덱스로 정정하세요.\n"
+            "2. 정답이 맞더라도 해설이 그 정답을 정확히 뒷받침하지 못하거나, 다른 선택지를 "
+            "잘못된 근거로 배제하고 있다면 해설을 다시 작성하세요.\n"
+            "3. 정정 후에도 여러 선택지가 동시에 정답으로 보이거나(중의적), 문맥 정보가 부족해 "
+            "판단이 불가능한 문제는 drop을 true로 표시하세요.\n"
+            "4. 원래 정답이 맞고 해설도 문제없다면, answer_index와 explanation을 원본과 "
+            "동일하게 그대로 반환하세요.\n\n"
+            "모든 문제(index 0부터 빠짐없이)에 대해 최종 확정된 answer_index(정수, 0부터 "
+            "시작), explanation(한국어, 정답과 나머지 오답 각각의 근거 포함), drop(boolean)을 "
+            "담아 아래 JSON 형식으로만 반환하세요. 다른 텍스트는 포함하지 마세요:\n"
+            '{"reviews": [{"index": 0, "answer_index": 0, "explanation": "...", "drop": false}]}'
+        )
+
+        try:
+            response = self.vision_model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0.2,
+                    "max_output_tokens": 4096,
+                    "response_mime_type": "application/json",
+                },
+            )
+
+            content = response.text
+            if not content:
+                raise ValueError("empty response")
+
+            content = content.strip()
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            content = content.strip()
+
+            parsed = json.loads(content, strict=False)
+            reviews = parsed.get("reviews")
+            if not isinstance(reviews, list):
+                raise ValueError("'reviews' is not a list")
+
+            by_index: Dict[int, Dict[str, Any]] = {}
+            for r in reviews:
+                if not isinstance(r, dict):
+                    continue
+                idx = r.get("index")
+                if isinstance(idx, int):
+                    by_index[idx] = r
+
+            if len(by_index) != len(questions):
+                raise ValueError(
+                    f"review count mismatch: got {len(by_index)}, expected {len(questions)}"
+                )
+
+            result: List[Dict[str, Any]] = []
+            for i, q in enumerate(questions):
+                r = by_index[i]
+                if r.get("drop") is True:
+                    continue
+                choices = q.get("choices") or []
+                answer_index = r.get("answer_index")
+                if not isinstance(answer_index, int) or not (0 <= answer_index < len(choices)):
+                    raise ValueError(f"invalid answer_index for item {i}: {answer_index!r}")
+                explanation = str(r.get("explanation", "")).strip()
+                if not explanation:
+                    raise ValueError(f"empty explanation for item {i}")
+
+                reviewed_q = dict(q)
+                reviewed_q["answer_index"] = answer_index
+                reviewed_q["explanation"] = explanation
+                result.append(reviewed_q)
+
+            return result
+
+        except (json.JSONDecodeError, ValueError) as e:
+            error_msg = f"Practice-question review parse error (attempt {retry_count + 1}/{max_retries + 1}): {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+
+            if retry_count < max_retries:
+                return await self.review_practice_questions(
+                    questions, retry_count=retry_count + 1, max_retries=max_retries
+                )
+            print(f"Practice-question review failed after {max_retries + 1} attempts")
+            return None
+        except Exception as e:
+            error_msg = f"Practice-question review error: {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
     async def suggest_blog_topics(
         self,
         pipeline: str,
