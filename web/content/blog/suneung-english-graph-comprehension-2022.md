@@ -29,6 +29,16 @@ The above graphs show the percentage share of the global middle class by region 
 ④ Central and South America is not expected to change from 2015 to 2025 in its share of the global middle class.
 ⑤ In 2025, the share of the Middle East and North Africa will be larger than that of sub-Saharan Africa, as it was in 2015.
 
+**해석:**
+
+위 그래프들은 2015년 지역별 세계 중산층 비중과 2025년 예상 비중을 보여준다.
+
+① 아시아 태평양 지역의 세계 중산층 비중은 2015년 46%에서 2025년 60%로 증가할 것으로 예상된다.
+② 여섯 개 지역 중 가장 큰 비중을 차지하는 2025년 아시아 태평양 지역의 예상 비중은 같은 해 유럽 비중의 세 배 이상이다.
+③ 유럽과 북미의 비중은 모두 감소할 것으로 예상되는데, 유럽은 2015년 24%에서 2025년 16%로, 북미는 2015년 11%에서 2025년 8%로 감소한다.
+④ 중앙 및 남아메리카는 2015년에서 2025년까지 세계 중산층 비중에 변화가 없을 것으로 예상된다.
+⑤ 2025년 중동 및 북아프리카의 비중은, 2015년에 그랬던 것처럼, 사하라 이남 아프리카의 비중보다 클 것이다.
+
 ## 도표 불일치 문제, 5분 완성 3단계 공략법
 
 도표 문제는 지문(도표 설명)을 읽는 시간보다, 선택지와 도표 수치를 대조하는 시간이 훨씬 깁니다. 다음 3단계로 접근하면 시간을 크게 아낄 수 있습니다.
@@ -57,4 +67,6 @@ The above graphs show the percentage share of the global middle class by region 
 
 ## 꾸준함이 만드는 영어 실력, Scan Voca와 함께라면 어렵지 않아요!
 
-오늘 우리는 2022학년도 수능 영어 도표 문제 유형을 어떻게 빠르고 정확하게 공략할 수 있는지 알아보았습니다. 결국, 이러한 유형별 문제 해결 능력의 기반에는 탄탄한 어휘력이 자리 잡고 있습니다. 아무리 도표를 잘 해석하는 방법을 알아도, 지문에 등장하는 생소한 단어 때문에 발목이 잡힌다면 좋은 결과를 얻기 어렵겠죠. 'global middle class', 'region share', 'percentage change'처럼 도표 문제에 자주 등장하는 표현들을 Scan Voca로 미리 정리해두면, 실전에서 도표를 훨씬 빠르게 읽어낼 수 있습니다. 지금 바로 [Scan Voca 시작하기](https://scanvoca.com) 를 통해 여러분의 영어 학습 여정을 혁신하세요.
+오늘 우리는 2022학년도 수능 영어 도표 문제 유형을 어떻게 빠르고 정확하게 공략할 수 있는지 알아보았습니다. 결국, 이러한 유형별 문제 해결 능력의 기반에는 탄탄한 어휘력이 자리 잡고 있습니다. 아무리 도표를 잘 해석하는 방법을 알아도, 지문에 등장하는 생소한 단어 때문에 발목이 잡힌다면 좋은 결과를 얻기 어렵겠죠. 'global middle class', 'region share', 'percentage change'처럼 도표 문제에 자주 등장하는 표현들을 미리 정리해두면, 실전에서 도표를 훨씬 빠르게 읽어낼 수 있습니다. Scan Voca는 사진 한 장으로 순식간에 단어장을 만들어, 언제 어디서든 꺼내 보며 외울 수 있게 해주는 단어장 앱입니다.
+
+[Scan Voca 시작하기](https://scanvoca.com)
