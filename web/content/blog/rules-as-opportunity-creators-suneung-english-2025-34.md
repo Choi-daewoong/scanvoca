@@ -19,12 +19,15 @@ thumbnail: "/blog-images/rules-as-opportunity-creators-suneung-english-2025-34/1
 
 **문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것은? [3점]
 
+**지문:**
+
 ```
+Centralized, formal rules can ________________________.
 The rules of baseball don’t just regulate the behavior of the
 players; they determine the behavior that constitutes playing
 the game. Rules do not prevent people from playing baseball;
 they create the very practice that allows people to play
-basketball. A score of music imposes rules, but it also creates a
+baseball. A score of music imposes rules, but it also creates a
 pattern of conduct that enables people to produce music. Legal
 rules that enable the formation of corporations, that enable the
 use of wills and trusts, that create negotiable instruments, and
@@ -39,8 +42,7 @@ opportunity to occupy the role. [3점]
 *constrain: 속박하다
 ```
 
-Centralized, formal rules can ________.
-
+**선택지:**
 ①. categorize one’s patterns of conduct in legal and productive ways
 ②. lead people to reevaluate their roles and practices in a society
 ③. encourage new ways of thinking which promote creative ideas
@@ -49,22 +51,24 @@ Centralized, formal rules can ________.
 
 **해석:**
 
-야구의 규칙은 단순히 선수들의 행동을 규제하는 데 그치지 않는다. 그것은 경기를 한다는 것을 구성하는 행동 자체를 결정한다. 규칙은 사람들이 야구를 하는 것을 막지 않는다. 오히려 사람들이 농구를 할 수 있게 해주는 바로 그 관행을 만들어낸다. 악보는 규칙을 부과하지만, 동시에 사람들이 음악을 만들어낼 수 있게 하는 행동 양식도 만들어낸다. 기업 설립을 가능하게 하고, 유언과 신탁의 활용을 가능하게 하며, 유통 가능한 증권을 만들어내고, 계약이라는 관행을 확립하는 법적 규칙들은 모두 개인에게 새로운 기회를 창출하는 관행을 만든다. 그리고 우리에게는 판사, 수탁자, 파트너, 후견인처럼 개인이 법체계 내에서 수행하는 역할을 확립하는 법적 규칙들도 있다. 물론, 이러한 역할을 확립하는 법적 규칙들은 그 역할을 맡은 개인의 행동을 제약하지만, 규칙은 또한 그 역할 자체를 만들어내기도 한다. 그러한 규칙이 없다면 개인은 그 역할을 맡을 기회조차 갖지 못할 것이다. [3점]
+중앙집권화된 공식적 규칙은 ________________________. 야구의 규칙은 단순히 선수들의 행동을 규제하는 데 그치지 않는다. 그것은 경기를 한다는 것을 구성하는 행동 자체를 결정한다. 규칙은 사람들이 야구를 하는 것을 막지 않는다. 오히려 사람들이 야구를 할 수 있게 해주는 바로 그 관행을 만들어낸다. 악보는 규칙을 부과하지만, 동시에 사람들이 음악을 만들어낼 수 있게 하는 행동 양식도 만들어낸다. 기업 설립을 가능하게 하고, 유언과 신탁의 활용을 가능하게 하며, 유통 가능한 증권을 만들어내고, 계약이라는 관행을 확립하는 법적 규칙들은 모두 개인에게 새로운 기회를 창출하는 관행을 만든다. 그리고 우리에게는 판사, 수탁자, 파트너, 후견인처럼 개인이 법체계 내에서 수행하는 역할을 확립하는 법적 규칙들도 있다. 물론, 이러한 역할을 확립하는 법적 규칙들은 그 역할을 맡은 개인의 행동을 제약하지만, 규칙은 또한 그 역할 자체를 만들어내기도 한다. 그러한 규칙이 없다면 개인은 그 역할을 맡을 기회조차 갖지 못할 것이다.
 *constrain: 속박하다
-
-중앙집권화된 공식적 규칙은 ________ 할 수 있다.
 
 ## 규칙을 '기회 창출'의 관점에서 접근하는 법
 
-이 문제는 '규칙'이 우리의 행동을 어떻게 만들고, 궁극적으로 어떤 결과로 이어지는지를 묻고 있습니다. 지문은 야구의 규칙이 단순히 선수들의 행동을 규제하는 것을 넘어, '경기'라는 행위 자체를 가능하게 만든다고 말합니다. 마찬가지로 음악의 악보 역시 규칙을 통해 사람들이 음악을 연주할 수 있는 틀을 제공합니다. 특히 법률 규칙은 기업 설립, 유언, 신탁, 계약 등 다양한 활동을 가능하게 하며, 이는 개인에게 새로운 기회를 만들어 줍니다.
+이 문제는 지문의 **첫 문장**에 빈칸이 있는 '두괄식' 빈칸 추론 유형입니다. 빈칸이 있는 문장이 곧 이 글 전체의 주제문이며, 그 뒤에 이어지는 야구 규칙 → 악보 규칙 → 법률 규칙이라는 세 가지 사례는 모두 이 주제문을 뒷받침하는 근거입니다. 따라서 빈칸에는 이 세 사례를 하나로 묶을 수 있는 일반화된 내용이 들어가야 합니다.
 
-이런 종류의 문제는 보통 지문의 핵심 아이디어를 파악하는 것이 중요합니다. 선택지를 먼저 빠르게 훑어본 후, 지문에서 각 선택지와 관련된 내용을 찾아 비교하는 것이 효율적입니다. 예를 들어, 'legal and productive ways', 'reevaluate their roles and practices', 'new ways of thinking', 'reinforce one’s behavior', 'facilitate productive activity'와 같은 핵심 구문이 지문에 어떻게 연결되는지 살펴보는 것이죠. 지문에서 'create the very practice', 'create new opportunities', 'create the roles themselves'와 같은 표현들이 반복적으로 등장하는 것을 눈여겨보면 문제의 핵심을 파악하는 데 도움이 될 것입니다.
+지문은 야구의 규칙이 단순히 선수들의 행동을 규제하는 것을 넘어, '경기'라는 행위 자체를 가능하게 만든다고 말합니다. 마찬가지로 음악의 악보 역시 규칙을 통해 사람들이 음악을 연주할 수 있는 틀을 제공합니다. 특히 법률 규칙은 기업 설립, 유언, 신탁, 계약, 그리고 판사·수탁자 같은 '역할' 자체를 가능하게 하며, 이는 개인에게 새로운 기회를 만들어 줍니다.
+
+이런 '두괄식' 빈칸 문제는 선택지를 먼저 훑어본 뒤, 뒤에 이어지는 예시들을 읽으며 그 예시들을 하나로 묶는 공통 결론이 무엇인지 거꾸로 추론하는 것이 효율적입니다. 지문에서 'create the very practice', 'create new opportunities', 'create the roles themselves'와 같은 표현들이 반복적으로 등장하는 것을 눈여겨보면 문제의 핵심을 파악하는 데 도움이 될 것입니다.
 
 ## 정답 및 해설: 규칙은 어떻게 기회를 만드는가?
 
 **정답: ⑤ facilitate productive activity by establishing roles and practices**
 
 **해설:**
+
+빈칸 문장 "Centralized, formal rules can ________."은 지문의 첫머리에서 제시되는 주제문이며, 이어지는 야구·음악·법률 규칙의 세 가지 사례가 이 주제문의 근거로 제시됩니다. 따라서 정답은 세 사례를 모두 아우르는 내용이어야 합니다.
 
 *   **①. categorize one’s patterns of conduct in legal and productive ways:** 지문은 규칙이 행동을 '만든다(determine, create)'고 말하지만, 단순히 '분류한다(categorize)'는 표현은 지문의 핵심 내용과 거리가 있습니다. 규칙은 행동을 가능하게 하고 기회를 만들지만, 분류 자체에 초점을 맞추지 않습니다.
 *   **②. lead people to reevaluate their roles and practices in a society:** 규칙이 때로는 역할과 관행을 재평가하게 만들 수도 있지만, 지문의 주된 내용은 규칙이 재평가를 '유도한다'기보다는 새로운 역할과 활동을 '가능하게 한다'는 점입니다. 지문은 규칙의 긍정적이고 창조적인 측면에 더 집중하고 있습니다.
