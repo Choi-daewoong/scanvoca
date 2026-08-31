@@ -26,6 +26,10 @@ Putting all of her energy into her last steps of the running race, Jamie crossed
 ④. nervous → fearful
 ⑤. calm → excited
 
+**해석:**
+
+달리기 경주의 마지막 걸음까지 온 힘을 쏟아부으며 Jamie는 결승선을 통과했다. 실망스럽게도, 그녀는 또다시 자신의 개인 최고 기록을 경신하지 못했다. Jamie는 마침내 기록을 깨기 위해 몇 달 동안 스스로를 채찍질해왔지만, 그것은 모두 헛수고였다. Jamie가 자신의 실패에 대해 느끼는 감정을 알아챈 팀 동료 Ken이 그녀에게 다가와 말했다. "Jamie, 오늘 개인 최고 기록을 세우지는 못했지만, 네 기량은 극적으로 향상됐어. 달리기 실력이 정말 많이 늘었다고! 다음 경주에서는 분명히 개인 최고 기록을 깰 수 있을 거야!" 그의 말을 들은 후, 그녀는 스스로에 대해 자신감을 느꼈다. 목표를 향해 계속 나아갈 동기를 얻은 Jamie는 미소를 지으며 대답했다. "네 말이 맞아! 다음 경주에서는 꼭 내 최고 기록을 깰 거야!"
+
 ## '심경 변화' 유형 문제, 어떻게 접근해야 할까?
 
 이 문제는 Jamie의 감정 상태가 어떻게 변화하는지를 파악하는 '심경, 분위기, 어조' 유형에 속합니다. 이러한 유형의 문제를 효과적으로 풀기 위해서는 몇 가지 전략이 필요합니다.
@@ -54,4 +58,6 @@ Putting all of her energy into her last steps of the running race, Jamie crossed
 *   “Your running skills have progressed so much **through your consistent training!**” (꾸준한 훈련을 통해 네 달리기 실력이 정말 많이 발전했어!)
 *   “Your running skills have progressed so much, **especially in terms of endurance!**” (특히 지구력 면에서 네 달리기 실력이 정말 많이 발전했어!)
 
-이처럼 부사구를 활용하면 문장의 의미를 더 구체적이고 생생하게 만들 수 있습니다. Scan Voca 앱을 활용하면 이러한 문장 구조와 어휘를 효과적으로 학습하고, 실제 영어 글쓰기나 말하기에 적용하는 연습을 할 수 있습니다. 복잡한 문장 구조나 생소한 어휘 때문에 좌절감을 느꼈던 경험이 있다면, 이제 Scan Voca와 함께라면 긍정적인 변화를 경험할 수 있을 거예요. 단어와 표현을 암기하는 것을 넘어, 문맥 속에서 그 의미를 파악하고 실제 활용하는 능력을 키우는 것이 중요하니까요. 지금 바로 [Scan Voca 시작하기](https://scanvoca.com) 를 통해 여러분의 영어 실력을 한 단계 업그레이드해보세요!
+이처럼 부사구를 활용하면 문장의 의미를 더 구체적이고 생생하게 만들 수 있습니다. 이런 표현들을 내 것으로 만들려면 결국 눈에 띄는 단어부터 하나씩 챙겨두는 습관이 중요합니다. Scan Voca는 사진 한 장으로 순식간에 단어장을 만들어, 언제 어디서든 꺼내 보며 외울 수 있게 해주는 단어장 앱입니다.
+
+[Scan Voca 시작하기](https://scanvoca.com)
