@@ -17,6 +17,8 @@ thumbnail: "/blog-images/suneung-english-notice-reading-turtle-island-booking-er
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 27번).
 
+![2024학년도 수능 영어 27번 안내문: Turtle Island Boat Tour](/blog-images/suneung-english-notice-reading-turtle-island-booking-error/notice.png)
+
 **Turtle Island Boat Tour**
 The fantastic Turtle Island Boat Tour invites you to the
 beautiful sea world.
@@ -53,8 +55,8 @@ Turtle Island Boat Tour
 환상적인 Turtle Island Boat Tour가 아름다운 바다 세계로 여러분을 초대합니다.
 날짜: 2024년 6월 1일부터 8월 31일까지
 투어 시간
-평일: 오후 1시~5시, 오전 9시~오후 1시
-주말: 오후 1시~5시
+평일: 오후 1시~5시
+주말: 오전 9시~오후 1시, 오후 1시~5시
 ※ 각 투어는 4시간 동안 진행됩니다.
 티켓 및 예약
 ∙투어당 1인 50달러

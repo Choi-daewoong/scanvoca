@@ -15,6 +15,8 @@ thumbnail: "/blog-images/suneung-english-notice-card-trap-10sec/1.png"
 ## 2025학년도 수능 영어 27번: Adenville City Pass Card 안내문
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2025학년도 대학수학능력시험 영어영역 27번).
 
+![2025학년도 수능 영어 27번 안내문: Adenville City Pass Card](/blog-images/suneung-english-notice-card-trap-10sec/notice.png)
+
 **일치하지 않는 것은?**
 
 **Adenville City Pass Card**
