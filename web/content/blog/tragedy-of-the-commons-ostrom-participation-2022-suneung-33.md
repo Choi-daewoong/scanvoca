@@ -17,7 +17,6 @@ thumbnail: "/blog-images/tragedy-of-the-commons-ostrom-participation-2022-suneun
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 33번).
 
-```
 Elinor Ostrom found that there are several factors critical to
 bringing about stable institutional solutions to the problem of
 the commons. She pointed out, for instance, that the actors
@@ -37,7 +36,6 @@ among themselves. Political institutions at central, regional,
 and local levels must allow users to devise their own regulations
 and independently ensure observance. [3점]
 *commons: 공유지 **mandate: 위임
-```
 
 **문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. [3점]
 

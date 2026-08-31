@@ -21,7 +21,6 @@ thumbnail: "/blog-images/rules-as-opportunity-creators-suneung-english-2025-34/1
 
 **지문:**
 
-```
 Centralized, formal rules can ________________________.
 The rules of baseball don’t just regulate the behavior of the
 players; they determine the behavior that constitutes playing
@@ -40,7 +39,6 @@ of individuals who occupy them, but rules also create the roles
 themselves. Without them an individual would not have the
 opportunity to occupy the role. [3점]
 *constrain: 속박하다
-```
 
 **선택지:**
 ①. categorize one’s patterns of conduct in legal and productive ways

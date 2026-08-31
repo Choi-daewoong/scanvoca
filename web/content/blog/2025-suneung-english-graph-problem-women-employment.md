@@ -19,11 +19,9 @@ thumbnail: "/blog-images/2025-suneung-english-graph-problem-women-employment/1.p
 
 ![2025학년도 수능 영어 25번 도표: 미국 상위 100개 영화의 직군별(감독·작가·편집자·프로듀서) 여성 고용 비율(2020~2022년)](/blog-images/2025-suneung-english-graph-problem-women-employment/graph.png)
 
-```
 The graph above shows the percentages of women employed
 behind the scenes on the top 100 U.S. films by role in 2020,
 2021, and 2022.
-```
 
 **문제:** 다음 도표의 내용과 일치하지 않는 것은?
 

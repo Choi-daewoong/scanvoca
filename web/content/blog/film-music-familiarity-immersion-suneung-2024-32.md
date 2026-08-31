@@ -17,7 +17,6 @@ thumbnail: "/blog-images/film-music-familiarity-immersion-suneung-2024-32/1.png"
 
 **문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것은?
 
-```text
 A musical score within any film can add an additional layer
 to the film text, which goes beyond simply imitating the action
 viewed. In films that tell of futuristic worlds, composers,
@@ -35,7 +34,6 @@ space so that the film may then lead the viewer to what is an
 unfamiliar, but acceptable vision of a world different from their
 own.
 *score: 악보 **cadence: (율동적인) 박자
-```
 
 **선택지:**
 

@@ -27,7 +27,6 @@ can be devalued when contracts are violated.
 
 **이어지는 글:**
 
-```
 (A) Similarly, a landowner can undermaintain fences, ditches,
 and irrigation systems. Accurate assessments of farmer
 and landowner behavior will be made over time, and
@@ -44,7 +43,6 @@ fairness, producing high yields, and consistently demonstrating
 that they are good at what they do. In small, close-knit
 farming communities, reputations are well known.
 *ditch: 개천 **irrigation: 물을 댐
-```
 
 **선택지:**
 

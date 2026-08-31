@@ -17,7 +17,6 @@ thumbnail: "/blog-images/suneung-english-notice-cancellation-strategy-2025/1.png
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2025학년도 대학수학능력시험 영어영역 18번).
 
-```
 Dear Rosydale City Marathon Racers,
 We are really grateful to all of you who have signed up for
 the 10th Rosydale City Marathon that was scheduled for
@@ -32,7 +31,6 @@ we promise to hold another race in the near future.
 Sincerely,
 Martha Kingsley
 Race Manager
-```
 
 **다음 글의 목적으로 가장 적절한 것은?**
 

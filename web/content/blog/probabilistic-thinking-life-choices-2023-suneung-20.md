@@ -17,7 +17,6 @@ thumbnail: "/blog-images/probabilistic-thinking-life-choices-2023-suneung-20/1.p
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력시험 영어영역 20번).
 
-```
 At every step in our journey through life we encounter
 junctions with many different pathways leading into the
 distance. Each choice involves uncertainty about which path will
@@ -32,7 +31,6 @@ then to see what proportion of them lead to success or failure.
 This gives you a much better map of the future on which to base
 your decisions about which path to choose.
 *junction: 분기점 **suboptimal: 차선의
-```
 
 **문제:** 다음 글에서 필자가 주장하는 바로 가장 적절한 것은?
 

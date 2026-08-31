@@ -17,7 +17,6 @@ thumbnail: "/blog-images/contingency-pricing-lawyer-fees-suneung-2023-37/1.png"
 
 **문제:** 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은? [3점]
 
-```
 The most commonly known form of results-based pricing
 is a practice called contingency pricing, used by lawyers.
 (A) Therefore, only an outcome in the client’s favor is
@@ -38,7 +37,6 @@ lawyers do not receive fees or payment until the case is
 settled, when they are paid a percentage of the money that
 the client receives.
 *intimidate: 위협하다
-```
 
 **선택지:**
 ①. (A) － (C) － (B)

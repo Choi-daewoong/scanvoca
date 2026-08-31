@@ -19,7 +19,6 @@ thumbnail: "/blog-images/science-vs-history-precision-determinacy-2022-suneung-3
 **문제(Question):** 다음 빈칸에 들어갈 말로 가장 적절한 것은? [3점]
 
 **지문(Passage):**
-```
 Precision and determinacy are a necessary requirement for
 all meaningful scientific debate, and progress in the sciences
 is, to a large extent, the ongoing process of achieving ever
@@ -41,7 +40,6 @@ questioning of ________,
 rather than, as in the sciences, an ever greater approximation
 to the truth. [3점]
 *proliferation: 증식
-```
 
 **선택지:**
 ①. criteria for evaluating historical representations

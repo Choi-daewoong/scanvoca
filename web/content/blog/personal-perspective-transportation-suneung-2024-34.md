@@ -19,7 +19,6 @@ thumbnail: "/blog-images/personal-perspective-transportation-suneung-2024-34/1.p
 
 **문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. [3점]
 
-```
 Everyone who drives, walks, or swipes a transit card in a
 city views herself as a transportation expert from the moment
 she walks out the front door. And how she views the street
@@ -42,7 +41,6 @@ commute, ability to park, belief about what is safe and what
 isn’t, or the bottom line of a local business.
 *swipe: 판독기에 통과시키다 **contentious: 논쟁적인
 ***commute: 통근
-```
 
 **선택지:**
 ①. relies heavily on how others see her city’s streets

@@ -19,7 +19,6 @@ thumbnail: "/blog-images/suneung-english-2023-email-purpose-10-sec-hack/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력시험 영어영역 18번).
 
-```
 To whom it may concern,
 My name is Michael Brown. I have been a bird-watcher since
 childhood. I have always enjoyed watching birds in my yard
@@ -33,7 +32,6 @@ would like to know how to sign up for the club. I look forward
 to your reply.
 Sincerely,
 Michael Brown
-```
 
 **문제:** 다음 글의 목적으로 가장 적절한 것은?
 
