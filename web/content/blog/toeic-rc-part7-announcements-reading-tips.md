@@ -62,6 +62,48 @@ thumbnail: "/blog-images/toeic-rc-part7-announcements-reading-tips/1.png"
 *   **부정적 표현의 함정:** 'not'이나 'except'와 같은 부정적 표현이 포함된 선택지는 종종 오답으로 이어지므로, 질문과 지문의 내용을 다시 한번 대조하며 신중하게 판단해야 합니다.
 *   **시간 및 수량 제한 재확인:** 질문에서 시간이나 수량에 대한 언급이 있다면, 반드시 지문에서 해당 정보를 다시 찾아 일치하는지 확인합니다.
 
+## 실전 연습문제
+
+> ATTENTION: Parking Lot Maintenance Notice
+>
+> The main employee parking lot will be resurfaced from Monday, June 3 to Friday, June 7. During this period, employees must park in the temporary lot located behind the west building. Visitor parking will remain open as usual. Employees who need overnight parking must request a permit from Security by Friday, May 31, as spaces in the temporary lot are limited. This notice does not apply to employees with reserved executive parking spaces.
+
+**1. (Part 7)** According to the notice, who must request a permit from Security?
+
+- (A) All employees
+- (B) Employees who need overnight parking
+- (C) Visitors
+- (D) Employees with reserved executive parking spaces
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (B)
+
+공지문에서 "Employees who need overnight parking must request a permit from Security by Friday, May 31"라고 명시하고 있습니다. (A)는 범위가 너무 넓고, (C)는 방문객 주차와 관련된 언급이 없으며, (D)는 "This notice does not apply to employees with reserved executive parking spaces."라고 명시되어 이 공지 자체가 적용되지 않는 대상입니다.
+
+</details>
+
+> ATTENTION: Parking Lot Maintenance Notice
+>
+> The main employee parking lot will be resurfaced from Monday, June 3 to Friday, June 7. During this period, employees must park in the temporary lot located behind the west building. Visitor parking will remain open as usual. Employees who need overnight parking must request a permit from Security by Friday, May 31, as spaces in the temporary lot are limited. This notice does not apply to employees with reserved executive parking spaces.
+
+**2. (Part 7)** What is true about visitor parking during the maintenance period?
+
+- (A) It will be closed
+- (B) It will be moved to the west building
+- (C) It will remain open as usual
+- (D) It requires a special permit
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (C)
+
+공지문에서 "Visitor parking will remain open as usual."라고 명확히 밝히고 있습니다. 임시 주차장 이동이나 허가증 신청은 방문객이 아닌 직원에게 해당하는 내용입니다.
+
+</details>
+
 ## Scan Voca와 함께라면, 공지사항도 자신 있게!
 
 이처럼 토익 RC 파트 7의 공지사항 및 안내문 유형은 꼼꼼한 독해와 조건 파악이 필수적입니다. 하지만 아무리 좋은 전략도 기본 어휘와 표현을 모르면 무용지물이죠. 복잡한 공지사항 속 숨겨진 의미를 정확히 파악하기 위해서는 꾸준한 어휘 학습이 뒷받침되어야 합니다. Scan Voca는 여러분이 이러한 실질적인 독해 능력을 갖추도록 돕는 최고의 도구입니다. 다양한 토익 유형별 필수 어휘와 핵심 표현을 효과적으로 학습하고, 실제 시험처럼 구성된 연습 문제를 통해 실전 감각을 익힐 수 있습니다. 더 이상 공지사항의 함정에 빠지지 마세요! 지금 바로 [Scan Voca 시작하기](https://scanvoca.com) 를 통해 여러분의 영어 실력을 한 단계 업그레이드하시길 바랍니다.

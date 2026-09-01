@@ -53,6 +53,48 @@ thumbnail: "/blog-images/toeic-rc-part7-ad-comprehension-strategy/1.png"
 
 광고/홍보성 글은 독자를 특정 행동으로 유도하기 위해 장점은 부각하고 단점이나 제약 조건은 축소하거나 생략하는 경우가 있습니다. 질문에서 'implied' (암시된) 또는 'suggested' (제안된)라는 표현이 사용된다면, 명시적으로 언급되지 않은 정보까지 추론해야 할 수도 있습니다. 또한, 정답처럼 보이는 매력적인 오답(distractor)이 자주 등장하므로, 질문의 의도를 정확히 파악하고 지문 내용과 꼼꼼히 대조하는 습관이 필요합니다.
 
+## 실전 연습문제
+
+> Riverside Fitness Center – Spring Membership Special!
+>
+> Join now and get 20% off your first three months! Our state-of-the-art facility features a full range of cardio and strength-training equipment, a heated pool, and free group classes including yoga and spin. This offer is available only to new members who sign up between March 1 and March 31. Existing members who refer a friend will receive a free one-month extension instead. To take advantage of the discount, simply mention this ad when you visit our front desk.
+
+**1. (Part 7)** According to the advertisement, who is eligible for the 20% discount?
+
+- (A) Existing members who refer a friend
+- (B) New members who sign up in March
+- (C) Members who attend yoga classes
+- (D) Anyone who visits the front desk
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (B)
+
+광고에서 "This offer is available only to new members who sign up between March 1 and March 31."라고 명시하고 있습니다. (A)는 친구를 추천한 기존 회원에게 주어지는 별개의 혜택(1개월 무료 연장)이고, (C)는 언급되지 않았으며, (D)는 할인을 받기 위한 신청 방법이지 자격 조건이 아닙니다.
+
+</details>
+
+> Riverside Fitness Center – Spring Membership Special!
+>
+> Join now and get 20% off your first three months! Our state-of-the-art facility features a full range of cardio and strength-training equipment, a heated pool, and free group classes including yoga and spin. This offer is available only to new members who sign up between March 1 and March 31. Existing members who refer a friend will receive a free one-month extension instead. To take advantage of the discount, simply mention this ad when you visit our front desk.
+
+**2. (Part 7)** What will existing members receive if they refer a friend?
+
+- (A) A 20% discount
+- (B) A free one-month extension
+- (C) A heated pool pass
+- (D) Free yoga classes
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (B)
+
+광고에서 "Existing members who refer a friend will receive a free one-month extension instead."라고 명시하고 있습니다. 20% 할인은 신규 회원 전용 혜택이며, 추천 회원에게 주어지는 혜택과는 별개입니다.
+
+</details>
+
 ## Scan Voca와 함께라면, 파트 7 정복은 시간 문제!
 
 오늘 우리는 토익 RC 파트 7에서 자주 등장하는 광고 및 홍보성 글을 효과적으로 공략하는 방법을 알아보았습니다. 질문 분석부터 키워드 추출, 스캐닝 기법 활용, 정보 배치 패턴 이해, 그리고 함정 피하기까지, 실질적인 전략들을 살펴보았죠. 이러한 전략들을 실제 시험에서 빠르게 적용하기 위해서는 결국 **지문의 핵심 내용을 파악하는 데 필수적인 어휘력을 탄탄히 다지는 것**이 중요합니다. 아무리 좋은 독해 전략도 모르는 단어가 너무 많으면 무용지물이 될 수밖에 없습니다. Scan Voca는 이러한 점을 깊이 이해하고, 여러분이 광고/홍보성 글에 자주 등장하는 비즈니스 용어와 표현들을 쉽고 효과적으로 익힐 수 있도록 돕습니다. 복잡한 수식어나 새로운 비즈니스 용어 앞에서 망설이는 대신, Scan Voca와 함께라면 자신감 있게 핵심 정보를 캐치하고 정답을 향해 나아갈 수 있을 것입니다. 지금 바로 [Scan Voca 시작하기](https://scanvoca.com) 를 통해 파트 7 정복의 첫걸음을 내딛어 보세요!

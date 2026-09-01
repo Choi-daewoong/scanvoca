@@ -50,6 +50,48 @@ thumbnail: "/blog-images/toeic-rc-part7-legal-contracts-reading-strategy/1.png"
 3.  **다의어의 정확한 의미 파악**: "assign"은 '할당하다'라는 뜻도 있지만, '양도하다'라는 법률적 의미로 쓰일 때도 있습니다. 문맥에 맞는 정확한 의미를 파악하는 것이 중요합니다.
 4.  **'Scan Voca'로 필수 어휘 다지기**: 계약서나 법률 문서에 자주 등장하는 핵심 어휘들을 체계적으로 학습하는 것이 중요합니다. Scan Voca는 이러한 맥락에 맞는 필수 어휘들을 엄선하여 제공하며, 반복 학습을 통해 여러분의 독해 속도와 정확도를 동시에 높여줄 것입니다. 단순히 단어만 외우는 것이 아니라, 실제 문장 속에서 어떻게 쓰이는지 예문을 통해 익힐 수 있어 실전 감각을 키우는 데 큰 도움이 됩니다.
 
+## 실전 연습문제
+
+> Section 4: Termination
+>
+> Either party may terminate this Agreement by providing thirty (30) days' written notice to the other party. If the Lessee terminates the Agreement before the end of the twelve-month term, an early termination fee equal to one month's rent shall apply. No early termination fee shall apply if the Lessee terminates due to a job relocation of more than 100 miles, provided that documentation is submitted within 15 days of the notice.
+
+**1. (Part 7)** According to the contract, when must a party give notice to terminate the Agreement?
+
+- (A) At least 30 days in advance
+- (B) At least 15 days in advance
+- (C) At the end of the twelve-month term
+- (D) Within 100 miles of relocation
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (A)
+
+조항에서 "Either party may terminate this Agreement by providing thirty (30) days' written notice"라고 명시하고 있습니다. (B)의 15일은 이직으로 인한 조기 해지 시 관련 서류를 제출해야 하는 기한이지 통지 기간이 아니며, (C)와 (D)는 각각 위약금 발생 조건 및 위약금 면제 조건과 관련된 정보로 통지 시점과는 무관합니다.
+
+</details>
+
+> Section 4: Termination
+>
+> Either party may terminate this Agreement by providing thirty (30) days' written notice to the other party. If the Lessee terminates the Agreement before the end of the twelve-month term, an early termination fee equal to one month's rent shall apply. No early termination fee shall apply if the Lessee terminates due to a job relocation of more than 100 miles, provided that documentation is submitted within 15 days of the notice.
+
+**2. (Part 7)** Under what condition is the early termination fee waived?
+
+- (A) If the Lessee gives 30 days' notice
+- (B) If the Lessee provides notice by phone instead of in writing
+- (C) If the Lessee relocates for a job more than 100 miles away and submits documentation within 15 days
+- (D) If the Lessor terminates the Agreement
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (C)
+
+조항에서 "No early termination fee shall apply if the Lessee terminates due to a job relocation of more than 100 miles, provided that documentation is submitted within 15 days of the notice."라고 명시하고 있습니다. (A)의 30일 사전 통지는 계약 해지 자체를 위한 일반 요건일 뿐 위약금 면제와는 별개이며, (B)는 서면 통지 요건과 반대되는 내용이고, (D) 임대인의 해지는 위약금 면제 조건으로 언급되지 않았습니다.
+
+</details>
+
 ## Scan Voca와 함께라면, 계약서 독해도 자신 있다!
 
 계약서와 법률 문서는 토익 RC 파트 7에서 자주 등장하지만, 어려운 용어와 복잡한 구조 때문에 많은 수험생들이 긴장하는 유형입니다. 하지만 오늘 함께 살펴본 것처럼, 질문을 먼저 분석하고, 문서의 구조를 파악하며, 핵심 조항과 필수 어휘에 집중하는 전략을 활용한다면 충분히 정복할 수 있습니다. 특히, **'indemnify', 'stipulate', 'waiver'** 와 같은 법률 용어들은 문맥 속에서 그 의미를 파악하는 연습이 중요하며, Scan Voca 앱을 통해 이러한 핵심 표현들을 꾸준히 익히는 것이 실력 향상의 지름길이 될 것입니다. 복잡한 법률 문서 속에서도 길을 잃지 않고 핵심 정보를 정확하게 찾아내는 능력을 키우고 싶다면, 지금 바로 [Scan Voca 시작하기](https://scanvoca.com) 를 통해 여러분의 영어 실력을 한 단계 업그레이드하세요!

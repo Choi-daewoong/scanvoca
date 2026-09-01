@@ -57,6 +57,48 @@ thumbnail: "/blog-images/toeic-rc-part7-technical-docs-reading-strategy/1.png"
 
 이 외에도 각 제품의 특성에 맞는 전문 용어들이 등장할 수 있습니다. 지문을 접할 때마다 모르는 단어는 반드시 찾아보고 정리하는 습관을 들이는 것이 중요합니다.
 
+## 실전 연습문제
+
+> QuickBrew Coffee Maker – Troubleshooting Guide
+>
+> If the "Add Water" light stays on after refilling the reservoir, check that the reservoir is fully seated in its base. If the light continues to blink after reseating, unplug the unit for 10 seconds and then plug it back in to reset the sensor. If the machine does not power on at all, first verify that it is connected to a working outlet. The QuickBrew does not have a reset button for power issues, so if the unit still does not respond after checking the outlet, it should be sent to an authorized service center. The one-year warranty covers manufacturing defects but does not cover damage caused by mineral buildup from hard water; using filtered water is recommended for optimal performance.
+
+**1. (Part 7)** What should a user do if the "Add Water" light continues to blink after reseating the reservoir?
+
+- (A) Send the unit to an authorized service center
+- (B) Check that it is connected to a working outlet
+- (C) Unplug the unit for 10 seconds and plug it back in
+- (D) Use filtered water
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (C)
+
+설명서에서 "If the light continues to blink after reseating, unplug the unit for 10 seconds and then plug it back in to reset the sensor."라고 명시하고 있습니다. (A)와 (B)는 전원이 아예 켜지지 않는 문제에 대한 대처법이며, (D)는 물때로 인한 손상 예방과 관련된 조언으로 이 증상과는 무관합니다.
+
+</details>
+
+> QuickBrew Coffee Maker – Troubleshooting Guide
+>
+> If the "Add Water" light stays on after refilling the reservoir, check that the reservoir is fully seated in its base. If the light continues to blink after reseating, unplug the unit for 10 seconds and then plug it back in to reset the sensor. If the machine does not power on at all, first verify that it is connected to a working outlet. The QuickBrew does not have a reset button for power issues, so if the unit still does not respond after checking the outlet, it should be sent to an authorized service center. The one-year warranty covers manufacturing defects but does not cover damage caused by mineral buildup from hard water; using filtered water is recommended for optimal performance.
+
+**2. (Part 7)** According to the guide, what does the warranty NOT cover?
+
+- (A) Manufacturing defects
+- (B) Power issues
+- (C) Damage caused by mineral buildup from hard water
+- (D) Problems with the "Add Water" sensor
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (C)
+
+설명서에서 "the one-year warranty covers manufacturing defects but does not cover damage caused by mineral buildup from hard water"라고 명시하고 있습니다. (A)는 오히려 보증이 적용되는 항목이며, (B)와 (D)는 보증 관련 언급 없이 별도의 문제 해결 절차로 안내되어 있습니다.
+
+</details>
+
 ## Scan Voca와 함께라면, 파트 7도 정복!
 
 제품 설명서나 기술 문서처럼 정보가 밀집된 지문을 빠르고 정확하게 이해하는 능력은 토익 파트 7 고득점을 위한 핵심 열쇠입니다. 오늘 함께 살펴본 핵심 정보 찾는 전략과 필수 어휘들을 꾸준히 연습한다면, 복잡해 보이는 지문도 더 이상 두렵지 않을 것입니다. 하지만 아무리 좋은 전략도 결국은 어휘력이라는 든든한 기반 없이는 흔들릴 수밖에 없습니다. Scan Voca는 여러분의 탄탄한 어휘력 구축을 위해, 지문 속 필수 어휘들을 효과적으로 학습하고 복습할 수 있는 최적의 환경을 제공합니다. 지금 바로 [Scan Voca 시작하기](https://scanvoca.com) 를 통해 여러분의 토익 점수를 한 단계 업그레이드하세요!

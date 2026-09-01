@@ -73,6 +73,52 @@ thumbnail: "/blog-images/toeic-rc-part7-order-payment-email-reading/1.png"
 
 이 외에도 다양한 비즈니스 관련 어휘들이 등장할 수 있으니, 꾸준히 관련 지문을 접하며 어휘력을 확장해나가야 합니다.
 
+## 실전 연습문제
+
+> Subject: Your Return Request – Order #58291
+>
+> Dear Ms. Alvarez,
+>
+> Thank you for contacting us regarding your recent order. We're sorry to hear that the blender you purchased arrived with a cracked lid. Since the item is defective, you are eligible for a full refund with no restocking fee. Please repackage the item in its original box and drop it off at any of our retail locations, or request a prepaid shipping label by replying to this email. Once we receive the item, please allow 5 to 7 business days for the refund to appear on your original payment method. Note that a 15% restocking fee normally applies to returns of non-defective items within our standard 30-day return window.
+
+**1. (Part 7)** Why is the customer eligible for a refund without a restocking fee?
+
+- (A) She returned the item within 30 days
+- (B) The item was defective
+- (C) She requested a prepaid shipping label
+- (D) She paid with a credit card
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (B)
+
+이메일에서 "Since the item is defective, you are eligible for a full refund with no restocking fee."라고 명시하고 있습니다. 30일 이내 반품에 대한 15% 재입고 수수료는 결함이 없는 제품에 적용되는 일반 규정이며, 이 고객의 경우와는 무관합니다.
+
+</details>
+
+> Subject: Your Return Request – Order #58291
+>
+> Dear Ms. Alvarez,
+>
+> Thank you for contacting us regarding your recent order. We're sorry to hear that the blender you purchased arrived with a cracked lid. Since the item is defective, you are eligible for a full refund with no restocking fee. Please repackage the item in its original box and drop it off at any of our retail locations, or request a prepaid shipping label by replying to this email. Once we receive the item, please allow 5 to 7 business days for the refund to appear on your original payment method. Note that a 15% restocking fee normally applies to returns of non-defective items within our standard 30-day return window.
+
+**2. (Part 7)** How long will it take for the refund to appear after the item is received?
+
+- (A) 15 days
+- (B) 30 days
+- (C) 5 to 7 business days
+- (D) Immediately
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (C)
+
+이메일에서 "please allow 5 to 7 business days for the refund to appear on your original payment method."라고 명시하고 있습니다. 30일은 반품 접수 가능 기간을 나타내는 수치일 뿐, 환불 처리 소요 기간이 아닙니다.
+
+</details>
+
 ## Scan Voca와 함께라면, 비즈니스 이메일 독해도 문제없어요!
 
 토익 RC Part 7의 주문/결제 관련 이메일은 실제 비즈니스 현장에서 마주칠 수 있는 다양한 상황을 반영하고 있습니다. 오늘 살펴본 핵심 정보 파악 전략과 필수 어휘들을 익히는 것은 단순히 시험 점수를 올리는 것을 넘어, 앞으로 여러분이 어떤 환경에서든 자신감 있게 영어를 활용하는 데 든든한 밑거름이 될 것입니다. 복잡해 보이는 이메일 속에서도 길을 잃지 않고 원하는 정보를 정확히 찾아내는 능력, 꾸준한 연습과 올바른 도구를 활용한다면 누구나 갖출 수 있습니다. 방대한 어휘와 다양한 표현들을 효과적으로 관리하고 싶다면, Scan Voca가 여러분의 든든한 파트너가 되어줄 것입니다. 지금 바로 [Scan Voca 시작하기](https://scanvoca.com) 를 통해 여러분의 영어 실력을 한 단계 업그레이드하세요!
