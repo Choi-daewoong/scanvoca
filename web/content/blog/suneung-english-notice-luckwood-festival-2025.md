@@ -22,19 +22,21 @@ thumbnail: "/blog-images/suneung-english-notice-luckwood-festival-2025/1.png"
 **[지문]**
 
 Luckwood Snow Festival
-We’re happy to announce the 15th annual Luckwood
-Snow Festival. Come to the festival to enjoy winter activities.
+
+We’re happy to announce the 15th annual Luckwood Snow Festival. Come to the festival to enjoy winter activities.
+
 When & Where
 ∙January 24th—30th (7 days), from 9 a.m. to 8 p.m.
 ∙Luckwood Park
+
 Special Activities
 ∙Snow Sculpture Contest: 11 teams will participate.
 ∙Fun in the Snow: Kids can enjoy snow tunnels and snow slides.
+
 Transportation
-∙Parking is not available (Use public transportation and/or
-shuttle bus service).
-∙The shuttle bus runs between Luckwood Subway Station
-and Luckwood Park (One-way fare: $1, cash only).
+∙Parking is not available (Use public transportation and/or shuttle bus service).
+∙The shuttle bus runs between Luckwood Subway Station and Luckwood Park (One-way fare: $1, cash only).
+
 ※ For more information, please visit www.ldsnow.org.
 
 **[문제]**

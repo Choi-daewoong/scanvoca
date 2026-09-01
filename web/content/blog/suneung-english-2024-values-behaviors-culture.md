@@ -15,20 +15,7 @@ thumbnail: "/blog-images/suneung-english-2024-values-behaviors-culture/1.png"
 ## 2024학년도 수능 영어 20번 원문 및 문제
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 20번).
 
-Values alone do not create and build culture. Living your
-values only some of the time does not contribute to the
-creation and maintenance of culture. Changing values into
-behaviors is only half the battle. Certainly, this is a step in the
-right direction, but those behaviors must then be shared and
-distributed widely throughout the organization, along with a
-clear and concise description of what is expected. It is not
-enough to simply talk about it. It is critical to have a visual
-representation of the specific behaviors that leaders and all
-people managers can use to coach their people. Just like a
-sports team has a playbook with specific plays designed to
-help them perform well and win, your company should have a
-playbook with the key shifts needed to transform your culture
-into action and turn your values into winning behaviors.
+Values alone do not create and build culture. Living your values only some of the time does not contribute to the creation and maintenance of culture. Changing values into behaviors is only half the battle. Certainly, this is a step in the right direction, but those behaviors must then be shared and distributed widely throughout the organization, along with a clear and concise description of what is expected. It is not enough to simply talk about it. It is critical to have a visual representation of the specific behaviors that leaders and all people managers can use to coach their people. Just like a sports team has a playbook with specific plays designed to help them perform well and win, your company should have a playbook with the key shifts needed to transform your culture into action and turn your values into winning behaviors.
 
 **문제:** 다음 글에서 필자가 주장하는 바로 가장 적절한 것은?
 

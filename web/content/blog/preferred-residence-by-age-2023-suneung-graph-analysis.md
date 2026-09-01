@@ -19,28 +19,15 @@ thumbnail: "/blog-images/preferred-residence-by-age-2023-suneung-graph-analysis/
 
 ![2023학년도 수능 영어 25번 도표: 연령대별 미국인 선호 거주지 유형(2020년 설문)](/blog-images/preferred-residence-by-age-2023-suneung-graph-analysis/graph.png)
 
-The above graph shows the percentages of Americans’
-preferred type of place to live by age group, based on a 2020
-survey.
+The above graph shows the percentages of Americans’ preferred type of place to live by age group, based on a 2020 survey.
 
 문제: 다음 도표의 내용과 일치하지 않는 것은?
 
-①. In each of the three age groups, Town/Rural Area
-was the most preferred type of place to live.
-②. In the 18-34
-year-olds group, the percentage of those who preferred
-Big/Small City was higher than that of those who preferred
-Suburb of Big/Small City.
-③. In the 35-54 year-olds group,
-the percentage of those who preferred Suburb of Big/Small City
-exceeded that of those who preferred Big/Small City.
-④. In the
-55 year-olds and older group, the percentage of those who chose
-Big/Small City among the three preferred types of place to live
-was the lowest.
-⑤. Each percentage of the three preferred types
-of place to live was higher than 20% across the three age
-groups.
+①. In each of the three age groups, Town/Rural Area was the most preferred type of place to live.
+②. In the 18-34 year-olds group, the percentage of those who preferred Big/Small City was higher than that of those who preferred Suburb of Big/Small City.
+③. In the 35-54 year-olds group, the percentage of those who preferred Suburb of Big/Small City exceeded that of those who preferred Big/Small City.
+④. In the 55 year-olds and older group, the percentage of those who chose Big/Small City among the three preferred types of place to live was the lowest.
+⑤. Each percentage of the three preferred types of place to live was higher than 20% across the three age groups.
 
 **해석:**
 

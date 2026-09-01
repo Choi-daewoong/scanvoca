@@ -19,34 +19,19 @@ thumbnail: "/blog-images/suneung-english-graph-trap-2024-no-4/1.png"
 
 ![2024학년도 수능 영어 25번 도표: 5개국의 뉴스 회피 응답 비율(2017년, 2019년, 2022년)](/blog-images/suneung-english-graph-trap-2024-no-4/graph.png)
 
-> The above graph shows the percentages of the respondents
-in five countries who sometimes or often actively avoided
-news in 2017, 2019, and 2022.
+> The above graph shows the percentages of the respondents in five countries who sometimes or often actively avoided news in 2017, 2019, and 2022.
 
 **문제:** 다음 도표의 내용과 일치하지 않는 것은?
 
-①. For each of the three years,
-Ireland showed the highest percentage of the respondents who
-sometimes or often actively avoided news, among the countries
-in the graph.
+①. For each of the three years, Ireland showed the highest percentage of the respondents who sometimes or often actively avoided news, among the countries in the graph.
 
-②. In Germany, the percentage of the respondents
-who sometimes or often actively avoided news was less than
-30% in each of the three years.
+②. In Germany, the percentage of the respondents who sometimes or often actively avoided news was less than 30% in each of the three years.
 
-③. In Denmark, the percentage
-of the respondents who sometimes or often actively avoided
-news in 2019 was higher than that in 2017 but lower than that
-in 2022.
+③. In Denmark, the percentage of the respondents who sometimes or often actively avoided news in 2019 was higher than that in 2017 but lower than that in 2022.
 
-④. In Finland, the percentage of the respondents who
-sometimes or often actively avoided news in 2019 was lower
-than that in 2017, which was also true for Japan.
+④. In Finland, the percentage of the respondents who sometimes or often actively avoided news in 2019 was lower than that in 2017, which was also true for Japan.
 
-⑤. In Japan,
-the percentage of the respondents who sometimes or often
-actively avoided news did not exceed 15% in each of the three
-years.
+⑤. In Japan, the percentage of the respondents who sometimes or often actively avoided news did not exceed 15% in each of the three years.
 
 **해석:**
 

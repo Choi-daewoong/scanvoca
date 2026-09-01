@@ -21,8 +21,7 @@ thumbnail: "/blog-images/negotiation-strategy-suneung-2024-36/1.png"
 
 **[주어진 글]**
 
-Negotiation can be defined as an attempt to explore and
-reconcile conflicting positions in order to reach an acceptable outcome.
+Negotiation can be defined as an attempt to explore and reconcile conflicting positions in order to reach an acceptable outcome.
 
 **[이어지는 글]**
 

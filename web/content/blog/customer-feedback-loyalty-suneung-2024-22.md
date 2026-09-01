@@ -17,24 +17,7 @@ thumbnail: "/blog-images/customer-feedback-loyalty-suneung-2024-22/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 22번).
 
-"Being able to prioritize your responses allows you to connect
-more deeply with individual customers, be it a one-off interaction
-around a particularly delightful or upsetting experience, or the
-development of a longer-term relationship with a significantly
-influential individual within your customer base. If you’ve
-ever posted a favorable comment―or any comment, for that
-matter―about a brand, product or service, think about what
-it would feel like if you were personally acknowledged by the
-brand manager, for example, as a result. In general, people
-post because they have something to say―and because they
-want to be recognized for having said it. In particular, when
-people post positive comments they are expressions of
-appreciation for the experience that led to the post. While a
-compliment to the person standing next to you is typically
-answered with a response like “Thank You,” the sad fact is
-that most brand compliments go unanswered. These are lost
-opportunities to understand what drove the compliments and
-create a solid fan based on them.
+"Being able to prioritize your responses allows you to connect more deeply with individual customers, be it a one-off interaction around a particularly delightful or upsetting experience, or the development of a longer-term relationship with a significantly influential individual within your customer base. If you’ve ever posted a favorable comment―or any comment, for that matter―about a brand, product or service, think about what it would feel like if you were personally acknowledged by the brand manager, for example, as a result. In general, people post because they have something to say―and because they want to be recognized for having said it. In particular, when people post positive comments they are expressions of appreciation for the experience that led to the post. While a compliment to the person standing next to you is typically answered with a response like “Thank You,” the sad fact is that most brand compliments go unanswered. These are lost opportunities to understand what drove the compliments and create a solid fan based on them.
 *compliment: 칭찬"
 
 **문제:** 다음 글의 요지로 가장 적절한 것은?

@@ -21,26 +21,11 @@ thumbnail: "/blog-images/winner-take-all-science-competition-suneung-2024-38/1.p
 
 **주어진 문장:**
 
-Yes, some contests are seen as world class, such as
-identification of the Higgs particle or the development of
-high temperature superconductors.
+Yes, some contests are seen as world class, such as identification of the Higgs particle or the development of high temperature superconductors.
 
 **지문:**
 
-Science is sometimes described as a winner-take-all contest,
-meaning that there are no rewards for being second or third.
-This is an extreme view of the nature of scientific contests.
-( ① ) Even those who describe scientific contests in such a
-way note that it is a somewhat inaccurate description, given
-that replication and verification have social value and are
-common in science. ( ② ) It is also inaccurate to the extent
-that it suggests that only a handful of contests exist. ( ③ ) But
-many other contests have multiple parts, and the number of
-such contests may be increasing. ( ④ ) By way of example,
-for many years it was thought that there would be “one” cure
-for cancer, but it is now realized that cancer takes multiple
-forms and that multiple approaches are needed to provide a
-cure. ( ⑤ ) There won’t be one winner―there will be many.
+Science is sometimes described as a winner-take-all contest, meaning that there are no rewards for being second or third. This is an extreme view of the nature of scientific contests. ( ① ) Even those who describe scientific contests in such a way note that it is a somewhat inaccurate description, given that replication and verification have social value and are common in science. ( ② ) It is also inaccurate to the extent that it suggests that only a handful of contests exist. ( ③ ) But many other contests have multiple parts, and the number of such contests may be increasing. ( ④ ) By way of example, for many years it was thought that there would be “one” cure for cancer, but it is now realized that cancer takes multiple forms and that multiple approaches are needed to provide a cure. ( ⑤ ) There won’t be one winner―there will be many.
 
 **선택지:**
 ①. ②. ③. ④. ⑤.

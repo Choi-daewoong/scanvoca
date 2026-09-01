@@ -18,9 +18,11 @@ thumbnail: "/blog-images/suneung-english-notice-reading-strategy/1.png"
 **지문(passage):**
 
 Goldbeach SeaWorld Sleepovers
+
 Do your children love marine animals? A sleepover at Goldbeach SeaWorld will surely be an exciting overnight experience for them. Join us for a magical underwater sleepover.
 
 Participants
+
 - Children ages 8 to 12
 - Children must be accompanied by a guardian.
 
@@ -29,9 +31,11 @@ When: Saturdays 5 p.m. to Sundays 10 a.m. in May, 2022
 Activities: guided tour, underwater show, and photo session with a mermaid
 
 Participation Fee
+
 - $50 per person (dinner and breakfast included)
 
 Note
+
 - Sleeping bags and other personal items will not be provided.
 - All activities take place indoors.
 - Taking photos is not allowed from 10 p.m. to 7 a.m.
@@ -51,9 +55,11 @@ For more information, you can visit our website at www.goldbeachseaworld.com.
 **해석:**
 
 Goldbeach SeaWorld 슬립오버
+
 당신의 아이들은 해양 동물을 좋아하나요? Goldbeach SeaWorld에서의 슬립오버는 분명 아이들에게 짜릿한 하룻밤 경험이 될 것입니다. 마법 같은 수중 슬립오버에 함께해요.
 
 참가 대상
+
 - 8세에서 12세 어린이
 - 어린이는 보호자를 동반해야 합니다.
 
@@ -62,9 +68,11 @@ Goldbeach SeaWorld 슬립오버
 활동: 가이드 투어, 수중 쇼, 인어와 함께하는 사진 촬영
 
 참가비
+
 - 1인당 50달러(저녁 식사와 아침 식사 포함)
 
 유의사항
+
 - 침낭 및 기타 개인 용품은 제공되지 않습니다.
 - 모든 활동은 실내에서 진행됩니다.
 - 오후 10시부터 오전 7시까지는 사진 촬영이 허용되지 않습니다.

@@ -20,9 +20,7 @@ thumbnail: "/blog-images/stay-longer-english-phrases-for-deep-connections/1.png"
 
 드라마 속 인물은 친구에게 이렇게 말합니다:
 
-> "So stay longer and build a real business here.
-You know you love it here.
-And selfishly, I love you here too."
+> "So stay longer and build a real business here. You know you love it here. And selfishly, I love you here too."
 
 이 대사는 단순히 "더 오래 있어"라고 말하는 것을 넘어, 상대방이 그곳을 좋아하는 이유를 알고 있으며, 동시에 자신의 이기적인 마음까지 솔직하게 드러내며 관계의 깊이를 보여줍니다. 여기서 핵심은 바로 'You know you love it here.'와 'And selfishly, I love you here too.'라는 두 문장입니다.
 

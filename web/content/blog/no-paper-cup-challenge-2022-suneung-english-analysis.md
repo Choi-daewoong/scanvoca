@@ -17,13 +17,9 @@ thumbnail: "/blog-images/no-paper-cup-challenge-2022-suneung-english-analysis/1.
 
 **지문(passage):**
 
-Cornhill No Paper Cup Challenge
-Cornhill High School invites you to join the "No Paper Cup Challenge." This encourages you to reduce your use of paper cups. Let's save the earth together!
+Cornhill No Paper Cup Challenge Cornhill High School invites you to join the "No Paper Cup Challenge." This encourages you to reduce your use of paper cups. Let's save the earth together!
 
-How to Participate
-1) After being chosen, record a video showing you are using a tumbler.
-2) Choose the next participant by saying his or her name in the video.
-3) Upload the video to our school website within 24 hours.
+How to Participate 1) After being chosen, record a video showing you are using a tumbler. 2) Choose the next participant by saying his or her name in the video. 3) Upload the video to our school website within 24 hours.
 
 ※ The student council president will start the challenge on December 1st, 2021.
 

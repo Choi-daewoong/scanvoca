@@ -21,27 +21,13 @@ thumbnail: "/blog-images/how-norms-are-formed-suneung-2024-37/1.png"
 
 **주어진 글:**
 
-Norms emerge in groups as a result of people conforming
-to the behavior of others. Thus, the start of a norm occurs
-when one person acts in a particular manner in a particular
-situation because she thinks she ought to.
+Norms emerge in groups as a result of people conforming to the behavior of others. Thus, the start of a norm occurs when one person acts in a particular manner in a particular situation because she thinks she ought to.
 
 **이어지는 글:**
 
-(A) Thus, she may prescribe the behavior to them by uttering
-the norm statement in a prescriptive manner. Alternately, 
-she may communicate that conformity is desired in other
-ways, such as by gesturing. In addition, she may threaten
-to sanction them for not behaving as she wishes. This will
-cause some to conform to her wishes and act as she acts.
-(B) But some others will not need to have the behavior prescribed
-to them. They will observe the regularity of behavior and
-decide on their own that they ought to conform. They may do
-so for either rational or moral reasons.
-(C) Others may then conform to this behavior for a number of
-reasons. The person who performed the initial action may
-think that others ought to behave as she behaves in
-situations of this sort. [3점]
+(A) Thus, she may prescribe the behavior to them by uttering the norm statement in a prescriptive manner. Alternately, she may communicate that conformity is desired in other ways, such as by gesturing. In addition, she may threaten to sanction them for not behaving as she wishes. This will cause some to conform to her wishes and act as she acts.
+(B) But some others will not need to have the behavior prescribed to them. They will observe the regularity of behavior and decide on their own that they ought to conform. They may do so for either rational or moral reasons.
+(C) Others may then conform to this behavior for a number of reasons. The person who performed the initial action may think that others ought to behave as she behaves in situations of this sort. [3점]
 *sanction: 제재를 가하다
 
 **선택지:**

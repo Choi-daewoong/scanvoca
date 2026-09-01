@@ -19,26 +19,7 @@ thumbnail: "/blog-images/personal-perspective-transportation-suneung-2024-34/1.p
 
 **문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. [3점]
 
-Everyone who drives, walks, or swipes a transit card in a
-city views herself as a transportation expert from the moment
-she walks out the front door. And how she views the street
-________________________.
-That’s
-why we find so many well-intentioned and civic-minded
-citizens arguing past one another. At neighborhood meetings
-in school auditoriums, and in back rooms at libraries and
-churches, local residents across the nation gather for
-often-contentious discussions about transportation proposals
-that would change a city’s streets. And like all politics, all
-transportation is local and intensely personal. A transit project
-that could speed travel for tens of thousands of people can be
-stopped by objections to the loss of a few parking spaces or by
-the simple fear that the project won’t work. It’s not a challenge
-of the data or the traffic engineering or the planning. Public
-debates about streets are typically rooted in emotional
-assumptions about how a change will affect a person’s
-commute, ability to park, belief about what is safe and what
-isn’t, or the bottom line of a local business.
+Everyone who drives, walks, or swipes a transit card in a city views herself as a transportation expert from the moment she walks out the front door. And how she views the street ________________________. That’s why we find so many well-intentioned and civic-minded citizens arguing past one another. At neighborhood meetings in school auditoriums, and in back rooms at libraries and churches, local residents across the nation gather for often-contentious discussions about transportation proposals that would change a city’s streets. And like all politics, all transportation is local and intensely personal. A transit project that could speed travel for tens of thousands of people can be stopped by objections to the loss of a few parking spaces or by the simple fear that the project won’t work. It’s not a challenge of the data or the traffic engineering or the planning. Public debates about streets are typically rooted in emotional assumptions about how a change will affect a person’s commute, ability to park, belief about what is safe and what isn’t, or the bottom line of a local business.
 *swipe: 판독기에 통과시키다 **contentious: 논쟁적인
 ***commute: 통근
 

@@ -19,26 +19,7 @@ thumbnail: "/blog-images/science-vs-history-precision-determinacy-2022-suneung-3
 **문제(Question):** 다음 빈칸에 들어갈 말로 가장 적절한 것은? [3점]
 
 **지문(Passage):**
-Precision and determinacy are a necessary requirement for
-all meaningful scientific debate, and progress in the sciences
-is, to a large extent, the ongoing process of achieving ever
-greater precision. But historical representation puts a premium
-on a proliferation of representations, hence not on the
-refinement of one representation but on the production of
-an ever more varied set of representations. Historical insight
-is not a matter of a continuous “narrowing down” of previous
-options, not of an approximation of the truth, but, on the
-contrary, is an “explosion” of possible points of view. It
-therefore aims at the unmasking of previous illusions of
-determinacy and precision by the production of new and
-alternative representations, rather than at achieving truth by
-a careful analysis of what was right and wrong in those
-previous representations. And from this perspective, the
-development of historical insight may indeed be regarded by the
-outsider as a process of creating ever more confusion, a continuous
-questioning of ________,
-rather than, as in the sciences, an ever greater approximation
-to the truth. [3점]
+Precision and determinacy are a necessary requirement for all meaningful scientific debate, and progress in the sciences is, to a large extent, the ongoing process of achieving ever greater precision. But historical representation puts a premium on a proliferation of representations, hence not on the refinement of one representation but on the production of an ever more varied set of representations. Historical insight is not a matter of a continuous “narrowing down” of previous options, not of an approximation of the truth, but, on the contrary, is an “explosion” of possible points of view. It therefore aims at the unmasking of previous illusions of determinacy and precision by the production of new and alternative representations, rather than at achieving truth by a careful analysis of what was right and wrong in those previous representations. And from this perspective, the development of historical insight may indeed be regarded by the outsider as a process of creating ever more confusion, a continuous questioning of ________, rather than, as in the sciences, an ever greater approximation to the truth. [3점]
 *proliferation: 증식
 
 **선택지:**

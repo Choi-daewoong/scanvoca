@@ -17,21 +17,7 @@ thumbnail: "/blog-images/2025-suneung-english-fact-check-trap/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2025학년도 대학수학능력시험 영어영역 26번).
 
-Dick Enberg was one of America’s most beloved sports
-broadcasters. He was born in Michigan in 1935. In the early
-1960s, he became an assistant professor at San Fernando
-Valley State College, where he also served as a coach of its
-basball team. Afterwards, he began a full-time sportscasting
-career in Los Angeles. In 1973, he became the first U.S.
-sportscaster ever to visit China. He joined NBC Sports in 1975
-and remained with the network for about 25 years, covering
-such big events as the Olympics. He later worked for other
-major sports broadcasting stations. He made his last live
-broadcast in 2016 and died the following year at the age of 82.
-He served as Chairman of the American Sportscaster Association
-for more than three decades. Enberg was also a best-selling
-writer and won Emmy Awards as a sportscaster, a writer, and a
-producer.
+Dick Enberg was one of America’s most beloved sports broadcasters. He was born in Michigan in 1935. In the early 1960s, he became an assistant professor at San Fernando Valley State College, where he also served as a coach of its basball team. Afterwards, he began a full-time sportscasting career in Los Angeles. In 1973, he became the first U.S. sportscaster ever to visit China. He joined NBC Sports in 1975 and remained with the network for about 25 years, covering such big events as the Olympics. He later worked for other major sports broadcasting stations. He made his last live broadcast in 2016 and died the following year at the age of 82. He served as Chairman of the American Sportscaster Association for more than three decades. Enberg was also a best-selling writer and won Emmy Awards as a sportscaster, a writer, and a producer.
 
 Dick Enberg에 관한 다음 글의 내용과 일치하지 않는 것은?
 ①. Michigan에서 태어났다.

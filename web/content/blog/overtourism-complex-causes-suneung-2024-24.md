@@ -17,24 +17,7 @@ thumbnail: "/blog-images/overtourism-complex-causes-suneung-2024-24/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 24번).
 
-The concept of overtourism rests on a particular assumption
-about people and places common in tourism studies and the
-social sciences in general. Both are seen as clearly defined and
-demarcated. People are framed as bounded social actors either
-playing the role of hosts or guests. Places, in a similar way, are
-treated as stable containers with clear boundaries. Hence,
-places can be full of tourists and thus suffer from overtourism.
-But what does it mean for a place to be full of people? Indeed,
-there are examples of particular attractions that have limited
-capacity and where there is actually no room for more visitors.
-This is not least the case with some man-made constructions
-such as the Eiffel Tower. However, with places such as cities,
-regions or even whole countries being promoted as destinations
-and described as victims of overtourism, things become more
-complex. What is excessive or out of proportion is highly
-relative and might be more related to other aspects than physical
-capacity, such as natural degradation and economic leakages
-(not to mention politics and local power dynamics).
+The concept of overtourism rests on a particular assumption about people and places common in tourism studies and the social sciences in general. Both are seen as clearly defined and demarcated. People are framed as bounded social actors either playing the role of hosts or guests. Places, in a similar way, are treated as stable containers with clear boundaries. Hence, places can be full of tourists and thus suffer from overtourism. But what does it mean for a place to be full of people? Indeed, there are examples of particular attractions that have limited capacity and where there is actually no room for more visitors. This is not least the case with some man-made constructions such as the Eiffel Tower. However, with places such as cities, regions or even whole countries being promoted as destinations and described as victims of overtourism, things become more complex. What is excessive or out of proportion is highly relative and might be more related to other aspects than physical capacity, such as natural degradation and economic leakages (not to mention politics and local power dynamics).
 *demarcate: 경계를 정하다
 
 다음 글의 제목으로 가장 적절한 것은? [3점]

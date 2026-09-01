@@ -19,26 +19,11 @@ thumbnail: "/blog-images/mutation-typo-analogy-suneung-2024-39/1.png"
 
 **주어진 문장:**
 
-At the next step in the argument, however, the analogy
-breaks down.
+At the next step in the argument, however, the analogy breaks down.
 
 **지문:**
 
-Misprints in a book or in any written message usually have a
-negative impact on the content, sometimes (literally) fatally.
-( ① ) The displacement of a comma, for instance, may be a
-matter of life and death. ( ② ) Similarly most mutations have
-harmful consequences for the organism in which they occur,
-meaning that they reduce its reproductive fitness. ( ③ ) Occasionally, however, a mutation may occur that increases
-the fitness of the organism, just as an accidental failure to
-reproduce the text of the first edition might provide more
-accurate or updated information. ( ④ ) A favorable mutation
-is going to be more heavily represented in the next generation,
-since the organism in which it occurred will have more offspring
-and mutations are transmitted to the offspring. ( ⑤ ) By
-contrast, there is no mechanism by which a book that
-accidentally corrects the mistakes of the first edition will tend
-to sell better.
+Misprints in a book or in any written message usually have a negative impact on the content, sometimes (literally) fatally. ( ① ) The displacement of a comma, for instance, may be a matter of life and death. ( ② ) Similarly most mutations have harmful consequences for the organism in which they occur, meaning that they reduce its reproductive fitness. ( ③ ) Occasionally, however, a mutation may occur that increases the fitness of the organism, just as an accidental failure to reproduce the text of the first edition might provide more accurate or updated information. ( ④ ) A favorable mutation is going to be more heavily represented in the next generation, since the organism in which it occurred will have more offspring and mutations are transmitted to the offspring. ( ⑤ ) By contrast, there is no mechanism by which a book that accidentally corrects the mistakes of the first edition will tend to sell better.
 *analogy: 유사 **mutation: 돌연변이
 
 **선택지:**

@@ -21,27 +21,13 @@ thumbnail: "/blog-images/reputation-market-enforcement-suneung-english-2025-36/1
 
 **주어진 글:**
 
-The potential for market enforcement is greater when
-contracting parties have developed reputational capital that
-can be devalued when contracts are violated.
+The potential for market enforcement is greater when contracting parties have developed reputational capital that can be devalued when contracts are violated.
 
 **이어지는 글:**
 
-(A) Similarly, a landowner can undermaintain fences, ditches,
-and irrigation systems. Accurate assessments of farmer
-and landowner behavior will be made over time, and
-those farmers and landowners who attempt to gain at each
-other’s expense will find that others may refuse to deal
-with them in the future.
-(B) Over time landowners indirectly monitor farmers by
-observing the reported output, the general quality of the soil,
-and any unusual or extreme behavior. Farmer and landowner
-reputations act as a bond. In any growing season a farmer can
-reduce effort, overuse soil, or underreport the crop.
-(C) Farmers and landowners develop reputations for honesty,
-fairness, producing high yields, and consistently demonstrating
-that they are good at what they do. In small, close-knit
-farming communities, reputations are well known.
+(A) Similarly, a landowner can undermaintain fences, ditches, and irrigation systems. Accurate assessments of farmer and landowner behavior will be made over time, and those farmers and landowners who attempt to gain at each other’s expense will find that others may refuse to deal with them in the future.
+(B) Over time landowners indirectly monitor farmers by observing the reported output, the general quality of the soil, and any unusual or extreme behavior. Farmer and landowner reputations act as a bond. In any growing season a farmer can reduce effort, overuse soil, or underreport the crop.
+(C) Farmers and landowners develop reputations for honesty, fairness, producing high yields, and consistently demonstrating that they are good at what they do. In small, close-knit farming communities, reputations are well known.
 *ditch: 개천 **irrigation: 물을 댐
 
 **선택지:**

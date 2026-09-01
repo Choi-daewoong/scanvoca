@@ -17,19 +17,7 @@ thumbnail: "/blog-images/probabilistic-thinking-life-choices-2023-suneung-20/1.p
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력시험 영어영역 20번).
 
-At every step in our journey through life we encounter
-junctions with many different pathways leading into the
-distance. Each choice involves uncertainty about which path will
-get you to your destination. Trusting our intuition to make the
-choice often ends up with us making a suboptimal choice.
-Turning the uncertainty into numbers has proved a potent way of
-analyzing the paths and finding the shortcut to your destination.
-The mathematical theory of probability hasn’t eliminated risk,
-but it allows us to manage that risk more effectively. The strategy
-is to analyze all the possible scenarios that the future holds and
-then to see what proportion of them lead to success or failure.
-This gives you a much better map of the future on which to base
-your decisions about which path to choose.
+At every step in our journey through life we encounter junctions with many different pathways leading into the distance. Each choice involves uncertainty about which path will get you to your destination. Trusting our intuition to make the choice often ends up with us making a suboptimal choice. Turning the uncertainty into numbers has proved a potent way of analyzing the paths and finding the shortcut to your destination. The mathematical theory of probability hasn’t eliminated risk, but it allows us to manage that risk more effectively. The strategy is to analyze all the possible scenarios that the future holds and then to see what proportion of them lead to success or failure. This gives you a much better map of the future on which to base your decisions about which path to choose.
 *junction: 분기점 **suboptimal: 차선의
 
 **문제:** 다음 글에서 필자가 주장하는 바로 가장 적절한 것은?

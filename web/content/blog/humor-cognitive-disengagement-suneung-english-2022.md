@@ -21,20 +21,7 @@ thumbnail: "/blog-images/humor-cognitive-disengagement-suneung-english-2022/1.pn
 
 **지문:**
 
-> Humour involves not just practical disengagement but
-________________________ cognitive disengagement. As long as something is funny, we
-are for the moment not concerned with whether it is real or
-fictional, true or false. This is why we give considerable
-leeway to people telling funny stories. If they are getting extra
-laughs by exaggerating the silliness of a situation or even by
-making up a few details, we are happy to grant them comic
-licence, a kind of poetic licence. Indeed, someone listening to
-a funny story who tries to correct the teller―‘No, he didn’t
-spill the spaghetti on the keyboard and the monitor, just on the
-keyboard’―will probably be told by the other listeners to
-stop interrupting. The creator of humour is putting ideas into
-people’s heads for the pleasure those ideas will bring, not to
-provide information.
+> Humour involves not just practical disengagement but ________________________ cognitive disengagement. As long as something is funny, we are for the moment not concerned with whether it is real or fictional, true or false. This is why we give considerable leeway to people telling funny stories. If they are getting extra laughs by exaggerating the silliness of a situation or even by making up a few details, we are happy to grant them comic licence, a kind of poetic licence. Indeed, someone listening to a funny story who tries to correct the teller―‘No, he didn’t spill the spaghetti on the keyboard and the monitor, just on the keyboard’―will probably be told by the other listeners to stop interrupting. The creator of humour is putting ideas into people’s heads for the pleasure those ideas will bring, not to provide information.
 > *cognitive: 인식의 **leeway: 여지
 
 **선택지:**

@@ -15,17 +15,7 @@ thumbnail: "/blog-images/2024-suneung-english-david-mood-analysis/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 19번).
 
-David was starting a new job in Vancouver, and he was
-waiting for his bus. He kept looking back and forth between
-his watch and the direction the bus would come from. He
-thought, “My bus isn’t here yet. I can’t be late on my first
-day.” David couldn’t feel at ease. When he looked up again,
-he saw a different bus coming that was going right to his
-work. The bus stopped in front of him and opened its door.
-He
-got on the bus thinking, “Phew! Luckily, this bus came just in
-time so I won’t be late.” He leaned back on an unoccupied seat
-in the bus and took a deep breath, finally able to relax.
+David was starting a new job in Vancouver, and he was waiting for his bus. He kept looking back and forth between his watch and the direction the bus would come from. He thought, “My bus isn’t here yet. I can’t be late on my first day.” David couldn’t feel at ease. When he looked up again, he saw a different bus coming that was going right to his work. The bus stopped in front of him and opened its door. He got on the bus thinking, “Phew! Luckily, this bus came just in time so I won’t be late.” He leaned back on an unoccupied seat in the bus and took a deep breath, finally able to relax.
 
 다음 글에 드러난 David의 심경 변화로 가장 적절한 것은?
 ①. nervous → relieved

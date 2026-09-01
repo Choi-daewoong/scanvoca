@@ -17,22 +17,7 @@ thumbnail: "/blog-images/ecosystem-services-non-market-value-suneung-2024-23/1.p
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 23번).
 
-Managers of natural resources typically face market
-incentives that provide financial rewards for exploitation.
-For example, owners of forest lands have a market incentive to cut
-down trees rather than manage the forest for carbon capture,
-wildlife habitat, flood protection, and other ecosystem services.
-These services provide the owner with no financial benefits,
-and thus are unlikely to influence management decisions. But
-the economic benefits provided by these services, based on
-their non-market values, may exceed the economic value of the
-timber. For example, a United Nations initiative has estimated
-that the economic benefits of ecosystem services provided by
-tropical forests, including climate regulation, water purification,
-and erosion prevention, are over three times greater per hectare
-than the market benefits. Thus cutting down the trees is
-economically inefficient, and markets are not sending the correct
-“signal” to favor ecosystem services over extractive uses.
+Managers of natural resources typically face market incentives that provide financial rewards for exploitation. For example, owners of forest lands have a market incentive to cut down trees rather than manage the forest for carbon capture, wildlife habitat, flood protection, and other ecosystem services. These services provide the owner with no financial benefits, and thus are unlikely to influence management decisions. But the economic benefits provided by these services, based on their non-market values, may exceed the economic value of the timber. For example, a United Nations initiative has estimated that the economic benefits of ecosystem services provided by tropical forests, including climate regulation, water purification, and erosion prevention, are over three times greater per hectare than the market benefits. Thus cutting down the trees is economically inefficient, and markets are not sending the correct “signal” to favor ecosystem services over extractive uses.
 *exploitation: 이용 **timber: 목재
 
 **문제(question):** 다음 글의 주제로 가장 적절한 것은?

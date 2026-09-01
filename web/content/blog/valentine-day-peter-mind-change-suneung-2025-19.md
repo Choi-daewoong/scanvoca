@@ -17,18 +17,7 @@ thumbnail: "/blog-images/valentine-day-peter-mind-change-suneung-2025-19/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2025학년도 대학수학능력시험 영어영역 19번).
 
-It was Valentine’s Day on Friday and Peter was certain that
-his wife, Amy, was going to love his surprise. Peter had spent
-a long time searching online for an event that would be a new
-way to spend time with Amy. He had finally found the perfect
-thing for her. She often told him that she liked to go to places
-she had never visited before, and he was absolutely sure that
-she would love going to the new, five-star restaurant downtown.
-He smiled as he called the restaurant and asked for a reservation
-for Friday. Unfortunately, his smile quickly disappeared when
-he was told that the restaurant was fully reserved. “That’s too
-bad,” he said quietly. “I thought that I had found the right
-place.”
+It was Valentine’s Day on Friday and Peter was certain that his wife, Amy, was going to love his surprise. Peter had spent a long time searching online for an event that would be a new way to spend time with Amy. He had finally found the perfect thing for her. She often told him that she liked to go to places she had never visited before, and he was absolutely sure that she would love going to the new, five-star restaurant downtown. He smiled as he called the restaurant and asked for a reservation for Friday. Unfortunately, his smile quickly disappeared when he was told that the restaurant was fully reserved. “That’s too bad,” he said quietly. “I thought that I had found the right place.”
 
 문제: 다음 글에 드러난 Peter의 심경 변화로 가장 적절한 것은?
 

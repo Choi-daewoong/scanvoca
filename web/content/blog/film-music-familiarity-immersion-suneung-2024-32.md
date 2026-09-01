@@ -17,22 +17,7 @@ thumbnail: "/blog-images/film-music-familiarity-immersion-suneung-2024-32/1.png"
 
 **문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것은?
 
-A musical score within any film can add an additional layer
-to the film text, which goes beyond simply imitating the action
-viewed. In films that tell of futuristic worlds, composers,
-much like sound designers, have added freedom to create a world that
-is unknown and new to the viewer. However, unlike sound
-designers, composers often shy away from creating unique
-pieces that reflect these new worlds and often present musical
-scores that possess familiar structures and cadences. While it is
-possible that this may interfere with creativity and a sense of
-space and time, it in fact ________________.
-Through recognizable scores, visions of the future or a galaxy
-far, far away can be placed within a recognizable context.
-Such familiarity allows the viewer to be placed in a comfortable
-space so that the film may then lead the viewer to what is an
-unfamiliar, but acceptable vision of a world different from their
-own.
+A musical score within any film can add an additional layer to the film text, which goes beyond simply imitating the action viewed. In films that tell of futuristic worlds, composers, much like sound designers, have added freedom to create a world that is unknown and new to the viewer. However, unlike sound designers, composers often shy away from creating unique pieces that reflect these new worlds and often present musical scores that possess familiar structures and cadences. While it is possible that this may interfere with creativity and a sense of space and time, it in fact ________________. Through recognizable scores, visions of the future or a galaxy far, far away can be placed within a recognizable context. Such familiarity allows the viewer to be placed in a comfortable space so that the film may then lead the viewer to what is an unfamiliar, but acceptable vision of a world different from their own.
 *score: 악보 **cadence: (율동적인) 박자
 
 **선택지:**

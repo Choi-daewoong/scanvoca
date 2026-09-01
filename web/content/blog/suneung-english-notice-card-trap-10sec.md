@@ -20,8 +20,7 @@ thumbnail: "/blog-images/suneung-english-notice-card-trap-10sec/1.png"
 **일치하지 않는 것은?**
 
 **Adenville City Pass Card**
-The Adenville City Pass Card is a public transportation
-card for tourists visiting Adenville.
+The Adenville City Pass Card is a public transportation card for tourists visiting Adenville.
 
 **Service Range**
 ∙Adenville-based subway lines
@@ -29,15 +28,9 @@ card for tourists visiting Adenville.
 ※ This card cannot be used for city tour buses.
 
 **Card Type**
-Price Additional Benefit
-1-Day $10
-3-Day $25
-10% off admission for
-5-Day $40
-major tourist attractions
+Price Additional Benefit 1-Day $10 3-Day $25 10% off admission for 5-Day $40 major tourist attractions
 
-※Unused cards are refundable within 30 days of the
-purchase date.
+※Unused cards are refundable within 30 days of the purchase date.
 
 **Purchase Information**
 ∙Physical cards can be purchased at subway stations.

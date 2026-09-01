@@ -21,24 +21,7 @@ thumbnail: "/blog-images/news-presentation-styles-understanding-impact-2022-sune
 
 **지문(passage):**
 
-News, especially in its televised form, is constituted not
-only by its choice of topics and stories but by its
-________________________. Presentational
-styles have been subject to a tension between an
-informational-educational purpose and the need to engage us
-entertainingly. While current affairs programmes are often
-‘serious’ in tone sticking to the ‘rules’ of balance, more
-popular programmes adopt a friendly, lighter, idiom in which
-we are invited to consider the impact of particular news items
-from the perspective of the ‘average person in the street’.
-Indeed, contemporary news construction has come to rely on an
-increased use of faster editing tempos and ‘flashier’ presentational
-styles including the use of logos, sound-bites, rapid visual cuts
-and the ‘star quality’ of news readers. Popular formats can be
-said to enhance understanding by engaging an audience unwilling
-to endure the longer verbal orientation of older news formats.
-However, they arguably work to reduce understanding by
-failing to provide the structural contexts for news events.
+News, especially in its televised form, is constituted not only by its choice of topics and stories but by its ________________________. Presentational styles have been subject to a tension between an informational-educational purpose and the need to engage us entertainingly. While current affairs programmes are often ‘serious’ in tone sticking to the ‘rules’ of balance, more popular programmes adopt a friendly, lighter, idiom in which we are invited to consider the impact of particular news items from the perspective of the ‘average person in the street’. Indeed, contemporary news construction has come to rely on an increased use of faster editing tempos and ‘flashier’ presentational styles including the use of logos, sound-bites, rapid visual cuts and the ‘star quality’ of news readers. Popular formats can be said to enhance understanding by engaging an audience unwilling to endure the longer verbal orientation of older news formats. However, they arguably work to reduce understanding by failing to provide the structural contexts for news events.
 
 **선택지:**
 ①. coordination with traditional display techniques

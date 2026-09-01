@@ -21,26 +21,11 @@ thumbnail: "/blog-images/future-job-strategy-robots-suneung-english/1.png"
 
 **주어진 문장:**
 
-Retraining current employees for new positions within the
-company will also greatly reduce their fear of being laid off.
+Retraining current employees for new positions within the company will also greatly reduce their fear of being laid off.
 
 **지문:**
 
-Introduction of robots into factories, while employment of human
-workers is being reduced, creates worry and fear. ( ① ) It is
-the responsibility of management to prevent, or at least, to ease
-these fears. ( ② ) For example, robots could be introduced only
-in new plants rather than replacing humans in existing assembly
-lines. ( ③ ) Workers should be included in the planning for
-new factories or the introduction of robots into existing plants,
-so they can participate in the process. ( ④ ) It may be that robots
-are needed to reduce manufacturing costs so that the company
-remains competitive, but planning for such cost reductions
-should be done jointly by labor and management. ( ⑤ ) Since
-robots are particularly good at highly repetitive simple motions,
-the replaced human workers should be moved to positions
-where judgment and decisions beyond the abilities of robots
-are required.
+Introduction of robots into factories, while employment of human workers is being reduced, creates worry and fear. ( ① ) It is the responsibility of management to prevent, or at least, to ease these fears. ( ② ) For example, robots could be introduced only in new plants rather than replacing humans in existing assembly lines. ( ③ ) Workers should be included in the planning for new factories or the introduction of robots into existing plants, so they can participate in the process. ( ④ ) It may be that robots are needed to reduce manufacturing costs so that the company remains competitive, but planning for such cost reductions should be done jointly by labor and management. ( ⑤ ) Since robots are particularly good at highly repetitive simple motions, the replaced human workers should be moved to positions where judgment and decisions beyond the abilities of robots are required.
 
 **선택지:**
 ①. ②. ③. ④. ⑤.

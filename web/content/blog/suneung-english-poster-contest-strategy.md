@@ -18,22 +18,25 @@ thumbnail: "/blog-images/suneung-english-poster-contest-strategy/1.png"
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력시험 영어영역 28번).
 
 2022 Valestown Recycles Poster Contest
-Join this year’s Valestown Recycles Poster Contest and
-show off your artistic talent!
+
+Join this year’s Valestown Recycles Poster Contest and show off your artistic talent!
+
 Guidelines
-󰠂Participation is only for high school students in Valestown.
-󰠂Participants should use the theme of “Recycling for the
-Future.”
+∙Participation is only for high school students in Valestown.
+∙Participants should use the theme of “Recycling for the Future.”
+
 Submission Format
-󰠂File type: PDF only
-󰠂Maximum file size: 40MB
+∙File type: PDF only
+∙Maximum file size: 40MB
+
 Judging Criteria
-󰠂Use of theme 󰠂Creativity 󰠂Artistic skill
+∙Use of theme ∙Creativity ∙Artistic skill
+
 Details
-󰠂Submissions are limited to one poster per person.
-󰠂Submissions should be uploaded to the website by 6 p.m.,
-December 19.
-󰠂Winners will be announced on the website on December 28.
+∙Submissions are limited to one poster per person.
+∙Submissions should be uploaded to the website by 6 p.m., December 19.
+∙Winners will be announced on the website on December 28.
+
 For more information, please visit www.vtco.org.
 
 문제:
@@ -49,19 +52,25 @@ For more information, please visit www.vtco.org.
 **해석:**
 
 2022 Valestown Recycles 포스터 공모전
+
 올해의 Valestown Recycles 포스터 공모전에 참여하여 여러분의 예술적 재능을 뽐내보세요!
+
 안내 사항
 ∙참가는 Valestown 소재 고등학생만 가능합니다.
 ∙참가자는 "미래를 위한 재활용"이라는 주제를 사용해야 합니다.
+
 제출 형식
 ∙파일 형식: PDF만 가능
 ∙최대 파일 크기: 40MB
+
 심사 기준
 ∙주제 활용 ∙창의성 ∙예술적 기량
+
 세부 사항
 ∙제출은 1인당 포스터 1점으로 제한됩니다.
 ∙제출물은 12월 19일 오후 6시까지 웹사이트에 업로드해야 합니다.
 ∙수상자는 12월 28일 웹사이트에 발표됩니다.
+
 더 많은 정보는 www.vtco.org를 방문해 주세요.
 
 ## 안내문 독해, '조건 파악' 전략으로 흔들림 없이 풀기

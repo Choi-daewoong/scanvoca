@@ -21,31 +21,15 @@ thumbnail: "/blog-images/environmental-tax-market-response-model-2022-suneung-36
 
 **주어진 글:**
 
-According to the market response model, it is increasing
-prices that drive providers to search for new sources,
-innovators to substitute, consumers to conserve, and
-alternatives to emerge.
+According to the market response model, it is increasing prices that drive providers to search for new sources, innovators to substitute, consumers to conserve, and alternatives to emerge.
 
 **이어지는 글:**
 
-(A) Many examples of such “green taxes” exist. Facing landfill
-costs, labor expenses, and related costs in the provision of
-garbage disposal, for example, some cities have required
-households to dispose of all waste in special trash bags,
-purchased by consumers themselves, and often costing a
-dollar or more each.
+(A) Many examples of such “green taxes” exist. Facing landfill costs, labor expenses, and related costs in the provision of garbage disposal, for example, some cities have required households to dispose of all waste in special trash bags, purchased by consumers themselves, and often costing a dollar or more each.
 
-(B) Taxing certain goods or services, and so increasing prices,
-should result in either decreased use of these resources or
-creative innovation of new sources or options. The money
-raised through the tax can be used directly by the government
-either to supply services or to search for alternatives.
+(B) Taxing certain goods or services, and so increasing prices, should result in either decreased use of these resources or creative innovation of new sources or options. The money raised through the tax can be used directly by the government either to supply services or to search for alternatives.
 
-(C) The results have been greatly increased recycling and more
-careful attention by consumers to packaging and waste.
-By internalizing the costs of trash to consumers, there has
-been an observed decrease in the flow of garbage from
-households.
+(C) The results have been greatly increased recycling and more careful attention by consumers to packaging and waste. By internalizing the costs of trash to consumers, there has been an observed decrease in the flow of garbage from households.
 
 **선택지:**
 ①. (A) － (C) － (B)

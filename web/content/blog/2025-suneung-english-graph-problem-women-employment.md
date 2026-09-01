@@ -19,33 +19,19 @@ thumbnail: "/blog-images/2025-suneung-english-graph-problem-women-employment/1.p
 
 ![2025학년도 수능 영어 25번 도표: 미국 상위 100개 영화의 직군별(감독·작가·편집자·프로듀서) 여성 고용 비율(2020~2022년)](/blog-images/2025-suneung-english-graph-problem-women-employment/graph.png)
 
-The graph above shows the percentages of women employed
-behind the scenes on the top 100 U.S. films by role in 2020,
-2021, and 2022.
+The graph above shows the percentages of women employed behind the scenes on the top 100 U.S. films by role in 2020, 2021, and 2022.
 
 **문제:** 다음 도표의 내용과 일치하지 않는 것은?
 
-①. For each of the three years, the percentage
-of women employed as producers on the top 100 U.S. films
-was the highest as compared with the percentages of each of
-the other three roles.
+①. For each of the three years, the percentage of women employed as producers on the top 100 U.S. films was the highest as compared with the percentages of each of the other three roles.
 
-②. The percentage of women employed
-as directors on the top 100 U.S. films in 2021 was lower than
-in 2020 but higher than in 2022.
+②. The percentage of women employed as directors on the top 100 U.S. films in 2021 was lower than in 2020 but higher than in 2022.
 
-③. The percentage of women
-employed as writers on the top 100 U.S. films increased by 4
-percentage points from 2020 to 2021 and by 1 percentage
-point from 2021 to 2022.
+③. The percentage of women employed as writers on the top 100 U.S. films increased by 4 percentage points from 2020 to 2021 and by 1 percentage point from 2021 to 2022.
 
-④. The percentage of women employed
-as editors on the top 100 U.S. films was less than 20% in each
-of the three years.
+④. The percentage of women employed as editors on the top 100 U.S. films was less than 20% in each of the three years.
 
-⑤. In 2022, the percentage of women
-employed as producers on the top 100 U.S. films was the same
-as that in 2020.
+⑤. In 2022, the percentage of women employed as producers on the top 100 U.S. films was the same as that in 2020.
 
 **해석:**
 

@@ -18,18 +18,21 @@ thumbnail: "/blog-images/suneung-english-video-contest-guide/1.png"
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 28번).
 
 2023 Eastland High School Video Clip Contest
-Shoot and share your most memorable moments with your
-teachers and friends!
+
+Shoot and share your most memorable moments with your teachers and friends!
+
 Guidelines
 ∙Theme: “Joyful Moments” in Our Growing Community
 ∙Submissions will be accepted from December 1 to December 14.
 ∙Submissions should be uploaded to our school website.
-󰠂Video length cannot exceed three minutes.
-󰠂Entries are limited to one per student.
+∙Video length cannot exceed three minutes.
+∙Entries are limited to one per student.
+
 Prizes
 ∙1st place: $100 gift card, 2nd place: $50 gift card
 ∙Winning videos will be posted to our school’s app.
 ∙The prize winners will be chosen by the school art teachers.
+
 ※ For more information, visit the school website.
 
 문제(question): 2023 Eastland High School Video Clip Contest에 관한 다음 안내문의 내용과 일치하는 것은?
@@ -44,17 +47,21 @@ Prizes
 **해석:**
 
 2023 Eastland 고등학교 영상 클립 공모전
+
 선생님, 친구들과 함께한 가장 기억에 남는 순간들을 촬영하고 공유하세요!
+
 안내 사항
 ∙주제: 성장하는 우리 공동체 속 "기쁨의 순간들"
 ∙제출은 12월 1일부터 12월 14일까지 접수됩니다.
 ∙제출물은 학교 웹사이트에 업로드해야 합니다.
 ∙영상 길이는 3분을 초과할 수 없습니다.
 ∙출품작은 학생 1인당 1개로 제한됩니다.
+
 상품
 ∙1등: 100달러 상품권, 2등: 50달러 상품권
 ∙수상 영상은 학교 앱에 게시됩니다.
 ∙수상자는 학교 미술 교사들이 선정합니다.
+
 ※ 더 많은 정보는 학교 웹사이트를 방문해 주세요.
 
 ## 안내문 독해, 핵심은 '선택지 먼저 훑기' 전략
@@ -72,10 +79,10 @@ Prizes
     "∙Submissions will be accepted from December 1 to December 14."라고 되어 있습니다. 이는 12월 1일부터 12월 14일까지, 즉 14일간 접수한다는 의미이므로 한 달이 아닙니다. 따라서 이 선택지는 틀렸습니다.
 
 *   **③. 출품할 동영상의 길이는 3분을 초과할 수 없다. (정답)**
-    "󰠂Video length cannot exceed three minutes."라는 문구는 동영상의 길이가 3분을 넘을 수 없다는 뜻입니다. 이는 3분 이내여야 한다는 조건과 일치하므로, 이 선택지가 정답입니다.
+    "∙Video length cannot exceed three minutes."라는 문구는 동영상의 길이가 3분을 넘을 수 없다는 뜻입니다. 이는 3분 이내여야 한다는 조건과 일치하므로, 이 선택지가 정답입니다.
 
 *   **④. 출품작은 학생 1인당 두 개로 제한된다. (오답)**
-    "󰠂Entries are limited to one per student."라고 명시되어 있습니다. 이는 학생당 출품작이 1개로 제한된다는 의미이므로, 두 개로 제한된다는 이 선택지는 틀렸습니다.
+    "∙Entries are limited to one per student."라고 명시되어 있습니다. 이는 학생당 출품작이 1개로 제한된다는 의미이므로, 두 개로 제한된다는 이 선택지는 틀렸습니다.
 
 *   **⑤. 학생회가 수상자를 선정할 것이다. (오답)**
     "∙The prize winners will be chosen by the school art teachers."라고 되어 있습니다. 수상자는 학교 미술 교사들이 선정한다고 나와 있으므로, 학생회가 선정한다는 이 선택지는 틀렸습니다.

@@ -21,31 +21,15 @@ thumbnail: "/blog-images/fictional-vs-real-filtering-2022-suneung-37/1.png"
 
 **주어진 글:**
 
-In spite of the likeness between the fictional and real
-world, the fictional world deviates from the real one in one
-important respect.
+In spite of the likeness between the fictional and real world, the fictional world deviates from the real one in one important respect.
 
 **이어지는 글:**
 
-(A) The author has selected the content according to his own
-worldview and his own conception of relevance, in an
-attempt to be neutral and objective or convey a subjective
-view on the world. Whatever the motives, the author’s
-subjective conception of the world stands between the
-reader and the original, untouched world on which the
-story is based.
+(A) The author has selected the content according to his own worldview and his own conception of relevance, in an attempt to be neutral and objective or convey a subjective view on the world. Whatever the motives, the author’s subjective conception of the world stands between the reader and the original, untouched world on which the story is based.
 
-(B) Because of the inner qualities with which the individual is
-endowed through heritage and environment, the mind
-functions as a filter; every outside impression that passes
-through it is filtered and interpreted. However, the world
-the reader encounters in literature is already processed
-and filtered by another consciousness.
+(B) Because of the inner qualities with which the individual is endowed through heritage and environment, the mind functions as a filter; every outside impression that passes through it is filtered and interpreted. However, the world the reader encounters in literature is already processed and filtered by another consciousness.
 
-(C) The existing world faced by the individual is in principle
-an infinite chaos of events and details before it is organized
-by a human mind. This chaos only gets processed and
-modified when perceived by a human mind. [3점]
+(C) The existing world faced by the individual is in principle an infinite chaos of events and details before it is organized by a human mind. This chaos only gets processed and modified when perceived by a human mind. [3점]
 
 *deviate: 벗어나다 **endow: 부여하다 ***heritage: 유산
 

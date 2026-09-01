@@ -21,26 +21,8 @@ thumbnail: "/blog-images/highschool-english-reading-time-management/1.png"
 
 실제 수능 기출 지문을 통해 시간 관리 전략을 적용해 봅시다. 본 지문은 2025학년도 대학수학능력시험 영어영역에 출제되었던 내용입니다. 이 지문은 산업화 시대의 시간, 노동, 자본의 관계 변화를 다루고 있습니다. 이러한 유형의 지문은 특정 개념의 정의나 역사적 배경을 설명하는 경우가 많습니다. 
 
-**[활용할 실제 기출 지문]**
-출처: 2025학년도 대학수학능력시험 영어영역
-지문(passage):
-"""The arrival of the Industrial Age changed the relationship
-among time, labor, and capital. Factories could produce
-around the clock, and they could do so with greater speed and
-volume than ever before. A machine that runs twelve hours a
-day will produce more widgets than one that runs for only
-eight hours per day―and a machine that runs twenty-four
-hours per day will produce the most widgets of all. As such, at
-many factories, the workday is divided into eight-hour shifts,
-so that there will always be people on hand to keep the widget
-machines humming. Industrialization raised the potential value
-of every single work hour―the more hours you worked, the
-more widgets you produced, and the more money you made―
-and thus wages became tied to effort and production. Labor,
-previously guided by harvest cycles, became clock-oriented,
-and society started to reorganize around new principles of
-productivity.
-*widget: 제품"""
+The arrival of the Industrial Age changed the relationship among time, labor, and capital. Factories could produce around the clock, and they could do so with greater speed and volume than ever before. A machine that runs twelve hours a day will produce more widgets than one that runs for only eight hours per day―and a machine that runs twenty-four hours per day will produce the most widgets of all. As such, at many factories, the workday is divided into eight-hour shifts, so that there will always be people on hand to keep the widget machines humming. Industrialization raised the potential value of every single work hour―the more hours you worked, the more widgets you produced, and the more money you made―and thus wages became tied to effort and production. Labor, previously guided by harvest cycles, became clock-oriented, and society started to reorganize around new principles of productivity.
+*widget: 제품
 
 **문제:** 다음 글의 주제로 가장 적절한 것은?
 

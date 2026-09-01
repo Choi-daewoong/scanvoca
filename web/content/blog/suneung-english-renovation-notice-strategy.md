@@ -19,25 +19,19 @@ thumbnail: "/blog-images/suneung-english-renovation-notice-strategy/1.png"
 
 **[Renovation Notice]**
 
-At the Natural Jade Resort, we are continually improving
-our facilities to better serve our guests. Therefore, we will be
-renovating some areas of the resort, according to the schedule
-below.
+At the Natural Jade Resort, we are continually improving our facilities to better serve our guests. Therefore, we will be renovating some areas of the resort, according to the schedule below.
 
 Renovation Period: November 21 to December 18, 2022
-∙Renovations will take place every day from 9:00 a.m. to
-5:00 p.m.
+∙Renovations will take place every day from 9:00 a.m. to 5:00 p.m.
+
 Areas to be Closed: Gym and indoor swimming pool
 
 Further Information
 ∙All outdoor leisure activities will be available as usual.
-∙Guests will receive a 15% discount for all meals in the
-restaurant.
+∙Guests will receive a 15% discount for all meals in the restaurant.
 ∙Guests may use the tennis courts for free.
 
-We will take all possible measures to minimize noise and
-any other inconvenience. We sincerely appreciate your
-understanding.
+We will take all possible measures to minimize noise and any other inconvenience. We sincerely appreciate your understanding.
 
 **문제:** 다음 Renovation Notice의 내용과 일치하지 않는 것은?
 
@@ -54,6 +48,7 @@ Natural Jade Resort는 고객님께 더 나은 서비스를 제공하기 위해 
 
 보수 기간: 2022년 11월 21일부터 12월 18일까지
 ∙보수 공사는 매일 오전 9시부터 오후 5시까지 진행됩니다.
+
 폐쇄 구역: 체육관 및 실내 수영장
 
 추가 정보

@@ -21,22 +21,7 @@ thumbnail: "/blog-images/reading-evolution-visual-texts-suneung-2024/1.png"
 
 **지문:**
 
-Over the last decade the attention given to how children
-learn to read has foregrounded the nature of textuality, and of
-the different, interrelated ways in which readers of all ages
-make texts mean. ‘Reading’ now applies to a greater number of
-representational forms than at any time in the past: pictures,
-maps, screens, design graphics and photographs are all
-regarded as text. In addition to the innovations made possible
-in picture books by new printing processes, design features
-also predominate in other kinds, such as books of poetry and
-information texts. Thus, reading becomes a more complicated
-kind of interpretation than it was when children’s attention
-was focused on the printed text, with sketches or pictures as an
-adjunct. Children now learn from a picture book that words
-and illustrations complement and enhance each other. Reading
-is not simply ________. Even in the easiest
-texts, what a sentence ‘says’ is often not what it means.
+Over the last decade the attention given to how children learn to read has foregrounded the nature of textuality, and of the different, interrelated ways in which readers of all ages make texts mean. ‘Reading’ now applies to a greater number of representational forms than at any time in the past: pictures, maps, screens, design graphics and photographs are all regarded as text. In addition to the innovations made possible in picture books by new printing processes, design features also predominate in other kinds, such as books of poetry and information texts. Thus, reading becomes a more complicated kind of interpretation than it was when children’s attention was focused on the printed text, with sketches or pictures as an adjunct. Children now learn from a picture book that words and illustrations complement and enhance each other. Reading is not simply ________. Even in the easiest texts, what a sentence ‘says’ is often not what it means.
 *adjunct: 부속물
 
 **선택지:**

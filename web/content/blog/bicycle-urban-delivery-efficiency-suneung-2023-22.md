@@ -15,24 +15,7 @@ thumbnail: "/blog-images/bicycle-urban-delivery-efficiency-suneung-2023-22/1.png
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력시험 영어영역 22번).
 
-Urban delivery vehicles can be adapted to better suit the
-density of urban distribution, which often involves smaller
-vehicles such as vans, including bicycles. The latter have the
-potential to become a preferred ‘last-mile’ vehicle, particularly
-in high-density and congested areas. In locations where
-bicycle use is high, such as the Netherlands, delivery bicycles
-are also used to carry personal cargo (e.g. groceries). Due to
-their low acquisition and maintenance costs, cargo bicycles
-convey much potential in developed and developing countries
-alike, such as the becak (a three-wheeled bicycle) in Indonesia.
-Services using electrically assisted delivery tricycles have
-been successfully implemented in France and are gradually
-being adopted across Europe for services as varied as parcel
-and catering deliveries. Using bicycles as cargo vehicles is
-particularly encouraged when combined with policies that
-restrict motor vehicle access to specific areas of a city, such as
-downtown or commercial districts, or with the extension of
-dedicated bike lanes.
+Urban delivery vehicles can be adapted to better suit the density of urban distribution, which often involves smaller vehicles such as vans, including bicycles. The latter have the potential to become a preferred ‘last-mile’ vehicle, particularly in high-density and congested areas. In locations where bicycle use is high, such as the Netherlands, delivery bicycles are also used to carry personal cargo (e.g. groceries). Due to their low acquisition and maintenance costs, cargo bicycles convey much potential in developed and developing countries alike, such as the becak (a three-wheeled bicycle) in Indonesia. Services using electrically assisted delivery tricycles have been successfully implemented in France and are gradually being adopted across Europe for services as varied as parcel and catering deliveries. Using bicycles as cargo vehicles is particularly encouraged when combined with policies that restrict motor vehicle access to specific areas of a city, such as downtown or commercial districts, or with the extension of dedicated bike lanes.
 
 다음 글의 요지로 가장 적절한 것은?
 

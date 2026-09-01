@@ -17,19 +17,7 @@ thumbnail: "/blog-images/charles-townes-bell-labs-suneung-2024-no-26/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 26번).
 
-Charles H. Townes, one of the most influential American
-physicists, was born in South Carolina. In his childhood, he
-grew up on a farm, studying the stars in the sky. He earned his
-doctoral degree from the California Institute of Technology in
-1939, and then he took a job at Bell Labs in New York City.
-After World War II, he became an associate professor of physics
-at Columbia University. In 1958, Townes and his co-researcher
-proposed the concept of the laser. Laser technology won quick
-acceptance in industry and research. He received the Nobel
-Prize in Physics in 1964. He was also involved in Project
-Apollo, the moon landing project. His contribution is priceless
-because the Internet and all digital media would be
-unimaginable without the laser.
+Charles H. Townes, one of the most influential American physicists, was born in South Carolina. In his childhood, he grew up on a farm, studying the stars in the sky. He earned his doctoral degree from the California Institute of Technology in 1939, and then he took a job at Bell Labs in New York City. After World War II, he became an associate professor of physics at Columbia University. In 1958, Townes and his co-researcher proposed the concept of the laser. Laser technology won quick acceptance in industry and research. He received the Nobel Prize in Physics in 1964. He was also involved in Project Apollo, the moon landing project. His contribution is priceless because the Internet and all digital media would be unimaginable without the laser.
 
 **문제:** Charles H. Townes에 관한 다음 글의 내용과 일치하지 않는 것은?
 

@@ -19,8 +19,7 @@ thumbnail: "/blog-images/cinema-illusion-technology-art-2022-suneung/1.png"
 
 **[원문 지문]**
 
-As long as the irrealism of the silent black and white film predominated, one could not take filmic fantasies for representations of reality.
-Cinema is valuable not for its ability to make visible the hidden outlines of our reality, but for its ability to reveal what reality itself veils―the dimension of fantasy. ________________________
+As long as the irrealism of the silent black and white film predominated, one could not take filmic fantasies for representations of reality. Cinema is valuable not for its ability to make visible the hidden outlines of our reality, but for its ability to reveal what reality itself veils―the dimension of fantasy. ________________________
 
 **[선택지]**
 

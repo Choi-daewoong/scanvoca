@@ -17,25 +17,7 @@ thumbnail: "/blog-images/bee-dance-collective-intelligence-suneung-2023-33/1.png
 
 **문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. [3점]
 
-The entrance to a honeybee colony, often referred to as
-the dancefloor, is a market place for information about the
-state of the colony and the environment outside the hive.
-Studying interactions on the dancefloor provides us with a
-number of illustrative examples of how individuals
-changing their own behavior in response to local information
-________________________. For
-example, upon returning to their hive honeybees that have
-collected water search out a receiver bee to unload their water
-to within the hive. If this search time is short then the returning
-bee is more likely to perform a waggle dance to recruit others
-to the water source. Conversely, if this search time is long then
-the bee is more likely to give up collecting water. Since
-receiver bees will only accept water if they require it, either for
-themselves or to pass on to other bees and brood, this unloading
-time is correlated with the colony’s overall need of water. Thus
-the individual water forager’s response to unloading time (up or
-down) regulates water collection in response to the colony’s
-need.
+The entrance to a honeybee colony, often referred to as the dancefloor, is a market place for information about the state of the colony and the environment outside the hive. Studying interactions on the dancefloor provides us with a number of illustrative examples of how individuals changing their own behavior in response to local information ________________________. For example, upon returning to their hive honeybees that have collected water search out a receiver bee to unload their water to within the hive. If this search time is short then the returning bee is more likely to perform a waggle dance to recruit others to the water source. Conversely, if this search time is long then the bee is more likely to give up collecting water. Since receiver bees will only accept water if they require it, either for themselves or to pass on to other bees and brood, this unloading time is correlated with the colony’s overall need of water. Thus the individual water forager’s response to unloading time (up or down) regulates water collection in response to the colony’s need.
 *brood: 애벌레 **forager: 조달자
 
 **선택지:**

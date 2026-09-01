@@ -18,23 +18,7 @@ thumbnail: "/blog-images/brain-visual-processing-specialization-2023-suneung-24/
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력시험 영어영역 24번).
 
 **Passage:**
-Different parts of the brain’s visual system get information
-on a need-to-know basis. Cells that help your hand muscles
-reach out to an object need to know the size and location of
-the object, but they don’t need to know about color. They need
-to know a little about shape, but not in great detail. Cells that
-help you recognize people’s faces need to be extremely
-sensitive to details of shape, but they can pay less attention to
-location. It is natural to assume that anyone who sees an object
-sees everything about it―the shape, color, location, and
-movement. However, one part of your brain sees its shape, another sees color, another detects location, and another
-perceives movement. Consequently, after localized brain
-damage, it is possible to see certain aspects of an object and
-not others. Centuries ago, people found it difficult to imagine
-how someone could see an object without seeing what color it
-is. Even today, you might find it surprising to learn about
-people who see an object without seeing where it is, or see it
-without seeing whether it is moving.
+Different parts of the brain’s visual system get information on a need-to-know basis. Cells that help your hand muscles reach out to an object need to know the size and location of the object, but they don’t need to know about color. They need to know a little about shape, but not in great detail. Cells that help you recognize people’s faces need to be extremely sensitive to details of shape, but they can pay less attention to location. It is natural to assume that anyone who sees an object sees everything about it―the shape, color, location, and movement. However, one part of your brain sees its shape, another sees color, another detects location, and another perceives movement. Consequently, after localized brain damage, it is possible to see certain aspects of an object and not others. Centuries ago, people found it difficult to imagine how someone could see an object without seeing what color it is. Even today, you might find it surprising to learn about people who see an object without seeing where it is, or see it without seeing whether it is moving.
 
 **Question:**
 다음 글의 제목으로 가장 적절한 것은?

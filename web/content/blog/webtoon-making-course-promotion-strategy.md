@@ -17,19 +17,7 @@ thumbnail: "/blog-images/webtoon-making-course-promotion-strategy/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 18번).
 
-I’m Charlie Reeves, manager of Toon Skills Company.
-If you’re interested in new webtoon-making skills and
-techniques, this post is for you. This year, we’ve launched
-special online courses, which contain a variety of contents
-about webtoon production. Each course consists of ten
-units that help improve your drawing and story-telling skills.
-Moreover, these courses are designed to suit any level,
-from beginner to advanced. It costs $45 for one course,
-and you can watch your course as many times as you want
-for six months. Our courses with talented and experienced
-instructors will open up a new world of creativity for you.
-It’s time to start creating your webtoon world at
-https://webtoonskills.com.
+I’m Charlie Reeves, manager of Toon Skills Company. If you’re interested in new webtoon-making skills and techniques, this post is for you. This year, we’ve launched special online courses, which contain a variety of contents about webtoon production. Each course consists of ten units that help improve your drawing and story-telling skills. Moreover, these courses are designed to suit any level, from beginner to advanced. It costs $45 for one course, and you can watch your course as many times as you want for six months. Our courses with talented and experienced instructors will open up a new world of creativity for you. It’s time to start creating your webtoon world at https://webtoonskills.com.
 
 다음 글의 목적으로 가장 적절한 것은?
 ①. 기초적인 웹툰 제작 방법을 설명하려고

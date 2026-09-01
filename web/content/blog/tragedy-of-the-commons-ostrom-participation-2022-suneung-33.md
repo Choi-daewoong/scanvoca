@@ -17,24 +17,9 @@ thumbnail: "/blog-images/tragedy-of-the-commons-ostrom-participation-2022-suneun
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 33번).
 
-Elinor Ostrom found that there are several factors critical to
-bringing about stable institutional solutions to the problem of
-the commons. She pointed out, for instance, that the actors
-affected by the rules for the use and care of resources must
-have the right to ________________________.
+Elinor Ostrom found that there are several factors critical to bringing about stable institutional solutions to the problem of the commons. She pointed out, for instance, that the actors affected by the rules for the use and care of resources must have the right to ________________________.
 
-For that reason, the people who monitor and control the
-behavior of users should also be users and/or have been given
-a mandate by all users. This is a significant insight, as it shows
-that prospects are poor for a centrally directed solution to the
-problem of the commons coming from a state power in
-comparison with a local solution for which users assume
-personal responsibility. Ostrom also emphasizes the importance
-of democratic decision processes and that all users must be
-given access to local forums for solving problems and conflicts
-among themselves. Political institutions at central, regional, 
-and local levels must allow users to devise their own regulations
-and independently ensure observance. [3점]
+For that reason, the people who monitor and control the behavior of users should also be users and/or have been given a mandate by all users. This is a significant insight, as it shows that prospects are poor for a centrally directed solution to the problem of the commons coming from a state power in comparison with a local solution for which users assume personal responsibility. Ostrom also emphasizes the importance of democratic decision processes and that all users must be given access to local forums for solving problems and conflicts among themselves. Political institutions at central, regional, and local levels must allow users to devise their own regulations and independently ensure observance. [3점]
 *commons: 공유지 **mandate: 위임
 
 **문제:** 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오. [3점]
