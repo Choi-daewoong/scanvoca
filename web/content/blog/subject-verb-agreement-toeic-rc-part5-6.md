@@ -61,6 +61,40 @@ thumbnail: "/blog-images/subject-verb-agreement-toeic-rc-part5-6/1.png"
 
 이러한 문제들은 문장의 구조를 정확히 파악하고, 핵심 주어를 찾아 동사의 형태를 결정하는 연습을 통해 자신감을 높일 수 있습니다. 특히 여러 문장 성분이 섞여 있는 복잡한 문장일수록, 주어와 동사를 분리하여 파악하는 연습이 중요합니다.
 
+## 실전 연습문제
+
+**1. (Part 5)** The manager, along with two assistants, ____ responsible for organizing the annual conference.
+
+- (A) is
+- (B) are
+- (C) have been
+- (D) were
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (A)
+
+"along with two assistants"는 주어를 수식하는 전치사구일 뿐 주어에 포함되지 않습니다. 문장의 진짜 주어는 단수 명사 The manager이므로 단수 동사 is가 와야 합니다.
+
+</details>
+
+**2. (Part 5)** Each of the applicants for the position ____ asked to submit three references.
+
+- (A) is
+- (B) are
+- (C) have
+- (D) were
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (A)
+
+Each는 뒤에 복수 명사(of the applicants)가 와도 항상 단수 취급합니다. "of the applicants for the position"은 수식어구이므로 진짜 주어는 Each이고, 단수 동사 is가 와야 합니다.
+
+</details>
+
 ## 마무리하며: 꾸준함으로 완성하는 토익 실력
 
 토익 RC 파트 5&6에서 수일치는 기본 중의 기본이지만, 그만큼 다양한 함정을 파고 있는 문법 포인트입니다. 오늘 살펴본 명확한 규칙들과 출제 패턴 분석을 통해 여러분의 수일치 실력이 한 단계 업그레이드되었기를 바랍니다. 문법 규칙을 익히는 것도 중요하지만, 결국 시험장에서의 정확성은 꾸준한 연습에서 나옵니다. 다양한 유형의 문제를 풀어보며 문장 구조를 파악하는 연습을 반복하고, 틀린 문제는 반드시 오답 노트를 만들어 복습하는 습관을 들이는 것이 중요합니다. 어휘력 또한 문장 이해의 기초가 되므로, 새롭게 알게 된 단어나 표현은 반드시 정리하고 암기해야 합니다. Scan Voca는 여러분의 이러한 노력을 효과적으로 지원할 수 있는 최고의 도구입니다. 복잡한 문장 속에서 핵심 어휘를 빠르게 찾아 뜻을 확인하고, 나만의 단어장을 만들어 효율적으로 복습할 수 있도록 돕습니다. 지금 바로 [Scan Voca 시작하기](https://scanvoca.com) 를 통해 토익 실력 향상의 새로운 경험을 시작해보세요!

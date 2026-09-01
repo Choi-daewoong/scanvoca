@@ -62,6 +62,40 @@ thumbnail: "/blog-images/toeic-synonym-distinction-guide/1.png"
 - [단어장 바로 가져오기](https://scanvoca.com/wordbooks/import?code=VUT4GKTS)
 - [공유 게시글에서 보기](https://scanvoca.com/board/share/41)
 
+## 실전 연습문제
+
+**1. (Part 5)** All new employees ____ to complete the safety training within their first week.
+
+- (A) are required
+- (B) are requested
+- (C) are demanded
+- (D) are permitted
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (A)
+
+신입사원 전원에게 규정상 반드시 이수해야 하는 필수 절차를 말하고 있으므로, 규칙이나 필요성에 의해 필수적으로 요구됨을 나타내는 require가 적절합니다. request는 정중한 부탁의 뉘앙스라 강제성이 있는 이 문맥과 맞지 않고, demand는 보통 'demand that절'이나 'demand + 명사' 형태로 쓰이며 'be demanded to부정사' 형태로는 잘 쓰이지 않습니다. permit(허용하다)은 의미상 정반대이므로 오답입니다.
+
+</details>
+
+**2. (Part 5)** The client ____ that the delivery date be moved up by one week.
+
+- (A) allowed
+- (B) considered
+- (C) requested
+- (D) regarded
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (C)
+
+빈칸 뒤의 "that the delivery date **be** moved up"은 request, require, demand 등의 동사 뒤에서 나타나는 당위성의 that절(동사원형 사용) 구조입니다. 고객이 납품일을 앞당겨 달라고 정중히 요청하는 상황이므로 request가 적절합니다. allow는 허락하다는 뜻이라 상대에게 무언가를 해달라고 요청하는 이 문맥과 맞지 않고, consider와 regard는 'that절'을 직접 목적어로 취해 당위성을 나타내는 구조로 쓰이지 않습니다.
+
+</details>
+
 ## Scan Voca와 함께라면 동의어/유의어 정복!
 
 토익 시험에서 동의어와 유의어 문제는 단순히 단어의 뜻을 암기하는 것만으로는 부족합니다. 각 단어가 가진 미묘한 뉘앙스 차이, 그리고 어떤 문맥에서 더 적합하게 사용되는지를 파악하는 것이 중요합니다. 오늘 살펴본 `allow` vs `permit`, `consider` vs `regard`와 같은 단어들은 시작에 불과합니다. 수많은 동의어, 유의어, 그리고 그들의 쓰임새를 모두 익히는 것은 방대한 작업처럼 느껴질 수 있습니다. 하지만 Scan Voca는 이러한 학습 부담을 덜어줄 수 있는 강력한 도구입니다. 매일매일 새로운 단어와 함께, 그 단어와 관련된 유의어, 반의어, 그리고 실제 예문까지 체계적으로 학습하며 단어의 깊이를 더할 수 있습니다. 헷갈리는 단어들을 명확하게 구분하고 토익 고득점을 향해 나아가세요!

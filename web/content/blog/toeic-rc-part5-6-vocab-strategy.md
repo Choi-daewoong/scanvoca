@@ -50,6 +50,40 @@ published: true
 3.  **빠른 독해 훈련:** 파트 6의 경우, 모든 단어를 해석하려 하기보다 핵심 내용을 빠르게 파악하는 연습을 하세요. 키워드 중심으로 지문을 읽는 습관을 들이는 것이 좋습니다.
 4.  **어형 변화 문제와 구분:** 빈칸 어휘 문제와 어형 변화(품사) 문제를 혼동하지 않도록 주의하세요. 어형 변화 문제는 문법적인 요소가 더 강하므로, 선택지의 품사를 먼저 파악하는 것이 중요합니다.
 
+## 실전 연습문제
+
+**1. (Part 5)** The new regulations will have a significant ____ on how the factory operates.
+
+- (A) affect
+- (B) effect
+- (C) affects
+- (D) effects
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (B)
+
+'a significant ____ on'은 관사 a와 전치사 on 사이에 단수 명사가 필요한 자리입니다. affect는 주로 동사(영향을 주다)로 쓰이므로 이 자리에 맞지 않고, effects는 복수형이라 단수 관사 a와 어울리지 않습니다. '~에 영향을 미치다'라는 뜻의 고정 표현 have an effect on을 이루는 명사 effect가 정답입니다.
+
+</details>
+
+**2. (Part 5)** All staff members are ____ for completing the annual safety training by the end of this month.
+
+- (A) responsible
+- (B) response
+- (C) responsive
+- (D) responsibility
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (A)
+
+빈칸 뒤에 전치사 for가 이어지므로 'be responsible for'(~에 대한 책임이 있다)라는 고정 표현을 완성하는 형용사 responsible이 적절합니다. response와 responsibility는 명사, responsive는 형용사이지만 주로 'responsive to'(~에 반응하는)의 형태로 쓰여 이 문맥과 맞지 않습니다.
+
+</details>
+
 ## 결국, 어휘력은 꾸준함이 답!
 
 토익 RC 파트 5&6에서 빈칸 어휘 문제는 단순히 많은 단어를 외우는 것 이상으로, 문맥 속에서 단어의 의미와 쓰임을 정확히 파악하는 능력을 요구합니다. 유사한 단어들 사이에서 헷갈리지 않고, 문장 전체의 흐름에 맞는 최적의 단어를 빠르게 골라내기 위해서는 결국 어휘 실력을 탄탄히 쌓는 것이 중요합니다. 아무리 좋은 전략도 기본 어휘력이 뒷받침되지 않으면 무용지물이죠. Scan Voca는 여러분이 토익 빈출 어휘부터 실생활에서 자주 쓰이는 표현까지, 효율적으로 학습하고 복습할 수 있도록 돕는 강력한 도구입니다. 복잡한 단어장 앱과 달리, 스캔 한 번으로 단어를 등록하고 나만의 단어장을 만들어 체계적으로 관리할 수 있습니다. 지금 바로 [Scan Voca 시작하기](https://scanvoca.com) 를 통해 여러분의 어휘 실력을 한 단계 업그레이드해보세요!

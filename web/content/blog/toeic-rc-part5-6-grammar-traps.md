@@ -53,6 +53,40 @@ thumbnail: "/blog-images/toeic-rc-part5-6-grammar-traps/1.png"
 3.  **시간 배분 연습:** 파트 5는 한 문제당 30초 내외로 푸는 것을 목표로 하세요. 너무 많은 시간을 투자하면 뒷부분 문제 풀 시간이 부족해집니다. 풀기 어렵거나 애매한 문제는 과감히 넘어가고, 나중에 시간이 남으면 다시 푸는 것도 좋은 전략입니다.
 4.  **기본 문법 개념 확실히 다지기:** 결국 문법 문제의 핵심은 기본 개념입니다. 품사의 역할, 시제, 태, 수 일치, 조동사, 가정법 등 토익에서 자주 출제되는 핵심 문법 개념을 확실히 복습하고, 다양한 예문을 통해 익숙해지도록 노력해야 합니다.
 
+## 실전 연습문제
+
+**1. (Part 5)** The training session provided ____ information about the new software update.
+
+- (A) use
+- (B) useful
+- (C) usefully
+- (D) usefulness
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (B)
+
+빈칸 뒤의 명사 information을 수식해야 하므로 형용사가 필요합니다. (A)와 (D)는 명사, (C)는 부사이므로 명사를 수식할 수 없고, 형용사 useful만 적절합니다.
+
+</details>
+
+**2. (Part 5)** The final report ____ by the accounting team before it is sent to the board.
+
+- (A) reviews
+- (B) will review
+- (C) will be reviewed
+- (D) has reviewed
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (C)
+
+문장 끝의 "by the accounting team"은 행위자를 나타내는 표현으로, 주어 The final report가 동사의 행위를 '받는' 입장임을 알려주는 수동태 단서입니다. 따라서 능동태인 (A), (B), (D)는 모두 오답이며, 미래 수동태 형태인 will be reviewed가 적절합니다.
+
+</details>
+
 ## Scan Voca와 함께 토익 RC 만점 향해 나아가기
 
 토익 RC의 파트 5&6 문법 문제에서 마주치는 다양한 함정들을 분석하고, 이를 극복하기 위한 실전 전략들을 살펴보았습니다. 결국 이러한 문법 문제의 정확도를 높이는 것은 탄탄한 기본기와 꾸준한 연습에 달려있습니다. 하지만 아무리 문법 규칙을 잘 알아도, 빈칸에 들어갈 올바른 단어를 선택하기 위해서는 결국 어휘력이 뒷받침되어야 합니다. 특히 파트 5&6에서는 보기 단어들이 품사만 다를 뿐 의미상 유사하거나 혼동하기 쉬운 경우가 많기 때문에, 단어의 정확한 뜻과 뉘앙스를 아는 것이 중요합니다. Scan Voca는 이러한 토익 필수 어휘들을 체계적으로 학습하고, 실제 시험처럼 다양한 유형의 문제 풀이를 통해 어휘력을 강화할 수 있도록 돕습니다. 복잡한 문법 함정 속에서도 흔들리지 않고 정답을 골라낼 수 있는 자신감을 키우고 싶다면, 지금 바로 [Scan Voca 시작하기](https://scanvoca.com) 를 통해 여러분의 토익 점수를 한 단계 업그레이드해 보세요!

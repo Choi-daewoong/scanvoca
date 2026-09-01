@@ -74,6 +74,40 @@ thumbnail: "/blog-images/noun-clause-vs-adjective-clause-toeic-rc-strategy/1.png
 *   이러한 복합 관계사는 문장에서 주어, 목적어, 보어 역할을 수행합니다.
 *   예: `Whoever is responsible` will be held accountable. (책임 있는 사람은 누구든 책임을 질 것이다. - 주어 역할)
 
+## 실전 연습문제
+
+**1. (Part 5)** ____ the marketing team recommended was implemented immediately.
+
+- (A) What
+- (B) Which
+- (C) Who
+- (D) When
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (A)
+
+빈칸은 문장 맨 앞에서 동사 was implemented의 주어 역할을 하는 절을 이끌어야 합니다. 앞에 수식할 명사(선행사)가 없으므로 관계대명사 Which나 Who, 관계부사 When은 올 수 없고, 선행사 없이 '~하는 것'이라는 의미의 명사절을 이끄는 What이 적절합니다.
+
+</details>
+
+**2. (Part 5)** The engineer ____ designed this system received an award.
+
+- (A) what
+- (B) who
+- (C) whom
+- (D) whether
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (B)
+
+'The engineer'라는 사람 선행사를 수식하는 형용사절이 필요하며, 빈칸 바로 뒤에 동사 designed가 이어지므로 빈칸이 그 절의 주어 역할을 해야 합니다. 따라서 주격 관계대명사 who가 적절합니다. whom은 목적격이라 뒤에 별도의 주어와 동사가 와야 하고, what은 선행사와 함께 쓸 수 없으며, whether는 명사절 접속사이므로 명사를 수식하는 이 자리에 맞지 않습니다.
+
+</details>
+
 ## Scan Voca와 함께라면 명사절, 형용사절도 문제없어요!
 
 오늘 우리는 토익 RC 파트 5&6에서 자주 등장하는 명사절과 형용사절의 개념, 역할, 그리고 이를 구분하는 실전 전략을 살펴보았습니다. 문장 내에서 빈칸이 어떤 역할을 하는지 파악하는 것이 관건이며, 이를 위해 문장 구조 분석 연습이 꾸준히 필요합니다. 특히 `what`이나 `that`처럼 여러 가지 역할을 할 수 있는 단어들은 문맥 속에서 그 쓰임을 정확히 이해하는 것이 중요합니다. 위에서 살펴본 연습문제처럼 실제 시험에 나올 법한 유형들을 반복해서 풀어보면서 감을 익히는 것이 실력 향상의 지름길입니다.

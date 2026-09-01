@@ -60,7 +60,7 @@ thumbnail: "/blog-images/toeic-rc-prepositions-master/1.png"
     *   예시: We have been waiting **for** the approval **for** days.
 *   **with**: 수단/도구 (with a pen, with a smile), 동반 (with colleagues), 특징 (a man with a hat)
     *   예시: Please sign the document **with** a black pen.
-    *   예시: The new manager is known **with** her innovative ideas.
+    *   예시: The new manager is known **for** her innovative ideas.
 *   **by**: 수단/방법 (by car, by email), 행위자 (written by Shakespeare), 시간 마감 (by Friday)
     *   예시: Please confirm your reservation **by** phone.
     *   예시: The report will be ready **by** the end of the day.
@@ -82,6 +82,40 @@ thumbnail: "/blog-images/toeic-rc-prepositions-master/1.png"
 3.  **숙어 및 관용구 암기**: 'in charge of', 'responsible for', 'look forward to', 'attend to' 등 자주 사용되는 숙어나 관용구를 통째로 외우면 문제 풀이가 훨씬 수월해집니다. Scan Voca 앱을 활용하여 이런 표현들을 꾸준히 학습하는 것을 추천합니다.
 4.  **시간, 장소, 방법 등 핵심 정보 체크**: 빈칸이 문장에서 어떤 역할을 하는지 (시간, 장소, 원인, 결과, 방법 등) 파악하면 선택지를 좁히는 데 도움이 됩니다.
 5.  **'during' vs 'while'**: 'during'은 명사와 함께 쓰여 특정 기간 동안을 나타내고, 'while'은 주어+동사(절)와 함께 쓰여 '~하는 동안'을 나타냅니다. 둘 다 '동안'이라는 의미지만 형태가 다르다는 점을 주의해야 합니다. (예: **during** the meeting vs. **while** I was in the meeting)
+
+## 실전 연습문제
+
+**1. (Part 5)** The quarterly meeting will take place ____ March 15.
+
+- (A) in
+- (B) at
+- (C) on
+- (D) since
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (C)
+
+특정 날짜 앞에는 전치사 on을 씁니다(on July 4th와 동일한 패턴). in은 월/연도/계절, at은 특정 시각이나 지점, since는 '~부터 지금까지'를 나타내므로 특정 날짜를 나타내는 이 문맥에 맞지 않습니다.
+
+</details>
+
+**2. (Part 5)** Ms. Tanaka is ____ charge of the new product launch.
+
+- (A) at
+- (B) on
+- (C) in
+- (D) for
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (C)
+
+'in charge of'(~을 담당하는)는 토익에 자주 출제되는 고정 숙어입니다. at charge, on charge, for charge는 실제로 쓰이지 않는 표현이므로 오답입니다.
+
+</details>
 
 ## 전치사 정복, Scan Voca와 함께라면 어렵지 않아요!
 

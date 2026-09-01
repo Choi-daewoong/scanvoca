@@ -63,6 +63,48 @@ KPI를 찾았다면, 이제 왜 그런 결과가 나왔는지에 대한 분석 �
 
 이러한 용어들을 문맥 속에서 익히고, 실제 토익 문제에 어떻게 적용되는지 꾸준히 연습하는 것이 중요합니다.
 
+## 실전 연습문제
+
+> Q3 Sales Performance Summary – North America Division
+>
+> Total revenue for Q3 reached $4.2 million, a 12% increase compared to Q2. This growth was primarily driven by the successful launch of our updated product line in July, which accounted for nearly half of the quarter's new sales. However, the Southeast region saw a 5% decline in sales, attributed mainly to increased competition from a new local distributor. Customer acquisition costs also rose by 8%, largely due to higher spending on digital advertising campaigns. Despite this, overall customer satisfaction scores improved to 91%, up from 87% in Q2.
+
+**1. (Part 7)** What was the primary reason for the 12% increase in total revenue?
+
+- (A) Lower customer acquisition costs
+- (B) The launch of the updated product line
+- (C) Increased competition from a local distributor
+- (D) Higher customer satisfaction scores
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (B)
+
+보고서에서 "This growth was primarily driven by the successful launch of our updated product line in July"라고 명시하고 있습니다. (A)는 사실과 반대로 고객 획득 비용은 오히려 상승했으며, (C)는 남동부 지역 매출 하락의 원인이고, (D)는 매출 증가와 별개로 언급된 결과이지 원인으로 제시되지 않았습니다.
+
+</details>
+
+> Q3 Sales Performance Summary – North America Division
+>
+> Total revenue for Q3 reached $4.2 million, a 12% increase compared to Q2. This growth was primarily driven by the successful launch of our updated product line in July, which accounted for nearly half of the quarter's new sales. However, the Southeast region saw a 5% decline in sales, attributed mainly to increased competition from a new local distributor. Customer acquisition costs also rose by 8%, largely due to higher spending on digital advertising campaigns. Despite this, overall customer satisfaction scores improved to 91%, up from 87% in Q2.
+
+**2. (Part 7)** What caused the decline in sales in the Southeast region?
+
+- (A) Rising customer acquisition costs
+- (B) Increased competition from a new local distributor
+- (C) The launch of the updated product line
+- (D) Higher spending on digital advertising
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (B)
+
+보고서에서 "the Southeast region saw a 5% decline in sales, attributed mainly to increased competition from a new local distributor"라고 명시하고 있습니다. 나머지 선택지들은 매출 증가나 비용 상승 등 다른 항목과 관련된 원인입니다.
+
+</details>
+
 ## Scan Voca와 함께라면, 영업 보고서도 문제없어요!
 
 토익 RC Part 7의 다양한 지문 유형 중에서도 비즈니스 관련 내용은 실생활과 직결되어 있어 더욱 중요하게 다뤄집니다. 특히 영업 보고서처럼 KPI와 분석 근거를 파악해야 하는 지문은 정확하고 신속한 독해 능력을 요구하죠. 오늘 살펴본 전략들이 여러분의 토익 점수 향상에 큰 도움이 되기를 바랍니다. 하지만 아무리 뛰어난 독해 전략도 결국에는 정확한 어휘력과 탄탄한 기본기를 바탕으로 해야 빛을 발할 수 있습니다. 복잡한 비즈니스 용어와 다양한 표현들을 효과적으로 익히고 싶다면, [Scan Voca 시작하기](https://scanvoca.com) 를 통해 여러분의 영어 실력을 한 단계 업그레이드해 보세요. Scan Voca는 여러분이 마주하는 모든 영어 콘텐츠를 효율적으로 학습할 수 있도록 돕는 최고의 파트너가 될 것입니다.
