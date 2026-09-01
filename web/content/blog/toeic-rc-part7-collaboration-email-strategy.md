@@ -48,6 +48,58 @@ thumbnail: "/blog-images/toeic-rc-part7-collaboration-email-strategy/1.png"
 
 이러한 질문들은 지문에 제시된 역할 분담 및 일정 조율 정보를 얼마나 잘 이해했는지를 직접적으로 묻고 있습니다. 따라서 위에서 제시된 팁들을 꾸준히 연습하며 지문 속에서 이러한 정보들을 빠르게 찾아내는 훈련을 하는 것이 중요합니다.
 
+## 실전 연습문제
+
+> Subject: Q3 Marketing Report – Task Assignments
+>
+> Hi team,
+>
+> As discussed in this morning's call, here's how we'll divide the Q3 marketing report. Jenna will compile the sales data and draft the executive summary. Marcus will handle the competitor analysis section, and Priya will review the entire document for accuracy before it goes to the director. Please send your sections to Priya by Wednesday, October 15, so she has enough time to review everything before the Friday deadline. If anyone runs into delays, let the team know as soon as possible so we can adjust the schedule.
+>
+> Thanks,
+> Daniel
+
+**1. (Part 7)** According to the email, what is Priya responsible for?
+
+- (A) Compiling the sales data
+- (B) Writing the executive summary
+- (C) Analyzing the competitors
+- (D) Reviewing the report for accuracy
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (D)
+
+이메일에서 "Priya will review the entire document for accuracy before it goes to the director."라고 명시하고 있습니다. (A)와 (B)는 Jenna의 업무("Jenna will compile the sales data and draft the executive summary"), (C)는 Marcus의 업무("Marcus will handle the competitor analysis section")로 각각 다른 사람에게 할당되어 있으므로 오답입니다.
+
+</details>
+
+> Subject: Client Onboarding Checklist – Next Steps
+>
+> Hi Sam and Rita,
+>
+> Thanks for volunteering to help with the Meridian Corp onboarding. Sam, could you set up their account in our system and send the welcome packet by this Thursday? Rita, once Sam confirms the account is active, please schedule the kickoff call for early next week. We're aiming to have everything wrapped up before the month ends, so please flag me immediately if either step gets delayed.
+>
+> Best,
+> Karen
+
+**2. (Part 7)** According to the email, when should Rita schedule the kickoff call?
+
+- (A) Before Sam sets up the account
+- (B) By this Thursday
+- (C) After Sam confirms the account is active
+- (D) At the same time as Sam sets up the account
+
+<details>
+<summary>정답 및 해설</summary>
+
+정답: (C)
+
+이메일에서 "once Sam confirms the account is active, please schedule the kickoff call"라고 명시하여, Rita의 일정 조율 업무가 Sam의 계정 활성화 확인 '이후'에 이루어져야 함을 분명히 밝히고 있습니다. (B)는 Sam이 계정을 설정하고 환영 패킷을 보내야 하는 기한이지, Rita가 통화 일정을 잡는 시점이 아닙니다. (A)와 (D)는 본문에서 명시한 순서("once ... confirms ... then schedule")와 반대되거나 어긋나므로 오답입니다.
+
+</details>
+
 ## Scan Voca와 함께라면, 이메일 속 정보, 더 이상 어렵지 않아요!
 
 토익 RC Part 7의 공동 작업 요청 이메일은 실제 비즈니스 현장에서 자주 접하는 상황을 반영하기 때문에, 단순히 시험 점수 향상을 넘어 실질적인 영어 활용 능력을 키우는 데 큰 도움이 됩니다. 누가 어떤 역할을 맡고, 언제까지 무엇을 해야 하는지 파악하는 것은 지문의 핵심 내용을 이해하는 열쇠와 같습니다. 복잡해 보이는 이메일 속에서도 핵심 정보를 놓치지 않고 빠르게 찾아내는 훈련은 꾸준한 연습을 통해서만 가능합니다. Scan Voca는 이러한 실전 감각을 키울 수 있도록 다양한 비즈니스 이메일 예시와 함께 필수 어휘, 빈출 표현들을 체계적으로 학습할 기회를 제공합니다. 복잡한 문장 구조나 생소한 비즈니스 용어 때문에 망설여진다면, Scan Voca와 함께라면 이메일 독해의 자신감을 높이고 토익 고득점은 물론, 실무 영어 능력까지 한 단계 업그레이드할 수 있을 것입니다. 지금 바로 [Scan Voca 시작하기](https://scanvoca.com) 를 통해 여러분의 영어 실력을 한층 더 발전시켜 보세요!
