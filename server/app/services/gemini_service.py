@@ -319,7 +319,13 @@ Important:
                 "\"Part 5\"/\"Part 6\"/\"Part 7\")를 쓰고, 보기 4개(choices)와 정답 인덱스"
                 "(answer_index, 0부터 시작), 한국어 해설(explanation)을 포함해야 합니다. "
                 "Part 6·7 문제는 passage(짧은 영문 지문)를 포함하세요. Part 5 문제는 passage를 비워도 됩니다. "
-                "body 안에는 연습문제 내용을 직접 쓰지 말고, practice_questions 필드에만 넣으세요."
+                "body 문자열 안에는 연습문제 내용을 단 한 글자도 쓰지 마세요 — `## 실전 연습문제` 같은 "
+                "소제목은 물론, '아래 문제를 풀어보세요', '다음은 관련 문제입니다' 같은 안내 문장이나 "
+                "예고조차 body에 넣지 마세요(연습문제 섹션은 body와 별도로 이미 자동으로 삽입되므로 "
+                "body에서 언급할 필요가 전혀 없습니다). body는 마지막 실전 팁 설명이 끝나는 즉시 "
+                "홍보 섹션으로 넘어가야 합니다. 또한 body 문자열 안에 마크다운 코드펜스(```)를 "
+                "포함하지 마세요 — practice_questions는 반드시 JSON의 별도 필드로만 작성하고, "
+                "body 문자열 값 중간에 JSON이나 코드 블록을 끼워 넣으면 전체 응답이 깨집니다."
             )
             practice_schema = (
                 ',\n  "practice_questions": [\n'
@@ -571,13 +577,23 @@ Important:
                 print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
 
             if retry_count < max_retries:
+                # If practice_questions is the likely culprit (the model has been observed
+                # writing its own "## 실전 연습문제" text plus a stray ```json fence directly
+                # into the body string, leaving it unterminated and breaking the whole
+                # response), drop it on the final retry so the post can still publish
+                # without the bonus section rather than fail outright after every attempt.
+                next_include_practice = include_practice_questions
+                is_final_retry = retry_count + 1 == max_retries
+                if is_final_retry and include_practice_questions:
+                    next_include_practice = False
+                    print("Final retry: disabling practice_questions to salvage the post")
                 print(f"Retrying blog generation ({retry_count + 1}/{max_retries})...")
                 return await self.generate_blog_post(
                     title=title,
                     angle=angle,
                     custom_prompt=custom_prompt,
                     recent_posts=recent_posts,
-                    include_practice_questions=include_practice_questions,
+                    include_practice_questions=next_include_practice,
                     include_word_list=include_word_list,
                     source_passage=source_passage,
                     source_dialogue=source_dialogue,

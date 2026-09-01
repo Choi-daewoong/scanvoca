@@ -258,6 +258,60 @@ class TestReviewPracticeQuestions:
         assert captured["calls"] == 2  # initial attempt + 1 retry (max_retries default=1)
 
 
+class TestPracticeQuestionsFallbackOnFinalRetry:
+    """실운영 장애 재현(2026-08-30~09-01, 토익 파이프라인 자동발행 전량 실패): 모델이
+    body 문자열 안에 자기 나름의 '## 실전 연습문제' 소제목과 ```json 코드펜스를 끼워
+    넣어 문자열을 닫지 못하고 JSON 전체가 깨지는 사례가 매일 3회 재시도 전부에서
+    재현됐다. generate_blog_post의 마지막 재시도에서는 practice_questions 요청 자체를
+    빼서, 같은 결함이 재발해도 최소한 본문은 발행되도록 하는 방어 로직을 검증한다.
+    """
+
+    @staticmethod
+    def _run(broken_text):
+        calls = []
+
+        class FakeResponse:
+            def __init__(self, text):
+                self.text = text
+
+        class FakeModel:
+            def generate_content(self, prompt, generation_config=None):
+                calls.append(prompt)
+                if '"practice_questions"' in prompt:
+                    return FakeResponse(broken_text)
+                return FakeResponse(json.dumps({
+                    "slug": "s", "title": "t", "description": "d", "category": "토익·비즈니스",
+                    "tags": [],
+                    "body": "## 첫째\n\n내용\n\n## 결국 홍보\n\n[Scan Voca](https://scanvoca.com)",
+                }))
+
+        service = GeminiService.__new__(GeminiService)
+        service.model = FakeModel()
+        out = asyncio.run(service.generate_blog_post(
+            title="t", angle="a", include_practice_questions=True,
+        ))
+        return out, calls
+
+    def test_drops_practice_questions_on_final_retry_to_salvage_post(self):
+        # Reproduces the actual malformed shape observed live: body's closing quote is
+        # never reached because the model started writing its own practice-questions
+        # section (complete with a stray code fence) inside the string.
+        broken = (
+            '{"slug": "s", "title": "t", "description": "d", "category": "토익·비즈니스", '
+            '"tags": [], "body": "## 첫째\\n\\n내용\\n\\n## 실전 연습문제\\n\\n다음을 풀어보세요.\\n\\n```json\n'
+            '[\n  {"type": "Part 5"'
+        )
+        out, calls = self._run(broken)
+
+        assert out is not None
+        assert "practice_questions" not in out
+        assert out["body"].startswith("## 첫째")
+        assert len(calls) == 3  # default max_retries=2 -> 3 total attempts
+        assert '"practice_questions"' in calls[0]
+        assert '"practice_questions"' in calls[1]
+        assert '"practice_questions"' not in calls[2]
+
+
 class TestValidateAutoDraft:
     """BlogService.validate_auto_draft 가드레일 단위 테스트"""
 
