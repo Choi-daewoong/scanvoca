@@ -33,7 +33,16 @@ tests.
 Config (CLI flags override .env / environment):
   NAS_SOURCE_DIR, NAS_OUTPUT_DIR, BACKEND_API_BASE, NAS_TOOL_API_KEY, CLIP_URL_PREFIX
   DISCOVER_WINDOW_SIZE, DISCOVER_MAX_WINDOWS_PER_VIDEO, DISCOVER_MAX_NEW_TOPICS
-  DISCOVER_COOLDOWN_WINDOWS
+  DISCOVER_COOLDOWN_WINDOWS, CLIPPER_LOOP_SECONDS
+
+Looping (CLIPPER_LOOP_SECONDS / --loop-seconds): 0 (default) runs once and exits — the
+original behavior. > 0 runs forever instead: run, sleep that many seconds, run again.
+This replaces the old approach of wrapping the container's entrypoint in a shell
+`while true; do python main.py; sleep 604800; done` from outside (previously configured
+only in an untracked NAS-side compose.yaml — see compose.yaml in this directory, now
+checked into git, for the deployed shape). Looping in Python instead of shell means a
+crashed run is caught and logged with a timestamp per iteration, rather than silently
+being retried by `restart: unless-stopped` with no record of what happened or when.
 """
 from __future__ import annotations
 
@@ -41,7 +50,10 @@ import argparse
 import os
 import re
 import subprocess
+import time
+import traceback
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
 from clipper.matching import (
@@ -563,6 +575,13 @@ def _load_config_from_args() -> Tuple[Config, str]:
              "same video before it's eligible again — keeps one chatty scene from "
              "filling several posts back to back.",
     )
+    parser.add_argument(
+        "--loop-seconds", type=int,
+        default=int(os.getenv("CLIPPER_LOOP_SECONDS", "0")),
+        help="0 (default): run once and exit. > 0: run, sleep this many seconds, run "
+             "again, forever — lets the container re-scan for new clips on its own "
+             "schedule instead of needing an external cron/scheduler to invoke it.",
+    )
     args = parser.parse_args()
 
     missing = [
@@ -585,15 +604,48 @@ def _load_config_from_args() -> Tuple[Config, str]:
         discover_max_new_topics=args.discover_max_new_topics,
         discover_state_file=args.discover_state_file,
         discover_cooldown_windows=args.discover_cooldown_windows,
-    ), args.mode
+    ), args.mode, args.loop_seconds
 
 
-def main() -> None:
-    cfg, mode = _load_config_from_args()
+def run_once(cfg: Config, mode: str) -> None:
+    """Run one discover/process pass, logging a timestamp before and after."""
+    started = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    print(f"[{started}] starting {mode} run")
     if mode == "discover":
         discover(cfg)
     else:
         process(cfg)
+    finished = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    print(f"[{finished}] {mode} run finished")
+
+
+def run_loop(cfg: Config, mode: str, loop_seconds: int) -> None:
+    """Run run_once forever, sleeping loop_seconds between runs.
+
+    A single run's exception is caught and logged (with a timestamp, so a look at the
+    container's logs shows exactly when and why nothing happened) rather than crashing
+    the whole container — `restart: unless-stopped` would otherwise silently re-run
+    immediately with no record of the failure, and a persistent problem (e.g. an
+    expired API key) would then spin in a tight crash loop instead of waiting for the
+    next scheduled interval like a healthy run does.
+    """
+    while True:
+        try:
+            run_once(cfg, mode)
+        except Exception:
+            failed_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+            print(f"[{failed_at}] {mode} run failed:")
+            traceback.print_exc()
+        print(f"sleeping {loop_seconds}s until next run")
+        time.sleep(loop_seconds)
+
+
+def main() -> None:
+    cfg, mode, loop_seconds = _load_config_from_args()
+    if loop_seconds > 0:
+        run_loop(cfg, mode, loop_seconds)
+    else:
+        run_once(cfg, mode)
 
 
 if __name__ == "__main__":
