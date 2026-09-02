@@ -3,9 +3,10 @@
 #         `docker save scanvoca-clipper -o scanvoca-clipper.tar`로 export한 뒤
 #         NAS에 업로드하고 Container Manager > 이미지에서 가져오기(import)로 등록한다.
 #
-# CLIPPER_LOOP_SECONDS를 .env에 설정하면(예: 604800 = 7일) 컨테이너가 스스로
+# CLIPPER_LOOP_SECONDS를 .env에 설정하면(예: 259200 = 3일) 컨테이너가 스스로
 # "1회 실행 -> N초 대기 -> 재실행"을 반복한다 — 이 값이 0이거나 없으면 한 번 실행하고
 # 종료하므로, NAS 스케줄러로 직접 기동하는 방식과도 그대로 호환된다.
+# 3일 주기인 이유는 .env의 CLIPPER_LOOP_SECONDS 주석 참고(실측 수요/공급 계산 근거).
 #
 # 아래 volumes의 왼쪽(호스트) 경로는 실제 NAS 폴더 구조에 맞게 바꿔야 한다. 오른쪽
 # (컨테이너 내부) 경로는 .env의 NAS_SOURCE_DIR / NAS_OUTPUT_DIR 값과 반드시 일치해야
