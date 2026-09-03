@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import VisitTracker from '@/components/common/VisitTracker';
+import GoogleAnalyticsGate from '@/components/common/GoogleAnalyticsGate';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://scanvoca.com'),
@@ -59,6 +60,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="h-full bg-white text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100">
         <VisitTracker />
         {children}
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <GoogleAnalyticsGate gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        )}
       </body>
     </html>
   );
