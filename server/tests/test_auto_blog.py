@@ -2989,6 +2989,97 @@ class TestRunDailyEndpoint:
         assert stored.status == "used"
 
 
+class TestRunDailySummaryEmail:
+    """run-daily는 이제 결과마다가 아니라 호출당 정확히 한 번, 성공/실패 집계 이메일을
+    보낸다 — Vercel의 커밋당 배포 알림 메일과 겹쳐 받은편지함이 넘치던 문제의 대응."""
+
+    URL = "/api/v1/admin/blog/auto-publish/run-daily"
+
+    def test_sends_exactly_one_summary_with_correct_counts(
+        self, client, admin_auth_headers, monkeypatch
+    ):
+        calls = []
+
+        async def fake_publish_one(db, pipeline, dry_run, gemini):
+            n = len(calls) + 1
+            published = pipeline != "conversation"
+            calls.append((pipeline, dry_run))
+            return BlogAutoPublishResult(
+                published=published,
+                reason=None if published else "no_ready_clip",
+                dry_run=dry_run,
+                slug=f"{pipeline}-{n}" if published else None,
+            )
+
+        summary_calls = []
+
+        async def fake_summary(published_count, failed_count, detail_lines):
+            summary_calls.append((published_count, failed_count, detail_lines))
+            return True
+
+        monkeypatch.setattr(blog_module, "_publish_one", fake_publish_one)
+        monkeypatch.setattr(blog_module, "_replenish_topic_queue", _stub_replenish([]))
+        monkeypatch.setattr(
+            blog_module, "_replenish_suneung_topics", _stub_replenish_suneung([])
+        )
+        monkeypatch.setattr(blog_module, "send_auto_publish_daily_summary_email", fake_summary)
+
+        resp = client.post(f"{self.URL}?count_per_pipeline=1", headers=admin_auth_headers)
+        assert resp.status_code == status.HTTP_200_OK
+
+        # 정확히 한 번만 호출됐는지 (파이프라인/포스트마다가 아니라)
+        assert len(summary_calls) == 1
+        published_count, failed_count, detail_lines = summary_calls[0]
+        assert published_count == 2  # toeic, suneung
+        assert failed_count == 1  # conversation
+        assert any("toeic" in line and "toeic-1" in line for line in detail_lines)
+        assert any("conversation" in line and "no_ready_clip" in line for line in detail_lines)
+
+    def test_dry_run_never_sends_a_summary(self, client, admin_auth_headers, monkeypatch):
+        """dry_run 결과는 항상 published=False라(7단계 참고), 요약을 보내면 실제로는
+        발행 가능했던 초안까지 '전부 실패'로 잘못 보고하게 된다 — 그래서 아예 건너뛴다."""
+        summary_calls = []
+
+        async def fake_summary(published_count, failed_count, detail_lines):
+            summary_calls.append((published_count, failed_count, detail_lines))
+            return True
+
+        monkeypatch.setattr(
+            blog_module, "_publish_one", _stub_publish_one([], published=False)
+        )
+        monkeypatch.setattr(blog_module, "send_auto_publish_daily_summary_email", fake_summary)
+
+        resp = client.post(
+            f"{self.URL}?count_per_pipeline=1&dry_run=true", headers=admin_auth_headers
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert summary_calls == []
+
+    def test_manual_single_pipeline_endpoint_never_sends_a_summary(
+        self, client, admin_auth_headers, monkeypatch
+    ):
+        """단건 수동 엔드포인트(/auto-publish/run)는 관리자가 직접 결과를 보므로 요약
+        메일 대상이 아니다 — run-daily 안에서만 보낸다."""
+        summary_calls = []
+
+        async def fake_summary(published_count, failed_count, detail_lines):
+            summary_calls.append((published_count, failed_count, detail_lines))
+            return True
+
+        async def fake_publish_one(db, pipeline, dry_run, gemini):
+            return BlogAutoPublishResult(published=False, reason="no_unused_topic", dry_run=dry_run)
+
+        monkeypatch.setattr(blog_module, "_publish_one", fake_publish_one)
+        monkeypatch.setattr(blog_module, "send_auto_publish_daily_summary_email", fake_summary)
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert summary_calls == []
+
+
 class TestRunAutoPublishRefactorRegression:
     """회귀: 단건 엔드포인트가 _publish_one 추출 후에도 동일하게 동작해야 한다."""
 

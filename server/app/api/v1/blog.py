@@ -54,7 +54,7 @@ from app.services.blog_service import (
     MAX_IMAGE_BYTES,
     MAX_ATTACHMENT_BYTES,
 )
-from app.services.email_service import send_auto_publish_failure_email
+from app.services.email_service import send_auto_publish_daily_summary_email
 from app.services.gemini_service import GeminiService
 
 router = APIRouter()
@@ -216,9 +216,6 @@ async def _publish_one(
             include_word_list=topic.include_word_list,
         )
         if result is None:
-            await send_auto_publish_failure_email(
-                "generation_failed", detail=f"pipeline=toeic, topic_id={topic.id}, title={topic.title}"
-            )
             return BlogAutoPublishResult(
                 published=False, reason="generation_failed", dry_run=dry_run, topic_id=topic.id
             )
@@ -279,10 +276,6 @@ async def _publish_one(
             },
         )
         if result is None:
-            await send_auto_publish_failure_email(
-                "generation_failed",
-                detail=f"pipeline=suneung, topic_id={topic.id}, passage_id={passage.id}",
-            )
             return BlogAutoPublishResult(
                 published=False, reason="generation_failed", dry_run=dry_run, topic_id=topic.id
             )
@@ -307,10 +300,6 @@ async def _publish_one(
             },
         )
         if result is None:
-            await send_auto_publish_failure_email(
-                "generation_failed",
-                detail=f"pipeline=conversation, topic_id={topic.id}, clip_id={clip.id}",
-            )
             return BlogAutoPublishResult(
                 published=False, reason="generation_failed", dry_run=dry_run, topic_id=topic.id
             )
@@ -330,9 +319,6 @@ async def _publish_one(
     # 5) Guardrail validation.
     failure = BlogService.validate_auto_draft(db, markdown, slug)
     if failure is not None:
-        await send_auto_publish_failure_email(
-            "guardrail_failed", detail=f"topic_id={topic.id}, slug={slug}, check={failure}"
-        )
         return BlogAutoPublishResult(
             published=False,
             reason="guardrail_failed",
@@ -384,10 +370,7 @@ async def _publish_one(
             )
         else:
             commit_url = await BlogService.commit_markdown(slug, markdown)
-    except GitHubPublishError as e:
-        await send_auto_publish_failure_email(
-            "github_failed", detail=f"topic_id={topic.id}, slug={slug}, error={e}"
-        )
+    except GitHubPublishError:
         return BlogAutoPublishResult(
             published=False,
             reason="github_failed",
@@ -628,6 +611,26 @@ async def run_auto_publish_daily(
             out[pipeline].append(result)
             if not result.published:
                 break
+
+    # One summary email per call instead of the old per-post failure emails — those,
+    # stacked with Vercel's own per-commit deployment email for every successful post,
+    # could flood the inbox with a dozen near-simultaneous notifications for one run.
+    # Skipped on dry_run: every result there has published=False by construction (see
+    # _publish_one step 7), so a summary would misreport a real preview as "all failed".
+    if not dry_run:
+        published_count = sum(1 for results in out.values() for r in results if r.published)
+        failed_count = sum(1 for results in out.values() for r in results if not r.published)
+        detail_lines = []
+        for pipeline, results in out.items():
+            published_slugs = [r.slug for r in results if r.published and r.slug]
+            failed_reasons = [r.reason for r in results if not r.published]
+            parts = []
+            if published_slugs:
+                parts.append(f"성공 {len(published_slugs)}건 ({', '.join(published_slugs)})")
+            if failed_reasons:
+                parts.append(f"실패 {len(failed_reasons)}건 ({', '.join(failed_reasons)})")
+            detail_lines.append(f"- {pipeline}: {' / '.join(parts)}")
+        await send_auto_publish_daily_summary_email(published_count, failed_count, detail_lines)
 
     return BlogDailyRunResult(
         toeic=out["toeic"], suneung=out["suneung"], conversation=out["conversation"]

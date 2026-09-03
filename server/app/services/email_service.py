@@ -82,6 +82,36 @@ async def send_auto_publish_failure_email(reason: str, detail: str = "") -> bool
         return False
 
 
+async def send_auto_publish_daily_summary_email(
+    published_count: int, failed_count: int, detail_lines: list[str]
+) -> bool:
+    """Notify the admin with ONE summary of a run-daily call (best-effort).
+
+    Replaces the old per-post failure emails that used to fire once per failed post inside
+    _publish_one — combined with Vercel's own per-commit deployment email (one per
+    successfully published post), a single daily run could flood the inbox with a dozen
+    near-identical notifications. This fires at most once per run-daily call.
+    """
+    to_email = (settings.ADMIN_NOTIFY_EMAIL or "").strip()
+    if not to_email:
+        logger.warning("Auto-publish summary not emailed: ADMIN_NOTIFY_EMAIL is not set")
+        return False
+
+    subject = f"[Scan Voca] 자동 블로그 발행 결과: 성공 {published_count} / 실패 {failed_count}"
+    body = (
+        f"자동 블로그 발행이 끝났습니다.\n\n"
+        f"성공: {published_count}건\n"
+        f"실패: {failed_count}건\n\n" + "\n".join(detail_lines)
+    )
+    try:
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, _send_plain_email_sync, to_email, subject, body)
+        return True
+    except Exception as e:  # noqa: BLE001 - notification must never break the caller
+        logger.error(f"Failed to send auto-publish summary email: {e}")
+        return False
+
+
 async def send_password_reset_email(to_email: str, otp: str) -> None:
     """Send password reset OTP email (async, non-blocking)"""
     subject = "[Scan Voca] 비밀번호 재설정 인증 코드"
