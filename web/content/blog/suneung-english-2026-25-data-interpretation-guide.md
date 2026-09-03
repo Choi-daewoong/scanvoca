@@ -17,6 +17,8 @@ thumbnail: "/blog-images/suneung-english-2026-25-data-interpretation-guide/1.png
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2026학년도 대학수학능력시험 영어영역 25번).
 
+![2026학년도 수능 영어 25번 도표: 의사소통 유형별로 친구들과 시간을 보낸 미국 십대들의 비율(2014~2015년)](/blog-images/suneung-english-2026-25-data-interpretation-guide/graph.png)
+
 ```
 The graph above shows the percentages of U.S. teenagers
 who spent time with friends by communication type, based on
@@ -62,11 +64,11 @@ Every Day.
 
 **정답: ④**
 
-*   **①. (일치)** 'Every Day' 카테고리에서 'text messaging'은 약 45%로, 네 가지 소통 유형 중 가장 높은 비율을 보입니다. 따라서 이 선택지는 도표 내용과 일치합니다.
-*   **②. (일치)** 'Less Often' 카테고리에서 'talking on the phone'은 약 20%, 'text messaging'은 약 8%입니다. 20%는 8%의 두 배 이상이므로, 이 선택지는 도표 내용과 일치합니다.
-*   **③. (일치)** 'Every Day' 카테고리에서 'talking on the phone'은 약 10%입니다. 'Less Often' 카테고리에서 'talking on the phone'은 약 20%입니다. 따라서 10%는 20%보다 낮으므로, 이 선택지는 도표 내용과 일치합니다.
-*   **④. (불일치)** 'Less Often' 카테고리에서 비율을 살펴보면, 'talking on the phone' (약 20%), 'video chatting' (약 15%), 'text messaging' (약 8%), 'emailing' (약 5%) 순입니다. 이메일링은 가장 낮은 비율을 차지하며, 두 번째로 높은 비율은 영상 채팅입니다. 따라서 이 선택지는 도표 내용과 일치하지 않습니다.
-*   **⑤. (일치)** 'Less Often' 카테고리에서 'video chatting'은 약 15%입니다. 'Every Day' 카테고리에서 'video chatting'은 약 5%입니다. 15%는 5%보다 높으므로, 이 선택지는 도표 내용과 일치합니다.
+*   **①. (일치)** 'Every Day' 카테고리에서 'text messaging'은 55%로, 네 가지 소통 유형(text messaging 55%, talking on the phone 19%, emailing 6%, video chatting 7%) 중 가장 높은 비율을 보입니다. 따라서 이 선택지는 도표 내용과 일치합니다.
+*   **②. (일치)** 'Less Often' 카테고리에서 'talking on the phone'은 41%, 'text messaging'은 13%입니다. 41%는 13%의 두 배(26%)를 넘으므로, 이 선택지는 도표 내용과 일치합니다.
+*   **③. (일치)** 'Every Day' 카테고리에서 'talking on the phone'은 19%입니다. 'Less Often' 카테고리에서 'talking on the phone'은 41%입니다. 따라서 19%는 41%보다 낮으므로, 이 선택지는 도표 내용과 일치합니다.
+*   **④. (불일치)** 'Less Often' 카테고리에서 비율을 살펴보면, 'emailing' (43%), 'talking on the phone' (41%), 'video chatting' (37%), 'text messaging' (13%) 순입니다. 가장 높은 비율은 emailing이고, 두 번째로 높은 비율은 talking on the phone입니다. 즉 emailing은 '두 번째로 높은 비율'이 아니라 '가장 높은 비율'이므로, 이 선택지는 도표 내용과 일치하지 않습니다.
+*   **⑤. (일치)** 'Less Often' 카테고리에서 'video chatting'은 37%입니다. 'Every Day' 카테고리에서 'video chatting'은 7%입니다. 37%는 7%보다 높으므로, 이 선택지는 도표 내용과 일치합니다.
 
 ## 도표 유형 정복, 이제 자신감을!
 
