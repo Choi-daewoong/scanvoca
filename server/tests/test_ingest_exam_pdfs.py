@@ -258,6 +258,80 @@ _ENGLISH_PASSAGE = (
 )
 
 
+def _img(x0, top, x1, bottom):
+    return {"x0": x0, "top": top, "x1": x1, "bottom": bottom}
+
+
+class TestComputeChartCropBbox:
+    """pdfplumber page.images 좌표만으로 도표 이미지 클러스터를 골라내는 순수 함수.
+    좌표는 2026 수능 영어영역 문제지 PDF 4페이지(25번 도표가 왼쪽 칼럼에, 27번 안내문이
+    오른쪽 칼럼에 있음)에서 실측한 값을 기반으로 한다."""
+
+    PAGE_WIDTH = 842.0
+    PAGE_HEIGHT = 1191.0
+
+    def test_picks_the_larger_cluster_over_a_small_unrelated_image_on_the_same_side(self):
+        """같은 쪽(왼쪽)에 있어도 세로로 멀리 떨어진 작은 이미지(예: 페이지 상단 로고)는
+        도표 클러스터에 안 섞이고, 더 큰 클러스터가 선택돼야 한다."""
+        from ingest_exam_pdfs import compute_chart_crop_bbox
+        small_unrelated = _img(150.0, 20.0, 250.0, 45.0)  # 도표와 멀리 떨어진 상단 로고
+        chart_top = _img(105.9, 189.96, 398.7, 339.0)
+        chart_bottom = _img(105.9, 339.0, 398.7, 388.56)  # chart_top에 바로 이어붙음
+
+        bbox = compute_chart_crop_bbox(
+            [small_unrelated, chart_top, chart_bottom], self.PAGE_WIDTH, self.PAGE_HEIGHT, "left"
+        )
+        assert bbox is not None
+        x0, top, x1, bottom = bbox
+        assert top > 150  # 로고(top=20)가 아니라 도표(top=189.96) 쪽이 선택됨
+        assert bottom > 380  # 도표 두 조각을 다 포함
+
+    def test_ignores_images_on_the_other_side_of_the_page(self):
+        from ingest_exam_pdfs import compute_chart_crop_bbox
+        left_chart = _img(105.9, 189.96, 398.7, 339.0)
+        right_notice = _img(447.84, 199.38, 753.96, 393.54)
+
+        x0, top, x1, bottom = compute_chart_crop_bbox(
+            [left_chart, right_notice], self.PAGE_WIDTH, self.PAGE_HEIGHT, "left"
+        )
+        assert x1 < 420
+
+    def test_right_side_selects_only_right_images(self):
+        from ingest_exam_pdfs import compute_chart_crop_bbox
+        left_chart = _img(105.9, 189.96, 398.7, 339.0)
+        right_notice = _img(447.84, 199.38, 753.96, 393.54)
+
+        x0, top, x1, bottom = compute_chart_crop_bbox(
+            [left_chart, right_notice], self.PAGE_WIDTH, self.PAGE_HEIGHT, "right"
+        )
+        assert x0 > 420
+
+    def test_full_width_considers_every_image_regardless_of_side(self):
+        from ingest_exam_pdfs import compute_chart_crop_bbox
+        left_img = _img(50.0, 100.0, 150.0, 200.0)
+        right_img = _img(700.0, 100.0, 800.0, 200.0)
+        x0, top, x1, bottom = compute_chart_crop_bbox(
+            [left_img, right_img], self.PAGE_WIDTH, self.PAGE_HEIGHT, "full_width"
+        )
+        assert x0 < 60 and x1 > 790  # 양쪽 다 포함해서 하나로 합쳐짐
+
+    def test_returns_none_when_that_side_has_no_images(self):
+        from ingest_exam_pdfs import compute_chart_crop_bbox
+        right_only = [_img(447.84, 199.38, 753.96, 393.54)]
+        assert compute_chart_crop_bbox(right_only, self.PAGE_WIDTH, self.PAGE_HEIGHT, "left") is None
+        assert compute_chart_crop_bbox([], self.PAGE_WIDTH, self.PAGE_HEIGHT, "full_width") is None
+
+    def test_crop_box_padding_is_clamped_to_page_bounds(self):
+        """padding 때문에 페이지 경계 밖으로 나가면 pdfplumber page.crop()이 예외를 던지므로
+        반드시 0..page_width / 0..page_height 안으로 잘려야 한다."""
+        from ingest_exam_pdfs import compute_chart_crop_bbox
+        corner_image = _img(0.0, 0.0, 50.0, 50.0)
+        x0, top, x1, bottom = compute_chart_crop_bbox(
+            [corner_image], self.PAGE_WIDTH, self.PAGE_HEIGHT, "left"
+        )
+        assert x0 == 0.0 and top == 0.0
+
+
 def _standard_item(**overrides):
     """검증을 통과하는 standard 유형 기준 아이템 — 테스트마다 필드 하나씩만 망가뜨린다."""
     item = {
@@ -437,6 +511,51 @@ class TestValidateExtractedItem:
         reason = validate_extracted_item(item)
         assert reason is not None
         assert "embedded" in reason
+
+    # --- 도표(chart) 유형 — 2026 수능 25번 실사고(도표 없이 지어낸 수치로 발행) 재발 방지 ---
+
+    def _chart_item(self, **overrides):
+        item = _standard_item(
+            problem_type="chart",
+            question_text="다음 도표의 내용과 일치하지 않는 것은?",
+            passage_text=(
+                "The graph above shows the percentages of U.S. teenagers who spent time "
+                "with friends by communication type.\n"
+                "[도표 데이터] Text Messaging: Every Day 55%, Less Often 13% / "
+                "Talking on the Phone: Every Day 19%, Less Often 41%"
+            ),
+            chart_page=4,
+            chart_side="left",
+        )
+        item.update(overrides)
+        return item
+
+    def test_accepts_chart_item_with_page_and_side(self):
+        from ingest_exam_pdfs import validate_extracted_item
+        assert validate_extracted_item(self._chart_item()) is None
+
+    def test_rejects_chart_item_missing_chart_page(self):
+        """chart_page가 없으면 어느 쪽을 잘라야 할지 알 수 없어 이미지를 못 만든다 —
+        이미지 없이 조용히 들어가면 사고가 재발하므로 아예 거부한다."""
+        from ingest_exam_pdfs import validate_extracted_item
+        reason = validate_extracted_item(self._chart_item(chart_page=None))
+        assert reason is not None
+        assert "chart_page" in reason
+
+    def test_rejects_chart_item_with_invalid_chart_page(self):
+        from ingest_exam_pdfs import validate_extracted_item
+        assert validate_extracted_item(self._chart_item(chart_page=0)) is not None
+        assert validate_extracted_item(self._chart_item(chart_page="4")) is not None
+
+    def test_rejects_chart_item_missing_chart_side(self):
+        from ingest_exam_pdfs import validate_extracted_item
+        reason = validate_extracted_item(self._chart_item(chart_side=None))
+        assert reason is not None
+        assert "chart_side" in reason
+
+    def test_rejects_chart_item_with_invalid_chart_side(self):
+        from ingest_exam_pdfs import validate_extracted_item
+        assert validate_extracted_item(self._chart_item(chart_side="center")) is not None
 
 
 # =============================================================================
@@ -662,3 +781,84 @@ class TestIngestOrchestration:
         row = db_session.query(ExamPassage).one()
         assert row.tags is None
         assert row.explanation  # 해설은 태깅 플래그와 무관하게 항상 저장된다
+
+    # --- 도표(chart) 유형: 실제 이미지가 크롭되어 row에 붙는지 ---
+
+    _CHART_PASSAGE = (
+        "The graph above shows the percentages of U.S. teenagers who spent time with "
+        "friends by communication type.\n"
+        "[도표 데이터] Text Messaging: Every Day 55%, Less Often 13% / "
+        "Talking on the Phone: Every Day 19%, Less Often 41%"
+    )
+
+    def test_chart_item_gets_cropped_image_attached(self, db_session, ingest_env, monkeypatch):
+        import ingest_exam_pdfs
+        captured = {}
+
+        def fake_crop(pdf_path, page_number, side):
+            captured["args"] = (pdf_path, page_number, side)
+            return b"cropped-png-bytes"
+
+        monkeypatch.setattr(ingest_exam_pdfs, "crop_chart_image", fake_crop)
+
+        ingest_env["manifest"] = _manifest(
+            {"problem_number": 25, "problem_type": "chart", "passage_group": []},
+        )
+        ingest_env["batches"][(25,)] = [
+            _standard_item(
+                problem_number=25, problem_type="chart",
+                question_text="다음 도표의 내용과 일치하지 않는 것은?",
+                passage_text=self._CHART_PASSAGE,
+                chart_page=4, chart_side="left",
+            ),
+        ]
+        _run_ingest()
+
+        row = db_session.query(ExamPassage).filter(ExamPassage.problem_number == 25).one()
+        assert row.chart_image == b"cropped-png-bytes"
+        assert captured["args"] == ("fake.pdf", 4, "left")
+
+    def test_chart_item_with_failed_crop_is_still_inserted_without_an_image(
+        self, db_session, ingest_env, monkeypatch
+    ):
+        """크롭이 실패해도(예: chart_page/chart_side가 실제 PDF와 안 맞음) 문항 자체는
+        들여보낸다 — passage_text의 텍스트 전사만으로도 발행은 가능하므로, 이미지 하나 못
+        구했다고 문항 전체를 버리는 건 과함(단, validate_extracted_item에서 chart_page/
+        chart_side 자체가 없는 건 이미 거부됨 — 이건 '있지만 크롭이 실패한' 경우)."""
+        import ingest_exam_pdfs
+        monkeypatch.setattr(ingest_exam_pdfs, "crop_chart_image", lambda *a, **k: None)
+
+        ingest_env["manifest"] = _manifest(
+            {"problem_number": 25, "problem_type": "chart", "passage_group": []},
+        )
+        ingest_env["batches"][(25,)] = [
+            _standard_item(
+                problem_number=25, problem_type="chart",
+                question_text="다음 도표의 내용과 일치하지 않는 것은?",
+                passage_text=self._CHART_PASSAGE,
+                chart_page=4, chart_side="left",
+            ),
+        ]
+        _run_ingest()
+
+        row = db_session.query(ExamPassage).filter(ExamPassage.problem_number == 25).one()
+        assert row.problem_type == "chart"
+        assert row.chart_image is None
+
+    def test_non_chart_item_never_calls_crop_chart_image(self, db_session, ingest_env, monkeypatch):
+        import ingest_exam_pdfs
+        calls = []
+        monkeypatch.setattr(
+            ingest_exam_pdfs, "crop_chart_image",
+            lambda *a, **k: calls.append(a) or b"should-not-be-used",
+        )
+
+        ingest_env["manifest"] = _manifest(
+            {"problem_number": 33, "problem_type": "standard", "passage_group": []},
+        )
+        ingest_env["batches"][(33,)] = [_standard_item(problem_number=33)]
+        _run_ingest()
+
+        assert calls == []
+        row = db_session.query(ExamPassage).one()
+        assert row.chart_image is None

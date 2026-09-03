@@ -201,6 +201,7 @@ async def _publish_one(
     # Pipeline-specific source objects to flip to used/published only on a real publish.
     passage = None  # ExamPassage (suneung)
     clip = None     # ConversationClip (conversation)
+    chart_image = None  # ReflectImage — suneung 'chart' passages only (see step 8)
 
     # 2) Pipeline-specific source resolution + draft generation → (topic, result, body).
     if pipeline == "toeic":
@@ -281,6 +282,15 @@ async def _publish_one(
             )
         body = await _apply_word_list_cta(db, topic, result, result["body"], dry_run)
 
+        # Embed the real cropped chart image for 'chart' problems — without this, a chart
+        # problem publishes with only a text caption and no way to see the actual data,
+        # which previously led to a fabricated-looking answer explanation (2026 수능 25번).
+        if passage.problem_type == "chart" and passage.chart_image:
+            citation = f"{passage.source_label} {passage.problem_number}번" if passage.problem_number else passage.source_label
+            body, chart_image = BlogService.insert_chart_image(
+                body, result["slug"], passage.chart_image, alt_text=f"{citation} 도표"
+            )
+
     else:  # conversation
         pair = BlogService.get_unused_conversation_topic_with_ready_clip(db)
         if pair is None:
@@ -359,14 +369,13 @@ async def _publish_one(
             detail="블로그 발행이 설정되지 않았습니다.",
         )
 
+    extra_images = [img for img in (hero_image, chart_image) if img is not None]
     try:
-        if hero_image is not None:
-            files = [
-                (f"{BLOG_CONTENT_DIR}/{slug}.md", markdown.encode("utf-8")),
-                (hero_image.path, hero_image.data),
-            ]
+        if extra_images:
+            files = [(f"{BLOG_CONTENT_DIR}/{slug}.md", markdown.encode("utf-8"))]
+            files.extend((img.path, img.data) for img in extra_images)
             commit_url = await BlogService.commit_files(
-                files, message=f"blog: auto-publish {slug} (+1 image)"
+                files, message=f"blog: auto-publish {slug} (+{len(extra_images)} image)"
             )
         else:
             commit_url = await BlogService.commit_markdown(slug, markdown)

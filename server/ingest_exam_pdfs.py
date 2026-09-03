@@ -67,7 +67,10 @@ _ALPHA_RE = re.compile(r"[A-Za-z]")
 # 아니다"라는 판정 자체는 AI 출력에도 그대로 유효한 안전망이라 검증기에 남겨둔다.
 _HANGUL_RE = re.compile(r"[가-힣]")
 
-_VALID_PROBLEM_TYPES = {"standard", "underline_choice", "embedded_marker", "paragraph_order"}
+_VALID_PROBLEM_TYPES = {
+    "standard", "chart", "underline_choice", "embedded_marker", "paragraph_order"
+}
+_VALID_CHART_SIDES = {"left", "right", "full_width"}
 _PAREN_LABEL_RE = re.compile(r"\(([A-C])\)")
 _ORDER_CHOICE_RE = re.compile(r"\(?[A-C]\)?(\s*[-–]\s*\(?[A-C]\)?){2}")
 # embedded_marker 지문 안에 실제로 박혀 있어야 하는 마커들 — 정답표 파싱용 CIRCLED와 같은
@@ -128,6 +131,17 @@ def validate_extracted_item(item: Dict) -> Optional[str]:
         markers_found = sum(1 for ch in _CIRCLED_CHARS if ch in passage)
         if markers_found < 5:
             return f"embedded_marker item needs 5 embedded ①-⑤ markers in passage_text, found {markers_found}"
+
+    if problem_type == "chart":
+        # chart_page/chart_side가 없으면 어느 페이지의 어느 쪽 이미지를 잘라야 할지 전혀
+        # 알 수 없다 — 이미지 없이 발행되면 2026 수능 25번과 똑같은 사고(도표 없이 지어낸
+        # 수치로 해설이 발행됨)가 재발하므로, 이미지를 못 만들 문항은 아예 들이지 않는다.
+        chart_page = item.get("chart_page")
+        chart_side = item.get("chart_side")
+        if not isinstance(chart_page, int) or chart_page < 1:
+            return f"chart item missing a valid chart_page: {chart_page!r}"
+        if chart_side not in _VALID_CHART_SIDES:
+            return f"chart item missing a valid chart_side: {chart_side!r}"
 
     return None
 
@@ -202,6 +216,92 @@ def extract_form_section(text: str, form: str) -> str:
         end = markers[i + 1][0] if i + 1 < len(markers) else len(text)
         return text[pos:end]
     return text
+
+
+# ---------- Chart image cropping (pure bbox math + a thin IO wrapper) ----------
+#
+# problem_type == "chart" 문항의 도표는 KICE PDF 안에서 인쇄 텍스트가 아니라 내장 래스터
+# 이미지(pdfplumber의 page.images)로 존재한다. 실측(2026 수능 영어 25번, p.4)으로 확인한
+# 사실: 도표 하나가 위/아래로 쪼개진 여러 개의 image 객체로 나뉘어 있고, 같은 페이지의 다른
+# 문항(오른쪽 칼럼의 안내문 등)도 자기 몫의 image 객체를 여러 개 갖고 있다. 그래서 "페이지의
+# 이미지를 전부 하나로 합치기"는 안 되고, chart_side로 먼저 반쪽만 남긴 뒤, 그 반쪽 안에서도
+# 세로로 가까이 붙어 있는 이미지들끼리만 하나의 클러스터로 묶어 가장 큰 클러스터를 도표로
+# 고른다 — 페이지 상단의 로고 같은 무관한 작은 이미지가 섞여 들어오는 걸 막기 위함이다.
+
+_CHART_CLUSTER_GAP = 25.0  # pt: 이 안에서 세로로 붙어 있으면 같은 도표의 조각으로 본다
+_CHART_CROP_PADDING = 6.0  # pt: 클러스터 bbox 바깥 여백(테두리가 잘리지 않도록)
+
+
+def compute_chart_crop_bbox(
+    images: List[Dict], page_width: float, page_height: float, side: str
+) -> Optional[tuple]:
+    """Pure: given a page's raw pdfplumber `page.images` and which half of the page the
+    chart is on (side: "left" | "right" | "full_width"), return the (x0, top, x1, bottom)
+    crop box covering the chart, or None if that half has no images at all.
+
+    Picks the largest vertically-contiguous cluster of images on that side (see module
+    comment above) rather than the union of everything on that side, so an unrelated small
+    image (e.g. a page-header logo straddling the column gutter) sharing the same half
+    doesn't drag the crop box up to include a blank gap plus the wrong image.
+    """
+    if side == "left":
+        picked = [im for im in images if (im["x0"] + im["x1"]) / 2 < page_width / 2]
+    elif side == "right":
+        picked = [im for im in images if (im["x0"] + im["x1"]) / 2 >= page_width / 2]
+    else:
+        picked = list(images)
+    if not picked:
+        return None
+
+    picked = sorted(picked, key=lambda im: im["top"])
+    clusters: List[List[Dict]] = []
+    for im in picked:
+        if clusters and im["top"] - max(c["bottom"] for c in clusters[-1]) <= _CHART_CLUSTER_GAP:
+            clusters[-1].append(im)
+        else:
+            clusters.append([im])
+
+    def cluster_area(cluster: List[Dict]) -> float:
+        x0 = min(c["x0"] for c in cluster)
+        x1 = max(c["x1"] for c in cluster)
+        top = min(c["top"] for c in cluster)
+        bottom = max(c["bottom"] for c in cluster)
+        return (x1 - x0) * (bottom - top)
+
+    best = max(clusters, key=cluster_area)
+    x0 = max(0.0, min(c["x0"] for c in best) - _CHART_CROP_PADDING)
+    top = max(0.0, min(c["top"] for c in best) - _CHART_CROP_PADDING)
+    x1 = min(page_width, max(c["x1"] for c in best) + _CHART_CROP_PADDING)
+    bottom = min(page_height, max(c["bottom"] for c in best) + _CHART_CROP_PADDING)
+    return (x0, top, x1, bottom)
+
+
+def crop_chart_image(pdf_path: str, page_number: int, side: str) -> Optional[bytes]:
+    """Thin IO wrapper (not unit tested — see compute_chart_crop_bbox for the pure logic
+    that is). Renders the cropped chart region to PNG bytes at 300dpi, or returns None if
+    the page number is out of range or that half of the page has no images at all (a
+    hallucinated chart_page/chart_side, or a chart that isn't a raster image in this PDF).
+
+    Callers MUST treat None as "couldn't get the image" and continue without one rather
+    than fail the whole item — an ingest run losing every problem in a batch over one
+    uncroppable chart would be a worse outcome than publishing that one chart without its
+    image (the text-transcribed data in passage_text still lets the post read correctly).
+    """
+    import io
+    import pdfplumber  # lazy: keeps this module importable where pdfplumber isn't installed
+
+    with pdfplumber.open(pdf_path) as pdf:
+        if not (1 <= page_number <= len(pdf.pages)):
+            return None
+        page = pdf.pages[page_number - 1]
+        bbox = compute_chart_crop_bbox(page.images, page.width, page.height, side)
+        if bbox is None:
+            return None
+        cropped_page = page.crop(bbox)
+        pil_image = cropped_page.to_image(resolution=300).original
+        buf = io.BytesIO()
+        pil_image.save(buf, format="PNG")
+        return buf.getvalue()
 
 
 # ---------- Column-aware reconstruction (pure — unit-testable without a real PDF) ----------
@@ -542,6 +642,17 @@ def ingest(
                 f"{year}-{exam_type}-{month or 0}-{min(group)}-{max(group)}"
                 if len(group) > 1 else None
             )
+            chart_image = None
+            if item["problem_type"] == "chart":
+                chart_image = crop_chart_image(
+                    pdf_path, item["chart_page"], item["chart_side"]
+                )
+                if chart_image is None:
+                    print(
+                        f"  WARN: problem {num} is a chart but cropping found no image "
+                        f"(page={item['chart_page']}, side={item['chart_side']!r}) — "
+                        "inserting without one, text-transcribed data only."
+                    )
             passage = ExamPassage(
                 year=year,
                 exam_type=exam_type,
@@ -556,6 +667,7 @@ def ingest(
                 explanation=item["explanation"],
                 tags=(item.get("tags") or None) if do_tagging else None,
                 passage_group_key=group_key,
+                chart_image=chart_image,
                 status="unused",
             )
             db.add(passage)

@@ -52,12 +52,15 @@ def _has_api_key() -> bool:
 
 EXAM_MANIFEST_PROMPT = """당신은 한국 수능/모의고사 영어영역 문제지 분석 전문가입니다.
 첨부된 PDF는 실제 수능/모의고사 영어 문제지입니다. 이 문제지에 등장하는 모든 문항 번호를
-빠짐없이 찾아, 각 문항의 유형을 아래 4가지 중 하나로 분류하세요. 본문 내용은 이 단계에서
+빠짐없이 찾아, 각 문항의 유형을 아래 5가지 중 하나로 분류하세요. 본문 내용은 이 단계에서
 추출하지 마세요 — 문항 번호와 유형 분류만 필요합니다.
 
 유형 분류 기준:
 - "standard": 지문 뒤에 ①~⑤ 선택지가 순서대로 나열되는 일반적인 유형 (목적/주장/함의추론/
-  요지/주제/제목/심경/내용일치·불일치/도표/빈칸추론/요약문완성/장문독해 각 문항 등 대부분).
+  요지/주제/제목/심경/내용일치·불일치/빈칸추론/요약문완성/장문독해 각 문항 등 대부분).
+- "chart": 막대그래프·선그래프·원그래프·표 등 시각 자료를 놓고 그 안의 수치를 비교해야
+  풀리는 도표 문제. 지문이 인쇄된 문장이 아니라 이미지(그림)로 된 도표라는 점이 "standard"
+  와 다른 결정적 차이입니다 — 도표는 절대 "standard"로 분류하지 마세요.
 - "underline_choice": "다음 밑줄 친 부분 중 어법상 틀린 것은?" / "문맥상 낱말의 쓰임이 적절
   하지 않은 것은?" 유형 — 선택지가 지문 속 5개의 밑줄 친 구간.
 - "embedded_marker": "다음 글에서 전체 흐름과 관계 없는 문장은?" (무관한 문장) 또는
@@ -90,9 +93,15 @@ def _build_extraction_prompt(problem_numbers, form: str, has_answers: bool) -> s
 다른 번호는 절대 포함하지 마세요.
 
 각 문항에 대해 다음을 정확히 채우세요:
-1. problem_type: "standard" | "underline_choice" | "embedded_marker" | "paragraph_order" 중
-   실제 이 문항의 유형.
+1. problem_type: "standard" | "chart" | "underline_choice" | "embedded_marker" |
+   "paragraph_order" 중 실제 이 문항의 유형. 도표(그래프)는 반드시 "chart"로 분류하세요.
 2. passage_text: 지문을 인쇄된 그대로 완전히 재현하세요. 절대 요약하거나 창작하지 마세요.
+   - problem_type이 "chart"이면, 지문에 인쇄된 도입 문장("The graph above shows..." 등)을
+     그대로 옮긴 다음, 줄바꿈 후 도표 안의 모든 항목과 수치를 빠짐없이 옮겨 적으세요(예:
+     "[도표 데이터] Text Messaging: Every Day 55%, Less Often 13% / Talking on the Phone:
+     Every Day 19%, Less Often 41% / ..."). 절대 대략적인 값을 추측하지 말고, 도표에 실제로
+     인쇄된 숫자를 그대로 읽어서 옮기세요 — 이 수치는 나중에 해설과 블로그 글이 그대로
+     인용하므로, 틀리면 잘못된 정답 해설이 그대로 학생들에게 발행됩니다.
    - problem_type이 "underline_choice"이면, 선택지에 해당하는 5개의 구간을 <u>...</u>로
      감싸 지문 안에 그대로 표시하세요.
    - problem_type이 "embedded_marker"이면, 지문에 인쇄된 ①②③④⑤ 표시를 실제 위치 그대로
@@ -102,15 +111,23 @@ def _build_extraction_prompt(problem_numbers, form: str, has_answers: bool) -> s
    - 빈칸추론 문제는 빈칸 표시(밑줄/괄호 등 원문 표기)를 절대 빠뜨리지 마세요.
 3. question_text: 지시문(한글 질문 문장) 그대로.
 4. choices: 정확히 5개.
-   - "standard"/"underline_choice"/"embedded_marker": 각 선택지(또는 밑줄 구간, 또는
-     지문 속 후보 문장)의 텍스트.
+   - "standard"/"chart"/"underline_choice"/"embedded_marker": 각 선택지(또는 밑줄 구간,
+     또는 지문 속 후보 문장)의 텍스트.
    - "paragraph_order": 선택지에 인쇄된 순서 표기 그대로(예: "(B) - (A) - (C)").
 5. answer: {answer_instruction}
 6. explanation: 정답이 왜 옳고 나머지 선택지가 왜 틀렸는지 한국어로 상세히 설명하세요. 이
    해설은 나중에 블로그 글의 해설 섹션 근거로 그대로 쓰이므로, 각 오답 선택지에 대한 반박
-   근거까지 포함해 충분히 구체적으로 작성하세요.
+   근거까지 포함해 충분히 구체적으로 작성하세요. problem_type이 "chart"이면 passage_text에
+   옮겨 적은 실제 수치만 근거로 쓰고, 그 수치를 다시 옮길 때도 절대 반올림하거나 다른 값으로
+   바꿔 쓰지 마세요.
 7. tags: 이 문항의 문법/유형 포인트(예: 빈칸추론, 역접, 인과)와 소재 키워드(예: 환경, 심리)를
-   섞어 3~5개, 짧은 한국어 단어/구로."""
+   섞어 3~5개, 짧은 한국어 단어/구로.
+8. chart_page: problem_type이 "chart"일 때만 채우세요 — 이 도표가 인쇄된 문제지 PDF의
+   쪽 번호(1부터 시작). 그 외 유형이면 null로 두세요.
+9. chart_side: problem_type이 "chart"일 때만 채우세요 — 그 쪽에서 도표가 왼쪽 칼럼에
+   있으면 "left", 오른쪽 칼럼이면 "right", 페이지가 한 칼럼뿐이라 폭 전체를 쓰면
+   "full_width". 정확한 픽셀 위치가 아니라 이 3가지 중 하나만 고르면 됩니다. 그 외
+   유형이면 null로 두세요."""
 
 
 class GeminiService:
@@ -440,6 +457,16 @@ Important:
                     "\n15. 이 문제는 지문 속 특정 문장을 고르는 유형입니다(무관한 문장 찾기 "
                     "또는 문장 삽입 위치 찾기). 지문 내 ①~⑤ 표시를 원문 그대로 유지해 인용하고, "
                     "해설에서 각 번호가 가리키는 문장을 명확히 지칭하며 설명하세요."
+                )
+            elif problem_type == "chart":
+                type_instruction = (
+                    "\n15. 이 문제는 도표(그래프) 문제입니다. 지문 뒤에 실제 도표 이미지가 "
+                    "별도로 삽입되므로, 본문에서 도표의 생김새를 다시 설명하거나 도표 이미지를 "
+                    "직접 언급(\"위 이미지를 보면\" 등)하지 마세요 — 이미지 삽입은 시스템이 "
+                    "자동으로 처리합니다. 해설을 쓸 때는 위 지문(passage)에 이미 옮겨 적힌 "
+                    "[도표 데이터] 수치만 근거로 삼고, 그 수치를 다시 옮길 때도 반올림하거나 "
+                    "다른 값으로 바꿔 쓰지 마세요 — 절대 스스로 새로운 수치를 추정하거나 "
+                    "지어내지 마세요."
                 )
 
             explanation_block = ""

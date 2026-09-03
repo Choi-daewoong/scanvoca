@@ -773,15 +773,24 @@ class TestTopicsPipelineFilter:
 SUNEUNG_BODY = ("## 지문 분석\n\n" + ("이 지문은 빈칸추론 유형으로 역접 연결사가 핵심입니다. " * 30)
                 + "\n\n## 결국, 단어는 외워야 합니다\n\n[Scan Voca 시작하기](https://scanvoca.com)")
 
+SUNEUNG_CHART_BODY = (
+    "## 도표 문제 살펴보기\n\n"
+    "본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2025학년도 수능 영어 18번).\n\n"
+    "```\nThe graph above shows...\n```\n\n"
+    "## 도표 해석 전략\n\n" + ("도표의 수치를 선택지와 하나씩 대조하는 연습이 중요합니다. " * 15)
+    + "\n\n## 결론\n\n[Scan Voca 시작하기](https://scanvoca.com)"
+)
+
 
 def _seed_passage(db_session, tags, problem_number=18, status="unused",
                   passage_text="This is the original exam passage text.",
-                  answer="3"):
+                  answer="3", problem_type="standard", chart_image=None):
     p = ExamPassage(
         year=2025, exam_type="수능", month=None, problem_number=problem_number,
         source_label="2025학년도 수능 영어",
         passage_text=passage_text, question_text="다음 빈칸에 들어갈 말로 적절한 것은?",
         choices=["a", "b", "c", "d", "e"], answer=answer, tags=tags, status=status,
+        problem_type=problem_type, chart_image=chart_image,
     )
     db_session.add(p)
     db_session.commit()
@@ -1116,6 +1125,132 @@ class TestSuneungAutoPublish:
         wordbook = db_session.query(Wordbook).filter(Wordbook.user_id == bot_user.id).one()
         post = db_session.query(Post).filter(Post.board_type == "share").one()
         assert post.wordbook_id == wordbook.id
+
+
+class TestSuneungChartImage:
+    """'chart' problem_type 지문은 실제 도표 이미지를 본문에 삽입하고 커밋에도 같이 실어야
+    한다 — 안 그러면 2026 수능 25번처럼 도표 없이 지어낸 수치로 글이 발행된다."""
+
+    def _seed_topic(self, db_session, angle="도표 해석 전략"):
+        t = BlogTopic(category="수능·내신", title="수능 도표 문제", angle=angle,
+                      status="unused", pipeline="suneung")
+        db_session.add(t)
+        db_session.commit()
+        db_session.refresh(t)
+        return t
+
+    def _seed_paired_chart(self, db_session, chart_image=b"fake-png-bytes"):
+        topic = self._seed_topic(db_session)
+        passage = _seed_passage(
+            db_session, tags=["도표"], problem_type="chart", chart_image=chart_image,
+            passage_text="The graph above shows... [도표 데이터] A: 10%, B: 20%",
+        )
+        passage.topic_id = topic.id
+        db_session.commit()
+        db_session.refresh(passage)
+        return topic, passage
+
+    def test_real_publish_embeds_chart_image_and_commits_it(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+        self._seed_paired_chart(db_session, chart_image=b"real-chart-png-bytes")
+        committed = {}
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            return {
+                "slug": "suneung-chart-live", "title": "수능 도표 해설", "description": "설명",
+                "category": "수능·내신", "tags": ["수능"], "body": SUNEUNG_CHART_BODY,
+            }
+
+        async def fake_commit_files(files, message):
+            committed["files"] = files
+            committed["message"] = message
+            return "https://github.com/Choi-daewoong/scanvoca/commit/chart123"
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+        monkeypatch.setattr(BlogService, "commit_files", staticmethod(fake_commit_files))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=suneung",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.json()["published"] is True
+
+        # commit_files (not commit_markdown) was used, with the markdown + the chart PNG
+        paths = [f[0] for f in committed["files"]]
+        assert "web/content/blog/suneung-chart-live.md" in paths
+        assert "web/public/blog-images/suneung-chart-live/graph.png" in paths
+        chart_file = next(f for f in committed["files"] if f[0].endswith("graph.png"))
+        assert chart_file[1] == b"real-chart-png-bytes"
+
+        # the markdown body actually references the image, right after the citation line
+        md = next(f[1] for f in committed["files"] if f[0].endswith(".md")).decode("utf-8")
+        assert "/blog-images/suneung-chart-live/graph.png" in md
+        citation_idx = md.index("본 지문은 한국교육과정평가원이")
+        image_idx = md.index("![")
+        assert citation_idx < image_idx  # 이미지가 인용문 뒤에 삽입됐는지
+
+    def test_dry_run_previews_chart_image_without_committing(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """dry_run에서도 미리보기 markdown에 이미지가 보여야 실제로 뭐가 삽입될지 확인 가능."""
+        self._seed_paired_chart(db_session)
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            return {
+                "slug": "suneung-chart-preview", "title": "수능 도표 해설", "description": "설명",
+                "category": "수능·내신", "tags": ["수능"], "body": SUNEUNG_CHART_BODY,
+            }
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=suneung&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert "/blog-images/suneung-chart-preview/graph.png" in resp.json()["markdown"]
+
+    def test_chart_type_without_a_cropped_image_falls_back_to_text_only(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """크롭이 실패해 chart_image가 NULL인 chart 지문(경고만 찍고 계속 진행된 케이스)은
+        발행 자체를 막지 않고, 그냥 이미지 없이 커밋된다(commit_markdown 그대로)."""
+        monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
+        self._seed_paired_chart(db_session, chart_image=None)
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            return {
+                "slug": "suneung-chart-no-image", "title": "수능 도표 해설", "description": "설명",
+                "category": "수능·내신", "tags": ["수능"], "body": SUNEUNG_CHART_BODY,
+            }
+
+        async def fake_commit(slug, markdown):
+            return "https://github.com/Choi-daewoong/scanvoca/commit/chartnoimg"
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+        monkeypatch.setattr(BlogService, "commit_markdown", staticmethod(fake_commit))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=suneung",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.json()["published"] is True
 
 
 class TestConversationAutoPublish:

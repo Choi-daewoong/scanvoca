@@ -135,8 +135,8 @@ class ExamPassageResponse(BaseModel):
     month: Optional[int] = None
     problem_number: int
     source_label: str
-    # 'standard' | 'underline_choice' | 'embedded_marker' | 'paragraph_order' — how
-    # passage_text/choices must be read (see ExamPassage.problem_type).
+    # 'standard' | 'chart' | 'underline_choice' | 'embedded_marker' | 'paragraph_order' —
+    # how passage_text/choices must be read (see ExamPassage.problem_type).
     problem_type: str = "standard"
     passage_text: str
     question_text: str

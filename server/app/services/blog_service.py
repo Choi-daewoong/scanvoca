@@ -80,6 +80,12 @@ _ATTACHMENT_FILENAME_RE = re.compile(
 )
 # A level-2 markdown heading line: "## text" (not "###")
 _H2_RE = re.compile(r"^##(?!#)\s+(.+?)\s*$")
+# generate_blog_post's source_instruction (suneung) requires this exact sentence to appear
+# verbatim in the body — used as the anchor to insert a chart problem's real image right
+# after it, matching where a human previously hand-inserted these (2026-08-31 retrofit).
+_SUNEUNG_CITATION_RE = re.compile(
+    r"본 지문은 한국교육과정평가원이 출제한 기출문제입니다\([^)]*\)\.?"
+)
 
 
 class GitHubPublishError(Exception):
@@ -374,6 +380,33 @@ class BlogService:
         """Prepend a raw <video> embed to the body (rendered by the public blog via rehype-raw)."""
         tag = f'<video src="{clip_url}" controls></video>'
         return f"{tag}\n\n{body.lstrip()}"
+
+    @staticmethod
+    def insert_chart_image(
+        body: str, slug: str, image_bytes: bytes, alt_text: str
+    ) -> Tuple[str, ReflectImage]:
+        """Insert a suneung 'chart' problem's real cropped graph image into the body.
+
+        Real incident that motivated this: a chart problem was published with only a
+        text caption ("The graph above shows...") and no way to see the actual data,
+        because nothing ever embedded the image the ingest pipeline crops for problem_type
+        == "chart" (see ExamPassage.chart_image). Inserted right after the citation
+        sentence source_instruction always requires ("본 지문은 한국교육과정평가원이...") so
+        it lands next to the passage quote it belongs to — falls back to prepending at the
+        very top of body if that sentence isn't found (a prompt-format deviation should
+        misplace the image, never silently drop it).
+        """
+        repo_path = f"{BLOG_IMAGE_DIR}/{slug}/graph.png"
+        public_ref = f"/blog-images/{slug}/graph.png"
+        image_md = f"![{alt_text}]({public_ref})"
+
+        m = _SUNEUNG_CITATION_RE.search(body)
+        if m:
+            new_body = body[:m.end()] + "\n\n" + image_md + body[m.end():]
+        else:
+            new_body = f"{image_md}\n\n{body.lstrip()}"
+
+        return new_body, ReflectImage(path=repo_path, data=image_bytes)
 
     @staticmethod
     def get_topic(db: Session, topic_id: int) -> Optional[BlogTopic]:

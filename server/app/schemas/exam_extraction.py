@@ -10,7 +10,9 @@ response has repeatedly caused production incidents under the free-form JSON con
 from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 
-ProblemType = Literal["standard", "underline_choice", "embedded_marker", "paragraph_order"]
+ProblemType = Literal[
+    "standard", "underline_choice", "embedded_marker", "paragraph_order", "chart"
+]
 
 
 class ExamManifestEntry(BaseModel):
@@ -44,6 +46,13 @@ class ExtractedProblem(BaseModel):
     answer: Optional[str] = None
     explanation: str
     tags: List[str] = Field(default_factory=list)
+    # problem_type == "chart"일 때만 채워진다. ingest_exam_pdfs.py가 이 페이지에서
+    # pdfplumber로 실제 도표 이미지를 잘라내는 데 쓴다(정확한 픽셀 좌표가 아니라 "몇 쪽의
+    # 왼쪽/오른쪽 칼럼인지"만 요구하는 이유는, 좌표 예측보다 훨씬 안정적으로 맞히는 작업이고
+    # 나머지 정밀한 크롭 영역은 그 칼럼 안의 실제 이미지 객체를 코드가 클러스터링해서
+    # 구하기 때문이다 — see ingest_exam_pdfs.compute_chart_crop_bbox).
+    chart_page: Optional[int] = None
+    chart_side: Optional[Literal["left", "right", "full_width"]] = None
 
 
 class ExtractedProblemBatch(BaseModel):
