@@ -40,7 +40,17 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    """Initialize database - create all tables"""
+    """Initialize database - create all tables (SQLite only).
+
+    Production (Postgres/Supabase) schema is managed exclusively by Alembic migrations —
+    this used to run create_all unconditionally on every startup, which on Cloud Run means
+    every cold start (min-instances is 0) paid for a full table-introspection round trip to
+    Supabase before the container could accept its first request, directly adding to the
+    "first visit takes forever" load time. It has also previously created real tables in
+    production without their RLS policies the moment a new model was merely imported
+    (see CLAUDE.md's 2026-07-21 changelog entry) — create_all only remains useful for the
+    disposable SQLite databases tests and local dev bootstrap from scratch.
+    """
     logger.info("Starting database initialization...")
 
     from app.models.base import Base
@@ -52,6 +62,10 @@ def init_db() -> None:
     from app.models.wordbook import Wordbook, WordbookWord  # noqa: F401
 
     logger.info("Models imported: User, Word, Wordbook, WordbookWord")
+
+    if "sqlite" not in settings.DATABASE_URL:
+        logger.info("Postgres detected — schema is managed by Alembic, skipping create_all")
+        return
 
     # Create all tables
     logger.info("Creating database tables...")

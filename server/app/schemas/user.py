@@ -48,10 +48,19 @@ class GuestUpgradeRequest(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    """Schema for token response"""
+    """Schema for token response.
+
+    user is optional and only populated by /auth/guest — that's the one call the
+    frontend's first-visit path always makes before it has ever seen a token, so handing
+    the user back inline saves it a second sequential request (see AuthGuard/loadUser)
+    that would otherwise add a full extra round trip to the initial loading screen. Other
+    callers (login/google-login/refresh) leave it null; the client already has other ways
+    to get the user there without doubling this request.
+    """
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    user: Optional[UserResponse] = None
 
 
 class TokenRefreshRequest(BaseModel):

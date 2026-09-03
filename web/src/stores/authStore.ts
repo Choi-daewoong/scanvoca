@@ -63,11 +63,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     // sessionStorage(로그인 유지 OFF)와 localStorage(로그인 유지 ON) 모두 확인
     const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
     if (!token) {
-      // 토큰이 전혀 없는 첫 방문 - 조용히 게스트 세션을 발급받아 이어간다
+      // 토큰이 전혀 없는 첫 방문 - 조용히 게스트 세션을 발급받아 이어간다.
+      // guestLogin 응답에 user가 이미 들어있으므로(백엔드가 같이 내려줌) 첫 화면을
+      // 띄우기 전 순차 요청을 2번이 아니라 1번만 기다리면 된다.
       try {
-        await authService.guestLogin();
-        const user = await authService.getMe();
-        set({ user, isInitialized: true });
+        const { user } = await authService.guestLogin();
+        set({ user: user ?? null, isInitialized: true });
       } catch {
         set({ user: null, isInitialized: true });
       }

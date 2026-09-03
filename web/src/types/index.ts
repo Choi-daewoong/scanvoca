@@ -16,6 +16,8 @@ export interface TokenResponse {
   access_token: string;
   refresh_token: string;
   token_type: string;
+  // guestLogin()에서만 채워진다 — 첫 방문 시 별도 /auth/me 호출 없이 바로 쓰기 위함.
+  user?: User;
 }
 
 export interface GPTMeaning {

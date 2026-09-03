@@ -72,6 +72,48 @@ class TestRegister:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
+class TestGuestLogin:
+    """게스트 로그인 테스트 — 첫 방문 시 토큰 발급과 사용자 정보를 한 번에 내려준다
+    (프론트가 별도 /auth/me 호출 없이 바로 쓸 수 있어야 함, 로딩 속도 관련)."""
+
+    def test_guest_login_returns_user_inline(self, client):
+        response = client.post("/api/v1/auth/guest")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        assert data["access_token"]
+        assert data["refresh_token"]
+        assert data["user"] is not None
+        assert data["user"]["is_guest"] is True
+        assert "password" not in data["user"]
+        assert "password_hash" not in data["user"]
+
+    def test_guest_login_issues_a_working_token(self, client):
+        """반환된 토큰으로 실제 /auth/me 호출도 되는지 (guest 응답의 user와 일치)."""
+        guest = client.post("/api/v1/auth/guest").json()
+
+        me = client.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {guest['access_token']}"},
+        )
+
+        assert me.status_code == status.HTTP_200_OK
+        assert me.json()["id"] == guest["user"]["id"]
+
+    def test_other_token_endpoints_leave_user_null(self, client, test_user_data):
+        """user 필드는 guest 전용 — login 등 기존 호출은 그대로 null이어야 한다
+        (기존 클라이언트 동작에 영향 없음)."""
+        client.post("/api/v1/auth/register", json=test_user_data)
+        response = client.post(
+            "/api/v1/auth/login",
+            json={"email": test_user_data["email"], "password": test_user_data["password"]},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["user"] is None
+
+
 class TestLogin:
     """로그인 테스트"""
 

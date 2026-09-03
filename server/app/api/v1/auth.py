@@ -81,7 +81,8 @@ async def guest_login(db: Session = Depends(get_db)):
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "user": user,
     }
 
 
