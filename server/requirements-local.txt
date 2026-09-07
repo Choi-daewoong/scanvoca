@@ -1,0 +1,14 @@
+# 로컬 전용 1회성 관리 스크립트가 쓰는 의존성 — Cloud Run 배포 이미지(requirements.txt만
+# 설치됨)에는 포함되지 않는다. Docker 이미지 용량 절감을 위해 분리했다: pdfplumber가 끌고
+# 오는 pypdfium2(PDF 렌더링 바이너리)+pdfminer.six가 합쳐서 약 16MB인데, 이걸 쓰는
+# ingest_exam_pdfs.py는 로컬에서 개발자가 직접 실행하는 스크립트이지 배포된 API가 실행하는
+# 코드가 아니다(app.main이 이 모듈을 import하지 않는다).
+#
+# 로컬에서 이 스크립트들을 실행하려면 (또는 pytest로 관련 테스트를 돌리려면) 아래처럼
+# requirements.txt와 함께 설치할 것:
+#   pip install -r requirements.txt -r requirements-local.txt
+-r requirements.txt
+
+# 수능/모의고사 기출 PDF 텍스트 추출 + 도표 이미지 크롭 (ingest_exam_pdfs.py 전용,
+# tests/test_ingest_exam_pdfs.py도 이 패키지가 있어야 관련 테스트를 실행할 수 있다)
+pdfplumber==0.11.4
