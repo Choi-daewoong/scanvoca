@@ -430,6 +430,89 @@ class TestReflowExamPassageText:
         assert captured["calls"] == 2  # initial attempt + 1 retry (max_retries default=1)
 
 
+class TestReviewExamTranslationAccuracy:
+    """GeminiService.review_exam_translation_accuracy 단위 테스트 (모델 mock).
+
+    실운영 사례(brain-automation-consciousness-grammar-suneung-2025-29: 지문 원문에는
+    있는 문장 성분(보어)이 본문의 문법 설명과 "**해석:**" 번역 양쪽에서 함께 생략되어
+    의미가 달라진 채 발행됨 — toeic(review_practice_questions)/conversation
+    (review_dialogue_usage_examples)과 달리 suneung은 지문 내용과 번역을 대조하는
+    검토가 전혀 없었다)를 재현하는 케이스를 포함한다.
+    """
+
+    PASSAGE_TEXT = (
+        "The committee found that the proposal, which had been submitted late, "
+        "was nonetheless worth considering."
+    )
+    ORIGINAL_BODY = (
+        "## 지문 분석\n\n주어는 The committee, 동사는 found입니다.\n\n"
+        "**해석:** 위원회는 그 제안이 늦게 제출되었다는 것을 발견했다.\n\n"
+        "## 마무리\n\n[Scan Voca 시작하기](https://scanvoca.com)"
+    )
+
+    @staticmethod
+    def _run(body, payload_text, passage_text=None, vision_model="default"):
+        captured = {}
+
+        class FakeResponse:
+            text = payload_text
+
+        class FakeModel:
+            def generate_content(self, prompt, generation_config=None):
+                captured["calls"] = captured.get("calls", 0) + 1
+                captured["prompt"] = prompt
+                return FakeResponse()
+
+        service = GeminiService.__new__(GeminiService)
+        service.vision_model = FakeModel() if vision_model == "default" else vision_model
+        out = asyncio.run(service.review_exam_translation_accuracy(
+            passage_text=(
+                passage_text if passage_text is not None
+                else TestReviewExamTranslationAccuracy.PASSAGE_TEXT
+            ),
+            body=body,
+        ))
+        return out, captured
+
+    def test_empty_passage_returns_body_unchanged_without_calling_model(self):
+        out, captured = self._run(self.ORIGINAL_BODY, "", passage_text="   ")
+        assert out == self.ORIGINAL_BODY
+        assert "calls" not in captured
+
+    def test_no_api_key_returns_none(self):
+        out, _ = self._run(self.ORIGINAL_BODY, "", vision_model=None)
+        assert out is None
+
+    def test_leaves_fully_accurate_translation_unchanged(self):
+        out, _ = self._run(self.ORIGINAL_BODY, json.dumps({
+            "corrected_body": self.ORIGINAL_BODY,
+        }))
+        assert out == self.ORIGINAL_BODY
+
+    def test_restores_dropped_complement_in_body_and_translation(self):
+        """실제 사례 재현: 해석과 문법 설명에서 함께 빠진 보어("그럼에도 불구하고 고려할
+        가치가 있다는 것")를 복원한 수정본이 그대로 반영되어야 한다."""
+        corrected = (
+            "## 지문 분석\n\n주어는 The committee, 동사는 found, 목적어는 that절이며 "
+            "that절의 보어는 worth considering입니다.\n\n"
+            "**해석:** 위원회는 늦게 제출된 그 제안이 그럼에도 불구하고 고려할 가치가 "
+            "있다는 것을 발견했다.\n\n"
+            "## 마무리\n\n[Scan Voca 시작하기](https://scanvoca.com)"
+        )
+        out, _ = self._run(self.ORIGINAL_BODY, json.dumps({"corrected_body": corrected}))
+        assert out == corrected
+        assert "고려할 가치가 있다" in out
+
+    def test_empty_corrected_body_returns_none(self):
+        out, _ = self._run(self.ORIGINAL_BODY, json.dumps({"corrected_body": ""}))
+        assert out is None
+
+    def test_malformed_json_retries_then_none(self):
+        out, captured = self._run(self.ORIGINAL_BODY, "not json at all")
+        assert out is None
+        assert captured["calls"] == 2  # initial attempt + 1 retry (max_retries default=1)
+
+
 class TestPracticeQuestionsFallbackOnFinalRetry:
     """실운영 장애 재현(2026-08-30~09-01, 토익 파이프라인 자동발행 전량 실패): 모델이
     body 문자열 안에 자기 나름의 '## 실전 연습문제' 소제목과 ```json 코드펜스를 끼워
@@ -1404,6 +1487,79 @@ class TestSuneungAutoPublish:
         wordbook = db_session.query(Wordbook).filter(Wordbook.user_id == bot_user.id).one()
         post = db_session.query(Post).filter(Post.board_type == "share").one()
         assert post.wordbook_id == wordbook.id
+
+    def test_dry_run_uses_reviewed_body_when_translation_review_rewrites_it(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """review_exam_translation_accuracy가 해석/문법 설명에서 빠진 문장 성분을
+        복원하면, 그 수정본이 실제 발행 markdown에 반영되어야 한다
+        (brain-automation-consciousness-grammar-suneung-2025-29 실운영 사례 재현)."""
+        self._seed_paired(db_session, tags=["어법"])
+        captured = {}
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            return {
+                "slug": "suneung-translation-fix-test", "title": "어법 해설", "description": "설명",
+                "category": "수능·내신", "tags": ["수능"],
+                "body": "**해석:** 위원회는 그 제안이 늦게 제출되었다는 것을 발견했다.\n\n"
+                        "[Scan Voca 시작하기](https://scanvoca.com)",
+            }
+
+        async def fake_review(self, passage_text, body):
+            captured["passage_text"] = passage_text
+            captured["body"] = body
+            return "**해석:** 위원회는 늦게 제출된 그 제안이 그럼에도 불구하고 고려할 가치가 " \
+                   "있다는 것을 발견했다.\n\n[Scan Voca 시작하기](https://scanvoca.com)"
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "review_exam_translation_accuracy", fake_review)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=suneung&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        markdown = resp.json()["markdown"]
+        assert "고려할 가치가 있다" in markdown
+        assert captured["body"] == (
+            "**해석:** 위원회는 그 제안이 늦게 제출되었다는 것을 발견했다.\n\n"
+            "[Scan Voca 시작하기](https://scanvoca.com)"
+        )
+
+    def test_dry_run_keeps_original_body_when_translation_review_fails(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """review_exam_translation_accuracy가 None을 반환하면(API 미설정/파싱 실패),
+        검토되지 않은 원본 본문 그대로 발행되어야 한다 — 발행을 막지 않는다."""
+        self._seed_paired(db_session, tags=["어법"])
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            return {
+                "slug": "suneung-translation-review-fail-test", "title": "어법 해설",
+                "description": "설명", "category": "수능·내신", "tags": ["수능"],
+                "body": SUNEUNG_BODY,
+            }
+
+        async def fake_review(self, passage_text, body):
+            return None
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "review_exam_translation_accuracy", fake_review)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=suneung&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.json()["published"] is False and resp.json()["dry_run"] is True
 
 
 class TestSuneungChartImage:

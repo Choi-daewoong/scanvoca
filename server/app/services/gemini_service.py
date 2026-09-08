@@ -1068,6 +1068,123 @@ Important:
                 print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
             return None
 
+    async def review_exam_translation_accuracy(
+        self,
+        passage_text: str,
+        body: str,
+        retry_count: int = 0,
+        max_retries: int = 1,
+    ) -> Optional[str]:
+        """
+        Critically re-check a suneung-pipeline post's quoted passage and "**해석:**"
+        translation against the real source passage_text before publish, correcting any
+        sentence/clause dropped or mistranslated in a way that changes meaning.
+
+        generate_blog_post(source_passage=...) is told to translate the passage "누락하거나
+        요약하지 말고" (without omitting or summarizing) and quote passage_text verbatim, but
+        nothing downstream re-checks that the fast/cheap generator model actually did either —
+        reflow_exam_passage_text only fixes PDF line-wrap whitespace in the quoted passage, it
+        never compares translation content against the source. review_practice_questions
+        (toeic) and review_dialogue_usage_examples (conversation) both exist for their
+        pipelines' content-accuracy blind spots; suneung had none for its own — the live case
+        that motivated this: brain-automation-consciousness-grammar-suneung-2025-29 quoted a
+        sentence with a dropped complement in both the body's grammar breakdown and the 해석,
+        changing what the sentence actually says, published with nothing catching it.
+
+        Reviews on the stronger flash model (vision_model, not the flash-lite generator) so
+        the same blind spot that produced the mistake doesn't just rubber-stamp itself, by
+        diffing the draft body against the real passage_text sentence by sentence.
+
+        Returns the (possibly corrected) full body markdown string, or the original body
+        unchanged when the review finds the quoted passage and 해석 already complete and
+        accurate. Returns None if review couldn't be completed (API unconfigured, malformed
+        response after retries) so the caller can fail safe by publishing the unreviewed
+        original body rather than blocking the whole post on a review-pipeline hiccup — this
+        is a correctness improvement, not a hard gate like the TOEIC answer-key review.
+        """
+        if not passage_text or not passage_text.strip():
+            return body
+        if self.vision_model is None:
+            print("Gemini API key not configured")
+            return None
+
+        prompt = (
+            "당신은 수능/모의고사 영어 지문 번역 검수자입니다. 아래는 실제 기출 지문 원문과, "
+            "이를 소재로 자동 생성된 블로그 글 초안입니다. 초안 안에서 지문을 인용한 부분과 "
+            "\"**해석:**\" 이하 번역, 그리고 문장 구조·문법을 설명하는 부분이 원문의 모든 문장을 "
+            "빠짐없이, 의미 왜곡 없이 반영하고 있는지 원문과 한 문장씩 대조해 비판적으로 "
+            "검토하세요.\n\n"
+            f'지문 원문:\n"""{passage_text}"""\n\n'
+            f'[검토할 초안 본문(body)]\n"""{body}"""\n\n'
+            "판단 기준:\n"
+            "1. 원문의 문장이 하나라도 통째로 누락되지 않았는지 확인하세요.\n"
+            "2. 각 문장의 해석·문법 설명에서 주어/동사/목적어/보어 등 문장 성분이 빠지거나 "
+            "잘못 옮겨져 원문과 다른 의미가 되지 않았는지 확인하세요(단순 의역·어순 조정은 "
+            "문제 삼지 마세요 — 원문에 실제로 있는 정보가 사라지거나 바뀐 경우만 문제입니다).\n"
+            "3. 문제를 발견하면 해당 문장의 인용·해석·설명만 원문에 맞게 정확히 고치고, 그 "
+            "외 본문 구조(다른 소제목, 문제 선택지, 해설, 마지막 Scan Voca 홍보 섹션, 문체)는 "
+            "그대로 유지하세요.\n"
+            "4. 이미 모든 문장이 빠짐없이 정확하게 반영되어 있다면, 본문을 전혀 수정하지 말고 "
+            "원본 그대로 반환하세요.\n\n"
+            "아래 JSON 형식으로만 반환하세요. 다른 텍스트는 포함하지 마세요:\n"
+            '{"corrected_body": "본문 마크다운 전체(수정했다면 반영된 최종 버전, 수정하지 않았다면 '
+            '원본과 동일한 문자열)"}'
+        )
+
+        try:
+            response = self.vision_model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0.2,
+                    "max_output_tokens": 8192,
+                    "response_mime_type": "application/json",
+                },
+            )
+
+            content = response.text
+            if not content:
+                raise ValueError("empty response")
+
+            content = content.strip()
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            content = content.strip()
+
+            parsed = json.loads(content, strict=False)
+            corrected_body = str(parsed.get("corrected_body", "")).strip()
+            if not corrected_body:
+                raise ValueError("empty corrected_body")
+
+            return corrected_body
+
+        except (json.JSONDecodeError, ValueError) as e:
+            error_msg = f"Exam-translation review parse error (attempt {retry_count + 1}/{max_retries + 1}): {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+
+            if retry_count < max_retries:
+                return await self.review_exam_translation_accuracy(
+                    passage_text,
+                    body,
+                    retry_count=retry_count + 1,
+                    max_retries=max_retries,
+                )
+            print(f"Exam-translation review failed after {max_retries + 1} attempts")
+            return None
+        except Exception as e:
+            error_msg = f"Exam-translation review error: {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
     async def suggest_blog_topics(
         self,
         pipeline: str,

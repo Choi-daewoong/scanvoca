@@ -46,7 +46,7 @@ Think of yourself. When you decide to get up and get a drink of water, for examp
 
 ③ 'freeing up'은 분사구문입니다. 'The autopilot parts of our brain'이라는 주절의 주어가 'conscious mind'를 해방시키는 능동적인 행위를 하므로, 현재분사 형태인 'freeing up'을 사용하는 것이 적절합니다.
 
-④ 'It is the older parts of our brain that support...'는 'It is ~ that' 형태의 강조구문입니다. 여기서는 'the older parts of our brain'을 강조하고 있으며, 뒤따르는 동사 'support'는 강조되는 주어의 수와 일치합니다. 주격 관계대명사 역할도 겸하고 있어 올바르게 사용되었습니다.
+④ 'It is the older parts of our brain that support...'는 'It is ~ that ...' 형태의 강조구문(cleft sentence)입니다. 여기서 형식상의 주어는 'It'이고, 문장 앞으로 강조되어 나온 'the older parts of our brain'은 실제로는 동사 'is'의 보어(주격보어) 역할을 하는 명사구입니다. 뒤에 이어지는 'that support these automatic processes...'는 이 보어를 수식하는 주격 관계대명사절로, 보어가 복수 명사구('the older parts')이므로 동사도 복수형 'support'로 수 일치되어 있어 어법상 올바르게 쓰였습니다.
 
 ⑤ 'what you are perceiving, feeling, or thinking'은 문장의 주어 역할을 하는 명사절을 이끕니다. 명사절 안에서 'what'은 선행사를 포함하는 관계대명사로 쓰였으며, 뒤에 동사 'is based on'이 이어지지만, 'perceiving, feeling, or thinking'의 목적어가 빠져 있어 불완전한 문장 구조를 이룹니다. 따라서 'what'의 사용은 적절합니다.
 

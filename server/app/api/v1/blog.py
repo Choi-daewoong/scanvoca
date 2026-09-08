@@ -193,7 +193,9 @@ async def _publish_one(
     drafts get their prose self-reviewed for scene-specific lines wrongly explained as
     general-purpose expressions (see review_dialogue_usage_examples), suneung drafts get
     their quoted passage reflowed to remove PDF hard line-wraps before quoting (see
-    reflow_exam_passage_text), and every pipeline's body gets run through
+    reflow_exam_passage_text) and their quoted passage/해석 self-reviewed against the real
+    PDF passage_text for dropped or mistranslated sentences (see
+    review_exam_translation_accuracy), and every pipeline's body gets run through
     strip_code_fences before assembly — the guardrail step below only validates post-level
     shape, not question/prose content.
 
@@ -295,6 +297,19 @@ async def _publish_one(
             return BlogAutoPublishResult(
                 published=False, reason="generation_failed", dry_run=dry_run, topic_id=topic.id
             )
+        # Self-review: catch a dropped/mistranslated sentence in the quoted passage or the
+        # "**해석:**" section — generate_blog_post is told to translate the passage in full,
+        # but nothing else checks that it actually did (reflow_exam_passage_text only fixes
+        # PDF line-wrap whitespace, it never diffs translation content against passage_text;
+        # see review_exam_translation_accuracy docstring for the live mistake that motivated
+        # this — brain-automation-consciousness-grammar-suneung-2025-29 dropped a sentence
+        # element in both the grammar breakdown and 해석). Best-effort: a review failure keeps
+        # the unreviewed original body rather than blocking publish.
+        reviewed_body = await gemini.review_exam_translation_accuracy(
+            passage_text=passage_text, body=result["body"]
+        )
+        if reviewed_body:
+            result["body"] = reviewed_body
         body = await _apply_word_list_cta(db, topic, result, result["body"], dry_run)
 
         # Embed the real cropped chart image for 'chart' problems — without this, a chart
