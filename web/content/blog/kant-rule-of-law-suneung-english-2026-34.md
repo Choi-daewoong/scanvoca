@@ -17,23 +17,7 @@ thumbnail: "/blog-images/kant-rule-of-law-suneung-english-2026-34/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2026학년도 대학수학능력시험 영어영역 34번).
 
-ultimate guarantee, not only of security and peace, but also of
-freedom. He believed that human societies were moving
-towards more rational forms regulated by effective and binding
-legal frameworks because only such frameworks enabled
-people to live in harmony, to prosper and to co-operate. However,
-his belief in inevitable progress was not based on an optimistic
-or high-minded view of human nature. On the contrary, it comes
-close to Hobbes’s outlook: man’s violent and conflict-prone
-nature makes it necessary to establish and maintain an effective
-legal framework in order to secure peace. We cannot count on
-people’s benevolence or goodwill, but even ‘a nation of
-devils’ can live in harmony in a legal system that binds every
-citizen equally. Ideally, the law is the embodiment of those
-political principles that all rational beings would freely
-choose. If such laws forbid them to do something that they
-would not rationally choose to do anyway, then the law cannot
-be . [3점]
+ultimate guarantee, not only of security and peace, but also of freedom. He believed that human societies were moving towards more rational forms regulated by effective and binding legal frameworks because only such frameworks enabled people to live in harmony, to prosper and to co-operate. However, his belief in inevitable progress was not based on an optimistic or high-minded view of human nature. On the contrary, it comes close to Hobbes’s outlook: man’s violent and conflict-prone nature makes it necessary to establish and maintain an effective legal framework in order to secure peace. We cannot count on people’s benevolence or goodwill, but even ‘a nation of devils’ can live in harmony in a legal system that binds every citizen equally. Ideally, the law is the embodiment of those political principles that all rational beings would freely choose. If such laws forbid them to do something that they would not rationally choose to do anyway, then the law cannot be . [3점]
 *benevolence: 자비심
 
 **문제:**

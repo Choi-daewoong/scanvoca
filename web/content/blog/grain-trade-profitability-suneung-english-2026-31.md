@@ -17,23 +17,7 @@ thumbnail: "/blog-images/grain-trade-profitability-suneung-english-2026-31/1.png
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2026학년도 대학수학능력시험 영어영역 31번).
 
-surplus-producing and food deficit regions, and these firms
-made it their business to know the state of supply and demand
-in both. Because this information was the key to their
-, these firms worked in relative secrecy,
-frequently built on family ties, trust, and loyalty. In addition,
-these firms were able to benefit from the rise of commodity
-exchanges and commodities futures markets that emerged in
-the mid-1800s. Agricultural markets are naturally unstable,
-due to changes in harvest size that result from variable weather
-patterns and other factors. Locking-in prices by buying and
-selling grain for future delivery helped these firms to minimize
-such risks. It made sense for the grain trading companies to
-manage their risks within a single firm that was operating in
-more than one country, rather than operating as independent
-national companies trading with each other. Their access to
-information in multiple markets enabled them to easily cover
-the risks associated with agricultural commodity trade.
+surplus-producing and food deficit regions, and these firms made it their business to know the state of supply and demand in both. Because this information was the key to their , these firms worked in relative secrecy, frequently built on family ties, trust, and loyalty. In addition, these firms were able to benefit from the rise of commodity exchanges and commodities futures markets that emerged in the mid-1800s. Agricultural markets are naturally unstable, due to changes in harvest size that result from variable weather patterns and other factors. Locking-in prices by buying and selling grain for future delivery helped these firms to minimize such risks. It made sense for the grain trading companies to manage their risks within a single firm that was operating in more than one country, rather than operating as independent national companies trading with each other. Their access to information in multiple markets enabled them to easily cover the risks associated with agricultural commodity trade.
 *deficit: 부족
 
 **Question:** The early grain trade firms were active in both

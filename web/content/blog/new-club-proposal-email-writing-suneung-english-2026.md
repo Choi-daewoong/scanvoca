@@ -15,18 +15,7 @@ published: true
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2026학년도 대학수학능력시험 영어영역 18번).
 
 Dear students,
-I am Amanda Clark, the school club director, and I am
-writing to you about our school clubs. Over the last few
-semesters, there have been requests for more diverse
-school clubs. For this reason, the school decided to expand
-the number of clubs for extracurricular activities. This
-provides students with an opportunity to make additional
-clubs. Students can make any type of club based on their
-various interests, such as hip-hop, K-pop dancing, or coding.
-Therefore, I am encouraging you to submit a proposal for a
-new club that you would like to create. Please turn this in
-to my office by the end of this week. I look forward to
-seeing your great ideas.
+I am Amanda Clark, the school club director, and I am writing to you about our school clubs. Over the last few semesters, there have been requests for more diverse school clubs. For this reason, the school decided to expand the number of clubs for extracurricular activities. This provides students with an opportunity to make additional clubs. Students can make any type of club based on their various interests, such as hip-hop, K-pop dancing, or coding. Therefore, I am encouraging you to submit a proposal for a new club that you would like to create. Please turn this in to my office by the end of this week. I look forward to seeing your great ideas.
 Best regards,
 Amanda Clark
 

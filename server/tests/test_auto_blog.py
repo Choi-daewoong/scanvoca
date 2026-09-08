@@ -358,6 +358,78 @@ class TestReviewDialogueUsageExamples:
         assert captured["calls"] == 2  # initial attempt + 1 retry (max_retries default=1)
 
 
+class TestReflowExamPassageText:
+    """GeminiService.reflow_exam_passage_text 단위 테스트 (모델 mock).
+
+    실운영 사례(them-pronoun-error-suneung-english-2023-29.md: PDF에서 그대로 추출된
+    지문이 인쇄 칼럼 폭 그대로 줄바꿈된 채 발행됨 — remark-breaks가 그 줄바꿈을 전부
+    강제 개행으로 렌더링해 문장 중간에서 부자연스럽게 끊겨 보임)를 재현하는 케이스를
+    포함한다.
+    """
+
+    HARD_WRAPPED = (
+        "The most common explanation offered by\n"
+        "my informants as to why fashion is so appealing is <u>①that</u> it\n"
+        "constitutes a kind of theatrical costumery.\n"
+        "*stature: 능력"
+    )
+
+    @staticmethod
+    def _run(passage_text, payload_text, vision_model="default", problem_type="standard"):
+        captured = {}
+
+        class FakeResponse:
+            text = payload_text
+
+        class FakeModel:
+            def generate_content(self, prompt, generation_config=None):
+                captured["calls"] = captured.get("calls", 0) + 1
+                captured["prompt"] = prompt
+                return FakeResponse()
+
+        service = GeminiService.__new__(GeminiService)
+        service.vision_model = FakeModel() if vision_model == "default" else vision_model
+        out = asyncio.run(service.reflow_exam_passage_text(passage_text, problem_type=problem_type))
+        return out, captured
+
+    def test_empty_passage_returns_unchanged_without_calling_model(self):
+        out, captured = self._run("   ", "")
+        assert out == "   "
+        assert "calls" not in captured
+
+    def test_no_api_key_returns_none(self):
+        out, _ = self._run(self.HARD_WRAPPED, "", vision_model=None)
+        assert out is None
+
+    def test_reflows_hard_wrapped_passage(self):
+        reflowed = (
+            "The most common explanation offered by my informants as to why fashion "
+            "is so appealing is <u>①that</u> it constitutes a kind of theatrical costumery.\n"
+            "*stature: 능력"
+        )
+        out, _ = self._run(self.HARD_WRAPPED, json.dumps({"reflowed_text": reflowed}))
+        assert out == reflowed
+        assert "\n" not in out.split("\n")[0]  # main sentence is one flowing line
+
+    def test_rejects_reflow_that_changes_content(self):
+        """모델이 단어를 빠뜨리거나 바꾼 경우, whitespace-collapse 비교로 걸러내고
+        검토 실패(None)로 처리해야 한다 — 원문 손상을 절대 신뢰하지 않는다."""
+        corrupted = "The most common explanation offered by my informants."  # truncated
+        out, _ = self._run(self.HARD_WRAPPED, json.dumps({"reflowed_text": corrupted}))
+        assert out is None
+
+    def test_accepts_whitespace_only_changes(self):
+        # Exact same words/punctuation, only newlines moved — must be accepted verbatim.
+        reflowed = self.HARD_WRAPPED.replace("\n", " ").replace("*stature", "\n*stature")
+        out, _ = self._run(self.HARD_WRAPPED, json.dumps({"reflowed_text": reflowed}))
+        assert out == reflowed
+
+    def test_malformed_json_retries_then_none(self):
+        out, captured = self._run(self.HARD_WRAPPED, "not json at all")
+        assert out is None
+        assert captured["calls"] == 2  # initial attempt + 1 retry (max_retries default=1)
+
+
 class TestPracticeQuestionsFallbackOnFinalRetry:
     """실운영 장애 재현(2026-08-30~09-01, 토익 파이프라인 자동발행 전량 실패): 모델이
     body 문자열 안에 자기 나름의 '## 실전 연습문제' 소제목과 ```json 코드펜스를 끼워
@@ -1151,6 +1223,75 @@ class TestSuneungAutoPublish:
         markdown = resp.json()["markdown"]
         assert "```" not in markdown
         assert "<u>①that</u>" in markdown
+
+    def test_dry_run_reflows_hard_wrapped_passage_before_quoting(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """실운영 재현: them-pronoun-error-suneung-english-2023-29.md의 지문이 PDF 인쇄
+        칼럼 폭 그대로 줄바꿈된 채 발행됨 — reflow_exam_passage_text가 실제로 호출되고,
+        그 결과가 generate_blog_post에 전달되는지 확인한다."""
+        topic, passage = self._seed_paired(db_session, tags=["어법"])
+        captured = {}
+
+        async def fake_reflow(self, passage_text, problem_type="standard"):
+            captured["reflow_input"] = passage_text
+            return "The most common explanation is <u>①that</u> it constitutes a costumery."
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            captured["source_passage"] = source_passage
+            return {
+                "slug": "them-pronoun-reflow-test", "title": "어법 해설", "description": "설명",
+                "category": "수능·내신", "tags": ["수능"], "body": SUNEUNG_BODY,
+            }
+
+        monkeypatch.setattr(GeminiService, "reflow_exam_passage_text", fake_reflow)
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=suneung&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert captured["reflow_input"] == passage.passage_text
+        assert captured["source_passage"]["passage_text"] == (
+            "The most common explanation is <u>①that</u> it constitutes a costumery."
+        )
+
+    def test_dry_run_falls_back_to_raw_passage_when_reflow_fails(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """reflow_exam_passage_text가 None을 반환하면(API 미설정/검증 실패), 원문
+        지문(하드랩 그대로)을 그대로 사용해 발행을 막지 않아야 한다."""
+        topic, passage = self._seed_paired(db_session, tags=["어법"])
+        captured = {}
+
+        async def fake_reflow(self, passage_text, problem_type="standard"):
+            return None
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            captured["source_passage"] = source_passage
+            return {
+                "slug": "them-pronoun-reflow-fallback", "title": "어법 해설", "description": "설명",
+                "category": "수능·내신", "tags": ["수능"], "body": SUNEUNG_BODY,
+            }
+
+        monkeypatch.setattr(GeminiService, "reflow_exam_passage_text", fake_reflow)
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=suneung&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert captured["source_passage"]["passage_text"] == passage.passage_text
 
     def test_source_passage_includes_problem_number(self, client, admin_auth_headers, db_session, monkeypatch):
         """지문 인용 시 '몇 년도 무슨 형식 몇 번 문제'까지 밝히려면 problem_number가

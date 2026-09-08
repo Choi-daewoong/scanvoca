@@ -946,6 +946,128 @@ Important:
                 print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
             return None
 
+    async def reflow_exam_passage_text(
+        self,
+        passage_text: str,
+        problem_type: str = "standard",
+        retry_count: int = 0,
+        max_retries: int = 1,
+    ) -> Optional[str]:
+        """
+        Reflow an exam passage's hard PDF line-wraps into natural paragraph structure
+        before it's ever quoted into a blog post.
+
+        The exam-PDF extraction prompt tells the model to reproduce passage_text
+        "인쇄된 그대로" (exactly as printed), which preserves the PDF's own line breaks —
+        wrapped at the print column width, not any web viewport. generate_blog_post then
+        quotes passage_text verbatim into the body, and the public page renders every
+        single \\n as a forced <br> (remark-breaks — needed elsewhere for numbered choice
+        lists), so those PDF-column breaks land mid-sentence on the actual page instead of
+        flowing naturally. Commit 82994b8 (2026-09-01) manually reflowed 14 already-
+        published files but never touched the extraction/generation pipeline, so every
+        suneung post published since keeps reproducing the identical bug (live case:
+        them-pronoun-error-suneung-english-2023-29.md, published 2026-09-07).
+
+        Reviews on the stronger flash model (vision_model) and asks it to apply the same
+        judgment a human editor used in that manual pass: collapse a continuous prose
+        passage into one flowing paragraph, but keep genuine structural breaks (a letter's
+        salutation/body/sign-off, (A)/(B)/(C) paragraph-order blocks, footnote lines) each
+        on their own line. Never trusts the model's promise not to alter wording — after
+        parsing, this asserts the whitespace-collapsed text is byte-identical to the
+        original before accepting the result, so a reflow that silently drops, adds, or
+        changes a word is rejected exactly like a malformed response.
+
+        Returns the reflowed text, or None if review couldn't be completed / the content-
+        preservation check failed, so the caller can fail safe and quote the original
+        (still hard-wrapped, but never corrupted) text instead. An empty/whitespace-only
+        passage_text is returned unchanged without calling the model.
+        """
+        if not passage_text or not passage_text.strip():
+            return passage_text
+        if self.vision_model is None:
+            print("Gemini API key not configured")
+            return None
+
+        prompt = (
+            "당신은 지문 조판 교정 담당자입니다. 아래 영어 지문은 수능/모의고사 PDF에서 그대로 "
+            "추출되어, PDF의 인쇄 칼럼 폭에 맞춰 강제로 줄바꿈된 상태입니다. 이 줄바꿈을 그대로 "
+            "웹페이지에 옮기면 줄바꿈마다 강제 개행으로 렌더링되어, 문장 중간에서 부자연스럽게 "
+            "끊겨 보입니다. 아래 원칙에 따라 줄바꿈 위치만 재구성하세요:\n\n"
+            "1. 단어·철자·구두점·순서 등 내용은 단 한 글자도 바꾸지 마세요 — 오직 줄바꿈 위치만 "
+            "조정합니다. ①~⑤, <u>...</u> 같은 표시가 있다면 원래 위치 그대로 유지하세요.\n"
+            "2. 이어지는 하나의 문단(에세이·설명문 등)은 인쇄상의 줄바꿈을 모두 없애고 하나의 "
+            "흐르는 문단으로 합치세요.\n"
+            "3. 편지·공지문이라면, 인사말(Dear ..., To whom it may concern 등)과 본문 사이, "
+            "본문과 맺음말(Sincerely, 등) 사이의 줄바꿈은 유지하되, 본문 자체는 하나의 문단으로 "
+            "합치고, 맺음말의 이름·직함은 각각 줄바꿈으로 구분하세요.\n"
+            "4. (A)(B)(C) 같은 문단 순서 배열 라벨이 있다면, 각 라벨로 시작하는 문단끼리는 "
+            "줄바꿈으로 구분하되, 각 문단 내부의 인쇄상 줄바꿈은 하나로 합치세요.\n"
+            "5. \"*단어: 뜻\" 형태의 각주는 원래 위치(대개 맨 끝)에 줄바꿈으로 구분해 유지하세요.\n\n"
+            f"이 지문의 문제 유형(problem_type): {problem_type}\n\n"
+            f'원문:\n"""{passage_text}"""\n\n'
+            "수정된 지문 전체를 아래 JSON 형식으로만 반환하세요. 다른 텍스트는 포함하지 마세요:\n"
+            '{"reflowed_text": "..."}'
+        )
+
+        try:
+            response = self.vision_model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0.0,
+                    "max_output_tokens": 4096,
+                    "response_mime_type": "application/json",
+                },
+            )
+
+            content = response.text
+            if not content:
+                raise ValueError("empty response")
+
+            content = content.strip()
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            content = content.strip()
+
+            parsed = json.loads(content, strict=False)
+            reflowed = str(parsed.get("reflowed_text", "")).strip()
+            if not reflowed:
+                raise ValueError("empty reflowed_text")
+
+            # Content-preservation guard: whitespace/newlines may move, nothing else may.
+            collapse = lambda s: re.sub(r"\s+", "", s)
+            if collapse(reflowed) != collapse(passage_text):
+                raise ValueError("reflow changed passage content — discarding")
+
+            return reflowed
+
+        except (json.JSONDecodeError, ValueError) as e:
+            error_msg = f"Passage-reflow parse error (attempt {retry_count + 1}/{max_retries + 1}): {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+
+            if retry_count < max_retries:
+                return await self.reflow_exam_passage_text(
+                    passage_text,
+                    problem_type=problem_type,
+                    retry_count=retry_count + 1,
+                    max_retries=max_retries,
+                )
+            print(f"Passage-reflow failed after {max_retries + 1} attempts")
+            return None
+        except Exception as e:
+            error_msg = f"Passage-reflow error: {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
     async def suggest_blog_topics(
         self,
         pipeline: str,

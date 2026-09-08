@@ -17,17 +17,7 @@ thumbnail: "/blog-images/sophie-emotional-journey-suneung-english-2026-5/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2026학년도 대학수학능력시험 영어영역 19번).
 
-“Where could it be?” Sophie asked herself. It had been more
-than ten years since she had last visited the area where she had
-grown up. The village had changed a lot over time. Uncertain, she awkwardly looked around at her surroundings. She walked
-the narrow streets of the village, unsure about which way to
-go. Suddenly, Sophie saw a familiar sight. “Yes, this must be
-it,” she thought. In front of her was a wall with flowers painted
-on it. Although the colors were now faded, the familiar shapes
-on the wall were the same ones she had painted with her father
-as a child. Sophie nodded, smiled brightly, and walked toward
-the gate. At last, she had finally found the house she had
-grown up in.
+“Where could it be?” Sophie asked herself. It had been more than ten years since she had last visited the area where she had grown up. The village had changed a lot over time. Uncertain, she awkwardly looked around at her surroundings. She walked the narrow streets of the village, unsure about which way to go. Suddenly, Sophie saw a familiar sight. “Yes, this must be it,” she thought. In front of her was a wall with flowers painted on it. Although the colors were now faded, the familiar shapes on the wall were the same ones she had painted with her father as a child. Sophie nodded, smiled brightly, and walked toward the gate. At last, she had finally found the house she had grown up in.
 
 **문제:** 다음 글에 드러난 Sophie의 심경 변화로 가장 적절한 것은?
 

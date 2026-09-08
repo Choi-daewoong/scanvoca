@@ -17,25 +17,10 @@ thumbnail: "/blog-images/culture-entertainment-dilemma-suneung-english-2026-24/1
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2026학년도 대학수학능력시험 영어영역 24번).
 
-The economic benefit of culturtainment makes it attractive to
-politicians and policy makers alike. A potential increase in
-inbound visitor numbers coupled with their demand for related
-goods and services (travel, accommodation, retail) is an
-incentive for those within governments and authorities to work
-with cultural groups in order to develop celebrations and
-commemorations into larger and more high-profile events.
-However, such commercialization risks culturtainment becoming
-homogeneous and losing its original ‘message’ that could lead
-to a dilution of audiences. This could also lead to smaller
-non-commercial independent events being set up that would
-only serve to divide audiences further. This is something that
-planners and stakeholders will need to balance against potential
-financial gain. Changing political, social and religious landscapes
-will lead to the emergence of new cultures, and with them new
-culturtainment experiences. Overall this is a healthy growth
-sector of the entertainment industry, but one that by its very
-nature is delicate in the face of exploitation.
-*homogeneous: 동종의 **dilution: 희석 ***exploitation: 착취
+The economic benefit of culturtainment makes it attractive to politicians and policy makers alike. A potential increase in inbound visitor numbers coupled with their demand for related goods and services (travel, accommodation, retail) is an incentive for those within governments and authorities to work with cultural groups in order to develop celebrations and commemorations into larger and more high-profile events. However, such commercialization risks culturtainment becoming homogeneous and losing its original ‘message’ that could lead to a dilution of audiences. This could also lead to smaller non-commercial independent events being set up that would only serve to divide audiences further. This is something that planners and stakeholders will need to balance against potential financial gain. Changing political, social and religious landscapes will lead to the emergence of new cultures, and with them new culturtainment experiences. Overall this is a healthy growth sector of the entertainment industry, but one that by its very nature is delicate in the face of exploitation.
+*homogeneous: 동종의
+**dilution: 희석
+***exploitation: 착취
 
 **문제:** 다음 글의 제목으로 가장 적절한 것은? [3점]
 

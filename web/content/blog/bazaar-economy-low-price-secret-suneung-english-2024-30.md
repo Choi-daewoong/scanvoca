@@ -17,23 +17,9 @@ thumbnail: "/blog-images/bazaar-economy-low-price-secret-suneung-english-2024-30
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2024학년도 대학수학능력시험 영어영역 30번).
 
-Bazaar economies feature an apparently flexible price-setting
-mechanism that sits atop more enduring ties of shared culture.
-Both the buyer and seller are aware of each other’s <u>①restrictions.</u>
-In Delhi’s bazaars, buyers and sellers can <u>②assess</u> to a large
-extent the financial constraints that other actors have in their
-everyday life. Each actor belonging to a specific economic class
-understands what the other sees as a necessity and a luxury.
-In the case of electronic products like video games, they are not
-a <u>③necessity</u> at the same level as other household purchases
-such as food items. So, the seller in Delhi’s bazaars is careful
-not to directly ask for very <u>④low</u> prices for video games
-because at no point will the buyer see possession of them as an
-absolute necessity. Access to this type of knowledge establishes
-a price consensus by relating to each other’s preferences and
-limitations of belonging to a <u>⑤similar</u> cultural and economic
-universe.
-*constraint: 압박 **consensus: 일치
+Bazaar economies feature an apparently flexible price-setting mechanism that sits atop more enduring ties of shared culture. Both the buyer and seller are aware of each other’s <u>①restrictions.</u> In Delhi’s bazaars, buyers and sellers can <u>②assess</u> to a large extent the financial constraints that other actors have in their everyday life. Each actor belonging to a specific economic class understands what the other sees as a necessity and a luxury. In the case of electronic products like video games, they are not a <u>③necessity</u> at the same level as other household purchases such as food items. So, the seller in Delhi’s bazaars is careful not to directly ask for very <u>④low</u> prices for video games because at no point will the buyer see possession of them as an absolute necessity. Access to this type of knowledge establishes a price consensus by relating to each other’s preferences and limitations of belonging to a <u>⑤similar</u> cultural and economic universe.
+*constraint: 압박
+**consensus: 일치
 
 [31～34] 다음 빈칸에 들어갈 말로 가장 적절한 것을 고르시오.
 

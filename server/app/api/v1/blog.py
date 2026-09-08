@@ -189,11 +189,13 @@ async def _publish_one(
     """Pick one topic and take it through draft -> guardrail -> (unless dry_run) publish.
 
     toeic drafts additionally get their practice_questions self-reviewed for answer/
-    explanation correctness before rendering (see review_practice_questions), and
-    conversation drafts get their prose self-reviewed for scene-specific lines wrongly
-    explained as general-purpose expressions (see review_dialogue_usage_examples), and
-    every pipeline's body gets run through strip_code_fences before assembly — the
-    guardrail step below only validates post-level shape, not question/prose content.
+    explanation correctness before rendering (see review_practice_questions), conversation
+    drafts get their prose self-reviewed for scene-specific lines wrongly explained as
+    general-purpose expressions (see review_dialogue_usage_examples), suneung drafts get
+    their quoted passage reflowed to remove PDF hard line-wraps before quoting (see
+    reflow_exam_passage_text), and every pipeline's body gets run through
+    strip_code_fences before assembly — the guardrail step below only validates post-level
+    shape, not question/prose content.
 
     Extracted verbatim from the old run_auto_publish body — same logic, side effects and
     return values. `pipeline` is guaranteed to be one of toeic/suneung/conversation by the
@@ -263,13 +265,23 @@ async def _publish_one(
             return BlogAutoPublishResult(published=False, reason="no_ready_passage", dry_run=dry_run)
         topic, passage = pair
         recent_posts = BlogService.get_recent_posts_for_prompt(db, category=topic.category, limit=12)
+        # Reflow the PDF's hard line-wraps before quoting the passage anywhere — see
+        # reflow_exam_passage_text's docstring for the live recurrence this fixes. Best-
+        # effort: falls back to the raw (still hard-wrapped, but never corrupted) extracted
+        # text on failure rather than blocking publish.
+        passage_text = (
+            await gemini.reflow_exam_passage_text(
+                passage.passage_text, problem_type=passage.problem_type
+            )
+            or passage.passage_text
+        )
         result = await gemini.generate_blog_post(
             title=topic.title,
             angle=topic.angle,
             recent_posts=recent_posts,
             include_word_list=topic.include_word_list,
             source_passage={
-                "passage_text": passage.passage_text,
+                "passage_text": passage_text,
                 "question_text": passage.question_text,
                 "choices": passage.choices,
                 "answer": passage.answer,

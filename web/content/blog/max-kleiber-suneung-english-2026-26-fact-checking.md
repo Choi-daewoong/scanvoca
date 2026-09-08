@@ -17,22 +17,9 @@ thumbnail: "/blog-images/max-kleiber-suneung-english-2026-26-fact-checking/1.png
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2026학년도 대학수학능능력시험 영어영역 26번).
 
-Max Kleiber, a pioneer in the study of animal biology, was
-best known for his research on animal nutrition and metabolism.
-He was born in Zurich, Switzerland in 1893. Kleiber graduated
-from the Swiss Federal Institute of Technology in 1920 and
-earned his doctoral degree in 1924. He came to the University
-of California at Davis (UC Davis) in 1929 to conduct research
-on energy metabolism in animals. In 1952, Kleiber received
-the distinguished Borden Award from the American Institute
-of Nutrition and, a year later, the Morrison Award from the
-American Society for Animal Production. Kleiber’s book,
-The Fire of Life, was published in 1961 and subsequently
-translated into German, Polish, Spanish, and Japanese. Kleiber
-was an outstanding teacher popular with undergraduates and
-graduate students alike. Before his death, a new classroom
-building at UC Davis was named Kleiber Hall in his honor.
-*nutrition: 영양(학) **metabolism: 신진대사
+Max Kleiber, a pioneer in the study of animal biology, was best known for his research on animal nutrition and metabolism. He was born in Zurich, Switzerland in 1893. Kleiber graduated from the Swiss Federal Institute of Technology in 1920 and earned his doctoral degree in 1924. He came to the University of California at Davis (UC Davis) in 1929 to conduct research on energy metabolism in animals. In 1952, Kleiber received the distinguished Borden Award from the American Institute of Nutrition and, a year later, the Morrison Award from the American Society for Animal Production. Kleiber’s book, The Fire of Life, was published in 1961 and subsequently translated into German, Polish, Spanish, and Japanese. Kleiber was an outstanding teacher popular with undergraduates and graduate students alike. Before his death, a new classroom building at UC Davis was named Kleiber Hall in his honor.
+*nutrition: 영양(학)
+**metabolism: 신진대사
 
 문제: Max Kleiber에 관한 다음 글의 내용과 일치하지 않는 것은?
 ①. 스위스의 Zurich에서 태어났다.

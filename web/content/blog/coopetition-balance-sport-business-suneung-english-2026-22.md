@@ -17,25 +17,7 @@ thumbnail: "/blog-images/coopetition-balance-sport-business-suneung-english-2026
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2026학년도 대학수학능력시험 영어영역 22번).
 
-A sport ecosystem exists based on the type and rate of
-coopetition existing. Coopetition is defined as “the simultaneous
-pursuit of cooperation and competition among firms to
-leverage strategically important resources for superior value
-creation purposes”. It is a useful way to understand the
-dynamic nature of sport businesses which need to collaborate
-for resource efficiency purposes but potentially compete with
-each other. This special relationship should be managed
-properly due to trust and confidence issues being paramount.
-It can be challenging to be collaborative and competitive in
-sport as they involve different forms of behaviour. This means
-a careful balancing act may be required in terms of the amount
-of emphasis placed on each activity. Often sport managers will
-try to be more competitive due to performance reasons and
-less collaborative. By necessity they may need to share
-information but do so in a cautious manner. This means it
-might be better to have plans in place about how to pursue
-both simultaneously. This will ensure one is not neglected at
-the expense of the other.
+A sport ecosystem exists based on the type and rate of coopetition existing. Coopetition is defined as “the simultaneous pursuit of cooperation and competition among firms to leverage strategically important resources for superior value creation purposes”. It is a useful way to understand the dynamic nature of sport businesses which need to collaborate for resource efficiency purposes but potentially compete with each other. This special relationship should be managed properly due to trust and confidence issues being paramount. It can be challenging to be collaborative and competitive in sport as they involve different forms of behaviour. This means a careful balancing act may be required in terms of the amount of emphasis placed on each activity. Often sport managers will try to be more competitive due to performance reasons and less collaborative. By necessity they may need to share information but do so in a cautious manner. This means it might be better to have plans in place about how to pursue both simultaneously. This will ensure one is not neglected at the expense of the other.
 *simultaneous: 동시의 **paramount: 최고의
 
 **문제:** 다음 글의 요지로 가장 적절한 것은?

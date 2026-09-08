@@ -15,19 +15,7 @@ thumbnail: "/blog-images/lyricists-language-evolution-suneung-english-2026-20/1.
 
 ## 2026학년도 대학수학능력시험 영어영역 20번
 
-The study of literature has repeatedly failed to recognize the
-influence of modern musical lyricists and their contributions
-to the evolution of language. Unlike Shakespeare, who has
-been studied and celebrated for his development of the English
-language, particularly in vocabulary and grammatical structure, modern songwriters have experienced restraints on the
-acknowledgement of their contributions and largely been
-ignored. Over the past century, we have witnessed an explosion
-of incredible literary works by these artists, who, through their
-music, have used linguistic manipulation and storytelling to
-enrich our language and literature. Producing lyrics of distinct
-and complex imagery, songwriters have had an incredible
-literary impact on our language. Their remarkable works, including influences on modern language development, must
-be recognized in the field of modern literature.
+The study of literature has repeatedly failed to recognize the influence of modern musical lyricists and their contributions to the evolution of language. Unlike Shakespeare, who has been studied and celebrated for his development of the English language, particularly in vocabulary and grammatical structure, modern songwriters have experienced restraints on the acknowledgement of their contributions and largely been ignored. Over the past century, we have witnessed an explosion of incredible literary works by these artists, who, through their music, have used linguistic manipulation and storytelling to enrich our language and literature. Producing lyrics of distinct and complex imagery, songwriters have had an incredible literary impact on our language. Their remarkable works, including influences on modern language development, must be recognized in the field of modern literature.
 *lyricist: 작사가 **restraint: 제약
 
 **문제:**

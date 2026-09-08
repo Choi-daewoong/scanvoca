@@ -17,24 +17,7 @@ thumbnail: "/blog-images/them-pronoun-error-suneung-english-2023-29/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력능력시험 영어영역 29번).
 
-Trends constantly suggest new opportunities for individuals
-to restage themselves, representing occasions for change. To
-understand how trends can ultimately give individuals power
-and freedom, one must first discuss fashion’s importance as a
-basis for change. The most common explanation offered by
-my informants as to why fashion is so appealing is <u>①that</u> it
-constitutes a kind of theatrical costumery. Clothes are part of
-how people present <u>②them</u> to the world, and fashion locates
-them in the present, relative to what is happening in society
-and to fashion’s own history. As a form of expression, fashion
-contains a host of ambiguities, enabling individuals to recreate
-the meanings <u>③associated</u> with specific pieces of clothing.
-Fashion is among the simplest and cheapest methods of
-self-expression: clothes can be <u>④inexpensively</u> purchased
-while making it easy to convey notions of wealth, intellectual
-stature, relaxation or environmental consciousness, even if
-none of these is true. Fashion can also strengthen agency in
-various ways, <u>⑤opening</u> up space for action.
+Trends constantly suggest new opportunities for individuals to restage themselves, representing occasions for change. To understand how trends can ultimately give individuals power and freedom, one must first discuss fashion’s importance as a basis for change. The most common explanation offered by my informants as to why fashion is so appealing is <u>①that</u> it constitutes a kind of theatrical costumery. Clothes are part of how people present <u>②them</u> to the world, and fashion locates them in the present, relative to what is happening in society and to fashion’s own history. As a form of expression, fashion contains a host of ambiguities, enabling individuals to recreate the meanings <u>③associated</u> with specific pieces of clothing. Fashion is among the simplest and cheapest methods of self-expression: clothes can be <u>④inexpensively</u> purchased while making it easy to convey notions of wealth, intellectual stature, relaxation or environmental consciousness, even if none of these is true. Fashion can also strengthen agency in various ways, <u>⑤opening</u> up space for action.
 *stature: 능력
 
 **문제:** 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?
