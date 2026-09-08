@@ -9,55 +9,61 @@ thumbnail: "/blog-images/future-job-strategy-robots-suneung-english/1.png"
 ---
 ![로봇 시대, 일자리 잃을까 봐 불안한 당신에게! 수능 영어 지문으로 배우는 '미래 직업' 준비 전략](/blog-images/future-job-strategy-robots-suneung-english/1.png)
 
-## 로봇이 일자리를 빼앗을까? 막연한 불안감, 수능 영어 지문으로 해답 찾기
 
-인공지능과 로봇 기술의 발전이 가속화되면서, 많은 사람들이 미래 사회에서 자신의 일자리가 사라질까 봐 불안감을 느끼고 있습니다. 특히 중·고등학생 시기에는 앞으로 어떤 직업을 선택해야 할지, 어떤 능력을 길러야 할지 막막하게 느껴질 수 있습니다. 이러한 시대적 고민에 대한 힌트를 우리는 어디서 찾을 수 있을까요? 놀랍게도, 매년 수많은 수험생들이 도전하는 대학수학능력시험 영어 영역 기출 지문 속에 그 해답의 실마리가 숨어 있습니다. 2022학년도 수능 영어 38번 지문은 바로 이러한 미래 사회의 고용 불안정 문제와 그 해결책에 대해 깊이 있는 통찰을 제공합니다.
+## 로봇이 대체할까 두려운 당신, 미래 직업 준비는 어떻게?
 
-## 2022학년도 수능 영어 38번: 로봇과 인간의 공존, 미래 직업의 핵심은?
+인공지능과 로봇 기술의 발전은 우리 사회 곳곳에 스며들고 있습니다. 편리함과 효율성을 가져다주었지만, 동시에 '내 일자리를 로봇이 빼앗기면 어쩌지?' 하는 불안감을 안겨주기도 하죠. 특히 중·고등학생 여러분은 앞으로 다가올 미래 사회에서 어떤 직업을 가져야 할지, 어떤 역량을 키워야 할지 막막하게 느껴질 수 있습니다. 이런 고민을 해결하는 데 도움이 될 만한 힌트를 2022학년도 수능 영어 지문 속에서 찾아보았습니다. 바로 로봇 도입으로 인한 고용 불안정 문제를 다룬 지문인데요, 이 지문을 통해 우리는 어떻게 미래를 준비해야 할지 구체적인 답을 얻을 수 있습니다.
+
+## 2022학년도 수능 영어 38번 원문 지문 및 문제
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 38번).
 
-**문제:** 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.
-
-**주어진 문장:**
-
 Retraining current employees for new positions within the company will also greatly reduce their fear of being laid off.
 
-**지문:**
+Introduction of robots into factories, while employment of human workers is being reduced, creates worry and fear. ( ① ) It is the responsibility of management to prevent or, at least, to ease these fears. ( ② ) For example, robots could be introduced only in new plants rather than replacing humans in existing assembly lines. ( ③ ) Workers should be included in the planning for new factories or the introduction of robots into existing plants, so they can participate in the process. ( ④ ) It may be that robots are needed to reduce manufacturing costs so that the company remains competitive, but planning for such cost reductions should be done jointly by labor and management. ( ⑤ ) Since robots are particularly good at highly repetitive simple motions, the replaced human workers should be moved to positions where judgment and decisions beyond the abilities of robots are required.
 
-Introduction of robots into factories, while employment of human workers is being reduced, creates worry and fear. ( ① ) It is the responsibility of management to prevent, or at least, to ease these fears. ( ② ) For example, robots could be introduced only in new plants rather than replacing humans in existing assembly lines. ( ③ ) Workers should be included in the planning for new factories or the introduction of robots into existing plants, so they can participate in the process. ( ④ ) It may be that robots are needed to reduce manufacturing costs so that the company remains competitive, but planning for such cost reductions should be done jointly by labor and management. ( ⑤ ) Since robots are particularly good at highly repetitive simple motions, the replaced human workers should be moved to positions where judgment and decisions beyond the abilities of robots are required.
+글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.
 
-**선택지:**
-①. ②. ③. ④. ⑤.
+①. ①
+②. ②
+③. ③
+④. ④
+⑤. ⑤
 
-**해석:**
+## 해석:
 
-(주어진 문장) 현재 직원들을 새로운 직무를 위해 재교육하는 것 역시 해고에 대한 두려움을 크게 줄여줄 것이다.
+회사 내의 새로운 직책을 위해 현재 직원을 재교육하는 것은 또한 해고에 대한 그들의 두려움을 크게 줄일 것이다.
 
-공장에 로봇이 도입되면서 인간 노동자의 고용이 줄어들자 우려와 두려움이 생겨난다. ( ① ) 이러한 두려움을 예방하거나 최소한 완화하는 것은 경영진의 책임이다. ( ② ) 예를 들어, 로봇은 기존 조립 라인에서 인간을 대체하기보다는 신규 공장에만 도입될 수 있다. ( ③ ) 노동자들은 신규 공장 계획이나 기존 공장에 로봇을 도입하는 계획에 참여시켜, 그 과정에 함께할 수 있도록 해야 한다. ( ④ ) 회사가 경쟁력을 유지하기 위해 제조 비용을 줄이려면 로봇이 필요할 수도 있지만, 그러한 비용 절감 계획은 노사가 공동으로 수립해야 한다. ( ⑤ ) 로봇은 특히 매우 반복적인 단순 동작에 뛰어나므로, 대체된 인간 노동자는 로봇의 능력을 넘어서는 판단과 결정이 필요한 직무로 옮겨져야 한다.
+인간 노동자의 고용이 줄어드는 동안 공장에 로봇을 도입하는 것은 걱정과 두려움을 만들어낸다. ( ① ) 경영진의 책임은 이러한 두려움을 방지하거나, 최소한 완화하는 것이다. ( ② ) 예를 들어, 로봇은 기존 조립 라인에서 인간을 대체하기보다는 새로운 공장에서만 도입될 수 있다. ( ③ ) 노동자들은 새로운 공장 계획이나 기존 공장에 로봇을 도입하는 계획에 포함되어야 하며, 그렇게 함으로써 그들은 그 과정에 참여할 수 있다. ( ④ ) 회사가 경쟁력을 유지하기 위해 제조 비용을 줄이기 위해 로봇이 필요할 수도 있지만, 그러한 비용 절감 계획은 노동자와 경영진이 공동으로 수행해야 한다. ( ⑤ ) 로봇은 특히 고도로 반복적이고 단순한 동작에 뛰어나기 때문에, 대체된 인간 노동자는 로봇의 능력을 넘어서는 판단과 결정이 요구되는 직책으로 이동되어야 한다.
 
-## 문제 유형 파악 및 일반적인 풀이 전략
+## 문제 유형별 풀이 전략: 문장 삽입
 
-이 문제는 지문 속 다섯 곳의 표시(①~⑤) 중 주어진 문장이 들어가기에 가장 적절한 위치를 고르는 '문장 삽입' 유형입니다. 이런 유형은 빈칸에 들어갈 말을 새로 만들어내는 게 아니라, 이미 완성된 한 문장을 지문의 논리 흐름 속 정확한 자리에 되돌려 놓는 문제이므로, 다음 전략이 효과적입니다.
+이 문제는 주어진 문장이 글의 흐름상 가장 자연스럽게 들어갈 위치를 찾는 '문장 삽입' 유형입니다. 이런 유형의 문제를 풀 때는 몇 가지 전략을 활용하면 좋습니다. 첫째, 주어진 문장의 내용과 앞뒤 문맥을 파악하는 것이 중요합니다. '또한', '그러나', '예를 들어'와 같은 연결어구는 문장 간의 관계를 파악하는 데 단서가 됩니다. 둘째, 지문 전체를 한번 읽고 각 문장이 어떤 내용을 담고 있는지 큰 흐름을 파악한 후, 주어진 문장이 들어갈 만한 논리적 연결고리를 찾아야 합니다. 특히 주어진 문장 안의 'also(또한)'와 같은 부사는 앞선 내용과 유사하거나 추가적인 내용을 나타내므로, 그 앞에 어떤 내용이 올 수 있을지 예측해보는 것이 중요합니다. 마지막으로, 각 번호(①~⑤)가 가리키는 문장의 앞뒤 내용을 꼼꼼히 살펴보며 주어진 문장을 끼워 넣었을 때 가장 자연스러운 흐름을 만드는 곳을 찾아야 합니다.
 
-1.  **주어진 문장의 연결 신호 찾기**: 주어진 문장에 대명사('these', 'this' 등)나 'also', 'however'처럼 앞뒤 문맥을 암시하는 표현이 있는지 확인합니다. 이 문장은 "Retraining current employees for new positions within the company will **also** greatly reduce their fear of being laid off."로 시작하는데, 'also'는 바로 앞에 이미 '두려움을 줄이는 다른 방법'이 하나 언급되어 있어야 자연스럽다는 강력한 단서입니다.
-2.  **지문의 논리 구조 파악**: 지문은 "로봇 도입 → 노동자의 불안감 → 경영진의 책임 → 불안을 줄이는 구체적인 방법들(신규 공장에만 로봇 도입, 계획 과정에 노동자 참여, 비용 절감 계획의 공동 수립, 판단력이 필요한 직무로의 재배치)"이라는 순서로 전개됩니다.
-3.  **삽입 후 앞뒤 문장이 자연스럽게 이어지는지 검증**: 후보 위치에 문장을 넣어보고, 앞 문장과의 연결(대명사·연결어 일치)과 뒤 문장과의 연결이 모두 매끄러운지 확인합니다.
+## 정답 및 해설
 
-## 정답 및 상세 해설: 미래 역량 개발의 핵심은 '인간 고유의 강점' 활용!
+**정답: ⑤**
 
-정답은 **⑤번 위치**입니다.
+**해설:**
 
-**해설:** ⑤ 바로 앞 문장은 "planning for such cost reductions should be done jointly by labor and management(그러한 비용 절감 계획은 노사가 공동으로 수립해야 한다)"이고, ⑤ 바로 뒤 문장은 "Since robots are particularly good at highly repetitive simple motions, the replaced human workers should be moved to positions where judgment and decisions beyond the abilities of robots are required(로봇은 반복 작업에 뛰어나므로, 대체된 노동자는 판단력이 필요한 직무로 재배치되어야 한다)"입니다.
+주어진 문장은 "Retraining current employees for new positions within the company will also greatly reduce their fear of being laid off." (회사 내의 새로운 직책을 위해 현재 직원을 재교육하는 것은 또한 해고에 대한 그들의 두려움을 크게 줄일 것이다.) 입니다. 이 문장에는 'also(또한)'라는 부사가 사용되어, 앞에 이미 언급된 직원들의 두려움을 줄이기 위한 다른 조치들이 있음을 암시합니다.
 
-주어진 문장 "직원 재교육을 통해 새 직무로 전환시키는 것 **역시** 해고에 대한 두려움을 크게 줄여줄 것이다"를 이 사이에 넣으면, 뒤 문장의 '판단력이 필요한 직무로 재배치'라는 구체적인 방법이 바로 앞에서 말한 '재교육을 통한 직무 전환'의 구체적인 실행 방안으로 자연스럽게 이어집니다. 즉, "재교육으로 새 직무를 주는 것도 두려움을 줄인다 → (구체적으로는) 로봇이 잘하는 반복 작업 대신, 판단력이 필요한 직무로 옮겨주면 된다"는 흐름이 완성됩니다.
+*   **① 앞:** "Introduction of robots into factories, while employment of human workers is being reduced, creates worry and fear." (인간 노동자의 고용이 줄어드는 동안 공장에 로봇을 도입하는 것은 걱정과 두려움을 만들어낸다.) 로봇 도입으로 인한 불안감이 생긴다는 내용만 제시되어 있어, 두려움을 줄이기 위한 조치가 나오기 전이므로 주어진 문장이 들어갈 수 없습니다.
 
-다른 위치에 넣으면 'also'가 가리킬 만한 '앞서 언급된 두려움 해소 방법'이 바로 앞 문장에 없거나(①, ②), 이미 다른 화제(로봇 도입 방식, 노동자 참여, 비용 문제)로 넘어간 뒤라 흐름이 끊깁니다(③, ④).
+*   **② 앞:** "It is the responsibility of management to prevent or, at least, to ease these fears." (경영진의 책임은 이러한 두려움을 방지하거나, 최소한 완화하는 것이다.) 경영진의 책임임을 언급한 뒤, 구체적인 완화 방법이 나와야 합니다. 따라서 주어진 문장이 들어갈 수 있습니다.
 
-결론적으로, 2022학년도 수능 영어 38번 지문은 로봇 시대의 고용 불안정이라는 현실을 직시하고, 경영진이 신규 공장 로봇 도입·노동자의 계획 참여·재교육을 통한 직무 전환·판단력이 필요한 직무로의 재배치 등 다양한 방법으로 노동자의 불안을 줄여야 한다는 점을 시사합니다.
+*   **③ 앞:** "For example, robots could be introduced only in new plants rather than replacing humans in existing assembly lines." (예를 들어, 로봇은 기존 조립 라인에서 인간을 대체하기보다는 새로운 공장에서만 도입될 수 있다.) 이는 두려움을 완화하기 위한 경영진의 구체적인 예시 중 하나입니다. 'also'를 포함한 주어진 문장은 이 예시와 유사한 성격의 또 다른 조치를 제시하므로, ②와 ③ 사이도 가능성이 있습니다. 하지만 'also'의 의미를 더 잘 살리는 위치는 뒤쪽일 수 있습니다.
 
-## 미래를 준비하는 당신을 위한 Scan Voca의 제안
+*   **④ 앞:** "Workers should be included in the planning for new factories or the introduction of robots into existing plants, so they can participate in the process." (노동자들은 새로운 공장 계획이나 기존 공장에 로봇을 도입하는 계획에 포함되어야 하며, 그렇게 함으로써 그들은 그 과정에 참여할 수 있다.) 노동자 참여를 강조하는 내용으로, 역시 두려움 완화 방안 중 하나입니다. 이 역시 주어진 문장과 유사한 성격의 조치이므로, ④ 앞도 가능성이 있습니다.
 
-미래 사회는 끊임없이 변화하며 새로운 기술과 직무가 등장할 것입니다. 로봇이 대체하기 어려운 인간 고유의 강점, 즉 창의성, 비판적 사고, 복잡한 문제 해결 능력, 그리고 뛰어난 소통 능력이 더욱 중요해질 것입니다. 이러한 역량을 키우기 위해서는 단순히 지식을 암기하는 것을 넘어, 새로운 정보를 받아들이고 융합하며 자신만의 방식으로 응용하는 능력이 필요합니다. 그리고 이러한 과정에서 영어라는 언어는 전 세계의 지식과 정보를 습득하는 강력한 도구가 됩니다. 방대한 영문 자료를 읽고 이해하며, 다양한 관점을 접하는 능력은 미래 사회에서 당신의 경쟁력을 배가시킬 것입니다. 결국, 새로운 지식과 기술을 배우고 습득하는 데는 꾸준한 단어 학습이 밑거름이 됩니다. Scan Voca는 사진 한 장으로 순식간에 단어장을 만들어, 언제 어디서든 꺼내 보며 외울 수 있게 해주는 영어 단어장 앱입니다.
+*   **⑤ 앞:** "It may be that robots are needed to reduce manufacturing costs so that the company remains competitive, but planning for such cost reductions should be done jointly by labor and management." (회사가 경쟁력을 유지하기 위해 제조 비용을 줄이기 위해 로봇이 필요할 수도 있지만, 그러한 비용 절감 계획은 노동자와 경영진이 공동으로 수행해야 한다.) 노사 공동의 비용 절감 계획을 언급하며, 로봇 도입의 필요성과 함께 협력의 중요성을 강조합니다. 이 문장 바로 뒤에 오는 ⑤번 위치에는, 로봇이 대체하는 인간 노동자가 어떤 새로운 역할을 해야 하는지에 대한 설명이 이어집니다.
+
+주어진 문장 "Retraining current employees for new positions within the company will also greatly reduce their fear of being laid off."는 직원 재교육을 통해 고용 불안을 줄이는 방안을 제시합니다. 이 방안은 로봇 도입으로 인해 대체되는 노동자들을 어떻게 활용할 것인가에 대한 맥락과 자연스럽게 연결됩니다. 특히, ⑤번 뒤에 오는 "Since robots are particularly good at highly repetitive simple motions, the replaced human workers should be moved to positions where judgment and decisions beyond the abilities of robots are required." (로봇은 특히 고도로 반복적이고 단순한 동작에 뛰어나기 때문에, 대체된 인간 노동자는 로봇의 능력을 넘어서는 판단과 결정이 요구되는 직책으로 이동되어야 한다.)라는 문장은, 직원 재교육을 통해 '로봇의 능력을 넘어서는 판단과 결정이 요구되는 직책'으로 이동시키는 것의 구체적인 이유와 방향을 설명해줍니다. 따라서 주어진 문장은 ⑤번 위치에 들어가는 것이 가장 자연스럽습니다. 즉, 로봇이 잘하는 반복적인 일을 대체하고, 인간은 더 고차원적인 업무를 맡도록 재교육하는 것이 핵심 전략임을 보여줍니다.
+
+## 미래 직업 역량, 어떻게 준비해야 할까?
+
+수능 지문에서 제시된 것처럼, 로봇 시대에는 인간 고유의 강점을 살리는 것이 중요합니다. 로봇이 대체하기 어려운 창의성, 비판적 사고, 문제 해결 능력, 감성 지능, 협업 능력 등을 키우는 것이 미래 사회에서 경쟁력을 갖추는 열쇠가 될 것입니다. 단순히 지식을 암기하는 것을 넘어, 배운 것을 실제 문제에 적용하고, 다양한 사람들과 소통하며 협력하는 경험을 쌓는 것이 중요합니다. 또한, 끊임없이 변화하는 기술 환경에 발맞춰 새로운 기술을 배우고 적응하는 유연성도 필수적입니다. 이를 위해 다양한 분야의 책을 읽고, 토론에 참여하며, 프로젝트 경험을 쌓는 등 적극적인 노력이 필요합니다. 미래 사회는 정해진 답을 찾는 것보다 새로운 질문을 던지고 해결책을 모색하는 사람에게 더 많은 기회를 줄 것입니다.
+
+어휘력은 이러한 미래 역량을 키우는 데 있어 가장 기본적인 바탕이 됩니다. 새로운 지식을 습득하고, 복잡한 문제를 이해하며, 효과적으로 소통하기 위해서는 풍부한 어휘가 필수적이기 때문입니다. Scan Voca는 사진 한 장으로 손쉽게 단어장을 만들고, 언제 어디서든 꺼내 보며 암기할 수 있도록 도와주는 혁신적인 영단어 앱입니다.
 
 [Scan Voca 시작하기](https://scanvoca.com)
