@@ -822,6 +822,130 @@ Important:
                 print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
             return None
 
+    async def review_dialogue_usage_examples(
+        self,
+        dialogue_en: str,
+        dialogue_ko: Optional[str],
+        video_title: Optional[str],
+        body: str,
+        retry_count: int = 0,
+        max_retries: int = 1,
+    ) -> Optional[str]:
+        """
+        Critically re-check a conversation-pipeline post's explanation of the quoted dialogue
+        before publish, correcting body text that misrepresents a scene-specific line as a
+        general-purpose expression.
+
+        generate_blog_post(source_dialogue=...) is told to explain "실제 회화에서 어떻게
+        쓰는지" but has no guardrail against overgeneralizing a one-off line whose humor
+        depends entirely on the scene's specific setup into an idiom-like "usage example" the
+        model invents for unrelated situations. Real case that motivated this: Emily in
+        Paris's "babies already smell good enough" — a joke that only lands because the scene
+        is a baby-perfume business pitch and the line is immediately undercut by "Not with a
+        full diaper" — got rendered with three fabricated dialogues (declining a skydiving
+        invite, criticizing a gaming binge, deflecting exam-score pressure) presenting it as a
+        stock comeback phrase, published with nothing catching it (validate_auto_draft only
+        checks post-level structure like length/category; there is no equivalent of
+        review_practice_questions for this pipeline's prose).
+
+        Reviews on the stronger flash model (vision_model, not the flash-lite generator) so
+        the same blind spot that produced the mistake doesn't just rubber-stamp itself.
+
+        Returns the (possibly corrected) full body markdown string, or the original body
+        unchanged when the review finds the explanation already scene-accurate. Returns None
+        if review couldn't be completed (API unconfigured, malformed response after retries)
+        so the caller can fail safe by publishing the unreviewed original body rather than
+        blocking the whole post on a review-pipeline hiccup — this is a correctness
+        improvement, not a hard gate like the TOEIC answer-key review.
+        """
+        if self.vision_model is None:
+            print("Gemini API key not configured")
+            return None
+
+        prompt = (
+            "당신은 영어 표현 콘텐츠 검수자입니다. 아래는 실제 영상 대사를 소재로 한 한국어 "
+            "블로그 글 초안입니다. 이 대사가 특정 장면의 설정이 있어야만 성립하는 말장난·농담인데, "
+            "초안이 이를 마치 여러 상황에 두루 쓸 수 있는 일반적인 표현(관용구·받아치기 문구 등)인 "
+            "것처럼 설명하며 원래 장면과 무관한 가상의 상황·대화 예시를 지어내지는 않았는지 "
+            "비판적으로 검토하세요.\n\n"
+            f'영상: {video_title or "(제목 없음)"}\n'
+            f'영어 대사(dialogue_en): """{dialogue_en}"""\n'
+            f'한국어 번역(dialogue_ko): """{dialogue_ko or "(없음)"}"""\n\n'
+            f'[검토할 초안 본문(body)]\n"""{body}"""\n\n'
+            "판단 기준:\n"
+            "1. 이 표현이 실제로 다양한 상황에 그대로 옮겨 써도 의미가 통하는 진짜 관용구/일반 "
+            "표현인지, 아니면 이 장면의 특정 소재(예: 특정 사업 아이템·설정에 대한 말장난)가 "
+            "있어야만 웃음 포인트가 성립하는 일회성 대사인지 구분하세요.\n"
+            "2. 후자인데 초안이 '이럴 때도 써요' 식으로 원본 장면과 무관한 가상의 상황·대화 "
+            "예시를 지어내 마치 범용 표현처럼 설명하고 있다면, 그 지어낸 예시 부분을 걷어내고 "
+            "대신 이 대사가 실제 장면에서 왜 웃긴지·어떤 말장난인지(원래 맥락)를 중심으로 "
+            "설명하도록 본문을 다시 쓰세요 — 이 표현을 다른 상황에 그대로 재사용하라고 권하지 "
+            "마세요.\n"
+            "3. 전자(진짜 일반 표현)이거나 이미 지어낸 가상 상황 없이 정확하게 설명하고 있다면, "
+            "본문을 전혀 수정하지 말고 원본 그대로 반환하세요.\n"
+            "4. 수정하더라도 본문의 나머지 구조(다른 소제목, 마지막 Scan Voca 홍보 섹션, 문체)는 "
+            "그대로 유지하고, 문제가 된 부분만 고치세요.\n\n"
+            "아래 JSON 형식으로만 반환하세요. 다른 텍스트는 포함하지 마세요:\n"
+            '{"corrected_body": "본문 마크다운 전체(수정했다면 반영된 최종 버전, 수정하지 않았다면 '
+            '원본과 동일한 문자열)"}'
+        )
+
+        try:
+            response = self.vision_model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0.2,
+                    "max_output_tokens": 8192,
+                    "response_mime_type": "application/json",
+                },
+            )
+
+            content = response.text
+            if not content:
+                raise ValueError("empty response")
+
+            content = content.strip()
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+            content = content.strip()
+
+            parsed = json.loads(content, strict=False)
+            corrected_body = str(parsed.get("corrected_body", "")).strip()
+            if not corrected_body:
+                raise ValueError("empty corrected_body")
+
+            return corrected_body
+
+        except (json.JSONDecodeError, ValueError) as e:
+            error_msg = f"Dialogue-usage review parse error (attempt {retry_count + 1}/{max_retries + 1}): {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+
+            if retry_count < max_retries:
+                return await self.review_dialogue_usage_examples(
+                    dialogue_en,
+                    dialogue_ko,
+                    video_title,
+                    body,
+                    retry_count=retry_count + 1,
+                    max_retries=max_retries,
+                )
+            print(f"Dialogue-usage review failed after {max_retries + 1} attempts")
+            return None
+        except Exception as e:
+            error_msg = f"Dialogue-usage review error: {e}"
+            try:
+                print(error_msg)
+            except UnicodeEncodeError:
+                print(error_msg.encode("ascii", errors="ignore").decode("ascii"))
+            return None
+
     async def suggest_blog_topics(
         self,
         pipeline: str,

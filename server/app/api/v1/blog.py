@@ -189,8 +189,10 @@ async def _publish_one(
     """Pick one topic and take it through draft -> guardrail -> (unless dry_run) publish.
 
     toeic drafts additionally get their practice_questions self-reviewed for answer/
-    explanation correctness before rendering (see review_practice_questions) — the
-    guardrail step below only validates post-level shape, not question content.
+    explanation correctness before rendering (see review_practice_questions), and
+    conversation drafts get their prose self-reviewed for scene-specific lines wrongly
+    explained as general-purpose expressions (see review_dialogue_usage_examples) — the
+    guardrail step below only validates post-level shape, not question/prose content.
 
     Extracted verbatim from the old run_auto_publish body — same logic, side effects and
     return values. `pipeline` is guaranteed to be one of toeic/suneung/conversation by the
@@ -313,6 +315,20 @@ async def _publish_one(
             return BlogAutoPublishResult(
                 published=False, reason="generation_failed", dry_run=dry_run, topic_id=topic.id
             )
+        # Self-review: catch a scene-specific one-off line explained as if it were a
+        # general-purpose expression, with fabricated "usage in other situations" examples
+        # (see review_dialogue_usage_examples docstring for the live mistake that motivated
+        # this — nothing else checks prose content, only validate_auto_draft's structural
+        # shape). Best-effort: a review failure keeps the unreviewed original body rather
+        # than blocking publish.
+        reviewed_body = await gemini.review_dialogue_usage_examples(
+            dialogue_en=clip.dialogue_en,
+            dialogue_ko=clip.dialogue_ko,
+            video_title=clip.video_title,
+            body=result["body"],
+        )
+        if reviewed_body:
+            result["body"] = reviewed_body
         # Embed the clip <video> at the top of the body (public blog renders raw HTML).
         body = BlogService.insert_video_embed(result["body"], clip.clip_url)
 

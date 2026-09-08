@@ -258,6 +258,79 @@ class TestReviewPracticeQuestions:
         assert captured["calls"] == 2  # initial attempt + 1 retry (max_retries default=1)
 
 
+class TestReviewDialogueUsageExamples:
+    """GeminiService.review_dialogue_usage_examples 단위 테스트 (모델 mock).
+
+    실운영 사례(babies-smell-good-enough-clever-comeback.md: 에밀리 파리에 가다의
+    아기 향수 사업 회의 장면에서만 성립하는 대사 "babies already smell good enough"를,
+    스카이다이빙 제안 거절/게임 지적/시험 압박 반박 등 원본 장면과 무관한 가상 상황
+    3개를 지어내 마치 범용 받아치기 표현인 것처럼 소개한 채 그대로 발행됨 — 이를
+    재현하는 케이스를 포함한다.
+    """
+
+    DIALOGUE_EN = "Apparently, babies already smell good enough."
+    DIALOGUE_KO = "아기들은 이미 충분히 좋은 냄새가 난다는데."
+    VIDEO_TITLE = "Emily in Paris S5E1"
+    ORIGINAL_BODY = (
+        "## 장면 소개\n\n아기 향수 사업 회의 장면입니다.\n\n"
+        "## 언제 어떻게 쓸까\n\n스카이다이빙 제안을 거절할 때도 쓸 수 있습니다.\n\n"
+        "## 마무리\n\n[Scan Voca 시작하기](https://scanvoca.com)"
+    )
+
+    @staticmethod
+    def _run(body, payload_text, vision_model="default", dialogue_en=None, dialogue_ko=None, video_title=None):
+        captured = {}
+
+        class FakeResponse:
+            text = payload_text
+
+        class FakeModel:
+            def generate_content(self, prompt, generation_config=None):
+                captured["calls"] = captured.get("calls", 0) + 1
+                captured["prompt"] = prompt
+                return FakeResponse()
+
+        service = GeminiService.__new__(GeminiService)
+        service.vision_model = FakeModel() if vision_model == "default" else vision_model
+        out = asyncio.run(service.review_dialogue_usage_examples(
+            dialogue_en=dialogue_en or TestReviewDialogueUsageExamples.DIALOGUE_EN,
+            dialogue_ko=dialogue_ko or TestReviewDialogueUsageExamples.DIALOGUE_KO,
+            video_title=video_title or TestReviewDialogueUsageExamples.VIDEO_TITLE,
+            body=body,
+        ))
+        return out, captured
+
+    def test_no_api_key_returns_none(self):
+        out, _ = self._run(self.ORIGINAL_BODY, "", vision_model=None)
+        assert out is None
+
+    def test_leaves_genuinely_generalizable_expression_unchanged(self):
+        out, _ = self._run(self.ORIGINAL_BODY, json.dumps({
+            "corrected_body": self.ORIGINAL_BODY,
+        }))
+        assert out == self.ORIGINAL_BODY
+
+    def test_rewrites_fabricated_generalized_usage_examples(self):
+        """실제 사례 재현: 지어낸 스카이다이빙 예시를 걷어내고 원본 장면 설명으로 대체."""
+        corrected = (
+            "## 장면 소개\n\n아기 향수 사업 회의 장면입니다.\n\n"
+            "## 왜 이 대사가 웃길까\n\n아기 향수 사업 아이디어를 반박하는 말장난입니다.\n\n"
+            "## 마무리\n\n[Scan Voca 시작하기](https://scanvoca.com)"
+        )
+        out, _ = self._run(self.ORIGINAL_BODY, json.dumps({"corrected_body": corrected}))
+        assert out == corrected
+        assert "스카이다이빙" not in out
+
+    def test_empty_corrected_body_returns_none(self):
+        out, _ = self._run(self.ORIGINAL_BODY, json.dumps({"corrected_body": ""}))
+        assert out is None
+
+    def test_malformed_json_retries_then_none(self):
+        out, captured = self._run(self.ORIGINAL_BODY, "not json at all")
+        assert out is None
+        assert captured["calls"] == 2  # initial attempt + 1 retry (max_retries default=1)
+
+
 class TestPracticeQuestionsFallbackOnFinalRetry:
     """실운영 장애 재현(2026-08-30~09-01, 토익 파이프라인 자동발행 전량 실패): 모델이
     body 문자열 안에 자기 나름의 '## 실전 연습문제' 소제목과 ```json 코드펜스를 끼워
@@ -1350,6 +1423,42 @@ class TestConversationAutoPublish:
         db_session.expire_all()
         assert db_session.get(ConversationClip, clip.id).status == "published"
         assert db_session.get(BlogTopic, topic.id).status == "used"
+
+    def test_dry_run_uses_reviewed_body_when_review_rewrites_it(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """review_dialogue_usage_examples가 본문을 고치면, 그 수정본이 실제 발행 markdown에
+        반영되어야 한다 (babies-smell-good-enough-clever-comeback.md 실운영 사례 재현)."""
+        topic = self._seed_topic(db_session)
+        self._seed_clip(db_session, topic.id, status="ready")
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            return {
+                "slug": "daily-howyoudoin", "title": "일상회화 표현", "description": "설명",
+                "category": "일상영어", "tags": ["회화"],
+                "body": "## 언제 어떻게 쓸까\n\n스카이다이빙 제안을 거절할 때도 쓸 수 있습니다.\n\n"
+                        "[Scan Voca 시작하기](https://scanvoca.com)",
+            }
+
+        async def fake_review(self, dialogue_en, dialogue_ko, video_title, body):
+            return "## 왜 이 대사가 웃길까\n\n원본 장면 맥락에서만 통하는 말장난입니다.\n\n" \
+                   "[Scan Voca 시작하기](https://scanvoca.com)"
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "review_dialogue_usage_examples", fake_review)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=conversation&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        markdown = resp.json()["markdown"]
+        assert "스카이다이빙" not in markdown
+        assert "원본 장면 맥락에서만 통하는 말장난" in markdown
 
 
 class TestRequireNasToolKey:
