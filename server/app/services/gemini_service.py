@@ -15,7 +15,14 @@ BLOG_IMAGE_MODEL = "gemini-2.5-flash-image"
 # Exam-PDF extraction runs on the pro model: it reads two full PDFs jointly and reasons
 # about the answer, and it's a rare unattended batch job (a few runs a year), so accuracy
 # matters far more than per-call cost or latency.
-EXAM_EXTRACTION_MODEL = "gemini-2.5-pro"
+# gemini-2.5-pro started 404ing ("no longer available to new users") sometime after this
+# pipeline shipped, even though it's still listed by client.models.list() — Google's
+# per-project entitlement, not the public catalog, gates access. gemini-3.1-pro-preview is
+# the model Google's own 404 response names as the replacement, and it responds fine to
+# both a plain call and (verified live, 2026-09-08) the PDF+response_schema pattern this
+# module uses. It's a preview name, so it may itself get renamed/retired later — if this
+# 404s again, check `client.models.list()` for the current pro-tier name.
+EXAM_EXTRACTION_MODEL = "gemini-3.1-pro-preview"
 
 # Target hero-image output size: 16:9 at exactly 1.5x the pixel area of the previous
 # 1024x1024 default (the model's un-configured fallback — confirmed by live probe, since
@@ -375,14 +382,30 @@ Important:
         if source_passage:
             choices = source_passage.get("choices") or []
             circled = "①②③④⑤"
-            choices_str = (
-                "\n".join(
-                    f"{circled[i] if i < len(circled) else i + 1}. {c}"
-                    for i, c in enumerate(choices)
-                )
-                if choices
-                else "(선택지 없음)"
+            # 문장 삽입형(embedded_marker) 문항은 choices가 실제 문장 텍스트가 아니라 마커
+            # 기호 자체("①","②"...)인 경우가 있다 — 지문 속 어느 위치에 넣을지 고르는
+            # 문제라 "선택지"에 별도로 인용할 텍스트가 없기 때문. 이 경우 그대로 렌더링하면
+            # "①. ①" 같은 무의미한 중복 목록이 나온다(실사고: 2022/2024/2026 수능 38·39번).
+            # 반면 무관한 문장 찾기처럼 choices가 진짜 문장 텍스트인 embedded_marker 문항은
+            # 평소대로 렌더링해야 하므로, "choices가 전부 마커 기호 자체"인 경우만 걸러낸다.
+            is_marker_only_choices = bool(choices) and all(
+                str(c).strip() in set(circled) for c in choices
             )
+            if is_marker_only_choices:
+                choices_str = (
+                    "(선택지는 지문 안에 표시된 ①~⑤ 위치 자체입니다 — 별도로 인용할 "
+                    "선택지 텍스트가 없으니 '선택지:' 목록을 따로 만들지 말고, 위 지문에 "
+                    "표시된 ①~⑤ 위치를 그대로 가리키며 설명하세요.)"
+                )
+            else:
+                choices_str = (
+                    "\n".join(
+                        f"{circled[i] if i < len(circled) else i + 1}. {c}"
+                        for i, c in enumerate(choices)
+                    )
+                    if choices
+                    else "(선택지 없음)"
+                )
             source_label = source_passage.get("source_label", "기출문제")
             problem_number = source_passage.get("problem_number")
             citation_label = (
@@ -412,9 +435,14 @@ Important:
                 "정답이나 지문 내용을 미리 풀이하거나 스포일러하지 마세요. "
                 "(2) 도입 문단 바로 다음에 원문 지문 전체 + 문제(question) + 선택지를 그대로 제시하세요 — "
                 "독자가 먼저 스스로 풀어볼 수 있도록 정답과 해설보다 앞에 배치해야 합니다. "
-                "선택지는 위 [선택지] 목록에 이미 ①②③④⑤ 번호가 붙어 있으니 그 번호와 순서를 그대로 유지하고, "
-                "**각 선택지를 반드시 줄바꿈하여 한 줄에 하나씩** 표시하세요(번호를 빼거나 한 줄로 붙여 쓰지 마세요). "
-                "(2-1) 선택지 바로 다음, 전략·해설보다 앞에 \"**해석:**\" 소제목을 넣고 지문 전체를 자연스러운 "
+                + (
+                    "위 [선택지]에 안내된 대로, 이 문항은 지문 안에 이미 표시된 ①~⑤ 위치를 고르는 "
+                    "문제이므로 '선택지:' 목록을 별도로 만들지 마세요 — 지문 속 ①~⑤ 표시만으로 충분합니다. "
+                    if is_marker_only_choices
+                    else "선택지는 위 [선택지] 목록에 이미 ①②③④⑤ 번호가 붙어 있으니 그 번호와 순서를 그대로 유지하고, "
+                    "**각 선택지를 반드시 줄바꿈하여 한 줄에 하나씩** 표시하세요(번호를 빼거나 한 줄로 붙여 쓰지 마세요). "
+                )
+                + "(2-1) 선택지 바로 다음, 전략·해설보다 앞에 \"**해석:**\" 소제목을 넣고 지문 전체를 자연스러운 "
                 "한국어로 완역하세요. 문장을 누락하거나 요약하지 말고 지문 전체를 빠짐없이 번역해, 독자가 "
                 "영어 원문을 다 이해하지 못해도 이 번역만으로 지문 내용을 완전히 파악할 수 있게 하세요. "
                 "밑줄 친 부분이나 ①~⑤ 표시가 지문 안에 있다면 번역문에서도 그 위치에 표시를 그대로 유지하세요. "
