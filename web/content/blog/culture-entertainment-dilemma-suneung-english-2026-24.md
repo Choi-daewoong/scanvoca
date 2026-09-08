@@ -17,7 +17,6 @@ thumbnail: "/blog-images/culture-entertainment-dilemma-suneung-english-2026-24/1
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2026학년도 대학수학능력시험 영어영역 24번).
 
-```
 The economic benefit of culturtainment makes it attractive to
 politicians and policy makers alike. A potential increase in
 inbound visitor numbers coupled with their demand for related
@@ -37,7 +36,6 @@ culturtainment experiences. Overall this is a healthy growth
 sector of the entertainment industry, but one that by its very
 nature is delicate in the face of exploitation.
 *homogeneous: 동종의 **dilution: 희석 ***exploitation: 착취
-```
 
 **문제:** 다음 글의 제목으로 가장 적절한 것은? [3점]
 

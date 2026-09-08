@@ -6,7 +6,6 @@ tags: ["동아리 개설", "이메일 작성법", "주도적인 활동", "수능
 date: "2026-09-01"
 published: true
 ---
-
 ## 나만의 아이디어, 현실로 만드는 첫걸음: 동아리 개설 제안!
 
 새 학년, 새 학기! 혹시 "이런 동아리가 있으면 정말 좋겠다"라고 생각해 본 적 있으신가요? 단순히 기존 동아리에 참여하는 것을 넘어, 내가 원하는 활동을 직접 기획하고 친구들과 함께 만들어가는 경험은 상상만 해도 설레는데요. 오늘은 2026학년도 대학수학능력시험 영어영역 18번 기출문제를 통해, 이러한 '나만의 동아리 만들기'를 위한 첫걸음, 바로 '개설 제안서 작성법'에 대해 알아보겠습니다. 단순히 영어 지문 독해를 넘어, 여러분의 주도적인 활동을 응원하는 실질적인 팁을 얻어가시길 바랍니다.
@@ -15,7 +14,6 @@ published: true
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2026학년도 대학수학능력시험 영어영역 18번).
 
-```
 Dear students,
 I am Amanda Clark, the school club director, and I am
 writing to you about our school clubs. Over the last few
@@ -31,7 +29,6 @@ to my office by the end of this week. I look forward to
 seeing your great ideas.
 Best regards,
 Amanda Clark
-```
 
 **다음 글의 목적으로 가장 적절한 것은?**
 

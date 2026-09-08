@@ -868,6 +868,35 @@ class BlogService:
         remaining = lines[:start_idx] + lines[end_idx:]
         return "\n".join(remaining).strip() + "\n"
 
+    @staticmethod
+    def strip_code_fences(body: str) -> str:
+        """Unwrap any ``` fenced code block in an auto-generated body, keeping its content.
+
+        None of the auto-blog pipelines ever legitimately need a code block — quoted exam
+        passages, dialogue clips and business-email samples are all prose, not code — but
+        the model periodically wraps a quoted passage in a fence anyway (observed live
+        across many suneung/toeic posts, e.g. them-pronoun-error-suneung-english-2023-29.md,
+        published 2026-09-07, a week after commit f0689c1 manually stripped fences from 14
+        already-published files without touching the generator, so the exact same mistake
+        kept recurring on every post published since). Two visible symptoms: inside a
+        fence, <u>...</u> underline markers meant to mark 어법 choices render as literal
+        text instead of an underline, and the passage renders as a bordered <pre> block
+        instead of flowing prose — both reproduced by the still-fenced posts found live
+        (business-email-signature-vocab-toeic-rc.md and 7 others, all published after that
+        commit, including one toeic post where the prompt already explicitly forbids code
+        fences — instruction-following alone isn't a reliable guardrail, matching this
+        pipeline's existing practice_questions/word_list defenses).
+
+        Strips any triple-backtick fence line (with or without a language tag, e.g.
+        ` ```text `) wherever it appears, leaving the enclosed text in place. A body with
+        no fences is returned unchanged.
+        """
+        lines = body.splitlines()
+        kept = [line for line in lines if not re.match(r"^```\w*\s*$", line.strip())]
+        if len(kept) == len(lines):
+            return body
+        return "\n".join(kept).strip() + "\n"
+
     # ----- Auto-blog: hero image reflection (port of blogWorkflow.reflectImages 'top') -----
 
     @staticmethod

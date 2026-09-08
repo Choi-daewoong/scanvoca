@@ -17,7 +17,6 @@ thumbnail: "/blog-images/grain-trade-profitability-suneung-english-2026-31/1.png
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2026학년도 대학수학능력시험 영어영역 31번).
 
-```
 surplus-producing and food deficit regions, and these firms
 made it their business to know the state of supply and demand
 in both. Because this information was the key to their
@@ -36,7 +35,6 @@ national companies trading with each other. Their access to
 information in multiple markets enabled them to easily cover
 the risks associated with agricultural commodity trade.
 *deficit: 부족
-```
 
 **Question:** The early grain trade firms were active in both
 

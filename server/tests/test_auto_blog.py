@@ -117,6 +117,33 @@ class TestRenderPracticeQuestions:
         assert "실전 연습문제" not in out
         assert "## 첫째" in out
 
+    def test_strip_code_fences_unwraps_passage(self):
+        """실운영 재현: them-pronoun-error-suneung-english-2023-29.md에서 지문 전체가
+        ``` 코드펜스로 감싸져 발행됨 — <u> 밑줄 표시가 문자 그대로 노출되고, 지문이
+        박스처럼 렌더링됨."""
+        body = (
+            "## 지문\n\n"
+            "```\n"
+            "The most common explanation is <u>①that</u> it constitutes a costumery.\n"
+            "```\n\n"
+            "## 결국 홍보\n\n[Scan Voca](https://scanvoca.com)"
+        )
+        out = BlogService.strip_code_fences(body)
+        assert "```" not in out
+        assert "<u>①that</u>" in out
+        assert "## 지문" in out
+        assert "## 결국 홍보" in out
+
+    def test_strip_code_fences_handles_language_tag(self):
+        body = "## 지문\n\n```text\nSome passage text.\n```\n"
+        out = BlogService.strip_code_fences(body)
+        assert "```" not in out
+        assert "Some passage text." in out
+
+    def test_strip_code_fences_noop_when_absent(self):
+        body = "## 첫째\n\n내용\n\n## 결국 홍보\n\n[Scan Voca](https://scanvoca.com)"
+        assert BlogService.strip_code_fences(body) == body
+
     def test_no_duplicate_practice_section_end_to_end(self, client, admin_auth_headers, db_session, monkeypatch):
         """Reproduces the live bug: model ignores the 'don't write it in body' instruction."""
         topic = BlogTopic(category="토익·비즈니스", title="토익 주제5", angle="a",
@@ -1086,6 +1113,44 @@ class TestSuneungAutoPublish:
         db_session.expire_all()
         assert db_session.get(ExamPassage, passage.id).status == "used"
         assert db_session.get(BlogTopic, topic.id).status == "used"
+
+    def test_dry_run_strips_code_fence_around_passage(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """실운영 재현: them-pronoun-error-suneung-english-2023-29.md가 지문을 ```
+        코드펜스로 감싼 채 발행됨(2026-08-31 f0689c1로 기존 파일만 수동 정리했지만
+        생성 파이프라인 자체는 고치지 않아, 그 이후 발행된 글에서 계속 재발함).
+        strip_code_fences 가드레일이 실제 발행 markdown에도 적용되는지 확인한다."""
+        self._seed_paired(db_session, tags=["어법"])
+
+        fenced_body = (
+            "## 지문 분석\n\n"
+            "```\n"
+            "The most common explanation is <u>①that</u> it constitutes a costumery.\n"
+            "```\n\n"
+            "## 결국 홍보\n\n[Scan Voca 시작하기](https://scanvoca.com)"
+        )
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            return {
+                "slug": "them-pronoun-fix-test", "title": "어법 해설", "description": "설명",
+                "category": "수능·내신", "tags": ["수능"], "body": fenced_body,
+            }
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=suneung&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        markdown = resp.json()["markdown"]
+        assert "```" not in markdown
+        assert "<u>①that</u>" in markdown
 
     def test_source_passage_includes_problem_number(self, client, admin_auth_headers, db_session, monkeypatch):
         """지문 인용 시 '몇 년도 무슨 형식 몇 번 문제'까지 밝히려면 problem_number가

@@ -19,11 +19,9 @@ thumbnail: "/blog-images/suneung-english-2026-25-data-interpretation-guide/1.png
 
 ![2026학년도 수능 영어 25번 도표: 의사소통 유형별로 친구들과 시간을 보낸 미국 십대들의 비율(2014~2015년)](/blog-images/suneung-english-2026-25-data-interpretation-guide/graph.png)
 
-```
 The graph above shows the percentages of U.S. teenagers
 who spent time with friends by communication type, based on
 a survey conducted between 2014 and 2015.
-```
 
 **문제:** 다음 도표의 내용과 일치하지 않는 것은?
 

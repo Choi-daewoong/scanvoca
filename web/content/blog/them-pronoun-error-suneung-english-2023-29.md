@@ -17,7 +17,6 @@ thumbnail: "/blog-images/them-pronoun-error-suneung-english-2023-29/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2023학년도 대학수학능력능력시험 영어영역 29번).
 
-```
 Trends constantly suggest new opportunities for individuals
 to restage themselves, representing occasions for change. To
 understand how trends can ultimately give individuals power
@@ -37,7 +36,6 @@ stature, relaxation or environmental consciousness, even if
 none of these is true. Fashion can also strengthen agency in
 various ways, <u>⑤opening</u> up space for action.
 *stature: 능력
-```
 
 **문제:** 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?
 

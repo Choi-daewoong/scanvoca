@@ -17,7 +17,6 @@ thumbnail: "/blog-images/suneung-english-2022-29-what-grammar-trap/1.png"
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2022학년도 대학수학능력시험 영어영역 29번).
 
-```
 Like whole individuals, cells have a life span. During their life
 cycle (cell cycle), cell size, shape, and metabolic activities can
 change dramatically. A cell is “born” as a twin when its mother
@@ -35,7 +34,6 @@ should be complex would not be surprising, but actually, they
 are rather simple and logical. Even the most complex cell has
 only a small number of parts, each <u>⑤responsible</u> for a distinct, well-defined aspect of cell life.
 *metabolic: 물질대사의 **protoplasm: 원형질
-```
 
 **문제:** 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [3점]
 

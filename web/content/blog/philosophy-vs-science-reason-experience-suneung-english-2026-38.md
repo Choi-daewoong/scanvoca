@@ -17,7 +17,6 @@ thumbnail: "/blog-images/philosophy-vs-science-reason-experience-suneung-english
 
 본 지문은 한국교육과정평가원이 출제한 기출문제입니다(2026학년도 대학수학능력시험 영어영역 37번).
 
-```
 many other scientific disciplines. It is capable of looking at
 the bigger picture and providing important insights into the
 relationships between different areas of knowledge.
@@ -40,7 +39,6 @@ research. Unlike scientific methods, philosophizing is a
 non-empirical approach that attempts to validate concepts
 through logical thinking and argumentation. [3점]
 *empirical: 경험의
-```
 
 **문제:** Philosophy allows us to ask much broader questions than
 

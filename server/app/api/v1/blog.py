@@ -191,7 +191,8 @@ async def _publish_one(
     toeic drafts additionally get their practice_questions self-reviewed for answer/
     explanation correctness before rendering (see review_practice_questions), and
     conversation drafts get their prose self-reviewed for scene-specific lines wrongly
-    explained as general-purpose expressions (see review_dialogue_usage_examples) — the
+    explained as general-purpose expressions (see review_dialogue_usage_examples), and
+    every pipeline's body gets run through strip_code_fences before assembly — the
     guardrail step below only validates post-level shape, not question/prose content.
 
     Extracted verbatim from the old run_auto_publish body — same logic, side effects and
@@ -333,6 +334,10 @@ async def _publish_one(
         body = BlogService.insert_video_embed(result["body"], clip.clip_url)
 
     slug = result["slug"]
+    # Guardrail (all pipelines): the model periodically wraps a quoted passage/dialogue in
+    # a ``` code fence despite never having a legitimate reason to — see
+    # strip_code_fences' docstring for the live recurrence this fixes.
+    body = BlogService.strip_code_fences(body)
     markdown = BlogService.build_markdown(
         slug=slug,
         title=result["title"],

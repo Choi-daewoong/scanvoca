@@ -34,7 +34,6 @@ thumbnail: "/blog-images/business-email-signature-vocab-toeic-rc/1.png"
 
 **예시 1: 간단한 서명**
 
-```
 Best regards,
 
 John Smith
@@ -42,13 +41,11 @@ Sales Manager
 ABC Corporation
 Tel: 123-456-7890
 Email: john.smith@abccorp.com
-```
 
 이 예시에서 'Sales Manager'는 직책(Title)을, 'ABC Corporation'은 회사명(Company Name)을 나타냅니다. 'Tel'과 'Email'은 각각 연락처 정보를 명확히 하기 위한 약어입니다.
 
 **예시 2: 상세 정보가 포함된 서명**
 
-```
 Sincerely,
 
 Dr. Emily Carter
@@ -58,7 +55,6 @@ Innovate Solutions Inc.
 1 Innovation Drive, Tech City, CA 90210
 Phone: +1 (555) 123-4567 | Fax: +1 (555) 123-4568
 Website: www.innovatesolutions.com
-```
 
 이 서명에는 직책('Senior Researcher'), 소속 부서('Department of Advanced Technologies'), 회사명('Innovate Solutions Inc.'), 상세 주소('Address'), 전화번호 및 팩스 번호('Contact Information'), 웹사이트('Website') 등이 포함되어 있습니다. 'Inc.'는 'Incorporated'의 약자로, 회사 형태를 나타냅니다.
 
