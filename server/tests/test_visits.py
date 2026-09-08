@@ -120,6 +120,28 @@ class TestTrackVisit:
         assert resp.status_code == status.HTTP_204_NO_CONTENT
         assert db_session.query(Visit).count() == 0
 
+    def test_naver_yeti_crawler_is_not_recorded(self, client, db_session):
+        """5-1. 네이버 크롤러(Yeti) UA → row 생성 안 됨 (실사고: 2026-09-08 발견)"""
+        resp = client.post(
+            "/api/v1/visits/track",
+            json={"visitor_id": "visitor-0005a"},
+            headers={"User-Agent": "Mozilla/5.0 (compatible; Yeti/1.1; +http://naver.me/spd)"},
+        )
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert db_session.query(Visit).count() == 0
+
+    def test_empty_user_agent_is_not_recorded(self, client, db_session):
+        """5-2. User-Agent 헤더가 빈 문자열 → row 생성 안 됨 (실사고: 2026-08-26 발견)"""
+        resp = client.post(
+            "/api/v1/visits/track",
+            json={"visitor_id": "visitor-0005b"},
+            headers={"User-Agent": ""},
+        )
+
+        assert resp.status_code == status.HTTP_204_NO_CONTENT
+        assert db_session.query(Visit).count() == 0
+
     def test_short_visitor_id_rejected(self, client, db_session):
         """6. visitor_id 8자 미만 → 422, row 0개"""
         resp = client.post("/api/v1/visits/track", json={"visitor_id": "short"})
