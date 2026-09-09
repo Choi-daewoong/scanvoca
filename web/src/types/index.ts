@@ -462,3 +462,27 @@ export interface BlogDailyRunResult {
   suneung: BlogAutoPublishResult[];
   conversation: BlogAutoPublishResult[];
 }
+
+// ===== 영작 연습 카드 덱 (관리자 전용) =====
+// 백엔드 server/app/schemas/deck.py와 1:1 대응 (snake_case 유지)
+
+export interface DeckCardResponse {
+  id: number;
+  order_index: number;
+  korean_text: string;
+  english_text: string;
+}
+
+export interface DeckResponse {
+  id: number;
+  title: string;
+  card_count: number;
+  created_at: string;
+}
+
+export interface DeckDetailResponse {
+  id: number;
+  title: string;
+  created_at: string;
+  cards: DeckCardResponse[];
+}

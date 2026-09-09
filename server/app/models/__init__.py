@@ -10,5 +10,6 @@ from app.models.blog_topic import BlogTopic
 from app.models.blog_published_post import BlogPublishedPost
 from app.models.exam_passage import ExamPassage
 from app.models.conversation_clip import ConversationClip
+from app.models.deck import Deck, DeckCard
 
-__all__ = ["Base", "User", "Word", "Wordbook", "WordbookWord", "Post", "PostLike", "PointTransaction", "Visit", "BlogTopic", "BlogPublishedPost", "ExamPassage", "ConversationClip"]
+__all__ = ["Base", "User", "Word", "Wordbook", "WordbookWord", "Post", "PostLike", "PointTransaction", "Visit", "BlogTopic", "BlogPublishedPost", "ExamPassage", "ConversationClip", "Deck", "DeckCard"]

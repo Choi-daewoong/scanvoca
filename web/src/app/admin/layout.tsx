@@ -23,6 +23,7 @@ const MENU_ITEMS = [
   { href: '/admin/qna', label: 'Q&A 관리', notificationKey: 'qna_waiting' },
   { href: '/admin/faqs', label: 'FAQ 관리' },
   { href: '/admin/reports', label: '신고/모더레이션' },
+  { href: '/admin/decks', label: '영작 연습 카드' },
 ];
 
 function AdminContent({ children }: { children: React.ReactNode }) {
