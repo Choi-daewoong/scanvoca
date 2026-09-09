@@ -4,7 +4,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { deckService } from '@/services/deckService';
-import { DeckDetailResponse } from '@/types';
+import { DeckCardResponse, DeckDetailResponse } from '@/types';
+
+function shuffle<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
 
 export default function AdminDeckQuizPage() {
   const params = useParams();
@@ -13,6 +22,9 @@ export default function AdminDeckQuizPage() {
   const [deck, setDeck] = useState<DeckDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [cards, setCards] = useState<DeckCardResponse[]>([]);
+  const [isShuffled, setIsShuffled] = useState(false);
 
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -28,6 +40,7 @@ export default function AdminDeckQuizPage() {
       try {
         const data = await deckService.getDeck(id);
         setDeck(data);
+        setCards(data.cards);
       } catch (e) {
         setError(e instanceof Error ? e.message : '덱을 불러오지 못했습니다.');
       } finally {
@@ -36,9 +49,25 @@ export default function AdminDeckQuizPage() {
     })();
   }, [id]);
 
-  const cards = deck?.cards ?? [];
   const total = cards.length;
   const card = cards[index];
+
+  const handleShuffle = () => {
+    setCards((prev) => shuffle(prev));
+    setIsShuffled(true);
+    setIndex(0);
+    setRevealed(false);
+    setFinished(false);
+  };
+
+  const handleResetOrder = () => {
+    if (!deck) return;
+    setCards(deck.cards);
+    setIsShuffled(false);
+    setIndex(0);
+    setRevealed(false);
+    setFinished(false);
+  };
 
   const handleNext = useCallback(() => {
     if (index + 1 >= total) {
@@ -108,14 +137,26 @@ export default function AdminDeckQuizPage() {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="truncate text-xl font-bold text-gray-900 dark:text-gray-100">{deck.title}</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">카드 {total}개</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            카드 {total}개{isShuffled && ' · 무작위 순서'}
+          </p>
         </div>
-        <Link
-          href="/admin/decks"
-          className="shrink-0 rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
-        >
-          목록
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          {total > 1 && (
+            <button
+              onClick={isShuffled ? handleResetOrder : handleShuffle}
+              className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              {isShuffled ? '원래 순서로' : '섞기'}
+            </button>
+          )}
+          <Link
+            href="/admin/decks"
+            className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            목록
+          </Link>
+        </div>
       </div>
 
       {total === 0 ? (
@@ -126,13 +167,21 @@ export default function AdminDeckQuizPage() {
         <div className="rounded-2xl border border-gray-100 bg-white px-6 py-14 text-center dark:border-gray-800 dark:bg-gray-900">
           <p className="text-lg font-bold text-gray-900 dark:text-gray-100">연습 완료!</p>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">카드 {total}개를 모두 확인했습니다.</p>
-          <div className="mt-6 flex justify-center gap-2">
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
             <button
               onClick={handleRestart}
               className="rounded-xl bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-500"
             >
               다시 연습하기
             </button>
+            {total > 1 && (
+              <button
+                onClick={handleShuffle}
+                className="rounded-xl border border-indigo-100 bg-white px-4 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-900 dark:bg-gray-900 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+              >
+                섞어서 다시하기
+              </button>
+            )}
             <Link
               href="/admin/decks"
               className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
