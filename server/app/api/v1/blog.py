@@ -337,6 +337,7 @@ async def _publish_one(
                 "dialogue_ko": clip.dialogue_ko,
                 "video_title": clip.video_title,
                 "clip_url": clip.clip_url,
+                "context_en": clip.context_en,
             },
         )
         if result is None:
@@ -344,8 +345,9 @@ async def _publish_one(
                 published=False, reason="generation_failed", dry_run=dry_run, topic_id=topic.id
             )
         # Self-review: catch a scene-specific one-off line explained as if it were a
-        # general-purpose expression, with fabricated "usage in other situations" examples
-        # (see review_dialogue_usage_examples docstring for the live mistake that motivated
+        # general-purpose expression, with fabricated "usage in other situations" examples,
+        # or a tone mischaracterization the surrounding scene contradicts (see
+        # review_dialogue_usage_examples docstring for the live mistakes that motivated
         # this — nothing else checks prose content, only validate_auto_draft's structural
         # shape). Best-effort: a review failure keeps the unreviewed original body rather
         # than blocking publish.
@@ -354,6 +356,7 @@ async def _publish_one(
             dialogue_ko=clip.dialogue_ko,
             video_title=clip.video_title,
             body=result["body"],
+            context_en=clip.context_en,
         )
         if reviewed_body:
             result["body"] = reviewed_body
@@ -761,6 +764,7 @@ async def create_conversation_clip(
         video_title=payload.video_title,
         dialogue_en=payload.dialogue_en,
         dialogue_ko=payload.dialogue_ko,
+        context_en=payload.context_en,
         start_seconds=payload.start_seconds,
         end_seconds=payload.end_seconds,
         clip_url=payload.clip_url,
@@ -792,6 +796,7 @@ async def discover_conversation_topic(
         dialogue_en=payload.dialogue_en,
         video_title=payload.video_title,
         existing_titles=existing_titles,
+        context_en=payload.context_en,
     )
     if suggestion is None:
         return ConversationTopicDiscoverResponse(suggestion=None)
@@ -834,6 +839,7 @@ async def create_discovered_conversation_clip(
         video_title=payload.video_title,
         dialogue_en=payload.dialogue_en,
         dialogue_ko=payload.dialogue_ko,
+        context_en=payload.context_en,
         start_seconds=payload.start_seconds,
         end_seconds=payload.end_seconds,
         clip_url=payload.clip_url,

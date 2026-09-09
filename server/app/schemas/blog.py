@@ -166,6 +166,7 @@ class ConversationClipCreateRequest(BaseModel):
     video_title: str = Field(..., min_length=1, max_length=200)
     dialogue_en: str = Field(..., min_length=1)
     dialogue_ko: Optional[str] = None
+    context_en: Optional[str] = None
     start_seconds: float = Field(..., ge=0)
     end_seconds: float = Field(..., ge=0)
     clip_url: str = Field(..., min_length=1, max_length=500)
@@ -180,6 +181,7 @@ class ConversationTopicDiscoverRequest(BaseModel):
     """
     dialogue_en: str = Field(..., min_length=1)
     video_title: str = Field(..., min_length=1, max_length=200)
+    context_en: Optional[str] = None
 
 
 class ConversationTopicSuggestion(BaseModel):
@@ -205,6 +207,7 @@ class ConversationClipDiscoveredCreateRequest(BaseModel):
     video_title: str = Field(..., min_length=1, max_length=200)
     dialogue_en: str = Field(..., min_length=1)
     dialogue_ko: Optional[str] = None
+    context_en: Optional[str] = None
     start_seconds: float = Field(..., ge=0)
     end_seconds: float = Field(..., ge=0)
     clip_url: str = Field(..., min_length=1, max_length=500)
@@ -217,6 +220,7 @@ class ConversationClipResponse(BaseModel):
     video_title: str
     dialogue_en: str
     dialogue_ko: Optional[str] = None
+    context_en: Optional[str] = None
     start_seconds: float
     end_seconds: float
     clip_url: str

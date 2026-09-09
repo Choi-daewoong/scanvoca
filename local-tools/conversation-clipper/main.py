@@ -33,7 +33,7 @@ tests.
 Config (CLI flags override .env / environment):
   NAS_SOURCE_DIR, NAS_OUTPUT_DIR, BACKEND_API_BASE, NAS_TOOL_API_KEY, CLIP_URL_PREFIX
   DISCOVER_WINDOW_SIZE, DISCOVER_MAX_WINDOWS_PER_VIDEO, DISCOVER_MAX_NEW_TOPICS
-  DISCOVER_COOLDOWN_WINDOWS, CLIPPER_LOOP_SECONDS
+  DISCOVER_COOLDOWN_WINDOWS, DISCOVER_CONTEXT_LINES, CLIPPER_LOOP_SECONDS
 
 Looping (CLIPPER_LOOP_SECONDS / --loop-seconds): 0 (default) runs once and exits — the
 original behavior. > 0 runs forever instead: run, sleep that many seconds, run again.
@@ -64,6 +64,7 @@ from clipper.matching import (
     find_best_subtitle_index,
     is_english_subtitles,
     window_bounds,
+    window_context_text,
     window_dialogue_text,
     window_key,
 )
@@ -83,6 +84,7 @@ class Config:
     discover_max_new_topics: int = 5
     discover_state_file: Optional[str] = None
     discover_cooldown_windows: int = 3
+    discover_context_lines: int = 10
 
 
 # ---------------- Thin IO wrappers (monkeypatched in tests) ----------------
@@ -138,15 +140,24 @@ def post_clip(cfg: Config, payload: Dict) -> Dict:
     return resp.json()
 
 
-def fetch_topic_discovery(cfg: Config, dialogue_en: str, video_title: str) -> Optional[Dict]:
+def fetch_topic_discovery(
+    cfg: Config, dialogue_en: str, video_title: str, context_en: str = ""
+) -> Optional[Dict]:
     """POST a dialogue window to the backend; returns a {title, angle} suggestion or None
-    when the model judged the window isn't good teaching material (X-Api-Key auth)."""
+    when the model judged the window isn't good teaching material (X-Api-Key auth).
+
+    context_en (optional): surrounding scene dialogue from window_context_text, reference-
+    only — see its docstring for why a window judged on its own lines can misread tone.
+    """
     import requests  # lazy
 
+    payload = {"dialogue_en": dialogue_en, "video_title": video_title}
+    if context_en:
+        payload["context_en"] = context_en
     resp = requests.post(
         f"{cfg.backend_api_base}/admin/blog/conversation-clips/discover-topic",
         headers={"X-Api-Key": cfg.api_key},
-        json={"dialogue_en": dialogue_en, "video_title": video_title},
+        json=payload,
         timeout=60,
     )
     resp.raise_for_status()
@@ -437,7 +448,10 @@ def _try_next_window_in_video(
             save_discover_state(state_path, visited)
             continue
 
-        suggestion = fetch_topic_discovery(cfg, text, media["title"])
+        context_en = window_context_text(
+            subtitles, lo, hi, context_lines=cfg.discover_context_lines
+        )
+        suggestion = fetch_topic_discovery(cfg, text, media["title"], context_en=context_en)
         visited.add(key)
         save_discover_state(state_path, visited)
         if suggestion is None:
@@ -461,6 +475,7 @@ def _try_next_window_in_video(
             "video_title": media["title"],
             "dialogue_en": text,
             "dialogue_ko": None,
+            "context_en": context_en or None,
             "start_seconds": start,
             "end_seconds": end,
             "clip_url": clip_url,
@@ -576,6 +591,13 @@ def _load_config_from_args() -> Tuple[Config, str]:
              "filling several posts back to back.",
     )
     parser.add_argument(
+        "--discover-context-lines", type=int,
+        default=int(os.getenv("DISCOVER_CONTEXT_LINES", "10")),
+        help="Subtitle lines immediately before/after a discover window to send as "
+             "reference-only scene context (never quoted, never cut into the clip video) "
+             "so the model can judge tone/intent correctly — see window_context_text.",
+    )
+    parser.add_argument(
         "--loop-seconds", type=int,
         default=int(os.getenv("CLIPPER_LOOP_SECONDS", "0")),
         help="0 (default): run once and exit. > 0: run, sleep this many seconds, run "
@@ -604,6 +626,7 @@ def _load_config_from_args() -> Tuple[Config, str]:
         discover_max_new_topics=args.discover_max_new_topics,
         discover_state_file=args.discover_state_file,
         discover_cooldown_windows=args.discover_cooldown_windows,
+        discover_context_lines=args.discover_context_lines,
     ), args.mode, args.loop_seconds
 
 

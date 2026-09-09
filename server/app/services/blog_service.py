@@ -270,6 +270,7 @@ class BlogService:
         start_seconds: float,
         end_seconds: float,
         clip_url: str,
+        context_en: Optional[str] = None,
     ) -> ConversationClip:
         """Insert a finished clip (status='ready'). Caller checks for an existing clip first
         (returns 409) — the unique topic_id constraint is the DB-level backstop."""
@@ -278,6 +279,7 @@ class BlogService:
             video_title=video_title.strip(),
             dialogue_en=dialogue_en,
             dialogue_ko=dialogue_ko,
+            context_en=context_en,
             start_seconds=start_seconds,
             end_seconds=end_seconds,
             clip_url=clip_url.strip(),
@@ -300,6 +302,7 @@ class BlogService:
         start_seconds: float,
         end_seconds: float,
         clip_url: str,
+        context_en: Optional[str] = None,
     ) -> ConversationClip:
         """Create a conversation topic AND its clip together (dialogue-first discovery).
 
@@ -331,6 +334,7 @@ class BlogService:
             start_seconds=start_seconds,
             end_seconds=end_seconds,
             clip_url=clip_url,
+            context_en=context_en,
         )
 
     @staticmethod

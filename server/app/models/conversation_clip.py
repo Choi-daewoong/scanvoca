@@ -32,6 +32,10 @@ class ConversationClip(Base):
     video_title: Mapped[str] = mapped_column(String(200), nullable=False)
     dialogue_en: Mapped[str] = mapped_column(Text, nullable=False)
     dialogue_ko: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Reference-only surrounding subtitle lines (never quoted, not part of the clip video)
+    # so the blog-writing model can judge tone/intent without misreading a bare excerpt —
+    # see window_context_text in local-tools/conversation-clipper/clipper/matching.py.
+    context_en: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     start_seconds: Mapped[float] = mapped_column(Float, nullable=False)
     end_seconds: Mapped[float] = mapped_column(Float, nullable=False)
     clip_url: Mapped[str] = mapped_column(String(500), nullable=False)

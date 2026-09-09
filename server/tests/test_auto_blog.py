@@ -305,7 +305,8 @@ class TestReviewDialogueUsageExamples:
     )
 
     @staticmethod
-    def _run(body, payload_text, vision_model="default", dialogue_en=None, dialogue_ko=None, video_title=None):
+    def _run(body, payload_text, vision_model="default", dialogue_en=None, dialogue_ko=None,
+             video_title=None, context_en=None):
         captured = {}
 
         class FakeResponse:
@@ -324,6 +325,7 @@ class TestReviewDialogueUsageExamples:
             dialogue_ko=dialogue_ko or TestReviewDialogueUsageExamples.DIALOGUE_KO,
             video_title=video_title or TestReviewDialogueUsageExamples.VIDEO_TITLE,
             body=body,
+            context_en=context_en,
         ))
         return out, captured
 
@@ -356,6 +358,44 @@ class TestReviewDialogueUsageExamples:
         out, captured = self._run(self.ORIGINAL_BODY, "not json at all")
         assert out is None
         assert captured["calls"] == 2  # initial attempt + 1 retry (max_retries default=1)
+
+    def test_no_tone_check_prompt_when_context_en_absent(self):
+        """context_en이 없으면 기존 동작(가상 예시 검토만) 그대로 — 톤 기준 문구가
+        프롬프트에 추가되지 않는다."""
+        _, captured = self._run(self.ORIGINAL_BODY, json.dumps({
+            "corrected_body": self.ORIGINAL_BODY,
+        }))
+        assert "참고용 주변 대사" not in captured["prompt"]
+        assert "미화" not in captured["prompt"]
+
+    def test_rewrites_tone_mischaracterized_as_humorous(self):
+        """실운영 사례 재현(commercial-impact-beyond-views.md): 직장 내 갈등성 발언인데
+        주변 대사(context_en)가 스트레스·책임 회피 상황임을 보여주면, '재치있는 유머'로
+        미화한 설명을 실제 톤에 맞게 고친 결과가 그대로 반영돼야 한다."""
+        original = (
+            "## 대사 소개\n\n에밀리가 이렇게 재치있게 받아칩니다: "
+            "\"if you want to blame someone, just blame yourself.\"\n\n"
+            "## 마무리\n\n[Scan Voca 시작하기](https://scanvoca.com)"
+        )
+        corrected = (
+            "## 대사 소개\n\n에밀리가 상대방의 스트레스 토로에 방어적으로 화제를 돌리며 "
+            "이렇게 말합니다: \"if you want to blame someone, just blame yourself.\"\n\n"
+            "## 마무리\n\n[Scan Voca 시작하기](https://scanvoca.com)"
+        )
+        out, captured = self._run(
+            original, json.dumps({"corrected_body": corrected}),
+            context_en="I know that!\nBut I'm under a lot of stress.",
+        )
+        assert out == corrected
+        assert "참고용 주변 대사" in captured["prompt"]
+        assert "I know that!\nBut I'm under a lot of stress." in captured["prompt"]
+
+    def test_leaves_genuinely_humorous_tone_unchanged_when_context_supports_it(self):
+        out, _ = self._run(
+            self.ORIGINAL_BODY, json.dumps({"corrected_body": self.ORIGINAL_BODY}),
+            context_en="Everyone in the room bursts out laughing.",
+        )
+        assert out == self.ORIGINAL_BODY
 
 
 class TestReflowExamPassageText:
@@ -1699,10 +1739,11 @@ class TestConversationAutoPublish:
         db_session.refresh(t)
         return t
 
-    def _seed_clip(self, db_session, topic_id, status="ready"):
+    def _seed_clip(self, db_session, topic_id, status="ready", context_en=None):
         c = ConversationClip(
             topic_id=topic_id, video_title="Friends S1E1",
             dialogue_en="How you doin'?", dialogue_ko="잘 지내?",
+            context_en=context_en,
             start_seconds=10.0, end_seconds=15.0,
             clip_url="https://clips.scanvoca.com/friends-1.mp4", status=status,
         )
@@ -1753,6 +1794,47 @@ class TestConversationAutoPublish:
         db_session.expire_all()
         assert db_session.get(ConversationClip, clip.id).status == "ready"
         assert db_session.get(BlogTopic, topic.id).status == "unused"
+
+    def test_dry_run_passes_context_en_to_generation_and_review(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """실운영 사례(commercial-impact-beyond-views.md) 재발 방지: 클립에 저장된
+        context_en이 generate_blog_post(source_dialogue)와 review_dialogue_usage_examples
+        양쪽에 실제로 전달돼야 톤 판단이 정확해진다."""
+        topic = self._seed_topic(db_session)
+        self._seed_clip(
+            db_session, topic.id, status="ready",
+            context_en="I know that!\nBut I'm under a lot of stress.",
+        )
+        captured = {}
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False,
+                                source_passage=None, source_dialogue=None):
+            captured["source_dialogue"] = source_dialogue
+            return {
+                "slug": "daily-howyoudoin", "title": "일상회화 표현", "description": "설명",
+                "category": "일상영어", "tags": ["회화"], "body": SUNEUNG_BODY,
+            }
+
+        async def fake_review(self, dialogue_en, dialogue_ko, video_title, body, context_en=None):
+            captured["review_context_en"] = context_en
+            return None
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "review_dialogue_usage_examples", fake_review)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=conversation&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.status_code == status.HTTP_200_OK
+        assert captured["source_dialogue"]["context_en"] == (
+            "I know that!\nBut I'm under a lot of stress."
+        )
+        assert captured["review_context_en"] == "I know that!\nBut I'm under a lot of stress."
 
     def test_real_publish_marks_clip_published(self, client, admin_auth_headers, db_session, monkeypatch):
         monkeypatch.setattr(settings, "GITHUB_TOKEN", "test-token")
@@ -1805,7 +1887,7 @@ class TestConversationAutoPublish:
                         "[Scan Voca 시작하기](https://scanvoca.com)",
             }
 
-        async def fake_review(self, dialogue_en, dialogue_ko, video_title, body):
+        async def fake_review(self, dialogue_en, dialogue_ko, video_title, body, **_):
             return "## 왜 이 대사가 웃길까\n\n원본 장면 맥락에서만 통하는 말장난입니다.\n\n" \
                    "[Scan Voca 시작하기](https://scanvoca.com)"
 
@@ -1907,6 +1989,29 @@ class TestConversationClipEndpoints:
         assert data["status"] == "ready"
         assert data["topic_id"] == topic.id
 
+    def test_create_clip_stores_context_en(self, client, db_session, monkeypatch):
+        """window_context_text가 보내는 참고용 주변 대사(context_en)가 저장·응답에
+        실려야 나중에 발행(generate_blog_post/review) 단계에서 톤 판단에 쓸 수 있다."""
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+        topic = self._seed_conv_topic(db_session)
+        resp = client.post(
+            "/api/v1/admin/blog/conversation-clips",
+            json={
+                "topic_id": topic.id, "video_title": "Friends", "dialogue_en": "Hi there",
+                "dialogue_ko": "안녕", "context_en": "[이전 대사]\nHey\n\n[이후 대사]\nBye",
+                "start_seconds": 5.0, "end_seconds": 9.5,
+                "clip_url": "https://clips.scanvoca.com/x2.mp4",
+            },
+            headers=self.NAS_HEADERS,
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+        data = resp.json()
+        assert data["context_en"] == "[이전 대사]\nHey\n\n[이후 대사]\nBye"
+
+        db_session.expire_all()
+        clip = db_session.get(ConversationClip, data["id"])
+        assert clip.context_en == "[이전 대사]\nHey\n\n[이후 대사]\nBye"
+
     def test_create_clip_duplicate_409(self, client, db_session, monkeypatch):
         monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
         topic = self._seed_conv_topic(db_session)
@@ -1985,11 +2090,13 @@ class TestConversationTopicDiscovery:
     DISCOVER_URL = "/api/v1/admin/blog/conversation-clips/discover-topic"
     DISCOVERED_URL = "/api/v1/admin/blog/conversation-clips/discovered"
 
-    def _discover_payload(self):
-        return {
+    def _discover_payload(self, **overrides):
+        payload = {
             "dialogue_en": "You're totally off the hook for tonight.",
             "video_title": "Friends S01E05",
         }
+        payload.update(overrides)
+        return payload
 
     def _discovered_payload(self, **overrides):
         payload = {
@@ -2023,7 +2130,7 @@ class TestConversationTopicDiscovery:
     def test_discover_returns_suggestion(self, client, monkeypatch):
         monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
 
-        async def fake_suggest(self, dialogue_en, video_title, existing_titles=None):
+        async def fake_suggest(self, dialogue_en, video_title, existing_titles=None, **_):
             return {"title": "제안 제목", "angle": "제안 앵글"}
 
         monkeypatch.setattr(
@@ -2039,7 +2146,7 @@ class TestConversationTopicDiscovery:
         """쓸 만한 표현이 없으면 에러가 아니라 200 + suggestion=null (정상 결과)."""
         monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
 
-        async def fake_suggest(self, dialogue_en, video_title, existing_titles=None):
+        async def fake_suggest(self, dialogue_en, video_title, existing_titles=None, **_):
             return None
 
         monkeypatch.setattr(
@@ -2063,7 +2170,7 @@ class TestConversationTopicDiscovery:
         db_session.commit()
         captured = {}
 
-        async def fake_suggest(self, dialogue_en, video_title, existing_titles=None):
+        async def fake_suggest(self, dialogue_en, video_title, existing_titles=None, **_):
             captured["titles"] = existing_titles
             return None
 
@@ -2075,6 +2182,44 @@ class TestConversationTopicDiscovery:
         )
         assert "기존 회화 주제" in captured["titles"]
         assert "토익 주제" not in captured["titles"]
+
+    def test_discover_passes_context_en_to_model(self, client, monkeypatch):
+        """window_context_text가 보낸 참고용 주변 대사가 톤 판단을 위해 실제로
+        suggest_conversation_topic_from_dialogue까지 전달돼야 한다."""
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+        captured = {}
+
+        async def fake_suggest(self, dialogue_en, video_title, existing_titles=None,
+                                context_en=None):
+            captured["context_en"] = context_en
+            return None
+
+        monkeypatch.setattr(
+            GeminiService, "suggest_conversation_topic_from_dialogue", fake_suggest
+        )
+        client.post(
+            self.DISCOVER_URL,
+            json=self._discover_payload(context_en="[이전 대사]\nWe need to talk."),
+            headers=self.NAS_HEADERS,
+        )
+        assert captured["context_en"] == "[이전 대사]\nWe need to talk."
+
+    def test_discover_context_en_defaults_to_none(self, client, monkeypatch):
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+        captured = {}
+
+        async def fake_suggest(self, dialogue_en, video_title, existing_titles=None,
+                                context_en=None):
+            captured["context_en"] = context_en
+            return None
+
+        monkeypatch.setattr(
+            GeminiService, "suggest_conversation_topic_from_dialogue", fake_suggest
+        )
+        client.post(
+            self.DISCOVER_URL, json=self._discover_payload(), headers=self.NAS_HEADERS
+        )
+        assert captured["context_en"] is None
 
     # ----- /discovered -----
 
@@ -2107,6 +2252,19 @@ class TestConversationTopicDiscovery:
         assert topic.category == "일상영어"
         assert topic.pipeline == "conversation"
         assert topic.status == "unused"
+
+    def test_discovered_stores_context_en(self, client, db_session, monkeypatch):
+        monkeypatch.setattr(settings, "NAS_TOOL_API_KEY", "naskey")
+        payload = self._discovered_payload(
+            context_en="[이전 대사]\nI know that!\n\n[이후 대사]\nBut I'm under a lot of stress.",
+            clip_url="https://clips.scanvoca.com/off-the-hook-ctx.mp4",
+        )
+        resp = client.post(self.DISCOVERED_URL, json=payload, headers=self.NAS_HEADERS)
+        assert resp.status_code == status.HTTP_201_CREATED
+        assert resp.json()["context_en"] == payload["context_en"]
+
+        clip = db_session.query(ConversationClip).filter_by(id=resp.json()["id"]).first()
+        assert clip.context_en == payload["context_en"]
 
     def test_discovered_topic_is_publishable_immediately(self, client, db_session, monkeypatch):
         """생성 직후 conversation 자동발행 셀렉터가 바로 집어갈 수 있어야 한다
@@ -2175,7 +2333,7 @@ class TestSuggestConversationTopicFromDialogue:
     """GeminiService.suggest_conversation_topic_from_dialogue 단위 테스트 (모델 mock)."""
 
     @staticmethod
-    def _run(payload_text, existing_titles=None):
+    def _run(payload_text, existing_titles=None, context_en=None):
         captured = {}
 
         class FakeResponse:
@@ -2192,6 +2350,7 @@ class TestSuggestConversationTopicFromDialogue:
             dialogue_en="You're totally off the hook.",
             video_title="Friends S01E05",
             existing_titles=existing_titles,
+            context_en=context_en,
         ))
         return out, captured.get("prompt", "")
 
@@ -2233,6 +2392,23 @@ class TestSuggestConversationTopicFromDialogue:
         }))
         assert "전제해야만 성립" in prompt
         assert "has_expression을 false" in prompt
+
+    def test_context_en_included_as_reference_only_when_given(self):
+        """실운영 사례: 클립 창(window) 대사만으로는 갈등/유머 여부를 판단할 수 없어
+        직장 내 갈등성 발언이 유머로 잘못 소개됐다. context_en이 주어지면 프롬프트에
+        '인용 금지' 명시와 함께 포함돼야 한다."""
+        _, prompt = self._run(
+            json.dumps({"has_expression": True, "title": "제목", "angle": "앵글"}),
+            context_en="I know that! But I'm under a lot of stress.",
+        )
+        assert "I know that! But I'm under a lot of stress." in prompt
+        assert "인용 금지" in prompt
+
+    def test_no_context_block_when_context_en_absent(self):
+        _, prompt = self._run(json.dumps({
+            "has_expression": True, "title": "제목", "angle": "앵글",
+        }))
+        assert "참고용 주변 대사" not in prompt
 
     def test_profanity_in_title_rejected(self):
         """실운영 버그: 프롬프트 지시에도 불구하고 실제로 "Fuck realistic"을 그대로 인용한
@@ -2475,6 +2651,56 @@ class TestSourcePassagePromptSafety:
         })
         assert "2025학년도 수능 영어" in prompt
         assert "번 기출문제" not in prompt
+
+
+class TestSourceDialoguePromptSafety:
+    """generate_blog_post(source_dialogue=...)의 프롬프트 구성 — 실운영 사례
+    (commercial-impact-beyond-views.md: 클립 창 대사만으로 직장 갈등성 발언이 유머로
+    잘못 소개됨)로 추가된 context_en(참고용 주변 대사) 처리를 검증한다."""
+
+    @staticmethod
+    def _run_generate(source_dialogue):
+        captured = {}
+
+        class FakeResponse:
+            text = json.dumps({
+                "slug": "x", "title": "t", "description": "d", "category": "일상영어",
+                "tags": [], "body": "## 첫째\n\n내용\n\n## 결국 홍보\n\n[Scan Voca](https://scanvoca.com)",
+            })
+
+        class FakeModel:
+            def generate_content(self, prompt, generation_config=None):
+                captured["prompt"] = prompt
+                return FakeResponse()
+
+        service = GeminiService.__new__(GeminiService)
+        service.model = FakeModel()
+        asyncio.run(service.generate_blog_post(
+            title="t", angle="a", source_dialogue=source_dialogue,
+        ))
+        return captured["prompt"]
+
+    def test_context_en_included_as_reference_only_when_present(self):
+        prompt = self._run_generate({
+            "dialogue_en": "If you want to blame someone, just blame yourself.",
+            "dialogue_ko": "누군가를 탓하고 싶다면 당신 자신을 탓하세요.",
+            "video_title": "Emily in Paris S05E04",
+            "clip_url": "https://clips.scanvoca.com/x.mp4",
+            "context_en": "I know that!\nBut I'm under a lot of stress.",
+        })
+        assert "I know that!\nBut I'm under a lot of stress." in prompt
+        assert "인용·설명 금지" in prompt
+        assert "미화하지 마세요" in prompt
+
+    def test_no_context_block_when_context_en_absent(self):
+        prompt = self._run_generate({
+            "dialogue_en": "You're totally off the hook.",
+            "dialogue_ko": "완전히 봐줄게.",
+            "video_title": "Friends S01E05",
+            "clip_url": "https://clips.scanvoca.com/x.mp4",
+        })
+        assert "참고용 주변 대사" not in prompt
+        assert "None" not in prompt
 
 
 # =============================================================================

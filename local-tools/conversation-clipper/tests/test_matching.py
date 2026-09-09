@@ -20,6 +20,7 @@ from clipper.matching import (  # noqa: E402
     is_english_subtitles,
     build_dialogue_windows,
     window_dialogue_text,
+    window_context_text,
     window_bounds,
     window_key,
 )
@@ -409,3 +410,38 @@ class TestDiscoverWindows:
         assert window_key("Emily in Paris S05E01", 0, 5) == "Emily in Paris S05E01::0-5"
         assert window_key("Emily in Paris S05E01", 0, 5) != window_key("Finding Dory", 0, 5)
         assert window_key("Finding Dory", 0, 5) != window_key("Finding Dory", 6, 11)
+
+
+class TestWindowContextText:
+    """실운영 사례: commercial-impact-beyond-views.md — 클립 창(window) 대사만 보고 글을
+    쓰다 보니, 직장 내 갈등성 발언("blame yourself")이 아무 장면 맥락 없이 "재치있는
+    유머"로 잘못 소개됐다. window 앞뒤 대사를 참고용으로 넘겨 톤 판단을 돕는다."""
+
+    LINES = [
+        {"text": f"Line {i}"} for i in range(20)
+    ]
+
+    def test_returns_before_and_after_labeled_sections(self):
+        out = window_context_text(self.LINES, lo=8, hi=10, context_lines=3)
+        assert out == (
+            "[이전 대사]\nLine 5\nLine 6\nLine 7\n\n"
+            "[이후 대사]\nLine 11\nLine 12\nLine 13"
+        )
+
+    def test_clamps_at_start_of_video_one_sided(self):
+        out = window_context_text(self.LINES, lo=0, hi=1, context_lines=5)
+        assert "[이전 대사]" not in out
+        assert out.startswith("[이후 대사]\nLine 2")
+
+    def test_clamps_at_end_of_video_one_sided(self):
+        out = window_context_text(self.LINES, lo=18, hi=19, context_lines=5)
+        assert "[이후 대사]" not in out
+        assert out.startswith("[이전 대사]")
+
+    def test_empty_when_window_spans_whole_video(self):
+        assert window_context_text(self.LINES, lo=0, hi=19, context_lines=5) == ""
+
+    def test_skips_blank_lines(self):
+        subs = [{"text": "Hey"}, {"text": ""}, {"text": "there"}, {"text": "TARGET"}]
+        out = window_context_text(subs, lo=3, hi=3, context_lines=5)
+        assert out == "[이전 대사]\nHey\nthere"

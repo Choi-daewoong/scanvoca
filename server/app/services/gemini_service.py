@@ -298,8 +298,11 @@ Important:
         writes an explainer that quotes the passage verbatim (never invents one) and appends
         the original passage/question/answer/explanation + a KICE source line at the bottom.
         source_dialogue (optional, conversation pipeline): a real dialogue clip
-        {dialogue_en, dialogue_ko, video_title, clip_url}. When given, the model quotes the
-        dialogue and explains its expressions/vocabulary.
+        {dialogue_en, dialogue_ko, video_title, clip_url, context_en}. When given, the model
+        quotes the dialogue and explains its expressions/vocabulary. context_en (optional) is
+        reference-only surrounding scene dialogue — never quoted, used only so the model
+        judges tone/intent (e.g. playful vs. defensive) correctly instead of guessing cold
+        from the bare excerpt (see window_context_text in local-tools/conversation-clipper).
         Retries on malformed JSON (mirrors get_word_definition) - the model occasionally
         breaks JSON validity in a ~1,500-2,500 char Korean body, and a retry usually fixes it.
         """
@@ -512,11 +515,19 @@ Important:
         dialogue_block = ""
         dialogue_instruction = ""
         if source_dialogue:
+            context_en = source_dialogue.get("context_en")
+            context_dialogue_block = ""
+            if context_en:
+                context_dialogue_block = (
+                    f'\n[참고용 주변 대사 — 인용·설명 금지, 장면의 분위기·긴장도·인물 관계를 '
+                    f'올바르게 파악하는 용도로만 참고할 것]\n"""{context_en}"""\n'
+                )
             dialogue_block = (
                 "\n\n[활용할 실제 대사 클립 — 아래 대사를 인용해 표현을 설명할 것]\n"
                 f'영상: {source_dialogue.get("video_title", "")}\n'
                 f'영어 대사(dialogue_en):\n"""{source_dialogue.get("dialogue_en", "")}"""\n'
                 f'한국어 번역(dialogue_ko):\n"""{source_dialogue.get("dialogue_ko", "") or "(없음)"}"""\n'
+                f'{context_dialogue_block}'
             )
             dialogue_instruction = (
                 "\n11. 위 [활용할 실제 대사 클립]의 영어 대사를 인용하며, 그 안에 등장하는 유용한 "
@@ -526,6 +537,13 @@ Important:
                 "영상 제목에 명시된 경우에만 언급하고, 그렇지 않다면 관계를 단정하지 마세요 — "
                 "실제 장면과 다른 관계를 지어내 설명하면 원본 영상과 어긋나는 글이 됩니다."
             )
+            if context_en:
+                dialogue_instruction += (
+                    " [참고용 주변 대사]가 있다면 그것을 인용·요약하지 말고, 오직 이 대사의 톤(예: "
+                    "장난스러운 농담인지, 방어적/책임회피성 발언인지, 진지한 갈등인지)을 정확히 "
+                    "판단하는 데만 활용하세요 — 주변 맥락과 어긋나게 무조건 '유머러스하다', "
+                    "'재치있다'처럼 톤을 미화하지 마세요."
+                )
 
         prompt = f"""당신은 영어 학습 서비스 "Scan Voca"의 콘텐츠 마케터입니다. 중·고등학생과 영어 학습자를 대상으로 하는 한국어 블로그 글을 작성하세요.
 
@@ -828,13 +846,15 @@ Important:
         dialogue_ko: Optional[str],
         video_title: Optional[str],
         body: str,
+        context_en: Optional[str] = None,
         retry_count: int = 0,
         max_retries: int = 1,
     ) -> Optional[str]:
         """
         Critically re-check a conversation-pipeline post's explanation of the quoted dialogue
         before publish, correcting body text that misrepresents a scene-specific line as a
-        general-purpose expression.
+        general-purpose expression, or that mischaracterizes the line's tone in a way the
+        surrounding scene contradicts.
 
         generate_blog_post(source_dialogue=...) is told to explain "실제 회화에서 어떻게
         쓰는지" but has no guardrail against overgeneralizing a one-off line whose humor
@@ -847,6 +867,16 @@ Important:
         stock comeback phrase, published with nothing catching it (validate_auto_draft only
         checks post-level structure like length/category; there is no equivalent of
         review_practice_questions for this pipeline's prose).
+
+        context_en (optional): reference-only surrounding subtitle lines from
+        window_context_text, not part of the quotable dialogue — lets this review also catch
+        a second, related failure mode: the body confidently framing a line as "재치있는
+        유머"/"유머러스한 받아치기" when the surrounding scene reads as a tense or defensive
+        exchange instead (live case: commercial-impact-beyond-views.md described a workplace
+        blame-deflection line — "if you want to blame someone, just blame yourself" — as a
+        witty comeback, with nothing in the reviewed window itself to contradict that
+        reading). When context_en isn't given, this tone check is skipped — only the
+        fabricated-usage-example check runs, same as before this was added.
 
         Reviews on the stronger flash model (vision_model, not the flash-lite generator) so
         the same blind spot that produced the mistake doesn't just rubber-stamp itself.
@@ -862,6 +892,22 @@ Important:
             print("Gemini API key not configured")
             return None
 
+        context_block = ""
+        tone_criterion = ""
+        if context_en:
+            context_block = (
+                f'[참고용 주변 대사 — 인용 금지, 장면의 분위기·긴장도 파악 용도]\n'
+                f'"""{context_en}"""\n\n'
+            )
+            tone_criterion = (
+                "5. [참고용 주변 대사]를 참고했을 때, 초안이 이 대사의 톤을 실제 장면과 다르게 "
+                "미화하지 않았는지도 확인하세요 — 예를 들어 주변 맥락이 갈등·스트레스·책임 회피 "
+                "상황을 보여주는데, 초안이 이를 '재치있는 유머', '유머러스한 받아치기'처럼 밝고 "
+                "긍정적인 톤으로만 설명하고 있다면, 그 표현을 실제 장면에 맞는 톤(예: 방어적으로 "
+                "화제를 돌리는 발언)으로 고쳐 쓰세요. 반대로 주변 맥락이 실제로 가벼운 농담·장난 "
+                "분위기라면 기존 설명을 그대로 두세요.\n"
+            )
+
         prompt = (
             "당신은 영어 표현 콘텐츠 검수자입니다. 아래는 실제 영상 대사를 소재로 한 한국어 "
             "블로그 글 초안입니다. 이 대사가 특정 장면의 설정이 있어야만 성립하는 말장난·농담인데, "
@@ -871,6 +917,7 @@ Important:
             f'영상: {video_title or "(제목 없음)"}\n'
             f'영어 대사(dialogue_en): """{dialogue_en}"""\n'
             f'한국어 번역(dialogue_ko): """{dialogue_ko or "(없음)"}"""\n\n'
+            f'{context_block}'
             f'[검토할 초안 본문(body)]\n"""{body}"""\n\n'
             "판단 기준:\n"
             "1. 이 표현이 실제로 다양한 상황에 그대로 옮겨 써도 의미가 통하는 진짜 관용구/일반 "
@@ -884,7 +931,8 @@ Important:
             "3. 전자(진짜 일반 표현)이거나 이미 지어낸 가상 상황 없이 정확하게 설명하고 있다면, "
             "본문을 전혀 수정하지 말고 원본 그대로 반환하세요.\n"
             "4. 수정하더라도 본문의 나머지 구조(다른 소제목, 마지막 Scan Voca 홍보 섹션, 문체)는 "
-            "그대로 유지하고, 문제가 된 부분만 고치세요.\n\n"
+            "그대로 유지하고, 문제가 된 부분만 고치세요.\n"
+            f"{tone_criterion}\n"
             "아래 JSON 형식으로만 반환하세요. 다른 텍스트는 포함하지 마세요:\n"
             '{"corrected_body": "본문 마크다운 전체(수정했다면 반영된 최종 버전, 수정하지 않았다면 '
             '원본과 동일한 문자열)"}'
@@ -933,6 +981,7 @@ Important:
                     dialogue_ko,
                     video_title,
                     body,
+                    context_en=context_en,
                     retry_count=retry_count + 1,
                     max_retries=max_retries,
                 )
@@ -1294,6 +1343,7 @@ Important:
         dialogue_en: str,
         video_title: str,
         existing_titles: Optional[List[str]] = None,
+        context_en: Optional[str] = None,
     ) -> Optional[Dict[str, str]]:
         """Propose a blog topic FROM a real subtitle excerpt (dialogue-first discovery).
 
@@ -1308,6 +1358,14 @@ Important:
         the prompt states the "no expression -> say so" escape explicitly and the caller is
         expected to just move on to the next excerpt. Also None on any API/parse error — the
         caller has thousands of other excerpts, so a retry here buys nothing.
+
+        context_en (optional): reference-only surrounding subtitle lines from
+        window_context_text (local-tools/conversation-clipper), NOT part of the quotable
+        excerpt — passed only so the model can gauge whether a line's tone (e.g. "playful
+        banter" vs. "tense/defensive") is actually supported by the scene, instead of
+        guessing from the bare excerpt alone (live case: a workplace deflection line got
+        judged and later written up as "humorous" with nothing to contradict that reading —
+        see review_dialogue_usage_examples for where the same gap showed up downstream).
         """
         if self.model is None:
             print("Gemini API key not configured")
@@ -1318,6 +1376,17 @@ Important:
             lines = "\n".join(f'- "{t}"' for t in existing_titles)
             existing_block = f"\n[이미 등록된 주제 (중복 금지)]\n{lines}\n"
 
+        context_block = ""
+        if context_en:
+            context_block = (
+                f"\n[참고용 주변 대사 — 인용 금지, 장면의 분위기·인물 관계·긴장도를 "
+                f"파악하는 용도로만 참고할 것]\n{context_en}\n"
+                f"위 [참고용 주변 대사]는 그 장면이 실제로 유쾌한 농담인지 아니면 갈등·긴장 "
+                f"상황인지 등 분위기를 파악하는 데만 쓰고, angle에 그 내용을 인용하거나 직접 "
+                f"언급하지 마세요 — 어디까지나 [대사 구간] 자체를 정확한 톤으로 소개하기 위한 "
+                f"배경 판단 자료입니다.\n"
+            )
+
         prompt = f"""당신은 영어 학습 서비스 "Scan Voca"의 콘텐츠 전략가입니다.
 아래는 실제 영상에서 그대로 가져온 대사 구간입니다. 이 대사가 일상 영어회화 학습자에게 가르칠 만한 표현을 담고 있는지 판단하세요.
 
@@ -1326,7 +1395,7 @@ Important:
 
 [대사 구간 (원문 그대로)]
 {dialogue_en}
-{existing_block}
+{context_block}{existing_block}
 이 서비스의 타겟 사용자는 중·고등학생입니다 — 판단 시 반드시 고려하세요.
 
 판단 기준:

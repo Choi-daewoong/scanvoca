@@ -108,6 +108,43 @@ def window_dialogue_text(subtitles: List[Dict], lo: int, hi: int) -> str:
     return "\n".join(ln for ln in lines if ln)
 
 
+def window_context_text(
+    subtitles: List[Dict], lo: int, hi: int, context_lines: int = 10
+) -> str:
+    """Reference-only scene context surrounding a discover-mode [lo, hi] window.
+
+    discover mode's window IS the quotable clip — both the AI's "is this worth a post"
+    judgment (discover-topic) and the blog-writing prompt see only window_dialogue_text's
+    lo..hi lines, with nothing about what's happening in the scene just before or after.
+    A live case this produced: a post about a line from a workplace argument ("blame
+    yourself") got written up as the speaker "재치있게/유머러스하게" deflecting, when
+    read cold the line has no way to signal whether the scene is playful banter or a
+    tense dispute — that framing depends on the surrounding conversation, not the quoted
+    lines alone.
+
+    Returns up to `context_lines` non-blank lines immediately before `lo` and immediately
+    after `hi`, each side labeled separately so a prompt can tell callers apart from the
+    quotable window text and instruct the model to use this for tone/intent only, never to
+    quote from it. Either side is naturally empty when the window sits at the very start or
+    end of the video's subtitles — no error, just a one-sided (or empty) result. Returns ""
+    when both sides are empty (nothing to add).
+    """
+    before_lo = max(0, lo - context_lines)
+    before_lines = [subtitles[i].get("text", "").strip() for i in range(before_lo, lo)]
+    before_text = "\n".join(ln for ln in before_lines if ln)
+
+    after_hi = min(len(subtitles) - 1, hi + context_lines)
+    after_lines = [subtitles[i].get("text", "").strip() for i in range(hi + 1, after_hi + 1)]
+    after_text = "\n".join(ln for ln in after_lines if ln)
+
+    parts = []
+    if before_text:
+        parts.append(f"[이전 대사]\n{before_text}")
+    if after_text:
+        parts.append(f"[이후 대사]\n{after_text}")
+    return "\n\n".join(parts)
+
+
 def window_bounds(
     subtitles: List[Dict], lo: int, hi: int, pad: float = 0.3, min_start: float = 0.0
 ) -> Tuple[float, float]:

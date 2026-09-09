@@ -71,7 +71,7 @@ class TestDiscoverStatePersistence:
 
         calls = []
 
-        def fake_discovery(cfg, dialogue_en, video_title):
+        def fake_discovery(cfg, dialogue_en, video_title, **_):
             calls.append(video_title)
             return {"title": "제목", "angle": "앵글"}
 
@@ -100,7 +100,7 @@ class TestDiscoverStatePersistence:
         monkeypatch.setattr(main, "load_subtitles", lambda srt: _subs())
         monkeypatch.setattr(main, "is_english_subtitles", lambda subs: True)
 
-        def fake_discovery(cfg, dialogue_en, video_title):
+        def fake_discovery(cfg, dialogue_en, video_title, **_):
             return {"title": f"{video_title} 표현", "angle": "앵글"}
 
         monkeypatch.setattr(main, "fetch_topic_discovery", fake_discovery)
@@ -140,7 +140,7 @@ class TestDiscoverRoundRobinAndCooldown:
         monkeypatch.setattr(main, "is_english_subtitles", lambda subs: True)
         monkeypatch.setattr(
             main, "fetch_topic_discovery",
-            lambda cfg, dialogue_en, video_title: {"title": f"{video_title} 표현", "angle": "앵글"},
+            lambda cfg, dialogue_en, video_title, **_: {"title": f"{video_title} 표현", "angle": "앵글"},
         )
         monkeypatch.setattr(main, "run_ffmpeg", lambda cmd: 0)
         monkeypatch.setattr(
@@ -161,7 +161,7 @@ class TestDiscoverRoundRobinAndCooldown:
         monkeypatch.setattr(main, "is_english_subtitles", lambda subs: True)
         monkeypatch.setattr(
             main, "fetch_topic_discovery",
-            lambda cfg, dialogue_en, video_title: {"title": "표현", "angle": "앵글"},
+            lambda cfg, dialogue_en, video_title, **_: {"title": "표현", "angle": "앵글"},
         )
         monkeypatch.setattr(main, "run_ffmpeg", lambda cmd: 0)
         monkeypatch.setattr(
@@ -218,7 +218,7 @@ class TestPostDiscoveredClip409Handling:
         monkeypatch.setattr(main, "run_ffmpeg", lambda cmd: 0)
         monkeypatch.setattr(
             main, "fetch_topic_discovery",
-            lambda cfg, dialogue_en, video_title: {"title": "제목", "angle": "앵글"},
+            lambda cfg, dialogue_en, video_title, **_: {"title": "제목", "angle": "앵글"},
         )
 
         calls = {"n": 0}
@@ -236,3 +236,65 @@ class TestPostDiscoveredClip409Handling:
 
         assert calls["n"] == 2  # 첫 구간(409로 스킵) + 두 번째 구간(성공)까지 호출됨
         assert len(created) == 1  # 크래시 없이, 성공한 구간만 결과에 포함
+
+
+class TestDiscoverPassesSurroundingContext:
+    """실운영 사례: commercial-impact-beyond-views.md — 클립 창(window) 대사만 보고
+    글을 쓰다 보니 직장 내 갈등성 발언이 "재치있는 유머"로 잘못 소개됐다. window
+    앞뒤 대사(window_context_text)가 discover-topic 판단과 클립 등록 페이로드 양쪽에
+    실제로 전달되는지 확인한다."""
+
+    def test_context_en_passed_to_fetch_topic_discovery_and_posted_payload(
+        self, tmp_path, monkeypatch
+    ):
+        media = [_media("Emily in Paris S05E04", num_lines=18)]
+        monkeypatch.setattr(main, "find_source_media", lambda source_dir: media)
+        monkeypatch.setattr(main, "load_subtitles", lambda srt: _subs(18))
+        monkeypatch.setattr(main, "is_english_subtitles", lambda subs: True)
+        monkeypatch.setattr(main, "run_ffmpeg", lambda cmd: 0)
+
+        captured = {}
+
+        def fake_discovery(cfg, dialogue_en, video_title, context_en=""):
+            captured["context_en"] = context_en
+            return {"title": "제목", "angle": "앵글"}
+
+        monkeypatch.setattr(main, "fetch_topic_discovery", fake_discovery)
+        monkeypatch.setattr(
+            main, "post_discovered_clip", lambda cfg, payload: {"id": 1, **payload}
+        )
+
+        cfg = _cfg(
+            tmp_path, discover_window_size=6, discover_max_new_topics=1,
+            discover_context_lines=5,
+        )
+        created = main.discover(cfg)
+
+        # window 0 is lines 0-5, so context is one-sided: only "after" (lines 6-10) exists.
+        assert "[이전 대사]" not in captured["context_en"]
+        assert "[이후 대사]" in captured["context_en"]
+        assert "real dialogue line number 6" in captured["context_en"]
+        assert created[0]["context_en"] == captured["context_en"]
+
+    def test_context_en_is_none_when_window_has_no_surrounding_lines(
+        self, tmp_path, monkeypatch
+    ):
+        """window가 영상의 대사 전체를 차지하면(짧은 클립), 참고할 앞뒤 맥락이 없으므로
+        context_en은 빈 문자열이 아니라 None으로 전송돼야 한다(선택 필드 스키마와 일치)."""
+        media = [_media("Short Clip", num_lines=6)]
+        monkeypatch.setattr(main, "find_source_media", lambda source_dir: media)
+        monkeypatch.setattr(main, "load_subtitles", lambda srt: _subs(6))
+        monkeypatch.setattr(main, "is_english_subtitles", lambda subs: True)
+        monkeypatch.setattr(main, "run_ffmpeg", lambda cmd: 0)
+        monkeypatch.setattr(
+            main, "fetch_topic_discovery",
+            lambda cfg, dialogue_en, video_title, **_: {"title": "제목", "angle": "앵글"},
+        )
+        monkeypatch.setattr(
+            main, "post_discovered_clip", lambda cfg, payload: {"id": 1, **payload}
+        )
+
+        cfg = _cfg(tmp_path, discover_window_size=6, discover_max_new_topics=1)
+        created = main.discover(cfg)
+
+        assert created[0]["context_en"] is None
