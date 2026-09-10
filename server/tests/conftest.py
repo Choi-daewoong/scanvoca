@@ -27,6 +27,7 @@ from app.core.database import get_db
 from app.models.base import Base
 from app.core.config import settings
 from app.services.blog_service import BlogService
+from app.services import email_service
 
 # 테스트용 In-Memory SQLite 데이터베이스
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -77,6 +78,24 @@ def _no_real_search_engine_pings(monkeypatch):
         return None
 
     monkeypatch.setattr(BlogService, "notify_search_engines", staticmethod(_noop))
+
+
+@pytest.fixture(autouse=True)
+def _no_real_emails(monkeypatch):
+    """server/.env holds real Gmail SMTP credentials (same file used for local dev), and
+    nothing in this conftest overrides SMTP_USER/SMTP_PASSWORD the way DATABASE_URL is
+    overridden above — so any test that exercises a code path calling
+    _send_email_sync/_send_plain_email_sync (password-reset OTP, and notably
+    run_auto_publish_daily's summary email) sends a REAL email to the real
+    ADMIN_NOTIFY_EMAIL every time pytest runs. Live incident: test_end_to_end_*_publishes_*
+    in test_auto_blog.py drive run-daily through the real endpoint without mocking the
+    summary email, so running the full suite repeatedly in one day sent 20-30 real
+    "[Scan Voca] 자동 블로그 발행 결과" emails (with test fixture slugs like
+    'suneung-daily-e2e') straight to the operator's inbox. Autoused for every test, same
+    pattern as _no_real_search_engine_pings; a test that wants to verify a send happened
+    can override this with its own monkeypatch.setattr on the same email_service attribute."""
+    monkeypatch.setattr(email_service, "_send_email_sync", lambda *a, **k: None)
+    monkeypatch.setattr(email_service, "_send_plain_email_sync", lambda *a, **k: None)
 
 
 @pytest.fixture(scope="function")
