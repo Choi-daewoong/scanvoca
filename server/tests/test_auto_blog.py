@@ -2465,7 +2465,8 @@ class TestSuggestTopicFromPassage:
     """GeminiService.suggest_topic_from_passage — 기출 지문에서 주제를 뽑는 passage-first 발굴."""
 
     @staticmethod
-    def _run(payload_text, existing_titles=None, choices=None, answer=None):
+    def _run(payload_text, existing_titles=None, choices=None, answer=None,
+             problem_number=None, tags=None):
         captured = {}
 
         class FakeResponse:
@@ -2484,6 +2485,8 @@ class TestSuggestTopicFromPassage:
             choices=choices,
             answer=answer,
             source_label="2025학년도 수능 영어",
+            problem_number=problem_number,
+            tags=tags,
             existing_titles=existing_titles,
         ))
         return out, captured.get("prompt", "")
@@ -2528,6 +2531,37 @@ class TestSuggestTopicFromPassage:
         assert "이미 있는 주제" in prompt
         # 특정 AI 모델명 비노출 관례
         assert "Gemini" in prompt and "언급하지 마세요" in prompt
+
+    def test_prompt_requires_seo_title_over_content_hook(self):
+        """실운영 사례: brain-automation-consciousness-grammar-suneung-2025-29의 제목이
+        지문 소재(뇌과학/자동화/의식)만 담고 "2025학년도 수능 영어 29번", "어법" 같이 실제
+        검색어로 쓰일 연도·번호·문제유형이 전혀 없었다. 프롬프트가 이를 명시적으로
+        요구/금지하는지 확인."""
+        _, prompt = self._run(
+            json.dumps({"title": "제목", "angle": "앵글"}),
+            problem_number=29,
+            tags=["어법"],
+        )
+        assert "2025학년도 수능 영어 29번" in prompt
+        assert "어법" in prompt
+        assert "소재·주제어는 title에 넣지 마세요" in prompt
+        assert "뇌과학으로 보는 자동화와 의식의 차이" in prompt  # 반례로 명시돼 금지 대상임을 확인
+
+    def test_prompt_includes_tags_as_question_type_hint(self):
+        _, prompt = self._run(
+            json.dumps({"title": "제목", "angle": "앵글"}),
+            problem_number=21,
+            tags=["빈칸추론", "역접"],
+        )
+        assert "빈칸추론, 역접" in prompt
+
+    def test_prompt_handles_missing_problem_number_and_tags(self):
+        """지문에 번호/태그가 없어도(구버전 데이터 등) None이 새어나가지 않고, source_label
+        단독으로라도 검색어 중심 제목 지침이 유지돼야 한다."""
+        _, prompt = self._run(json.dumps({"title": "제목", "angle": "앵글"}))
+        assert "None" not in prompt
+        assert "2025학년도 수능 영어" in prompt
+        assert "태그 없음" in prompt
 
     def test_prompt_omits_optional_blocks_when_absent(self):
         """choices/answer가 없는 지문(주관식·정답 미상)에서 파이썬 None이 새어나가면 안 된다."""
@@ -2651,6 +2685,30 @@ class TestSourcePassagePromptSafety:
         })
         assert "2025학년도 수능 영어" in prompt
         assert "번 기출문제" not in prompt
+
+    def test_title_instruction_requires_citation_and_tags_over_content_hook(self):
+        """실운영 사례: brain-automation-consciousness-grammar-suneung-2025-29가 지문
+        소재(뇌과학/자동화/의식)만 담은 제목으로 발행됐다 — 검색자는 "2025학년도 수능 영어
+        29번"이나 "어법" 같은 걸로 찾지, 지문 소재로 찾지 않는다. source_passage가 주어지면
+        title 지침에 인용 라벨과 태그(문제 유형)가 반드시 포함되고, 소재 중심 제목이
+        명시적으로 금지되는지 확인."""
+        prompt = self._run_generate({
+            "passage_text": "Some passage.", "question_text": "Q?",
+            "choices": ["a", "b"], "answer": "3", "source_label": "2025학년도 수능 영어",
+            "problem_number": 29, "tags": ["어법"],
+        })
+        assert "2025학년도 수능 영어 29번" in prompt
+        assert "어법" in prompt
+        assert "지문의 소재·주제어는 제목에 넣지 마세요" in prompt
+
+    def test_title_instruction_handles_missing_tags(self):
+        prompt = self._run_generate({
+            "passage_text": "Some passage.", "question_text": "Q?",
+            "choices": ["a", "b"], "answer": "3", "source_label": "2025학년도 수능 영어",
+            "problem_number": 29,
+        })
+        assert "None" not in prompt
+        assert "(태그 없음)" in prompt
 
 
 class TestSourceDialoguePromptSafety:
@@ -3388,7 +3446,7 @@ class TestReplenishSuneungTopics:
         seen = []
 
         async def fake(self, passage_text, question_text, choices, answer,
-                       source_label, existing_titles=None):
+                       source_label, problem_number=None, tags=None, existing_titles=None):
             seen.append({"passage_text": passage_text, "existing_titles": list(existing_titles or [])})
             return results(passage_text)
 
@@ -3773,7 +3831,8 @@ class TestRunDailyEndpoint:
                                 passage_text="Real exam passage body.")
 
         async def fake_suggest_from_passage(self, passage_text, question_text, choices,
-                                            answer, source_label, existing_titles=None):
+                                            answer, source_label, problem_number=None,
+                                            tags=None, existing_titles=None):
             return {"title": "수능 빈칸추론 해설", "angle": f"지문 기반 앵글: {passage_text[:10]}"}
 
         captured = {}

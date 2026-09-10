@@ -294,9 +294,14 @@ Important:
         WordService.get_or_create_words, so a reader's imported wordbook matches what the
         app shows everywhere else. Default False leaves the output shape unchanged.
         source_passage (optional, suneung pipeline): a real exam passage
-        {passage_text, question_text, choices, answer, source_label}. When given, the model
-        writes an explainer that quotes the passage verbatim (never invents one) and appends
-        the original passage/question/answer/explanation + a KICE source line at the bottom.
+        {passage_text, question_text, choices, answer, source_label, problem_number, tags}.
+        When given, the model writes an explainer that quotes the passage verbatim (never
+        invents one) and appends the original passage/question/answer/explanation + a KICE
+        source line at the bottom. The title is required to lead with source_label +
+        problem_number + the tags-derived question type (what people actually search for),
+        not the passage's subject matter — see the docstring on that title rule inline below
+        for the live case that motivated it (brain-automation-consciousness-grammar-suneung-
+        2025-29's content-hook title has zero of the terms a real exam searcher would type).
         source_dialogue (optional, conversation pipeline): a real dialogue clip
         {dialogue_en, dialogue_ko, video_title, clip_url, context_en}. When given, the model
         quotes the dialogue and explains its expressions/vocabulary. context_en (optional) is
@@ -414,6 +419,8 @@ Important:
             citation_label = (
                 f"{source_label} {problem_number}번" if problem_number else source_label
             )
+            passage_tags = [t for t in (source_passage.get("tags") or []) if str(t).strip()]
+            tags_str = ", ".join(passage_tags) if passage_tags else "(태그 없음)"
             has_answer = bool(source_passage.get("answer"))
             answer_line = (
                 source_passage.get("answer")
@@ -464,6 +471,17 @@ Important:
                     else "\n14. 정답이 별도로 제공되지 않았습니다 — 지문·문제·선택지 내용을 근거로 "
                     "정답을 스스로 판단하고, 애매한 태도 없이 확정된 정답으로 제시한 뒤 그렇게 판단한 "
                     "근거를 해설에서 논리적으로 설명하세요."
+                )
+                + (
+                    "\n15. **제목(title)은 반드시 검색 유입을 최우선으로 지으세요.** 수능 문제를 검색하는 "
+                    "사람들은 지문의 소재(예: 뇌과학, 환경, 심리학 같은 내용 주제)가 아니라 "
+                    f"\"{citation_label}\"처럼 **연도·시험명·과목·문제번호**, 그리고 **문제 유형**"
+                    f"(아래 [문제 유형 태그]: {tags_str} — 어법이면 구체적 문법 포인트(예: to부정사, 분사구문, "
+                    "관계대명사), 독해면 유형명(예: 빈칸추론, 주제찾기, 글의 순서, 무관한 문장, 요지파악) 등)로 "
+                    f"검색합니다. 제목에 \"{citation_label}\"과 문제 유형을 반드시 그대로 포함하고, 지문의 "
+                    "소재·주제어는 제목에 넣지 마세요(소재는 description이나 본문에서 다루는 것으로 충분합니다). "
+                    f'예: "{citation_label} 어법 문제 완벽 정리 — to부정사 함정 피하는 법" 같은 형태이지, '
+                    "지문 내용을 은유적으로 요약한 제목(예: \"뇌과학으로 보는 자동화와 의식의 차이\")은 안 됩니다."
                 )
             )
 
@@ -1470,6 +1488,8 @@ Important:
         choices: Optional[list],
         answer: Optional[str],
         source_label: str,
+        problem_number: Optional[int] = None,
+        tags: Optional[List[str]] = None,
         existing_titles: Optional[List[str]] = None,
     ) -> Optional[Dict[str, str]]:
         """Propose a blog topic FROM a real 기출 지문 (passage-first discovery).
@@ -1480,6 +1500,13 @@ Important:
         grounded in this exact passage, or None on failure/parse error (rare in practice since
         these are curated real exam questions, but the caller must handle it — e.g. OCR
         garble from a bad PDF page).
+
+        title is steered toward what someone searching for this exact exam question would
+        type — year/exam/subject/problem number + question type (from `tags`) — rather than
+        the passage's subject matter. Live case: brain-automation-consciousness-grammar-
+        suneung-2025-29's title described the passage's content (뇌과학/자동화/의식) with none
+        of the terms ("2025학년도 수능 영어 29번", "어법") an actual searcher would use.
+        angle is a separate field and still carries the content specifics (그대로 유지).
 
         Deliberately has NO has_expression-style veto field (unlike the dialogue version):
         every row here is an already-curated real exam question, so "this material is not
@@ -1502,12 +1529,18 @@ Important:
             choices_block = f"\n[선택지]\n{rendered}\n"
 
         answer_block = f"\n[정답]\n{answer}\n" if answer else ""
+        citation_label = f"{source_label} {problem_number}번" if problem_number else source_label
+        clean_tags = [t for t in (tags or []) if str(t).strip()]
+        tags_str = ", ".join(clean_tags) if clean_tags else "(태그 없음 — 지문/문제 내용으로 유형을 직접 판단할 것)"
 
         prompt = f"""당신은 영어 학습 서비스 "Scan Voca"의 콘텐츠 전략가입니다.
 아래는 실제 기출 시험지에서 그대로 가져온 영어 지문과 문제입니다. 이 지문/문제를 소재로 삼아 블로그 글 주제를 하나 뽑으세요.
 
 [출처]
-{source_label}
+{citation_label}
+
+[문제 유형 태그]
+{tags_str}
 
 [지문 (원문 그대로)]
 {passage_text}
@@ -1519,7 +1552,13 @@ Important:
 
 요구사항:
 1. 언어: 한국어.
-2. title은 이 지문/문제를 해설하는 블로그 글 제목(한국어, 검색해서 들어오고 싶어지는 구체적인 톤).
+2. **title은 검색 유입을 최우선으로 지으세요.** 수능 문제를 검색하는 사람들은 지문의 소재(예: 뇌과학,
+   환경, 심리학 같은 내용 주제)가 아니라 "{citation_label}"처럼 연도·시험명·과목·문제번호, 그리고
+   [문제 유형 태그](어법이면 구체적 문법 포인트(예: to부정사, 분사구문, 관계대명사), 독해면 유형명
+   (예: 빈칸추론, 주제찾기, 글의 순서, 무관한 문장, 요지파악) 등)로 검색합니다. title에
+   "{citation_label}"과 문제 유형을 반드시 그대로 포함하고, 지문의 소재·주제어는 title에 넣지 마세요
+   — 그런 내용은 angle에서 다루세요. 예: "{citation_label} 어법 문제 완벽 정리 — to부정사 함정 피하는 법"
+   같은 형태이지, 지문 내용을 은유적으로 요약한 제목(예: "뇌과학으로 보는 자동화와 의식의 차이")은 안 됩니다.
 3. angle은 글의 방향·타깃·핵심 키워드 메모(한국어 1~2문장). **이 지문의 핵심 문법 포인트나 소재(주제어)를 반드시 구체적으로 포함**하세요 — "수능 영어 대비" 같은 뭉뚱그린 표현만 쓰지 마세요.
 4. 위 [이미 등록된 주제]와 겹치는 제목은 만들지 마세요.
 5. 특정 AI 모델명(Gemini, GPT 등)은 절대 언급하지 마세요.

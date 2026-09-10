@@ -291,6 +291,7 @@ async def _publish_one(
                 "problem_number": passage.problem_number,
                 "problem_type": passage.problem_type,
                 "explanation": passage.explanation,
+                "tags": passage.tags,
             },
         )
         if result is None:
@@ -578,6 +579,8 @@ async def _replenish_suneung_topics(db: Session, target: int, gemini: GeminiServ
             choices=passage.choices,
             answer=passage.answer,
             source_label=passage.source_label,
+            problem_number=passage.problem_number,
+            tags=passage.tags,
             existing_titles=existing_titles,
         )
         if suggestion is None:
