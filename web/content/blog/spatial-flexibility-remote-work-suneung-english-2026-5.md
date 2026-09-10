@@ -1,5 +1,5 @@
 ---
-title: "수능 영어 2026학년도 A형 5번 'less sticky'의 비밀: 원격 근무 시대, 일자리의 공간적 유연성 파헤치기!"
+title: "2026학년도 수능 영어 21번 함의 추론 정답과 해설"
 description: "2026학년도 수능 영어 5번 'less sticky'와 'spatial flexibility'를 통해 변화하는 업무 환경과 원격 근무의 특징을 중고등학생 눈높이에 맞춰 쉽게 설명합니다."
 category: "수능·내신"
 tags: ["수능 영어", "2026학년도 수능", "원격 근무", "spatial flexibility", "less sticky", "업무 환경 변화"]

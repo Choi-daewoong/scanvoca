@@ -1,5 +1,5 @@
 ---
-title: "2022 수능 영어 안내문 문제 정복! 'No Paper Cup Challenge' 참여 방법부터 함정까지 완벽 분석"
+title: "2022학년도 수능 영어 27번 안내문 내용 불일치 핵심 정리"
 description: "2022학년도 수능 영어 27번 문제에 등장한 'No Paper Cup Challenge' 안내문을 통해 안내문 내용 일치 유형의 함정을 피하고 참여 방법을 정확히 파악하는 실전 독해 전략을 제시합니다."
 category: "수능·내신"
 tags: ["수능영어", "안내문 문제", "No Paper Cup Challenge", "독해 전략", "고등영어"]
