@@ -407,6 +407,40 @@ class TestValidateExtractedItem:
         assert reason is not None
         assert "English" in reason
 
+    def test_rejects_listening_chart_item_despite_ample_english_in_table(self):
+        """실사고 재현: 2022 수능 영어 10번(듣기, 스터디 룸 예약표를 보며 대화를 듣는 유형)이
+        "chart"로 분류됐는데, 표 자체의 영어 라벨(Room/Capacity/Available Times/Price/
+        Projector 등)이 40자를 훌쩍 넘어 위 alpha-count 검사를 통과해버렸다 — 실제로는 대화
+        스크립트가 문제지에 인쇄되지 않는 듣기 문항이라 인용할 지문이 없는데도 발행되어
+        scanvoca.com/blog/2022-suneung-english-listening-10-chart-comprehension으로 게재됐다
+        (2026-09-12 사용자 신고로 삭제). 문항 번호(<=17)만으로 판단하는 구조적 검사가 있어야
+        표 안의 영어 분량과 무관하게 걸러진다."""
+        from ingest_exam_pdfs import validate_extracted_item
+        item = self._chart_item(
+            problem_number=10,
+            question_text="다음 표를 보면서 대화를 듣고, 두 사람이 예약할 스터디 룸을 고르시오.",
+            passage_text=(
+                "Study Rooms\n"
+                "Room | Capacity (persons) | Available Times | Price (per hour) | Projector\n"
+                "A | 2-3 | 9 a.m. - 11 a.m. | $10 | X\n"
+                "B | 4-6 | 9 a.m. - 11 a.m. | $16 | O"
+            ),
+        )
+        reason = validate_extracted_item(item)
+        assert reason is not None
+        assert "listening range" in reason
+
+    def test_rejects_any_problem_type_in_listening_range(self):
+        """1~17번 경계는 유형과 무관한 구조적 사실이므로 standard 유형에도 동일하게 적용된다."""
+        from ingest_exam_pdfs import validate_extracted_item
+        reason = validate_extracted_item(_standard_item(problem_number=1))
+        assert reason is not None
+        assert "listening range" in reason
+
+    def test_accepts_problem_18_the_first_reading_number(self):
+        from ingest_exam_pdfs import validate_extracted_item
+        assert validate_extracted_item(_standard_item(problem_number=18)) is None
+
     def test_accepts_underline_choice_item(self):
         from ingest_exam_pdfs import validate_extracted_item
         item = _standard_item(
@@ -670,6 +704,24 @@ def _run_ingest(**overrides):
 
 
 class TestIngestOrchestration:
+    def test_listening_range_manifest_entries_are_never_batched_for_extraction(
+        self, db_session, ingest_env
+    ):
+        """1~17번은 manifest 단계에서부터 걸러져 extract_exam_problems_from_pdfs 호출조차
+        받지 않아야 한다 — validate_extracted_item은 최후의 방어선일 뿐, 1차 방어는 여기서
+        AI 추출 호출 자체를 아예 만들지 않는 것이다(비용 절감 + 표 안의 영어 분량으로 우회될
+        여지를 원천 차단)."""
+        ingest_env["manifest"] = _manifest(
+            {"problem_number": 10, "problem_type": "chart", "passage_group": []},
+            {"problem_number": 33, "problem_type": "standard", "passage_group": []},
+        )
+        ingest_env["batches"][(33,)] = [_standard_item(problem_number=33)]
+        _run_ingest()
+
+        assert ingest_env["calls"] == [(33,)]
+        rows = db_session.query(ExamPassage).all()
+        assert [r.problem_number for r in rows] == [33]
+
     def test_inserts_valid_items_with_problem_type(self, db_session, ingest_env):
         ingest_env["manifest"] = _manifest(
             {"problem_number": 33, "problem_type": "standard", "passage_group": []},

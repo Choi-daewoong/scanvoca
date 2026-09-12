@@ -70,6 +70,15 @@ _HANGUL_RE = re.compile(r"[가-힣]")
 _VALID_PROBLEM_TYPES = {
     "standard", "chart", "underline_choice", "embedded_marker", "paragraph_order"
 }
+# 수능/모의고사 영어영역은 1~17번이 항상 듣기(청해), 18번부터 독해 — 이 경계는 시행 연도나
+# 모의고사 여부와 무관하게 고정된 문제지 구조라, PDF 내용이 아니라 문항 번호만으로 판단할 수
+# 있다. 실사고: 10번(듣기, 표를 보며 대화를 듣는 유형)이 "chart"로 분류됐는데, 표 자체에
+# 영어 라벨(Room/Capacity/Price 등)이 40자 넘게 있어 아래 _ALPHA_RE 길이 검사를 통과해버려
+# 대화 스크립트(오디오로만 존재, 문제지에 인쇄되지 않음) 없이 블로그에 발행됨 —
+# scanvoca.com/blog/2022-suneung-english-listening-10-chart-comprehension, 2026-09-12
+# 사용자 신고로 삭제. 콘텐츠 기반 휴리스틱(alpha count)은 표가 껴 있는 유형에서 우회되므로,
+# 문항 번호라는 구조적 사실을 코드 차원의 1차 방어선으로 둔다.
+_LISTENING_MAX_PROBLEM_NUMBER = 17
 _VALID_CHART_SIDES = {"left", "right", "full_width"}
 _PAREN_LABEL_RE = re.compile(r"\(([A-C])\)")
 _ORDER_CHOICE_RE = re.compile(r"\(?[A-C]\)?(\s*[-–]\s*\(?[A-C]\)?){2}")
@@ -89,6 +98,13 @@ def validate_extracted_item(item: Dict) -> Optional[str]:
     problem_type = item.get("problem_type")
     if problem_type not in _VALID_PROBLEM_TYPES:
         return f"unrecognized problem_type: {problem_type!r}"
+
+    problem_number = item.get("problem_number")
+    if isinstance(problem_number, int) and problem_number <= _LISTENING_MAX_PROBLEM_NUMBER:
+        return (
+            f"problem {problem_number} is in the listening range "
+            f"(1-{_LISTENING_MAX_PROBLEM_NUMBER}) — no printed passage exists to quote"
+        )
 
     question = item.get("question_text") or ""
     passage = item.get("passage_text") or ""
@@ -598,7 +614,21 @@ def ingest(
         return
     print(f"Manifest: {len(manifest)} problems found.")
 
-    batches = _plan_batches([m.model_dump() for m in manifest], batch_size=6)
+    manifest_entries = [m.model_dump() for m in manifest]
+    listening_numbers = sorted(
+        m["problem_number"] for m in manifest_entries
+        if m["problem_number"] <= _LISTENING_MAX_PROBLEM_NUMBER
+    )
+    if listening_numbers:
+        print(
+            f"Skipping {len(listening_numbers)} listening-range problem(s) "
+            f"(1-{_LISTENING_MAX_PROBLEM_NUMBER}), never worth extracting: {listening_numbers}"
+        )
+    manifest_entries = [
+        m for m in manifest_entries if m["problem_number"] > _LISTENING_MAX_PROBLEM_NUMBER
+    ]
+
+    batches = _plan_batches(manifest_entries, batch_size=6)
 
     all_items: List[Dict] = []
     failed_batches: List[List[int]] = []
