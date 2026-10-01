@@ -275,6 +275,16 @@ export default function SettingsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </Link>
+        <div className="border-t border-gray-100 dark:border-gray-800" />
+        <Link
+          href="/settings/sentences"
+          className="flex items-center justify-between py-4 pl-9 pr-5 transition hover:bg-gray-50 dark:hover:bg-gray-800"
+        >
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">문장 단어장</span>
+          <svg className="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
         {user?.is_admin && (
           <>
             <div className="border-t border-gray-100 dark:border-gray-800" />

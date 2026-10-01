@@ -8,6 +8,10 @@ from sqlalchemy.orm import Session, selectinload
 from app.models.deck import Deck, DeckCard
 
 
+MAX_DECKS_PER_USER = 30
+MAX_CARDS_PER_DECK = 300
+
+
 class DeckService:
     """Service for deck-related database operations.
 
@@ -48,6 +52,15 @@ class DeckService:
             raise ValueError(
                 f"한국어 문장 수({len(korean_lines)})와 영어 문장 수({len(english_lines)})가 일치하지 않습니다."
             )
+
+        if len(korean_lines) > MAX_CARDS_PER_DECK:
+            raise ValueError(f"덱 하나에는 문장을 최대 {MAX_CARDS_PER_DECK}개까지 넣을 수 있습니다.")
+
+        deck_count = db.scalar(
+            select(sa_func.count(Deck.id)).where(Deck.user_id == user_id)
+        ) or 0
+        if deck_count >= MAX_DECKS_PER_USER:
+            raise ValueError(f"덱은 최대 {MAX_DECKS_PER_USER}개까지 만들 수 있습니다.")
 
         deck = Deck(
             user_id=user_id,

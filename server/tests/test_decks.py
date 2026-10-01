@@ -278,3 +278,68 @@ class TestDeckAuth:
         assert response.status_code in (
             status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN
         )
+
+
+class TestUserDecks:
+    """/api/v1/decks/* — 일반(비게스트) 로그인 사용자용 경로"""
+
+    def test_regular_user_full_flow(self, client, auth_headers):
+        payload = {"title": "내 문장", "korean_text": "안녕\n잘가", "english_text": "Hi\nBye"}
+        created = client.post("/api/v1/decks", json=payload, headers=auth_headers)
+        assert created.status_code == status.HTTP_201_CREATED
+        assert created.json()["card_count"] == 2
+        deck_id = created.json()["id"]
+
+        assert len(client.get("/api/v1/decks", headers=auth_headers).json()) == 1
+        detail = client.get(f"/api/v1/decks/{deck_id}", headers=auth_headers).json()
+        assert [c["english_text"] for c in detail["cards"]] == ["Hi", "Bye"]
+        assert client.delete(
+            f"/api/v1/decks/{deck_id}", headers=auth_headers
+        ).status_code == status.HTTP_204_NO_CONTENT
+
+    def test_users_are_isolated(self, client, auth_headers, auth_headers_2):
+        deck_id = client.post(
+            "/api/v1/decks",
+            json={"title": "A", "korean_text": "가", "english_text": "A"},
+            headers=auth_headers,
+        ).json()["id"]
+        assert client.get("/api/v1/decks", headers=auth_headers_2).json() == []
+        assert client.get(
+            f"/api/v1/decks/{deck_id}", headers=auth_headers_2
+        ).status_code == status.HTTP_404_NOT_FOUND
+
+    def test_admin_route_still_forbidden_for_regular_user(self, client, auth_headers):
+        assert client.get(
+            "/api/v1/admin/decks", headers=auth_headers
+        ).status_code == status.HTTP_403_FORBIDDEN
+
+    def test_unauthenticated_rejected(self, client):
+        assert client.get("/api/v1/decks").status_code in (
+            status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN
+        )
+
+    def test_guest_forbidden(self, client, db_session, auth_headers, test_user_data):
+        user = db_session.query(User).filter(User.email == test_user_data["email"]).first()
+        user.is_guest = True
+        db_session.commit()
+        assert client.get(
+            "/api/v1/decks", headers=auth_headers
+        ).status_code == status.HTTP_403_FORBIDDEN
+
+    def test_card_limit_422(self, client, auth_headers):
+        korean = "\n".join(f"문장{i}" for i in range(301))
+        english = "\n".join(f"Sentence{i}" for i in range(301))
+        response = client.post(
+            "/api/v1/decks",
+            json={"korean_text": korean, "english_text": english},
+            headers=auth_headers,
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_deck_limit_422(self, client, auth_headers):
+        body = {"korean_text": "가", "english_text": "A"}
+        for _ in range(30):
+            assert client.post("/api/v1/decks", json=body, headers=auth_headers).status_code == 201
+        assert client.post(
+            "/api/v1/decks", json=body, headers=auth_headers
+        ).status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

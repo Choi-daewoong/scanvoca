@@ -7,23 +7,34 @@ export interface DeckCreatePayload {
   english_text: string;
 }
 
-export const deckService = {
-  async createDeck(payload: DeckCreatePayload): Promise<DeckResponse> {
-    return apiFetch<DeckResponse>('/api/v1/admin/decks', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-  },
+export interface DeckService {
+  createDeck(payload: DeckCreatePayload): Promise<DeckResponse>;
+  listDecks(): Promise<DeckResponse[]>;
+  getDeck(id: number): Promise<DeckDetailResponse>;
+  deleteDeck(id: number): Promise<void>;
+}
 
-  async listDecks(): Promise<DeckResponse[]> {
-    return apiFetch<DeckResponse[]>('/api/v1/admin/decks');
-  },
+function createDeckService(basePath: string): DeckService {
+  return {
+    async createDeck(payload) {
+      return apiFetch<DeckResponse>(basePath, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+    async listDecks() {
+      return apiFetch<DeckResponse[]>(basePath);
+    },
+    async getDeck(id) {
+      return apiFetch<DeckDetailResponse>(`${basePath}/${id}`);
+    },
+    async deleteDeck(id) {
+      await apiFetch(`${basePath}/${id}`, { method: 'DELETE' });
+    },
+  };
+}
 
-  async getDeck(id: number): Promise<DeckDetailResponse> {
-    return apiFetch<DeckDetailResponse>(`/api/v1/admin/decks/${id}`);
-  },
-
-  async deleteDeck(id: number): Promise<void> {
-    await apiFetch(`/api/v1/admin/decks/${id}`, { method: 'DELETE' });
-  },
-};
+/** 관리자 전용 경로 (/admin/decks) */
+export const deckService = createDeckService('/api/v1/admin/decks');
+/** 일반 사용자 경로 (/decks) — 설정 > 문장 단어장 */
+export const userDeckService = createDeckService('/api/v1/decks');
