@@ -2085,3 +2085,83 @@ Rules:
         except Exception as e:
             print(f"Gemini Vision error: {e}")
             return None
+
+    async def extract_dialogue_from_image(self, image_bytes: bytes, mime_type: str = "image/jpeg") -> Optional[List[Dict[str, Any]]]:
+        """
+        Vision으로 이미지 속 영어 문장을 읽어 '말한 사람 단위'로 나누고 한국어 해석을 붙인다.
+
+        Returns:
+            [{"speaker": "A" | None, "english": "...", "korean": "..."}, ...]
+            이미지에 영어 문장이 없으면 [], 호출 실패(키 없음/API 오류)면 None
+        """
+        if self.vision_model is None:
+            print("Gemini API key not configured")
+            return None
+
+        try:
+            image_part = {
+                "inline_data": {
+                    "mime_type": mime_type,
+                    "data": base64.b64encode(image_bytes).decode("utf-8"),
+                }
+            }
+
+            prompt = """Read the English text in this image and split it into items for sentence memorization.
+
+Return ONLY a JSON array, nothing else:
+[{"speaker":"A","english":"Hello. I'm Ann. Nice to meet you.","korean":"안녕하세요. 저는 앤이에요. 만나서 반갑습니다."},
+ {"speaker":"B","english":"Nice to meet you too.","korean":"저도 만나서 반갑습니다."}]
+
+Rules:
+- If the text is a dialogue with speaker labels (A:, B:, names, etc.), make ONE item per speaking turn: everything one speaker says in a row is a single item. Put the label in "speaker" (without the colon) and leave it out of "english".
+- If there are no speaker labels, make one item per sentence and set "speaker" to null.
+- Keep the items in reading order (top to bottom, left to right).
+- Correct obvious typos, OCR mistakes and capitalization in "english" (e.g. "nice to me you" -> "Nice to meet you"), but do not rewrite, add or remove content.
+- "korean" is a natural Korean translation of that item's "english" only.
+- Ignore page numbers, headings, instructions and anything that is not an English sentence to memorize.
+- If there is no English text, return: []"""
+
+            response = self.vision_model.generate_content(
+                [prompt, image_part],
+                generation_config={
+                    "temperature": 0.2,
+                    "max_output_tokens": 8192,
+                }
+            )
+
+            content = (response.text or "").strip()
+            if not content:
+                return []
+
+            # 마크다운 코드블록 제거
+            if content.startswith("```"):
+                content = content.split("```")[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+
+            start = content.find("[")
+            end = content.rfind("]") + 1
+            if start == -1 or end <= start:
+                return []
+
+            items = json.loads(content[start:end], strict=False)
+            if not isinstance(items, list):
+                return []
+
+            sentences: List[Dict[str, Any]] = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                english = str(item.get("english") or "").strip()
+                korean = str(item.get("korean") or "").strip()
+                if not english or not korean:
+                    continue
+                speaker = item.get("speaker")
+                speaker = str(speaker).strip() if speaker not in (None, "") else None
+                sentences.append({"speaker": speaker or None, "english": english, "korean": korean})
+            return sentences
+        except Exception as e:
+            print(f"Gemini dialogue extraction error: {e}")
+            return None
+

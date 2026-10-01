@@ -11,18 +11,25 @@ existence stays hidden.
 """
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.api.v1.ocr import ALLOWED_MIME_TYPES, MAX_FILE_SIZE
 from app.core.database import get_db
+from app.core.rate_limit import RateLimiter
 from app.core.dependencies import get_current_admin_user, get_current_real_user
 from app.models.user import User
 from app.schemas.deck import (
     DeckCreateRequest,
     DeckResponse,
     DeckDetailResponse,
+    DeckScanResponse,
 )
 from app.services.deck_service import DeckService
+from app.services.gemini_service import GeminiService
+
+# 한 번에 가져올 문장 수 상한 (덱당 300개 상한 이내, AI 비용 통제)
+MAX_SCAN_SENTENCES = 100
 
 
 def _build_router(user_dependency) -> APIRouter:
@@ -57,6 +64,43 @@ def _build_router(user_dependency) -> APIRouter:
 
         return deck
 
+
+    @router.post("/scan", response_model=DeckScanResponse)
+    async def scan_deck_image(
+        image: UploadFile = File(..., description="영어 문장이 담긴 사진"),
+        current_user: User = Depends(user_dependency),
+        _: User = Depends(RateLimiter(max_requests=20, window_seconds=3600, scope="deck_scan")),
+    ):
+        """
+        Read English sentences from a photo and translate them (nothing is saved)
+
+        Dialogue is split per speaking turn (A: ... / B: ...); plain text is split per sentence.
+        The client pastes the result into the deck form so the user can edit before saving.
+        """
+        content_type = image.content_type or "image/jpeg"
+        if content_type not in ALLOWED_MIME_TYPES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="지원하지 않는 파일 형식입니다. 지원 형식: JPEG, PNG, WebP, GIF",
+            )
+
+        image_bytes = await image.read()
+        if len(image_bytes) == 0:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="빈 파일입니다.")
+        if len(image_bytes) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="파일 크기는 10MB를 초과할 수 없습니다.",
+            )
+
+        sentences = await GeminiService().extract_dialogue_from_image(image_bytes, content_type)
+        if sentences is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="AI 분석 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해주세요.",
+            )
+
+        return DeckScanResponse(sentences=sentences[:MAX_SCAN_SENTENCES])
 
     @router.get("", response_model=List[DeckResponse])
     async def list_decks(

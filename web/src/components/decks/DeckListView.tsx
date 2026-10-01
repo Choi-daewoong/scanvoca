@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { DeckService } from '@/services/deckService';
 import { DeckResponse } from '@/types';
@@ -28,6 +28,9 @@ export default function DeckListView({ service, basePath, title: heading = '영�
   const [englishText, setEnglishText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanNotice, setScanNotice] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -69,6 +72,35 @@ export default function DeckListView({ service, basePath, title: heading = '영�
     }
   };
 
+  // 사진 → 영어 문장(말한 사람 단위) + AI 해석. 저장하지 않고 입력칸에만 채워서 사용자가 고친 뒤 저장한다.
+  const handleScan = async (file: File) => {
+    setScanning(true);
+    setFormError(null);
+    setScanNotice(null);
+    try {
+      const { sentences } = await service.scanImage(file);
+      if (sentences.length === 0) {
+        setFormError('사진에서 영어 문장을 찾지 못했습니다. 글자가 잘 보이게 다시 찍어주세요.');
+        return;
+      }
+      const oneLine = (text: string) => text.replace(/\s*\n\s*/g, ' ').trim();
+      const label = (speaker: string | null) => (speaker ? `${speaker}: ` : '');
+      const korean = sentences.map((s) => `${label(s.speaker)}${oneLine(s.korean)}`).join('\n');
+      const english = sentences.map((s) => `${label(s.speaker)}${oneLine(s.english)}`).join('\n');
+      // 이미 입력해 둔 내용이 있으면 지우지 않고 뒤에 이어 붙인다.
+      const append = (prev: string, added: string) =>
+        prev.trim() ? `${prev.replace(/\n+$/, '')}\n${added}` : added;
+      setKoreanText((prev) => append(prev, korean));
+      setEnglishText((prev) => append(prev, english));
+      setScanNotice(`${sentences.length}개 문장을 불러왔습니다. AI가 읽고 해석한 결과이니 저장하기 전에 확인해 주세요.`);
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : '사진을 분석하지 못했습니다.');
+    } finally {
+      setScanning(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const handleDelete = async (deck: DeckResponse) => {
     if (!confirm(`"${deck.title}" 덱을 삭제하시겠습니까? 카드도 함께 삭제됩니다.`)) return;
     try {
@@ -100,6 +132,30 @@ export default function DeckListView({ service, basePath, title: heading = '영�
             placeholder="제목 (선택 — 비우면 자동 생성)"
             className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
           />
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleScan(file);
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={scanning}
+            className="w-full rounded-xl border border-dashed border-indigo-300 bg-white py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50 disabled:opacity-60 dark:border-indigo-800 dark:bg-gray-900 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+          >
+            {scanning ? '사진 분석 중...' : '📷 사진으로 문장 채우기'}
+          </button>
+          {scanNotice && (
+            <p className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400">
+              {scanNotice}
+            </p>
+          )}
 
           <div>
             <div className="mb-1 flex items-center justify-between">

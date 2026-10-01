@@ -486,3 +486,13 @@ export interface DeckDetailResponse {
   created_at: string;
   cards: DeckCardResponse[];
 }
+
+export interface DeckScanSentence {
+  speaker: string | null;
+  english: string;
+  korean: string;
+}
+
+export interface DeckScanResponse {
+  sentences: DeckScanSentence[];
+}

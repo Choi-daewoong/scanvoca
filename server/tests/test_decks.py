@@ -343,3 +343,97 @@ class TestUserDecks:
         assert client.post(
             "/api/v1/decks", json=body, headers=auth_headers
         ).status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+class TestDeckScan:
+    """POST /api/v1/decks/scan — 사진 → 문장+해석 후보 (저장 안 함)"""
+
+    PNG = ("scan.png", b"\x89PNG\r\n\x1a\n" + b"0" * 32, "image/png")
+
+    @staticmethod
+    def _fake(result):
+        from app.services.gemini_service import GeminiService
+
+        async def fake(self, image_bytes, mime_type="image/jpeg"):
+            return result
+
+        return GeminiService, fake
+
+    def test_scan_returns_turns_and_saves_nothing(self, client, auth_headers, monkeypatch):
+        cls, fake = self._fake([
+            {"speaker": "A", "english": "Hello. I'm Ann. Nice to meet you.", "korean": "안녕하세요. 저는 앤이에요. 만나서 반갑습니다."},
+            {"speaker": "B", "english": "Nice to meet you too.", "korean": "저도 만나서 반갑습니다."},
+        ])
+        monkeypatch.setattr(cls, "extract_dialogue_from_image", fake)
+
+        response = client.post("/api/v1/decks/scan", files={"image": self.PNG}, headers=auth_headers)
+        assert response.status_code == status.HTTP_200_OK
+        sentences = response.json()["sentences"]
+        assert [s["speaker"] for s in sentences] == ["A", "B"]
+        assert sentences[0]["english"].startswith("Hello")
+        assert client.get("/api/v1/decks", headers=auth_headers).json() == []
+
+    def test_scan_empty_result(self, client, auth_headers, monkeypatch):
+        cls, fake = self._fake([])
+        monkeypatch.setattr(cls, "extract_dialogue_from_image", fake)
+        response = client.post("/api/v1/decks/scan", files={"image": self.PNG}, headers=auth_headers)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == {"sentences": []}
+
+    def test_scan_caps_sentence_count(self, client, auth_headers, monkeypatch):
+        cls, fake = self._fake(
+            [{"speaker": None, "english": f"S{i}", "korean": f"문{i}"} for i in range(150)]
+        )
+        monkeypatch.setattr(cls, "extract_dialogue_from_image", fake)
+        response = client.post("/api/v1/decks/scan", files={"image": self.PNG}, headers=auth_headers)
+        assert len(response.json()["sentences"]) == 100
+
+    def test_scan_ai_failure_503_without_model_name(self, client, auth_headers, monkeypatch):
+        cls, fake = self._fake(None)
+        monkeypatch.setattr(cls, "extract_dialogue_from_image", fake)
+        response = client.post("/api/v1/decks/scan", files={"image": self.PNG}, headers=auth_headers)
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert "gemini" not in response.json()["detail"].lower()
+
+    def test_scan_rejects_bad_type_and_empty(self, client, auth_headers):
+        bad = client.post(
+            "/api/v1/decks/scan",
+            files={"image": ("a.txt", b"hello", "text/plain")},
+            headers=auth_headers,
+        )
+        assert bad.status_code == status.HTTP_400_BAD_REQUEST
+        empty = client.post(
+            "/api/v1/decks/scan",
+            files={"image": ("a.png", b"", "image/png")},
+            headers=auth_headers,
+        )
+        assert empty.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_scan_requires_real_user_and_auth(self, client, db_session, auth_headers, test_user_data):
+        assert client.post("/api/v1/decks/scan", files={"image": self.PNG}).status_code in (401, 403)
+        user = db_session.query(User).filter(User.email == test_user_data["email"]).first()
+        user.is_guest = True
+        db_session.commit()
+        assert client.post(
+            "/api/v1/decks/scan", files={"image": self.PNG}, headers=auth_headers
+        ).status_code == status.HTTP_403_FORBIDDEN
+
+    def test_extract_dialogue_parses_and_cleans(self, monkeypatch):
+        """파서: 코드블록 제거, 빈 항목/비객체 제외, speaker 정규화"""
+        import asyncio
+        from app.services.gemini_service import GeminiService
+
+        class Resp:
+            text = '```json\n[{"speaker":" A ","english":" Hi ","korean":"안녕"},{"speaker":"","english":"Bye","korean":"잘가"},{"english":"","korean":"x"},"junk"]\n```'
+
+        class Model:
+            def generate_content(self, *a, **k):
+                return Resp()
+
+        svc = GeminiService()
+        svc.vision_model = Model()
+        result = asyncio.run(svc.extract_dialogue_from_image(b"x", "image/png"))
+        assert result == [
+            {"speaker": "A", "english": "Hi", "korean": "안녕"},
+            {"speaker": None, "english": "Bye", "korean": "잘가"},
+        ]

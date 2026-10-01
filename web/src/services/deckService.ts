@@ -1,5 +1,5 @@
 import { apiFetch } from './api';
-import { DeckResponse, DeckDetailResponse } from '@/types';
+import { DeckResponse, DeckDetailResponse, DeckScanResponse } from '@/types';
 
 export interface DeckCreatePayload {
   title?: string;
@@ -12,6 +12,8 @@ export interface DeckService {
   listDecks(): Promise<DeckResponse[]>;
   getDeck(id: number): Promise<DeckDetailResponse>;
   deleteDeck(id: number): Promise<void>;
+  /** 사진 속 영어 문장을 말한 사람 단위로 읽고 한국어 해석을 붙여 돌려준다(저장 안 함). */
+  scanImage(file: File): Promise<DeckScanResponse>;
 }
 
 function createDeckService(basePath: string): DeckService {
@@ -30,6 +32,14 @@ function createDeckService(basePath: string): DeckService {
     },
     async deleteDeck(id) {
       await apiFetch(`${basePath}/${id}`, { method: 'DELETE' });
+    },
+    async scanImage(file) {
+      const formData = new FormData();
+      formData.append('image', file);
+      return apiFetch<DeckScanResponse>(`${basePath}/scan`, {
+        method: 'POST',
+        body: formData,
+      });
     },
   };
 }

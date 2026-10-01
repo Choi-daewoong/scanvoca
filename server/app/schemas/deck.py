@@ -43,3 +43,15 @@ class DeckDetailResponse(BaseModel):
     cards: List[DeckCardResponse]
 
     model_config = {"from_attributes": True}
+
+
+class DeckScanSentence(BaseModel):
+    """One speaking turn (or sentence) read from a photo, with its Korean translation"""
+    speaker: Optional[str] = None
+    english: str
+    korean: str
+
+
+class DeckScanResponse(BaseModel):
+    """Result of scanning a photo into sentence-deck candidates (nothing is saved yet)"""
+    sentences: List[DeckScanSentence]
