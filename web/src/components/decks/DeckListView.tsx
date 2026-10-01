@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import ImageCropModal from '@/components/common/ImageCropModal';
 import { DeckService } from '@/services/deckService';
 import { DeckResponse } from '@/types';
 
@@ -30,7 +31,15 @@ export default function DeckListView({ service, basePath, title: heading = '영�
   const [formError, setFormError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [scanNotice, setScanNotice] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+
+  // 같은 사진을 다시 골라도 onChange가 동작하도록 선택값을 비운다.
+  const resetFileInputs = () => {
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+    if (galleryInputRef.current) galleryInputRef.current.value = '';
+  };
 
   useEffect(() => {
     (async () => {
@@ -97,7 +106,7 @@ export default function DeckListView({ service, basePath, title: heading = '영�
       setFormError(e instanceof Error ? e.message : '사진을 분석하지 못했습니다.');
     } finally {
       setScanning(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      resetFileInputs();
     }
   };
 
@@ -113,6 +122,21 @@ export default function DeckListView({ service, basePath, title: heading = '영�
 
   return (
     <div className="space-y-6">
+      {pendingFile && (
+        <ImageCropModal
+          file={pendingFile}
+          title="문장이 있는 영역 선택"
+          description="드래그해서 외우고 싶은 문장 부분만 선택하세요."
+          onConfirm={(cropped) => {
+            setPendingFile(null);
+            handleScan(cropped);
+          }}
+          onCancel={() => {
+            setPendingFile(null);
+            resetFileInputs();
+          }}
+        />
+      )}
       <div>
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{heading}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -134,23 +158,38 @@ export default function DeckListView({ service, basePath, title: heading = '영�
           />
 
           <input
-            ref={fileInputRef}
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => setPendingFile(e.target.files?.[0] ?? null)}
+          />
+          <input
+            ref={galleryInputRef}
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleScan(file);
-            }}
+            onChange={(e) => setPendingFile(e.target.files?.[0] ?? null)}
           />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={scanning}
-            className="w-full rounded-xl border border-dashed border-indigo-300 bg-white py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50 disabled:opacity-60 dark:border-indigo-800 dark:bg-gray-900 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
-          >
-            {scanning ? '사진 분석 중...' : '📷 사진으로 문장 채우기'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={scanning}
+              className="flex-1 rounded-xl border border-dashed border-indigo-300 bg-white py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50 disabled:opacity-60 dark:border-indigo-800 dark:bg-gray-900 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+            >
+              {scanning ? '사진 분석 중...' : '📷 사진 찍어 채우기'}
+            </button>
+            <button
+              type="button"
+              onClick={() => galleryInputRef.current?.click()}
+              disabled={scanning}
+              className="flex-1 rounded-xl border border-dashed border-indigo-300 bg-white py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50 disabled:opacity-60 dark:border-indigo-800 dark:bg-gray-900 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+            >
+              갤러리에서 선택
+            </button>
+          </div>
           {scanNotice && (
             <p className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400">
               {scanNotice}
