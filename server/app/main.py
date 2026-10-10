@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 import sys
+from sqlalchemy.engine import make_url
 from app.core.config import settings
 from app.core.database import init_db
 
@@ -25,7 +26,10 @@ async def lifespan(app: FastAPI):
         logger.info("Initializing database...")
         init_db()
         logger.info("Database initialized successfully!")
-        logger.info(f"Database URL: {settings.DATABASE_URL}")
+        # 비밀번호는 로그(Cloud Logging)에 남기지 않는다.
+        logger.info(
+            f"Database URL: {make_url(settings.DATABASE_URL).render_as_string(hide_password=True)}"
+        )
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}", exc_info=True)
         raise

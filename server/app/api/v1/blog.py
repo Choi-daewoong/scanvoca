@@ -381,6 +381,14 @@ async def _publish_one(
     # 5) Guardrail validation.
     failure = BlogService.validate_auto_draft(db, markdown, slug)
     if failure is not None:
+        # A topic whose draft collides with an already-published slug can never publish
+        # (same title -> same slug, every day). Left 'unused' it stays at the head of the
+        # FIFO queue and blocks the whole pipeline (toeic stalled 2026-10-02~ on topic 539
+        # vs. the post published 2026-09-12). Retire it, pointing at the existing post.
+        # Not on dry_run (must stay repeatable); passage/clip stay untouched so suneung/
+        # conversation sources remain available.
+        if failure == "slug_already_published" and not dry_run:
+            BlogService.mark_used(db, topic, slug)
         return BlogAutoPublishResult(
             published=False,
             reason="guardrail_failed",
@@ -669,11 +677,27 @@ async def run_auto_publish_daily(
                 await _replenish_suneung_topics(db, count_per_pipeline, gemini)
             # conversation: no replenish — clip supply is the local NAS tool's job.
 
-        for _ in range(count_per_pipeline):
+        published = 0
+        skipped_duplicates = 0
+        while published < count_per_pipeline:
+            topic_before = BlogService.get_unused_topic_for_pipeline(db, pipeline) if pipeline == "toeic" else None
             result = await _publish_one(db, pipeline, dry_run, gemini)
+            # A retired duplicate-slug toeic topic (see _publish_one) is not an outage:
+            # move on to the next topic, bounded so a bad queue cannot loop forever.
+            retired_duplicate = (
+                not dry_run
+                and pipeline == "toeic"
+                and result.reason == "guardrail_failed"
+                and topic_before is not None
+                and topic_before.status == "used"
+            )
+            if retired_duplicate and skipped_duplicates < 3:
+                skipped_duplicates += 1
+                continue
             out[pipeline].append(result)
             if not result.published:
                 break
+            published += 1
 
     # One summary email per call instead of the old per-post failure emails — those,
     # stacked with Vercel's own per-commit deployment email for every successful post,

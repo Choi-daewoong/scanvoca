@@ -891,6 +891,51 @@ class TestAutoPublishRun:
         assert updated.status == "used"
         assert updated.post_slug == "toeic-auto-live"
 
+    def test_duplicate_slug_retires_topic_so_queue_moves_on(
+        self, client, admin_auth_headers, db_session, monkeypatch
+    ):
+        """이미 발행된 slug와 충돌하는 주제는 'used'로 소진돼야 큐 맨 앞에서 영원히 막지 않는다
+        (2026-10-02~ toeic 발행 중단 사고: 주제 539 vs 9/12 발행글). dry_run에서는 건드리지 않는다."""
+        BlogService.upsert_published_post(
+            db_session, slug="toeic-dup-slug", title="기존 글", description="d",
+            category="토익·비즈니스", tags=["토익"],
+        )
+        topic = BlogTopic(category="토익·비즈니스", title="토익 중복주제", angle="a",
+                          status="unused", pipeline="toeic")
+        db_session.add(topic)
+        db_session.commit()
+        topic_id = topic.id
+
+        async def fake_generate(self, title=None, angle=None, custom_prompt=None,
+                                recent_posts=None, include_practice_questions=False,
+                                include_word_list=False):
+            return {
+                "slug": "toeic-dup-slug", "title": "토익 중복 글", "description": "설명",
+                "category": "토익·비즈니스", "tags": ["토익"], "body": LONG_BODY,
+                "practice_questions": [],
+            }
+
+        monkeypatch.setattr(GeminiService, "generate_blog_post", fake_generate)
+        monkeypatch.setattr(GeminiService, "is_image_generation_configured", staticmethod(lambda: False))
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic&dry_run=true",
+            headers=admin_auth_headers,
+        )
+        assert resp.json()["reason"] == "guardrail_failed"
+        db_session.expire_all()
+        assert db_session.get(BlogTopic, topic_id).status == "unused"
+
+        resp = client.post(
+            "/api/v1/admin/blog/auto-publish/run?pipeline=toeic",
+            headers=admin_auth_headers,
+        )
+        assert resp.json()["reason"] == "guardrail_failed"
+        db_session.expire_all()
+        retired = db_session.get(BlogTopic, topic_id)
+        assert retired.status == "used"
+        assert retired.post_slug == "toeic-dup-slug"
+
     def test_generation_failure_200_reason(self, client, admin_auth_headers, db_session, monkeypatch):
         topic = BlogTopic(category="토익·비즈니스", title="토익 주제3", angle="a",
                           status="unused", pipeline="toeic")

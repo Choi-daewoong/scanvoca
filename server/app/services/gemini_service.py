@@ -786,7 +786,7 @@ Important:
                 prompt,
                 generation_config={
                     "temperature": 0.2,
-                    "max_output_tokens": 4096,
+                    "max_output_tokens": 8192,
                     "response_mime_type": "application/json",
                 },
             )
