@@ -2,7 +2,9 @@
 # PowerShell에서 실행: .\deploy-final.ps1
 # 사전 준비: server/.env 파일에 GEMINI_API_KEY, JWT_SECRET_KEY, DATABASE_URL 설정 필요
 
-$ErrorActionPreference = "Stop"
+# Continue: docker/gcloud가 진행 로그를 stderr로 내보내는데, Windows PowerShell 5.1은 Stop 상태에서
+# 이를 종료 오류(NativeCommandError)로 처리한다. 실패 판정은 각 단계의 $LASTEXITCODE 검사가 맡는다.
+$ErrorActionPreference = "Continue"
 
 $PROJECT_ID = "gen-lang-client-0831056674"
 $REGION = "asia-northeast3"
@@ -65,7 +67,17 @@ Write-Host "✅ API 활성화 완료`n" -ForegroundColor Green
 
 # 2. Docker 인증
 Write-Host "[2/7] Docker 인증 설정 중..." -ForegroundColor Green
-gcloud auth configure-docker --quiet
+# gcloud는 이미 설정된 credential helper를 stderr 경고로 알린다. Windows PowerShell 5.1은
+# $ErrorActionPreference=Stop 상태에서 이를 종료 오류로 처리하므로 이 호출만 Continue로 둔다.
+$PrevErrorAction = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+gcloud auth configure-docker --quiet 2>&1 | Out-Null
+$DockerAuthExitCode = $LASTEXITCODE
+$ErrorActionPreference = $PrevErrorAction
+if ($DockerAuthExitCode -ne 0) {
+    Write-Host "❌ Docker 인증 설정 실패" -ForegroundColor Red
+    exit 1
+}
 Write-Host "✅ Docker 인증 완료`n" -ForegroundColor Green
 
 # 3. 환경변수 확인
